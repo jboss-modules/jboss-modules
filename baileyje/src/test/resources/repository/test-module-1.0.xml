@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jboss-module xmlns="urn:jboss:module:1.0">
+    <export package="org.jboss.test"/>
+    <export package="config"/>
+    <import group="other" module="module" version="1.0" package="org.jboss.test.other"/>
+    <import group="other" module="module" version="1.0" package="config"/>
+</jboss-module>
