@@ -22,13 +22,44 @@
 
 package org.jboss.modules;
 
+import java.util.Iterator;
+import java.util.List;
+
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
  */
 public final class Module {
 
-    Module(ModuleSpec spec) {
+    private final ModuleIdentifier identifier;
+    private final List<Module> imports;
+    private final List<Module> exports;
+    private final ModuleContentLoader contentLoader;
+
+    Module(ModuleSpec spec, List<Module> imports, List<Module> exports) {
+        this.identifier = spec.getIdentifier();
+        this.contentLoader = spec.getContentLoader();
+        this.imports = imports;
+        this.exports = exports;
         // do stuff
+    }
+
+    public final Class<?> getExportedClass(String className) {
+        return null;
+    }
+
+    public final Resource getExportedResource(final String resourcePath) {
+        return contentLoader.getResource(resourcePath);
+    }
+
+    public final Iterable<Resource> getExportedResources(final String resourcePath) {
+        // todo filter...
+        return contentLoader.getResources(resourcePath);
+    }
+
+    public final Resource getExportedResource(final String rootPath, final String resourcePath) {
+        // todo filter...
+        return contentLoader.getResource(rootPath, resourcePath);
     }
 
     public static enum Flag {

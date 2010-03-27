@@ -1,64 +1,71 @@
 package org.jboss.modules;
 
-import java.lang.ref.ReferenceQueue;
-import java.lang.ref.SoftReference;
-import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
+ * 
+ * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
  */
-public abstract class ModuleLoader
-{
-   private final HashMap<ModuleIdentifier, ModuleRef> moduleMap = new HashMap<ModuleIdentifier, ModuleRef>();
+public abstract class ModuleLoader {
+    private final HashMap<ModuleIdentifier, Module> moduleMap = new HashMap<ModuleIdentifier, Module>();
 
-   public ModuleSpec loadModule(ModuleIdentifier identifier) throws ModuleNotFoundException
-   {
-      final ModuleSpec module = findModule(identifier);
-      if(module == null)
-      {
-         throw new ModuleNotFoundException(identifier.toString());
-      }
-      return module;
-   }
+    /**
+     * Load a module based on an identifier.
+     *
+     * @param identifier The module identifier
+     * @return The loaded Module
+     * @throws ModuleNotFoundException if the Module can not be found
+     */
+    public Module loadModule(ModuleIdentifier identifier) throws ModuleNotFoundException {
+        final Module module = findModule(identifier);
+        if (module == null) {
+            throw new ModuleNotFoundException(identifier.toString());
+        }
+        return module;
+    }
 
-   private static final class ModuleRef extends SoftReference<Module>
-   {
-      private final URI key;
+    /**
+     * Find a Module by its identifier.  This should be overriden by sub-classes
+     * to provide custom Module loading strategies.  Implementations of this method
+     * should call {@link #defineModule}
+     *
+     * @param moduleIdentifier The modules Identifier
+     * @return The Module  
+     */
+    protected abstract Module findModule(final ModuleIdentifier moduleIdentifier);
 
-      private ModuleRef(final URI key, final Module value, final ReferenceQueue<? super Module> queue)
-      {
-         super(value, queue);
-         this.key = key;
-      }
+    /**
+     * Defines a Module based on a specification.  Use of this method is required by
+     * any ModuleLoader implementations in order to fully define a Module. 
+     *
+     * @param moduleSpec The module specification to create the Module from
+     * @return The defined Module
+     * @throws ModuleNotFoundException If any dependent modules can not be found
+     */
+    protected final Module defineModule(ModuleSpec moduleSpec) throws ModuleNotFoundException {
 
-      public URI getKey()
-      {
-         return key;
-      }
-   }
+        final ModuleIdentifier moduleIdentifier = moduleSpec.getIdentifier();
 
-   protected abstract ModuleSpec findModule(final ModuleIdentifier moduleIdentifier);
-
-   protected final ModuleSpec defineModule(final ModuleIdentifier moduleIdentifier, final ModuleContentLoader loader, final ModuleIdentifier[] imports, final ModuleIdentifier[] exports, final Module.Flag... flags) throws ModuleNotFoundException
-   {
-      synchronized(moduleMap)
-      {
-         final SoftReference<Module> ref = moduleMap.get(moduleIdentifier);
-         if(ref != null)
-         {
-            final Module oldModule = ref.get();
-            if(oldModule != null)
-            {
-               throw new RuntimeException("Module already exists:" + moduleIdentifier); // Make custom
+        synchronized (moduleMap) {
+            final Module oldModule = moduleMap.get(moduleIdentifier);
+            if (oldModule != null) {
+                throw new ModuleAlreadyExistsException(moduleIdentifier.toString());
             }
-         }
-         // Add logic to resolve modules
+            final List<Module> importModules = new ArrayList<Module>(moduleSpec.getImports().size());
+            for (ModuleIdentifier importId : moduleSpec.getImports()) {
+                importModules.add(loadModule(importId));
+            }
+            final List<Module> exportModules = new ArrayList<Module>(moduleSpec.getImports().size());
+            for (ModuleIdentifier exportId : moduleSpec.getExports()) {
+                exportModules.add(loadModule(exportId));
+            }
 
-         // Add the module to the map
-         //final ModuleSpec module = new ModuleSpec(loader, importModules, exportModules, moduleIdentifier, flags);
-         //moduleMap.put(moduleIdentifier, new ModuleRef(moduleIdentifier, module, refQueue));
-         return null;
-      }
-   }
+            final Module module = new Module(moduleSpec, importModules, exportModules);
+            moduleMap.put(moduleIdentifier, module);
+            return module;
+        }
+    }
 }
