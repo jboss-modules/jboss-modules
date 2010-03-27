@@ -23,6 +23,10 @@
 package org.jboss.modules;
 
 import java.io.Serializable;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -74,5 +78,50 @@ public final class ResourceIdentifier implements Serializable {
         result = 31 * result + root.hashCode();
         result = 31 * result + path.hashCode();
         return result;
+    }
+
+    public static ResourceIdentifier fromURL(URL url) throws MalformedURLException {
+        final ModuleIdentifier moduleIdentifier = ModuleIdentifier.fromURL(url);
+        final String moduleRootSpec = url.getFile();
+        final int si = moduleRootSpec.indexOf('/');
+        final String rootSpec;
+        if (si == -1) {
+            rootSpec = "";
+        } else {
+            rootSpec = moduleRootSpec.substring(si + 1);
+        }
+        final String pathSpec = url.getQuery();
+        return new ResourceIdentifier(moduleIdentifier, rootSpec, pathSpec == null ? "" : pathSpec);
+    }
+
+    public static ResourceIdentifier fromURI(URI uri) throws URISyntaxException {
+        final ModuleIdentifier moduleIdentifier = ModuleIdentifier.fromURI(uri);
+        final String moduleFullSpec = uri.getSchemeSpecificPart();
+        final int si = moduleFullSpec.indexOf('/');
+        final int qi = moduleFullSpec.indexOf('?');
+        final String rootSpec;
+        final String pathSpec;
+        if (qi == -1) {
+            if (si == -1) {
+                rootSpec = "";
+                pathSpec = "";
+            } else {
+                rootSpec = moduleFullSpec.substring(si + 1);
+                pathSpec = "";
+            }
+        } else {
+            if (si == -1 || si > qi) {
+                rootSpec = "";
+                pathSpec = moduleFullSpec.substring(qi + 1);
+            } else {
+                rootSpec = moduleFullSpec.substring(si + 1, qi);
+                pathSpec = moduleFullSpec.substring(qi + 1);
+            }
+        }
+        return new ResourceIdentifier(moduleIdentifier, rootSpec, pathSpec);
+    }
+
+    public String toString() {
+        return moduleIdentifier.toString() + "/" + root + "?" + path;
     }
 }

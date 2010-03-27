@@ -89,7 +89,7 @@ public final class ModuleIdentifier implements Serializable {
         return String.format("module:%s:%s:%s", group, artifact, version);
     }
 
-    public ModuleIdentifier fromURL(URL url) throws MalformedURLException {
+    public static ModuleIdentifier fromURL(URL url) throws MalformedURLException {
         if (url.getAuthority() != null) {
             throw new MalformedURLException("Modules cannot have an authority part");
         }
@@ -101,13 +101,22 @@ public final class ModuleIdentifier implements Serializable {
         } else {
             moduleSpec = moduleRootSpec.substring(0, si);
         }
+        if (moduleSpec.length() == 0) {
+            throw new MalformedURLException("Empty module URL");
+        }
         final int c1 = moduleSpec.indexOf(':');
         if (c1 == -1) {
-            throw new MalformedURLException("")
+            throw new MalformedURLException("Module URL requires a group ID");
         }
+        final int c2 = moduleSpec.indexOf(':', c1 + 1);
+        if (c2 == -1) {
+            throw new MalformedURLException("Module URL requires a version");
+        }
+        final int c3 = moduleSpec.indexOf(':', c2 + 1);
+        return new ModuleIdentifier(moduleSpec.substring(0, c1), moduleSpec.substring(c1 + 1, c2), c3 == -1 ? moduleSpec.substring(c2 + 1) : moduleSpec.substring(c2 + 1, c3));
     }
 
-    public ModuleIdentifier fromURI(URI uri) throws URISyntaxException {
+    public static ModuleIdentifier fromURI(URI uri) throws URISyntaxException {
         final String scheme = uri.getScheme();
         if (scheme == null || ! scheme.equals("module")) {
             throw new URISyntaxException(uri.toString(), "Module URIs must start with \"module:\"");
@@ -115,6 +124,28 @@ public final class ModuleIdentifier implements Serializable {
         if (uri.getAuthority() != null) {
             throw new URISyntaxException(uri.toString(), "Modules cannot have an authority part");
         }
-        if (uri.isAbsolute())
+        final String moduleFullSpec = uri.getSchemeSpecificPart();
+        final int sli = moduleFullSpec.indexOf('/');
+        final int qi = moduleFullSpec.indexOf('?');
+        final int si = qi == -1 ? sli == -1 ? -1 : sli : sli == -1 ? qi : Math.min(sli, qi);
+        final String moduleSpec;
+        if (si == -1) {
+            moduleSpec = moduleFullSpec;
+        } else {
+            moduleSpec = moduleFullSpec.substring(0, si);
+        }
+        if (moduleSpec.length() == 0) {
+            throw new URISyntaxException(uri.toString(), "Empty module URI");
+        }
+        final int c1 = moduleSpec.indexOf(':');
+        if (c1 == -1) {
+            throw new URISyntaxException(uri.toString(), "Module URI requires a group ID");
+        }
+        final int c2 = moduleSpec.indexOf(':', c1 + 1);
+        if (c2 == -1) {
+            throw new URISyntaxException(uri.toString(), "Module URI requires a version");
+        }
+        final int c3 = moduleSpec.indexOf(':', c2 + 1);
+        return new ModuleIdentifier(moduleSpec.substring(0, c1), moduleSpec.substring(c1 + 1, c2), c3 == -1 ? moduleSpec.substring(c2 + 1) : moduleSpec.substring(c2 + 1, c3));
     }
 }
