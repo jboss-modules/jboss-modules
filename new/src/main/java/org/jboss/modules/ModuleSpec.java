@@ -64,4 +64,8 @@ public final class ModuleSpec {
     public void setMainClass(final String mainClass) {
         this.mainClass = mainClass;
     }
+
+    public ModuleContentLoader getContentLoader() {
+        return loader;
+    }
 }

@@ -27,4 +27,8 @@ package org.jboss.modules;
  */
 public interface ModuleContentLoader {
     ResourceLoader getResourceLoader(String root);
+    Resource getResource(String name);
+    Resource getResource(String root, String name);
+    Iterable<Resource> getResources(String name);
+    ClassSpec getClassSpec(String className);
 }
