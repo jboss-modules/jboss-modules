@@ -34,4 +34,11 @@ public class BasicWire implements Wire
    {
       return export.satisfies(packageName);
    }
+
+   @Override
+   public String toString()
+   {
+      return String.format("BasicWire{exportingModule='%s', importingModule='%s', package='%s'}",
+         exportingModule, importingModule, export.getPackageName());
+   }
 }

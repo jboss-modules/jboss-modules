@@ -61,13 +61,7 @@ public class BasicImport implements Import
    @Override
    public String toString()
    {
-      return "BasicImport{" +
-         "moduleGroup='" + groupGroup + '\'' +
-         ", moduleName='" + moduleName + '\'' +
-         ", moduleVersion='" + moduleVersion + '\'' +
-         ", packageName='" + packageName + '\'' +
-         ", optional=" + optional +
-         ", resolved=" + resolved +
-         '}';
+      return String.format("BasicImport{moduleGroup='%s', moduleName='%s', moduleVersion='%s', packageName='%s', optional=%s, resolved=%s}",
+         groupGroup, moduleName, moduleVersion, packageName, optional, resolved) ;
    }
 }

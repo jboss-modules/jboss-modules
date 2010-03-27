@@ -22,7 +22,7 @@
 
 package org.jboss.module;
 
-class BooleanVersionFilter implements VersionFilter {
+class yBooleanVersionFilter implements VersionFilter {
     private final boolean value;
 
     public BooleanVersionFilter(final boolean value) {

@@ -3,7 +3,7 @@ package org.jboss.modules.basic.system;
 import org.jboss.logging.Logger;
 import org.jboss.modules.basic.BasicExport;
 import org.jboss.modules.basic.BasicImport;
-import org.jboss.modules.basic.BasicModuleId;
+import org.jboss.modules.basic.ModuleIdentifier;
 import org.jboss.modules.basic.BasicWire;
 import org.jboss.modules.basic.WrappedClassLoaderModule;
 import org.jboss.modules.spi.Export;
@@ -43,7 +43,7 @@ public class BasicModuleSystem implements ModuleSystem
 
    public Module getModule(final String group, final String name, final String version)
    {
-      final BasicModuleId moduleId = new BasicModuleId(group, name, version);
+      final ModuleIdentifier moduleId = new ModuleIdentifier(group, name, version);
       Module module = getModule(moduleId);
       if(module == null)
          module = loadAndResolve(moduleId, new LinkedList<Module>());
@@ -125,7 +125,7 @@ public class BasicModuleSystem implements ModuleSystem
       {
          final String packageName = declaredImport.getPackageName();
 
-         ModuleId moduleKey = new BasicModuleId(declaredImport.getModuleGroup(), declaredImport.getModuleName(), declaredImport.getModuleVersion());
+         ModuleId moduleKey = new ModuleIdentifier(declaredImport.getModuleGroup(), declaredImport.getModuleName(), declaredImport.getModuleVersion());
          Module importedModule = moduleMap.get(moduleKey);
          if(importedModule == null)
             importedModule = loadAndResolve(moduleKey, visited);
@@ -156,7 +156,7 @@ public class BasicModuleSystem implements ModuleSystem
 
    private void installSystemModule()
    {
-      final ModuleId systemModuleId = new BasicModuleId(SYSTEM_MODULE_IMPORT.getModuleGroup(),
+      final ModuleId systemModuleId = new ModuleIdentifier(SYSTEM_MODULE_IMPORT.getModuleGroup(),
          SYSTEM_MODULE_IMPORT.getModuleName(), SYSTEM_MODULE_IMPORT.getModuleVersion());
 
       final Module systemModule = new WrappedClassLoaderModule(systemModuleId, Collections.<Export>singletonList(new BasicExport("java.*")),

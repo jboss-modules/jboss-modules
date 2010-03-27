@@ -29,26 +29,29 @@ import java.util.List;
 import java.util.Set;
 
 public final class ModuleSpec {
-    private final List<URI> imports = new ArrayList<URI>();
+    private final List<ModuleIdentifier> imports = new ArrayList<ModuleIdentifier>();
     private final List<URI> exports = new ArrayList<URI>();
     private final Set<Module.Flag> moduleFlags = EnumSet.noneOf(Module.Flag.class);
 
-    private URI moduleUri;
+    private ModuleIdentifier moduleIdentifier;
     private String mainClass;
     private ModuleContentLoader loader;
 
-    public URI getModuleUri() {
-        return moduleUri;
-    }
+   public ModuleIdentifier getIdentifier()
+   {
+      return moduleIdentifier;
+   }
 
-    public void setModuleUri(final URI moduleUri) {
-        if (moduleUri == null) {
-            throw new IllegalArgumentException("moduleUri is null");
+   public void setIdentifier(final ModuleIdentifier moduleIdentifier)
+   {
+      if (moduleIdentifier == null) {
+            throw new IllegalArgumentException("moduleIdentifier is null");
         }
-        this.moduleUri = moduleUri;
-    }
+        this.moduleIdentifier = moduleIdentifier;
+   }
 
-    public List<URI> getImports() {
+
+    public List<ModuleIdentifier> getImports() {
         return imports;
     }
 

@@ -29,6 +29,8 @@ public class BasicModuleSystemTest
 
       Module module = moduleSystem.getModule("circular", "a-module", "1.0");
       assert module != null : "Module should not be null";
+
+      module.loadClass("org.jboss.test.other.OtherClass");
    }
 
    @Test
