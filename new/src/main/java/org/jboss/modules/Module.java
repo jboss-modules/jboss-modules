@@ -31,7 +31,6 @@ public final class Module {
         // do stuff
     }
 
-
     public static enum Flag {
         // flags here
     }
