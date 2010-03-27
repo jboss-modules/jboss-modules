@@ -22,12 +22,19 @@
 
 package org.jboss.modules;
 
+import java.util.List;
+
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class Module {
 
-    Module(ModuleSpec spec) {
+    private final List<Module> imports;
+    private final List<Module> exports;
+
+    Module(ModuleSpec spec, List<Module> imports, List<Module> exports) {
+        this.imports = imports;
+        this.exports = exports;
         // do stuff
     }
 

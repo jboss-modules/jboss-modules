@@ -30,32 +30,30 @@ import java.util.Set;
 
 public final class ModuleSpec {
     private final List<ModuleIdentifier> imports = new ArrayList<ModuleIdentifier>();
-    private final List<URI> exports = new ArrayList<URI>();
+    private final List<ModuleIdentifier> exports = new ArrayList<ModuleIdentifier>();
     private final Set<Module.Flag> moduleFlags = EnumSet.noneOf(Module.Flag.class);
 
     private ModuleIdentifier moduleIdentifier;
     private String mainClass;
     private ModuleContentLoader loader;
 
-   public ModuleIdentifier getIdentifier()
-   {
-      return moduleIdentifier;
-   }
+    public ModuleIdentifier getIdentifier() {
+        return moduleIdentifier;
+    }
 
-   public void setIdentifier(final ModuleIdentifier moduleIdentifier)
-   {
-      if (moduleIdentifier == null) {
+    public void setIdentifier(final ModuleIdentifier moduleIdentifier) {
+        if (moduleIdentifier == null) {
             throw new IllegalArgumentException("moduleIdentifier is null");
         }
         this.moduleIdentifier = moduleIdentifier;
-   }
+    }
 
 
     public List<ModuleIdentifier> getImports() {
         return imports;
     }
 
-    public List<URI> getExports() {
+    public List<ModuleIdentifier> getExports() {
         return exports;
     }
 
