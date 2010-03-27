@@ -22,40 +22,37 @@
 
 package org.jboss.modules;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 
-/**
- * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
- */
-public interface Resource {
-    /**
-     * Get the relative resource name.
-     *
-     * @return the name
-     */
-    String getName();
+final class FileEntryResource implements Resource {
 
-    /**
-     * Get the complete URL of this resource.
-     *
-     * @return the URL
-     */
-    URL getURL();
+    private final String name;
+    private final File file;
+    private final URL url;
 
-    /**
-     * Open an input stream to this resource.
-     *
-     * @return the stream
-     * @throws java.io.IOException if an I/O error occurs
-     */
-    InputStream openStream() throws IOException;
+    FileEntryResource(final String name, final File file, final URL url) {
+        this.name = name;
+        this.file = file;
+        this.url = url;
+    }
 
-    /**
-     * Get the size of the resource, if known.
-     *
-     * @return the size, or 0L if unknown
-     */
-    long getSize();
+    public long getSize() {
+        return file.length();
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public URL getURL() {
+        return url;
+    }
+
+    public InputStream openStream() throws IOException {
+        return new FileInputStream(file);
+    }
 }

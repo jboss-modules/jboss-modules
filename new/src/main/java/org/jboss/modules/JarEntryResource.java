@@ -25,37 +25,34 @@ package org.jboss.modules;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
-/**
- * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
- */
-public interface Resource {
-    /**
-     * Get the relative resource name.
-     *
-     * @return the name
-     */
-    String getName();
+final class JarEntryResource implements Resource {
+    private final JarFile jarFile;
+    private final JarEntry entry;
+    private final URL resourceURL;
 
-    /**
-     * Get the complete URL of this resource.
-     *
-     * @return the URL
-     */
-    URL getURL();
+    JarEntryResource(final JarFile jarFile, final JarEntry entry, final URL resourceURL) {
+        this.jarFile = jarFile;
+        this.entry = entry;
+        this.resourceURL = resourceURL;
+    }
 
-    /**
-     * Open an input stream to this resource.
-     *
-     * @return the stream
-     * @throws java.io.IOException if an I/O error occurs
-     */
-    InputStream openStream() throws IOException;
+    public String getName() {
+        return entry.getName();
+    }
 
-    /**
-     * Get the size of the resource, if known.
-     *
-     * @return the size, or 0L if unknown
-     */
-    long getSize();
+    public URL getURL() {
+        return resourceURL;
+    }
+
+    public InputStream openStream() throws IOException {
+        return jarFile.getInputStream(entry);
+    }
+
+    public long getSize() {
+        final long size = entry.getSize();
+        return size == -1 ? 0 : size;
+    }
 }

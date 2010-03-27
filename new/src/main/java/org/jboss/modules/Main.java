@@ -50,6 +50,16 @@ public final class Main {
     }
 
     public static void main(String[] args) throws Throwable {
+        // First set up URL handler, if it isn't already
+        final String pkgs = System.getProperty("java.protocol.handler.pkgs");
+        final String newPkgs;
+        if (pkgs == null || pkgs.length() == 0) {
+            newPkgs = "org.jboss.modules.protocol";
+            System.setProperty("java.protocol.handler.pkgs", newPkgs);
+        } else if (! pkgs.contains("org.jboss.modules.protocol")) {
+            newPkgs = pkgs + "|org.jboss.modules.protocol";
+            System.setProperty("java.protocol.handler.pkgs", newPkgs);
+        }
         final int argsLen = args.length;
         String[] moduleArgs = null;
         String modulePath = null;

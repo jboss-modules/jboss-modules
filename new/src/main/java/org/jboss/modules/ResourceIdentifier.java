@@ -121,6 +121,10 @@ public final class ResourceIdentifier implements Serializable {
         return new ResourceIdentifier(moduleIdentifier, rootSpec, pathSpec);
     }
 
+    public URL toURL() throws MalformedURLException {
+        return moduleIdentifier.toURL(root, path);
+    }
+
     public String toString() {
         return moduleIdentifier.toString() + "/" + root + "?" + path;
     }

@@ -30,8 +30,23 @@ import java.io.IOException;
 public interface ResourceLoader {
     ClassSpec getClassSpec(String name) throws IOException;
 
-    PackageSpec getPackageSpec(String name);
+    /**
+     * Get the package specification for the given directory name.  Always returns a package specification; this
+     * method cannot be used to test for the existence of a package.  A package spec should always be acquired from
+     * the same resource loader which provided the class specification.
+     *
+     * @param name the directory name
+     * @return the package specification
+     * @throws IOException if an I/O error occurs
+     */
+    PackageSpec getPackageSpec(String name) throws IOException;
 
+    /**
+     * Get the absolute physical filesystem path for a library with the given name.
+     *
+     * @param name the name
+     * @return the path or {@code null} if the library is not present
+     */
     String getLibrary(String name);
 
     Resource getResource(String name);

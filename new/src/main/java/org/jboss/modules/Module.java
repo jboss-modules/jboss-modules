@@ -25,6 +25,7 @@ package org.jboss.modules;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.net.URL;
 import java.util.List;
 
 /**
@@ -87,6 +88,10 @@ public final class Module {
             // unexpected; should be public
             throw new IllegalAccessError(e.getMessage());
         }
+    }
+
+    public ModuleIdentifier getIdentifier() {
+        return identifier;
     }
 
     public static enum Flag {

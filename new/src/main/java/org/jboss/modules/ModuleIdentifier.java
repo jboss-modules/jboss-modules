@@ -148,4 +148,26 @@ public final class ModuleIdentifier implements Serializable {
         final int c3 = moduleSpec.indexOf(':', c2 + 1);
         return new ModuleIdentifier(moduleSpec.substring(0, c1), moduleSpec.substring(c1 + 1, c2), c3 == -1 ? moduleSpec.substring(c2 + 1) : moduleSpec.substring(c2 + 1, c3));
     }
+
+    public URL toURL() throws MalformedURLException {
+        return new URL("module", null, -1, group + ":" + artifact + ":" + version);
+    }
+
+    public URL toURL(String resourceRoot) throws MalformedURLException {
+        if (resourceRoot == null) {
+            return toURL();
+        } else {
+            return new URL("module", null, -1, group + ":" + artifact + ":" + version + "/" + resourceRoot);
+        }
+    }
+
+    public URL toURL(String resourceRoot, String resourceName) throws MalformedURLException {
+        if (resourceName == null) {
+            return toURL(resourceRoot);
+        } else if (resourceRoot == null) {
+            return new URL("module", null, -1, group + ":" + artifact + ":" + version + "?" + resourceName);
+        } else {
+            return new URL("module", null, -1, group + ":" + artifact + ":" + version + "/" + resourceRoot + "?" + resourceName);
+        }
+    }
 }
