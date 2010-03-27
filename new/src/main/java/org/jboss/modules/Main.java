@@ -24,7 +24,6 @@ package org.jboss.modules;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
-import java.net.URI;
 
 public final class Main {
 
