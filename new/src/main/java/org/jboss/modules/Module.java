@@ -25,7 +25,8 @@ package org.jboss.modules;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.net.URL;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.List;
 
 /**
@@ -33,6 +34,23 @@ import java.util.List;
  * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
  */
 public final class Module {
+    static {
+        AccessController.doPrivileged(new PrivilegedAction<Void>() {
+            public Void run() {
+                // Set up URL handler, if it isn't already
+                final String pkgs = System.getProperty("java.protocol.handler.pkgs");
+                final String newPkgs;
+                if (pkgs == null || pkgs.length() == 0) {
+                    newPkgs = "org.jboss.modules.protocol";
+                    System.setProperty("java.protocol.handler.pkgs", newPkgs);
+                } else if (! pkgs.contains("org.jboss.modules.protocol")) {
+                    newPkgs = pkgs + "|org.jboss.modules.protocol";
+                    System.setProperty("java.protocol.handler.pkgs", newPkgs);
+                }
+                return null;
+            }
+        });
+    }
 
     private final ModuleIdentifier identifier;
     private final List<Module> imports;
