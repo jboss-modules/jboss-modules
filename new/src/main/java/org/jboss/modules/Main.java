@@ -23,6 +23,7 @@
 package org.jboss.modules;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 
 public final class Main {
@@ -49,7 +50,7 @@ public final class Main {
         System.out.println("and module-spec is a valid module URI");
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Throwable {
         final int argsLen = args.length;
         String[] moduleArgs = null;
         String modulePath = null;
@@ -106,7 +107,11 @@ public final class Main {
             System.exit(1);
             return;
         }
-        module.runMain(moduleArgs);
+        try {
+            module.runMain(moduleArgs);
+        } catch (InvocationTargetException e) {
+            throw e.getCause();
+        }
         return;
     }
 }

@@ -22,7 +22,9 @@
 
 package org.jboss.modules;
 
-import java.util.Iterator;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.List;
 
 /**
@@ -35,12 +37,14 @@ public final class Module {
     private final List<Module> imports;
     private final List<Module> exports;
     private final ModuleContentLoader contentLoader;
+    private final String mainClassName;
 
     Module(ModuleSpec spec, List<Module> imports, List<Module> exports) {
         this.identifier = spec.getIdentifier();
         this.contentLoader = spec.getContentLoader();
         this.imports = imports;
         this.exports = exports;
+        mainClassName = spec.getMainClass();
         // do stuff
     }
 
@@ -62,7 +66,34 @@ public final class Module {
         return contentLoader.getResource(rootPath, resourcePath);
     }
 
+    final Class<?> getModuleClass(String className) {
+        return null;
+    }
+
+    public final void runMain(final String[] args) throws NoSuchMethodException, InvocationTargetException {
+        try {
+            final Class<?> mainClass = getModuleClass(mainClassName);
+            if (mainClass == null) {
+                throw new NoSuchMethodException("No main class defined for " + this);
+            }
+            final Method mainMethod = mainClass.getMethod("main", String[].class);
+            final int modifiers = mainMethod.getModifiers();
+            if (! Modifier.isStatic(modifiers)) {
+                throw new NoSuchMethodException("Main method is not static for " + this);
+            }
+            // ignore the return value
+            mainMethod.invoke(null, args);
+        } catch (IllegalAccessException e) {
+            // unexpected; should be public
+            throw new IllegalAccessError(e.getMessage());
+        }
+    }
+
     public static enum Flag {
         // flags here
+    }
+
+    public String toString() {
+        return "Module " + identifier;
     }
 }
