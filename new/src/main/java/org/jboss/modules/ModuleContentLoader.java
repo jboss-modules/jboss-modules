@@ -22,13 +22,90 @@
 
 package org.jboss.modules;
 
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
 /**
+ * Module content loader used to load resources from a collection of ResourceLoaders.
+ *
+ * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public interface ModuleContentLoader {
-    ResourceLoader getResourceLoader(String root);
-    Resource getResource(String name);
-    Resource getResource(String root, String name);
-    Iterable<Resource> getResources(String name);
-    ClassSpec getClassSpec(String className);
+public class ModuleContentLoader {
+
+    private final Map<String, ResourceLoader> resourceLoaders;
+
+    public ModuleContentLoader(Map<String, ResourceLoader> resourceLoaders) {
+        this.resourceLoaders = resourceLoaders;
+    }
+
+    /**
+     * Get a resource loader by a root name
+     *
+     * @param root The resource loader root
+     * @return The ResourceLoader at the provided root or null if not found
+     */
+    public ResourceLoader getResourceLoader(String root) {
+        return resourceLoaders.get(root);
+    }
+
+    /**
+     * Get a resource by name.  Will return the first resource found within the
+     * resource loaders.
+     *
+     * @param name The resource name
+     * @return The resource or null if not found in any resource loader
+     */
+    public Resource getResource(String name) {
+        for (ResourceLoader resourceLoader : resourceLoaders.values()) {
+            final Resource resource = resourceLoader.getResource(name);
+            if (resource != null)
+                return resource;
+        }
+        return null;
+    }
+
+    /**
+     * Get a resource from a specific root.
+     *
+     * @param root The root to get the resource from
+     * @param name The name of the resource
+     * @return The resource or null if not found
+     */
+    public Resource getResource(String root, String name) {
+        final ResourceLoader resourceLoader = resourceLoaders.get(root);
+        if (resourceLoader != null) {
+            return resourceLoader.getResource(name);
+        }
+        return null;
+    }
+
+    /**
+     * Get all resources for a specific name.  This will check each resource loader
+     * to find the resource and will return all resources found.
+     *
+     * @param name The name of the resource
+     * @return The Resource or an empty Iterable if none are found
+     */
+    public Iterable<Resource> getResources(String name) {
+        final List<Resource> resources = new LinkedList<Resource>();
+        for (ResourceLoader resourceLoader : resourceLoaders.values()) {
+            final Resource resource = resourceLoader.getResource(name);
+            if (resource != null)
+                resources.add(resource);
+        }
+        return resources;
+    }
+
+    /**
+     * Get the class specification by checking all resource loaders and
+     * returning the first instance found.
+     *
+     * @param className The class name to get the specification for
+     * @return The ClassSpec or null if not found
+     */
+    public ClassSpec getClassSpec(String className) {
+        return null;
+    }
 }
