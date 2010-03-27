@@ -28,6 +28,10 @@ import java.net.URL;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+/**
+ *
+ * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ */
 final class JarEntryResource implements Resource {
     private final JarFile jarFile;
     private final JarEntry entry;

@@ -34,6 +34,10 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
+/**
+ *
+ * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ */
 final class JarFileResourceLoader implements ResourceLoader {
     private final Module module;
     private final JarFile jarFile;
