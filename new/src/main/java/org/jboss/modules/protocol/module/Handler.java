@@ -35,13 +35,6 @@ import org.jboss.modules.Resource;
  */
 public final class Handler extends URLStreamHandler {
 
-    protected void parseURL(final URL u, final String spec, final int start, final int limit) {
-        final String auth = u.getAuthority();
-        if (auth != null) {
-            throw new IllegalArgumentException("A module URL cannot have an authority part");
-        }
-    }
-
     protected URLConnection openConnection(final URL u) throws IOException {
         return new ResourceConnection(null, u);
     }
