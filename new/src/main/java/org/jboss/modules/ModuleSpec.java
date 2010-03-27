@@ -22,7 +22,6 @@
 
 package org.jboss.modules;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -48,7 +47,6 @@ public final class ModuleSpec {
         this.moduleIdentifier = moduleIdentifier;
     }
 
-
     public List<ModuleIdentifier> getImports() {
         return imports;
     }
@@ -67,5 +65,13 @@ public final class ModuleSpec {
 
     public ModuleContentLoader getContentLoader() {
         return loader;
+    }
+
+    public void setLoader(final ModuleContentLoader loader) {
+        this.loader = loader;
+    }
+
+    public Set<Module.Flag> getModuleFlags() {
+        return moduleFlags;
     }
 }
