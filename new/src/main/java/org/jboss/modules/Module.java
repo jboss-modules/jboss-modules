@@ -117,7 +117,7 @@ public final class Module {
                 throw new NoSuchMethodException("Main method is not static for " + this);
             }
             // ignore the return value
-            mainMethod.invoke(null, args);
+            mainMethod.invoke(null, (Object[]) args);
         } catch (IllegalAccessException e) {
             // unexpected; should be public
             throw new IllegalAccessError(e.getMessage());
