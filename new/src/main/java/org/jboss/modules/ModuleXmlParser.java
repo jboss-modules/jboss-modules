@@ -132,7 +132,7 @@ final class ModuleXmlParser {
 
     private static ModuleSpec parse(final File root, InputStream source, final ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
         try {
-            final XMLInputFactory inputFactory = XMLInputFactory.newFactory();
+            final XMLInputFactory inputFactory = XMLInputFactory.newInstance();
             setIfSupported(inputFactory, XMLInputFactory.IS_VALIDATING, Boolean.FALSE);
             setIfSupported(inputFactory, XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
             final XMLStreamReader streamReader = inputFactory.createXMLStreamReader(source);
