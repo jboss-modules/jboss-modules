@@ -54,7 +54,7 @@ public class LocalModuleLoader extends ModuleLoader {
     }
 
     private File getModuleRoot(final ModuleIdentifier moduleIdentifier) {
-        return new File(repoRoot, toPathString(moduleIdentifier);
+        return new File(repoRoot, toPathString(moduleIdentifier));
     }
 
     private static String toPathString(ModuleIdentifier moduleIdentifier) {
