@@ -36,7 +36,7 @@ public class LocalModuleLoader extends ModuleLoader {
     }
 
     @Override
-    protected Module findModule(final ModuleIdentifier moduleIdentifier) throws ModuleNotFoundException {
+    protected Module findModule(final ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
         final File moduleRoot = getModuleRoot(moduleIdentifier);
         if (moduleRoot == null)
             throw new ModuleNotFoundException("Module " + moduleIdentifier + " is not found");
@@ -44,11 +44,7 @@ public class LocalModuleLoader extends ModuleLoader {
         final File moduleXml = new File(moduleRoot, "module.xml");
 
         ModuleSpec moduleSpec;
-        try {
-            moduleSpec = parseModuleInfoFile(moduleIdentifier, moduleRoot, moduleXml);
-        } catch (Exception e) {
-            throw new ModuleNotFoundException(moduleIdentifier.toString(), e);
-        }
+        moduleSpec = parseModuleInfoFile(moduleIdentifier, moduleRoot, moduleXml);
 
         return defineModule(moduleSpec);
     }
@@ -71,7 +67,7 @@ public class LocalModuleLoader extends ModuleLoader {
         return builder.toString();
     }
 
-    private ModuleSpec parseModuleInfoFile(final ModuleIdentifier moduleIdentifier, final File moduleRoot, final File moduleInfoFile) throws Exception {
+    private ModuleSpec parseModuleInfoFile(final ModuleIdentifier moduleIdentifier, final File moduleRoot, final File moduleInfoFile) throws ModuleLoadException {
         return ModuleXmlParser.parse(moduleIdentifier, moduleRoot, moduleInfoFile);
     }
 }

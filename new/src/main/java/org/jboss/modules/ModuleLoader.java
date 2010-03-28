@@ -19,7 +19,7 @@ public abstract class ModuleLoader {
      * @return The loaded Module
      * @throws ModuleNotFoundException if the Module can not be found
      */
-    public Module loadModule(ModuleIdentifier identifier) throws ModuleNotFoundException {
+    public Module loadModule(ModuleIdentifier identifier) throws ModuleLoadException {
         final Module module = findModule(identifier);
         if (module == null) {
             throw new ModuleNotFoundException(identifier.toString());
@@ -35,7 +35,7 @@ public abstract class ModuleLoader {
      * @param moduleIdentifier The modules Identifier
      * @return The Module  
      */
-    protected abstract Module findModule(final ModuleIdentifier moduleIdentifier) throws ModuleNotFoundException;
+    protected abstract Module findModule(final ModuleIdentifier moduleIdentifier) throws ModuleLoadException;
 
     /**
      * Defines a Module based on a specification.  Use of this method is required by
@@ -45,7 +45,7 @@ public abstract class ModuleLoader {
      * @return The defined Module
      * @throws ModuleNotFoundException If any dependent modules can not be found
      */
-    protected final Module defineModule(ModuleSpec moduleSpec) throws ModuleNotFoundException {
+    protected final Module defineModule(ModuleSpec moduleSpec) throws ModuleLoadException {
 
         final ModuleIdentifier moduleIdentifier = moduleSpec.getIdentifier();
 

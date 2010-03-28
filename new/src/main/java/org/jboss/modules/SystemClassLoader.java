@@ -50,7 +50,7 @@ public final class SystemClassLoader extends ClassLoader {
                 ModuleLoader moduleLoader = InitialModuleLoader.INSTANCE;
                 try {
                     return moduleLoader.loadModule(identifier).getExportedClass(name);
-                } catch (ModuleNotFoundException e) {
+                } catch (ModuleLoadException e) {
                     throw new ClassNotFoundException(name, e);
                 }
             }

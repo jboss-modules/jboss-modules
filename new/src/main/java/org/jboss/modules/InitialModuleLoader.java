@@ -65,7 +65,7 @@ final class InitialModuleLoader extends ModuleLoader {
         this.delegate = delegate;
     }
 
-    protected Module findModule(final ModuleIdentifier moduleIdentifier) throws ModuleNotFoundException {
+    protected Module findModule(final ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
         return delegate.findModule(moduleIdentifier);
     }
 }
