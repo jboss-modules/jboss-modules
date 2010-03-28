@@ -102,13 +102,13 @@ final class FileResourceLoader implements ResourceLoader {
         });
     }
 
-    private final Module module;
+    private final ModuleIdentifier moduleIdentifier;
     private final String rootName;
     private final File root;
     private final Manifest manifest;
 
-    FileResourceLoader(final Module module, final String rootName, final File root) {
-        this.module = module;
+    FileResourceLoader(final ModuleIdentifier moduleIdentifier, final String rootName, final File root) {
+        this.moduleIdentifier = moduleIdentifier;
         this.rootName = rootName;
         this.root = root;
         final File manifestFile = new File(root, "META-INF" + File.separator + "MANIFEST.MF");
@@ -171,7 +171,7 @@ final class FileResourceLoader implements ResourceLoader {
         spec.setImplVersion(getDefinedAttribute(Attributes.Name.IMPLEMENTATION_VERSION, entryAttribute, mainAttribute));
         spec.setImplVendor(getDefinedAttribute(Attributes.Name.IMPLEMENTATION_VENDOR, entryAttribute, mainAttribute));
         if (Boolean.parseBoolean(getDefinedAttribute(Attributes.Name.SEALED, entryAttribute, mainAttribute))) {
-            spec.setSealBase(module.getIdentifier().toURL(rootName));
+            spec.setSealBase(moduleIdentifier.toURL(rootName));
         }
         return spec;
     }
@@ -188,7 +188,7 @@ final class FileResourceLoader implements ResourceLoader {
 
     public Resource getResource(final String name) {
         try {
-            return new FileEntryResource(name, new File(root, name), module.getIdentifier().toURL(rootName, name));
+            return new FileEntryResource(name, new File(root, name), moduleIdentifier.toURL(rootName, name));
         } catch (MalformedURLException e) {
             // must be invalid...?  (todo: check this out)
             return null;

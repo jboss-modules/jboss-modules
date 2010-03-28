@@ -39,14 +39,14 @@ import java.util.jar.Manifest;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 final class JarFileResourceLoader implements ResourceLoader {
-    private final Module module;
+    private final ModuleIdentifier moduleIdentifier;
     private final JarFile jarFile;
     private final String rootName;
 
-    JarFileResourceLoader(final Module module, final JarFile jarFile, final String rootName) {
+    JarFileResourceLoader(final ModuleIdentifier moduleIdentifier, final JarFile jarFile, final String rootName) {
         this.jarFile = jarFile;
         this.rootName = rootName;
-        this.module = module;
+        this.moduleIdentifier = moduleIdentifier;
     }
 
     public ClassSpec getClassSpec(final String name) throws IOException {
@@ -54,7 +54,7 @@ final class JarFileResourceLoader implements ResourceLoader {
         final JarEntry entry = jarFile.getJarEntry(name);
         final CodeSigner[] codeSigners = entry.getCodeSigners();
         if (codeSigners != null) {
-            spec.setCodeSource(new CodeSource(module.getIdentifier().toURL(rootName), codeSigners));
+            spec.setCodeSource(new CodeSource(moduleIdentifier.toURL(rootName), codeSigners));
         }
         final long size = entry.getSize();
         final InputStream is = jarFile.getInputStream(entry);
@@ -111,7 +111,7 @@ final class JarFileResourceLoader implements ResourceLoader {
         spec.setImplVersion(getDefinedAttribute(Attributes.Name.IMPLEMENTATION_VERSION, entryAttribute, mainAttribute));
         spec.setImplVendor(getDefinedAttribute(Attributes.Name.IMPLEMENTATION_VENDOR, entryAttribute, mainAttribute));
         if (Boolean.parseBoolean(getDefinedAttribute(Attributes.Name.SEALED, entryAttribute, mainAttribute))) {
-            spec.setSealBase(module.getIdentifier().toURL(rootName));
+            spec.setSealBase(moduleIdentifier.toURL(rootName));
         }
         return spec;
     }
@@ -128,7 +128,7 @@ final class JarFileResourceLoader implements ResourceLoader {
 
     public Resource getResource(final String name) {
         try {
-            return new JarEntryResource(jarFile, jarFile.getJarEntry(name), module.getIdentifier().toURL(rootName, name));
+            return new JarEntryResource(jarFile, jarFile.getJarEntry(name), moduleIdentifier.toURL(rootName, name));
         } catch (MalformedURLException e) {
             // must be invalid...?  (todo: check this out)
             return null;
