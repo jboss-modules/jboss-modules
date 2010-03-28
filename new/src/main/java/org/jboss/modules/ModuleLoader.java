@@ -2,6 +2,7 @@ package org.jboss.modules;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -10,6 +11,14 @@ import java.util.List;
  * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
  */
 public abstract class ModuleLoader {
+
+    private static ThreadLocal<LinkedList<ModuleIdentifier>> LOAD_CALL_STACK_HOLDER = new ThreadLocal<LinkedList<ModuleIdentifier>>() {
+        @Override
+        protected LinkedList<ModuleIdentifier> initialValue() {
+            return new LinkedList<ModuleIdentifier>();
+        }
+    };
+
     private final HashMap<ModuleIdentifier, Module> moduleMap = new HashMap<ModuleIdentifier, Module>();
 
     /**
@@ -17,14 +26,25 @@ public abstract class ModuleLoader {
      *
      * @param identifier The module identifier
      * @return The loaded Module
-     * @throws ModuleNotFoundException if the Module can not be found
+     * @throws ModuleLoadException if the Module can not be loaded
      */
-    public Module loadModule(ModuleIdentifier identifier) throws ModuleNotFoundException {
-        final Module module = findModule(identifier);
-        if (module == null) {
-            throw new ModuleNotFoundException(identifier.toString());
+    public Module loadModule(ModuleIdentifier identifier) throws ModuleLoadException {
+
+        final LinkedList<ModuleIdentifier> callStack = LOAD_CALL_STACK_HOLDER.get();
+
+        if(callStack.contains(identifier))
+            throw new ModuleLoadException("Module cycle discovered: " + callStack);
+
+        callStack.push(identifier);
+        try {
+            final Module module = findModule(identifier);
+            if (module == null) {
+                throw new ModuleNotFoundException(identifier.toString());
+            }
+            return module;
+        } finally {
+            callStack.pop();
         }
-        return module;
     }
 
     /**
@@ -33,9 +53,10 @@ public abstract class ModuleLoader {
      * should call {@link #defineModule}
      *
      * @param moduleIdentifier The modules Identifier
-     * @return The Module  
+     * @return The Module
+     * @throws ModuleLoadException If any problems occur finding the module
      */
-    protected abstract Module findModule(final ModuleIdentifier moduleIdentifier) throws ModuleNotFoundException;
+    protected abstract Module findModule(final ModuleIdentifier moduleIdentifier) throws ModuleLoadException;
 
     /**
      * Defines a Module based on a specification.  Use of this method is required by
@@ -43,9 +64,9 @@ public abstract class ModuleLoader {
      *
      * @param moduleSpec The module specification to create the Module from
      * @return The defined Module
-     * @throws ModuleNotFoundException If any dependent modules can not be found
+     * @throws ModuleLoadException If any dependent modules can not be loaded
      */
-    protected final Module defineModule(ModuleSpec moduleSpec) throws ModuleNotFoundException {
+    protected final Module defineModule(ModuleSpec moduleSpec) throws ModuleLoadException {
 
         final ModuleIdentifier moduleIdentifier = moduleSpec.getIdentifier();
 
