@@ -149,6 +149,22 @@ public final class ModuleIdentifier implements Serializable {
         return new ModuleIdentifier(moduleSpec.substring(0, c1), moduleSpec.substring(c1 + 1, c2), c3 == -1 ? moduleSpec.substring(c2 + 1) : moduleSpec.substring(c2 + 1, c3));
     }
 
+    public static ModuleIdentifier fromString(String moduleSpec) throws IllegalArgumentException {
+        if (moduleSpec.length() == 0) {
+            throw new IllegalArgumentException("Empty module specification");
+        }
+        final int c1 = moduleSpec.indexOf(':');
+        if (c1 == -1) {
+            throw new IllegalArgumentException("Module specification requires a group ID");
+        }
+        final int c2 = moduleSpec.indexOf(':', c1 + 1);
+        if (c2 == -1) {
+            throw new IllegalArgumentException("Module specification requires a version");
+        }
+        final int c3 = moduleSpec.indexOf(':', c2 + 1);
+        return new ModuleIdentifier(moduleSpec.substring(0, c1), moduleSpec.substring(c1 + 1, c2), c3 == -1 ? moduleSpec.substring(c2 + 1) : moduleSpec.substring(c2 + 1, c3));
+    }
+
     public URL toURL() throws MalformedURLException {
         return new URL("module", null, -1, group + ":" + artifact + ":" + version);
     }
@@ -170,4 +186,5 @@ public final class ModuleIdentifier implements Serializable {
             return new URL("module", null, -1, group + ":" + artifact + ":" + version + "/" + resourceRoot + "?" + resourceName);
         }
     }
+
 }

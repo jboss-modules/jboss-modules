@@ -46,7 +46,7 @@ public final class Main {
         System.out.println("    -mp <search path of directories>");
         System.out.println("                  A list of directories, separated by '" + File.pathSeparator + "', where modules may be located");
         System.out.println("    -version      Print version and exit\n");
-        System.out.println("and module-spec is a valid module URI");
+        System.out.println("and module-spec is a valid module specification string");
     }
 
     public static void main(String[] args) throws Throwable {
@@ -79,7 +79,7 @@ public final class Main {
                     }
                 } else {
                     // it's the module specification
-                    moduleIdentifier = null; // todo - parse arg
+                    moduleIdentifier = ModuleIdentifier.fromString(arg);
                     int cnt = argsLen - i - 1;
                     moduleArgs = new String[cnt];
                     System.arraycopy(args, i, moduleArgs, 0, cnt);
