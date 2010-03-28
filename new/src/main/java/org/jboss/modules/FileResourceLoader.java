@@ -182,7 +182,7 @@ final class FileResourceLoader implements ResourceLoader {
     }
 
     public String getLibrary(final String name) {
-        final File file = new File(root, "lib" + ARCH_NAME + File.separator + name);
+        final File file = new File(root, ARCH_NAME + File.separator + name);
         return file.exists() ? file.getAbsolutePath() : null;
     }
 
