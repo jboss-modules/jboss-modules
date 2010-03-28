@@ -35,7 +35,7 @@ public abstract class ModuleLoader {
      * @param moduleIdentifier The modules Identifier
      * @return The Module  
      */
-    protected abstract Module findModule(final ModuleIdentifier moduleIdentifier);
+    protected abstract Module findModule(final ModuleIdentifier moduleIdentifier) throws ModuleNotFoundException;
 
     /**
      * Defines a Module based on a specification.  Use of this method is required by
@@ -54,16 +54,13 @@ public abstract class ModuleLoader {
             if (oldModule != null) {
                 throw new ModuleAlreadyExistsException(moduleIdentifier.toString());
             }
-            final List<Module> importModules = new ArrayList<Module>(moduleSpec.getImports().size());
-            for (ModuleIdentifier importId : moduleSpec.getImports()) {
-                importModules.add(loadModule(importId));
-            }
-            final List<Module> exportModules = new ArrayList<Module>(moduleSpec.getImports().size());
-            for (ModuleIdentifier exportId : moduleSpec.getExports()) {
-                exportModules.add(loadModule(exportId));
+            final List<Dependency> dependencies = new ArrayList<Dependency>(moduleSpec.getDependencies().size());
+            for (DependencySpec dependencySpec : moduleSpec.getDependencies()) {
+                final Dependency dependency = new Dependency(loadModule(dependencySpec.getModuleIdentifier()), dependencySpec.isExport());
+                dependencies.add(dependency);
             }
 
-            final Module module = new Module(moduleSpec, importModules, exportModules);
+            final Module module = new Module(moduleSpec, dependencies);
             moduleMap.put(moduleIdentifier, module);
             return module;
         }

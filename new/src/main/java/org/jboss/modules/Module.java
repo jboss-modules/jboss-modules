@@ -53,18 +53,17 @@ public final class Module {
     }
 
     private final ModuleIdentifier identifier;
-    private final List<Module> imports;
-    private final List<Module> exports;
+    private final List<Dependency> dependencies;
     private final ModuleContentLoader contentLoader;
     private final String mainClassName;
 
-    Module(ModuleSpec spec, List<Module> imports, List<Module> exports) {
+    Module(final ModuleSpec spec, final List<Dependency> dependencies) {
         this.identifier = spec.getIdentifier();
         this.contentLoader = spec.getContentLoader();
-        this.imports = imports;
-        this.exports = exports;
         mainClassName = spec.getMainClass();
+        this.dependencies = dependencies;
         // do stuff
+
     }
 
     public final Class<?> getExportedClass(String className) {

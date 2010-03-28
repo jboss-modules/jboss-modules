@@ -22,6 +22,7 @@
 
 package org.jboss.modules;
 
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -105,7 +106,28 @@ public class ModuleContentLoader {
      * @param className The class name to get the specification for
      * @return The ClassSpec or null if not found
      */
-    public ClassSpec getClassSpec(String className) {
+    public ClassSpec getClassSpec(String className) throws IOException {
+        for (ResourceLoader resourceLoader : resourceLoaders.values()) {
+            final ClassSpec classSpec = resourceLoader.getClassSpec(className);
+            if (classSpec != null)
+                return classSpec;
+        }
+        return null;
+    }
+
+    /**
+     * Get the package specification by checking all resource loaders and
+     * returning the first instance found.
+     *
+     * @param packageName The class name to get the specification for
+     * @return The ClassSpec or null if not found
+     */
+    public PackageSpec getPackageSpec(String packageName) throws IOException  {
+        for (ResourceLoader resourceLoader : resourceLoaders.values()) {
+            final PackageSpec packageSpec = resourceLoader.getPackageSpec(packageName);
+            if (packageSpec != null)
+                return packageSpec;
+        }
         return null;
     }
 }

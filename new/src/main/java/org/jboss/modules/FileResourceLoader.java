@@ -107,7 +107,7 @@ final class FileResourceLoader implements ResourceLoader {
     private final File root;
     private final Manifest manifest;
 
-    FileResourceLoader(final ModuleIdentifier moduleIdentifier, final String rootName, final File root) {
+    FileResourceLoader(final ModuleIdentifier moduleIdentifier, final File root, final String rootName) {
         this.moduleIdentifier = moduleIdentifier;
         this.rootName = rootName;
         this.root = root;
