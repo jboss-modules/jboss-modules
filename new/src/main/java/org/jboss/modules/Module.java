@@ -59,8 +59,10 @@ public final class Module {
     private final ModuleContentLoader contentLoader;
     private final String mainClassName;
     private final ModuleClassLoader moduleClassLoader;
+    private final ModuleLoader moduleLoader;
 
-    Module(final ModuleSpec spec, final List<Dependency> dependencies, final Set<Flag> flags) {
+    Module(final ModuleSpec spec, final List<Dependency> dependencies, final Set<Flag> flags, final ModuleLoader moduleLoader) {
+        this.moduleLoader = moduleLoader;
         this.identifier = spec.getIdentifier();
         this.contentLoader = spec.getContentLoader();
         mainClassName = spec.getMainClass();
@@ -127,6 +129,10 @@ public final class Module {
 
     public ModuleIdentifier getIdentifier() {
         return identifier;
+    }
+
+    public ModuleLoader getModuleLoader() {
+        return moduleLoader;
     }
 
     public enum Flag {
