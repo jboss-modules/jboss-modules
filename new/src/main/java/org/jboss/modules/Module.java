@@ -29,6 +29,7 @@ import java.lang.reflect.Modifier;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -59,13 +60,13 @@ public final class Module {
     private final String mainClassName;
     private final ModuleClassLoader moduleClassLoader;
 
-    Module(final ModuleSpec spec, final List<Dependency> dependencies) {
+    Module(final ModuleSpec spec, final List<Dependency> dependencies, final Set<Flag> flags) {
         this.identifier = spec.getIdentifier();
         this.contentLoader = spec.getContentLoader();
         mainClassName = spec.getMainClass();
         this.dependencies = dependencies;
 
-        this.moduleClassLoader = new ModuleClassLoader(this, false); // TODO: Use flags to determine child first
+        this.moduleClassLoader = new ModuleClassLoader(this, flags.contains(Flag.CHILD_FIRST));
     }
 
     public final Class<?> getExportedClass(String className) {
@@ -128,8 +129,9 @@ public final class Module {
         return identifier;
     }
 
-    public static enum Flag {
+    public enum Flag {
         // flags here
+        CHILD_FIRST,
     }
 
     public String toString() {

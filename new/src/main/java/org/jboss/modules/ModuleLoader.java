@@ -60,7 +60,7 @@ public abstract class ModuleLoader {
                 dependencies.add(dependency);
             }
 
-            final Module module = new Module(moduleSpec, dependencies);
+            final Module module = new Module(moduleSpec, dependencies, moduleSpec.getModuleFlags());
             moduleMap.put(moduleIdentifier, module);
             return module;
         }
