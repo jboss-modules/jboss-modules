@@ -36,7 +36,8 @@ public final class SystemClassLoader extends ClassLoader {
         packageAutoLoads = new HashMap<String, ModuleIdentifier>();
     }
 
-    public SystemClassLoader() {
+    public SystemClassLoader(final ClassLoader parent) {
+        super(parent);
     }
 
     protected Class<?> findClass(final String name) throws ClassNotFoundException {
