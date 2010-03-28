@@ -89,6 +89,15 @@ public final class ModuleClassLoader extends SecureClassLoader {
         // Check if we have already loaded it..
         Class<?> loadedClass = findLoadedClass(name);
 
+        // Check the system.  Hmmm maybe this should be a default Module or something.
+        if(loadedClass == null) {
+            try {
+                loadedClass = findSystemClass(name);
+            } catch(ClassNotFoundException e) {
+                // Ignored
+            }
+        }
+
         if(loadedClass == null) {
             if (childFirst) {
                 loadedClass = loadClassLocal(name);
