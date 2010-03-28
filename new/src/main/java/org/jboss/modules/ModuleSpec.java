@@ -69,7 +69,7 @@ public final class ModuleSpec {
         return loader;
     }
 
-    public void setLoader(final ModuleContentLoader loader) {
+    public void setContentLoader(final ModuleContentLoader loader) {
         this.loader = loader;
     }
 

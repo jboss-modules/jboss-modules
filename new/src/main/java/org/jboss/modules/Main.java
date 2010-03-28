@@ -73,7 +73,7 @@ public final class Main {
                         modulePath = args[++i];
                         System.setProperty("org.jboss.module.loader.path", modulePath);
                     } else {
-                        System.err.printf("Invalid option '%s'", arg);
+                        System.err.printf("Invalid option '%s'\n", arg);
                         usage();
                         System.exit(1);
                     }
@@ -97,12 +97,12 @@ public final class Main {
             usage();
             System.exit(1);
         }
-        final ModuleLoader loader = null; // todo locate module
+        final ModuleLoader loader = InitialModuleLoader.INSTANCE;
         final Module module;
         try {
             module = loader.loadModule(moduleIdentifier);
         } catch (ModuleNotFoundException e) {
-            System.err.printf("Module '%s' not found: %s", moduleIdentifier, e);
+            e.printStackTrace(System.err);
             System.exit(1);
             return;
         }

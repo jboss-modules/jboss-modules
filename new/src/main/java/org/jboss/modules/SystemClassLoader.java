@@ -47,10 +47,10 @@ public final class SystemClassLoader extends ClassLoader {
             final ModuleIdentifier identifier = packageAutoLoads.get(pkgName);
             if (identifier != null) {
                 // it's an auto-loaded package.  Load it via the current module loader
-                ModuleLoader moduleLoader = null; // todo
+                ModuleLoader moduleLoader = InitialModuleLoader.INSTANCE;
                 try {
                     return moduleLoader.loadModule(identifier).getExportedClass(name);
-                } catch (ModuleNotFoundException e) {
+                } catch (ModuleLoadException e) {
                     throw new ClassNotFoundException(name, e);
                 }
             }

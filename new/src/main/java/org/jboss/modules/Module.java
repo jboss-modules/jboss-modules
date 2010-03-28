@@ -110,9 +110,12 @@ public final class Module {
 
     public final void runMain(final String[] args) throws NoSuchMethodException, InvocationTargetException {
         try {
+            if (moduleClassLoader == null) {
+                throw new NoSuchMethodException("No main class defined for " + this);
+            }
             final Class<?> mainClass = getExportedClass(mainClassName);
             if (mainClass == null) {
-                throw new NoSuchMethodException("No main class defined for " + this);
+                throw new NoSuchMethodException("No main class named '" + mainClassName + "' found in " + this);
             }
             final Method mainMethod = mainClass.getMethod("main", String[].class);
             final int modifiers = mainMethod.getModifiers();
@@ -141,6 +144,6 @@ public final class Module {
     }
 
     public String toString() {
-        return "Module " + identifier;
+        return "Module \"" + identifier + "\"";
     }
 }

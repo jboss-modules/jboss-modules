@@ -29,32 +29,33 @@ import java.io.File;
  */
 public class LocalModuleLoader extends ModuleLoader {
 
-    private final File repoRoot;
+    private final File[] repoRoots;
 
-    public LocalModuleLoader(final File repoRoot) {
-        this.repoRoot = repoRoot;
+    public LocalModuleLoader(final File[] repoRoots) {
+        this.repoRoots = repoRoots;
     }
 
     @Override
-    protected Module findModule(final ModuleIdentifier moduleIdentifier) throws ModuleNotFoundException {
+    protected Module findModule(final ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
         final File moduleRoot = getModuleRoot(moduleIdentifier);
-        if (!moduleRoot.exists())
-            throw new ModuleNotFoundException("Module " + moduleIdentifier + " does not exist in repository " + repoRoot);
+        if (moduleRoot == null)
+            throw new ModuleNotFoundException("Module " + moduleIdentifier + " is not found");
 
         final File moduleXml = new File(moduleRoot, "module.xml");
 
         ModuleSpec moduleSpec;
-        try {
-            moduleSpec = parseModuleInfoFile(moduleIdentifier, moduleRoot, moduleXml);
-        } catch (Exception e) {
-            throw new ModuleNotFoundException(moduleIdentifier.toString(), e);
-        }
+        moduleSpec = parseModuleInfoFile(moduleIdentifier, moduleRoot, moduleXml);
 
         return defineModule(moduleSpec);
     }
 
     private File getModuleRoot(final ModuleIdentifier moduleIdentifier) {
-        return new File(repoRoot, toPathString(moduleIdentifier));
+        final String child = toPathString(moduleIdentifier);
+        for (File root : repoRoots) {
+            final File file = new File(root, child);
+            if (file.exists() && new File(file, "module.xml").exists()) return file;
+        }
+        return null;
     }
 
     private static String toPathString(ModuleIdentifier moduleIdentifier) {
@@ -66,7 +67,7 @@ public class LocalModuleLoader extends ModuleLoader {
         return builder.toString();
     }
 
-    private ModuleSpec parseModuleInfoFile(final ModuleIdentifier moduleIdentifier, final File moduleRoot, final File moduleInfoFile) throws Exception {
+    private ModuleSpec parseModuleInfoFile(final ModuleIdentifier moduleIdentifier, final File moduleRoot, final File moduleInfoFile) throws ModuleLoadException {
         return ModuleXmlParser.parse(moduleIdentifier, moduleRoot, moduleInfoFile);
     }
 }

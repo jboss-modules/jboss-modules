@@ -29,7 +29,6 @@ public abstract class ModuleLoader {
      * @throws ModuleLoadException if the Module can not be loaded
      */
     public Module loadModule(ModuleIdentifier identifier) throws ModuleLoadException {
-
         final LinkedList<ModuleIdentifier> callStack = LOAD_CALL_STACK_HOLDER.get();
 
         if(callStack.contains(identifier))

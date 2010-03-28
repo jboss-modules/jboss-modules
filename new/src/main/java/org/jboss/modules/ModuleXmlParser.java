@@ -28,6 +28,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -142,7 +143,7 @@ final class ModuleXmlParser {
                 safeClose(streamReader);
             }
         } catch (XMLStreamException e) {
-            throw new ModuleLoadException("Failed to read module.xml: " + e.getMessage());
+            throw new ModuleLoadException("Failed to read module.xml", e);
         }
     }
 
@@ -162,8 +163,34 @@ final class ModuleXmlParser {
         }
     }
 
-    private static XMLStreamException unexpectedContent(final Location location) {
-        return new XMLStreamException("Unexpected content", location);
+    private static XMLStreamException unexpectedContent(final XMLStreamReader reader) {
+        final String kind;
+        switch (reader.getEventType()) {
+            case XMLStreamConstants.ATTRIBUTE: kind = "attribute"; break;
+            case XMLStreamConstants.CDATA: kind = "cdata"; break;
+            case XMLStreamConstants.CHARACTERS: kind = "characters"; break;
+            case XMLStreamConstants.COMMENT: kind = "comment"; break;
+            case XMLStreamConstants.DTD: kind = "dtd"; break;
+            case XMLStreamConstants.END_DOCUMENT: kind = "document end"; break;
+            case XMLStreamConstants.END_ELEMENT: kind = "element end"; break;
+            case XMLStreamConstants.ENTITY_DECLARATION: kind = "entity decl"; break;
+            case XMLStreamConstants.ENTITY_REFERENCE: kind = "entity ref"; break;
+            case XMLStreamConstants.NAMESPACE: kind = "namespace"; break;
+            case XMLStreamConstants.NOTATION_DECLARATION: kind = "notation decl"; break;
+            case XMLStreamConstants.PROCESSING_INSTRUCTION: kind = "processing instruction"; break;
+            case XMLStreamConstants.SPACE: kind = "whitespace"; break;
+            case XMLStreamConstants.START_DOCUMENT: kind = "document start"; break;
+            case XMLStreamConstants.START_ELEMENT: kind = "element start"; break;
+            default: kind = "unknown"; break;
+        }
+        final StringBuilder b = new StringBuilder("Unexpected content of type '").append(kind).append('\'');
+        if (reader.hasName()) {
+            b.append(" named '").append(reader.getName()).append('\'');
+        }
+        if (reader.hasText()) {
+            b.append(", text is: '").append(reader.getText()).append('\'');
+        }
+        return new XMLStreamException(b.toString(), reader.getLocation());
     }
 
     private static XMLStreamException endOfDocument(final Location location) {
@@ -185,13 +212,28 @@ final class ModuleXmlParser {
                     parseRootElement(root, reader, spec);
                     return spec;
                 }
+                case XMLStreamConstants.START_ELEMENT: {
+                    if (Element.of(reader.getName()) != Element.MODULE) {
+                        throw unexpectedContent(reader);
+                    }
+                    parseModuleContents(root, reader, spec);
+                    parseEndDocument(reader);
+                    return spec;
+                }
+                case XMLStreamConstants.CHARACTERS: {
+                    if (! reader.isWhiteSpace()) {
+                        throw unexpectedContent(reader);
+                    }
+                    // ignore
+                    break;
+                }
                 case XMLStreamConstants.COMMENT:
                 case XMLStreamConstants.SPACE: {
                     // ignore
                     break;
                 }
                 default: {
-                    throw unexpectedContent(reader.getLocation());
+                    throw unexpectedContent(reader);
                 }
             }
         }
@@ -203,11 +245,18 @@ final class ModuleXmlParser {
             switch (reader.next()) {
                 case XMLStreamConstants.START_ELEMENT: {
                     if (Element.of(reader.getName()) != Element.MODULE) {
-                        throw unexpectedContent(reader.getLocation());
+                        throw unexpectedContent(reader);
                     }
                     parseModuleContents(root, reader, spec);
                     parseEndDocument(reader);
                     return;
+                }
+                case XMLStreamConstants.CHARACTERS: {
+                    if (! reader.isWhiteSpace()) {
+                        throw unexpectedContent(reader);
+                    }
+                    // ignore
+                    break;
                 }
                 case XMLStreamConstants.COMMENT:
                 case XMLStreamConstants.SPACE: {
@@ -215,7 +264,7 @@ final class ModuleXmlParser {
                     break;
                 }
                 default: {
-                    throw unexpectedContent(reader.getLocation());
+                    throw unexpectedContent(reader);
                 }
             }
         }
@@ -228,20 +277,30 @@ final class ModuleXmlParser {
         while (reader.hasNext()) {
             switch (reader.next()) {
                 case XMLStreamConstants.END_ELEMENT: {
+                    if (spec.getContentLoader() == null) {
+                        spec.setContentLoader(new ModuleContentLoader(Collections.<String, ResourceLoader>emptyMap()));
+                    }
                     return;
                 }
                 case XMLStreamConstants.START_ELEMENT: {
                     final Element element = Element.of(reader.getName());
                     if (visited.contains(element)) {
-                        throw unexpectedContent(reader.getLocation());
+                        throw unexpectedContent(reader);
                     }
                     visited.add(element);
                     switch (element) {
                         case DEPENDENCIES: parseDependencies(reader, spec); break;
                         case MAIN_CLASS:   parseMainClass(reader, spec); break;
                         case RESOURCES:    parseResources(root, reader, spec); break;
-                        default: throw unexpectedContent(reader.getLocation());
+                        default: throw unexpectedContent(reader);
                     }
+                    break;
+                }
+                case XMLStreamConstants.CHARACTERS: {
+                    if (! reader.isWhiteSpace()) {
+                        throw unexpectedContent(reader);
+                    }
+                    // ignore
                     break;
                 }
                 case XMLStreamConstants.COMMENT:
@@ -250,7 +309,7 @@ final class ModuleXmlParser {
                     break;
                 }
                 default: {
-                    throw unexpectedContent(reader.getLocation());
+                    throw unexpectedContent(reader);
                 }
             }
         }
@@ -267,8 +326,15 @@ final class ModuleXmlParser {
                 case XMLStreamConstants.START_ELEMENT: {
                     switch (Element.of(reader.getName())) {
                         case MODULE: parseModuleDependency(reader, spec); break;
-                        default: throw unexpectedContent(reader.getLocation());
+                        default: throw unexpectedContent(reader);
                     }
+                    break;
+                }
+                case XMLStreamConstants.CHARACTERS: {
+                    if (! reader.isWhiteSpace()) {
+                        throw unexpectedContent(reader);
+                    }
+                    // ignore
                     break;
                 }
                 case XMLStreamConstants.COMMENT:
@@ -277,7 +343,7 @@ final class ModuleXmlParser {
                     break;
                 }
                 default: {
-                    throw unexpectedContent(reader.getLocation());
+                    throw unexpectedContent(reader);
                 }
             }
         }
@@ -299,7 +365,7 @@ final class ModuleXmlParser {
                 case NAME:    name = reader.getAttributeValue(i); break;
                 case VERSION: version = reader.getAttributeValue(i); break;
                 case EXPORT:  export = Boolean.parseBoolean(reader.getAttributeValue(i)); break;
-                default: throw unexpectedContent(reader.getLocation());
+                default: throw unexpectedContent(reader);
             }
         }
         if (! required.isEmpty()) {
@@ -320,7 +386,7 @@ final class ModuleXmlParser {
             required.remove(attribute);
             switch (attribute) {
                 case NAME: name = reader.getAttributeValue(i); break;
-                default: throw unexpectedContent(reader.getLocation());
+                default: throw unexpectedContent(reader);
             }
         }
         if (! required.isEmpty()) {
@@ -343,11 +409,18 @@ final class ModuleXmlParser {
                         case RESOURCE_ROOT: {
                             final Map<String, ResourceLoader> loaders = new LinkedHashMap<String, ResourceLoader>();
                             parseResourceRoot(root, spec.getIdentifier(), reader, loaders);
-                            spec.setLoader(new ModuleContentLoader(loaders));
+                            spec.setContentLoader(new ModuleContentLoader(loaders));
                             break;
                         }
-                        default: throw unexpectedContent(reader.getLocation());
+                        default: throw unexpectedContent(reader);
                     }
+                    break;
+                }
+                case XMLStreamConstants.CHARACTERS: {
+                    if (! reader.isWhiteSpace()) {
+                        throw unexpectedContent(reader);
+                    }
+                    // ignore
                     break;
                 }
                 case XMLStreamConstants.COMMENT:
@@ -356,7 +429,7 @@ final class ModuleXmlParser {
                     break;
                 }
                 default: {
-                    throw unexpectedContent(reader.getLocation());
+                    throw unexpectedContent(reader);
                 }
             }
         }
@@ -374,7 +447,7 @@ final class ModuleXmlParser {
             switch (attribute) {
                 case NAME: name = reader.getAttributeValue(i); break;
                 case PATH: path = reader.getAttributeValue(i); break;
-                default: throw unexpectedContent(reader.getLocation());
+                default: throw unexpectedContent(reader);
             }
         }
         if (! required.isEmpty()) {
@@ -402,13 +475,20 @@ final class ModuleXmlParser {
                 case XMLStreamConstants.END_ELEMENT: {
                     return;
                 }
+                case XMLStreamConstants.CHARACTERS: {
+                    if (! reader.isWhiteSpace()) {
+                        throw unexpectedContent(reader);
+                    }
+                    // ignore
+                    break;
+                }
                 case XMLStreamConstants.COMMENT:
                 case XMLStreamConstants.SPACE: {
                     // ignore
                     break;
                 }
                 default: {
-                    throw unexpectedContent(reader.getLocation());
+                    throw unexpectedContent(reader);
                 }
             }
         }
@@ -421,13 +501,20 @@ final class ModuleXmlParser {
                 case XMLStreamConstants.END_DOCUMENT: {
                     return;
                 }
+                case XMLStreamConstants.CHARACTERS: {
+                    if (! reader.isWhiteSpace()) {
+                        throw unexpectedContent(reader);
+                    }
+                    // ignore
+                    break;
+                }
                 case XMLStreamConstants.COMMENT:
                 case XMLStreamConstants.SPACE: {
                     // ignore
                     break;
                 }
                 default: {
-                    throw unexpectedContent(reader.getLocation());
+                    throw unexpectedContent(reader);
                 }
             }
         }
