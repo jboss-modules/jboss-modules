@@ -27,32 +27,33 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Module Specification.
+ *
+ * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
+ */
 public final class ModuleSpec {
-    private final List<ModuleIdentifier> imports = new ArrayList<ModuleIdentifier>();
-    private final List<ModuleIdentifier> exports = new ArrayList<ModuleIdentifier>();
+    private final List<DependencySpec> dependencies = new ArrayList<DependencySpec>();
     private final Set<Module.Flag> moduleFlags = EnumSet.noneOf(Module.Flag.class);
 
     private ModuleIdentifier moduleIdentifier;
     private String mainClass;
     private ModuleContentLoader loader;
 
+    public ModuleSpec(ModuleIdentifier moduleIdentifier) {
+        this.moduleIdentifier = moduleIdentifier;
+    }
+
     public ModuleIdentifier getIdentifier() {
         return moduleIdentifier;
     }
 
-    public void setIdentifier(final ModuleIdentifier moduleIdentifier) {
-        if (moduleIdentifier == null) {
-            throw new IllegalArgumentException("moduleIdentifier is null");
-        }
-        this.moduleIdentifier = moduleIdentifier;
+    public List<DependencySpec> getDependencies() {
+        return dependencies;
     }
 
-    public List<ModuleIdentifier> getImports() {
-        return imports;
-    }
-
-    public List<ModuleIdentifier> getExports() {
-        return exports;
+    void addDependency(final DependencySpec dependencySpec) {
+        dependencies.add(dependencySpec);
     }
 
     public String getMainClass() {
