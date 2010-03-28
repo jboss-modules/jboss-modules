@@ -27,6 +27,10 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ *
+ * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ */
 public final class ModuleSpec {
     private final List<ModuleIdentifier> imports = new ArrayList<ModuleIdentifier>();
     private final List<ModuleIdentifier> exports = new ArrayList<ModuleIdentifier>();
