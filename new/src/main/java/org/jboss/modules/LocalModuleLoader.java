@@ -54,8 +54,16 @@ public class LocalModuleLoader extends ModuleLoader {
     }
 
     private File getModuleRoot(final ModuleIdentifier moduleIdentifier) {
-        return new File(repoRoot,
-                String.format("%s/%s/%s/", moduleIdentifier.getGroup(), moduleIdentifier.getArtifact(), moduleIdentifier.getVersion()));
+        return new File(repoRoot, toPathString(moduleIdentifier);
+    }
+
+    private static String toPathString(ModuleIdentifier moduleIdentifier) {
+        final StringBuilder builder = new StringBuilder();
+        builder.append(moduleIdentifier.getGroup().replace('.', File.separatorChar));
+        builder.append(File.separatorChar).append(moduleIdentifier.getArtifact());
+        builder.append(File.separatorChar).append(moduleIdentifier.getVersion());
+        builder.append(File.separatorChar);
+        return builder.toString();
     }
 
     private ModuleSpec parseModuleInfoFile(final ModuleIdentifier moduleIdentifier, final File moduleRoot, final File moduleInfoFile) throws Exception {
