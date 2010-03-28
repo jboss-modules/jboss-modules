@@ -22,6 +22,7 @@
 
 package org.jboss.modules;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -56,18 +57,38 @@ public final class Module {
     private final List<Dependency> dependencies;
     private final ModuleContentLoader contentLoader;
     private final String mainClassName;
+    private final ModuleClassLoader moduleClassLoader;
 
     Module(final ModuleSpec spec, final List<Dependency> dependencies) {
         this.identifier = spec.getIdentifier();
         this.contentLoader = spec.getContentLoader();
         mainClassName = spec.getMainClass();
         this.dependencies = dependencies;
-        // do stuff
 
+        this.moduleClassLoader = new ModuleClassLoader(this, false); // TODO: Use flags to determine child first
     }
 
     public final Class<?> getExportedClass(String className) {
+        try {
+            return moduleClassLoader.loadClass(className);
+            // TODO: Need to make sure we should export the class (Maybe use Module.forClass(class)
+        } catch (ClassNotFoundException e) {
+            return null;
+        }
+    }
+
+    Class<?> getImportedClass(final String className) {
+        for(Dependency dependency : dependencies) {
+            final Module module = dependency.getModule();
+            Class<?> importedClass = module.getExportedClass(className);
+            if(importedClass != null)
+                return importedClass;
+        }
         return null;
+    }
+
+    ClassSpec getLocalClassSpec(String className) throws IOException {
+        return contentLoader.getClassSpec(className);
     }
 
     public final Resource getExportedResource(final String resourcePath) {
@@ -84,13 +105,9 @@ public final class Module {
         return contentLoader.getResource(rootPath, resourcePath);
     }
 
-    final Class<?> getModuleClass(String className) {
-        return null;
-    }
-
     public final void runMain(final String[] args) throws NoSuchMethodException, InvocationTargetException {
         try {
-            final Class<?> mainClass = getModuleClass(mainClassName);
+            final Class<?> mainClass = getExportedClass(mainClassName);
             if (mainClass == null) {
                 throw new NoSuchMethodException("No main class defined for " + this);
             }
