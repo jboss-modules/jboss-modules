@@ -78,7 +78,7 @@ public final class ModuleClassLoader extends SecureClassLoader {
             return req.result;
         } else {
             // no deadlock risk!  Either the lock isn't held, or we're inside the class loader thread.
-            Class<?> loadedClass = findClass(className);
+            final Class<?> loadedClass = findClass(className);
             if (loadedClass != null && resolve) resolveClass(loadedClass);
             return loadedClass;
         }
@@ -89,21 +89,31 @@ public final class ModuleClassLoader extends SecureClassLoader {
         // Check if we have already loaded it..
         Class<?> loadedClass = findLoadedClass(name);
 
-        Class<?> clazz = null;
-        if (childFirst) {
-            clazz = loadClassLocal(name);
-            if (clazz == null) {
-                clazz = module.getImportedClass(name);
-            }
-        } else {
-            clazz = module.getImportedClass(name);
-            if (clazz == null) {
-                clazz = loadClassLocal(name);
+        // Check the system.  Hmmm maybe this should be a default Module or something.
+        if(loadedClass == null) {
+            try {
+                loadedClass = findSystemClass(name);
+            } catch(ClassNotFoundException e) {
+                // Ignored
             }
         }
-        if (clazz == null)
+
+        if(loadedClass == null) {
+            if (childFirst) {
+                loadedClass = loadClassLocal(name);
+                if (loadedClass == null) {
+                    loadedClass = module.getImportedClass(name);
+                }
+            } else {
+                loadedClass = module.getImportedClass(name);
+                if (loadedClass == null) {
+                    loadedClass = loadClassLocal(name);
+                }
+            }
+        }
+        if (loadedClass == null)
             throw new ClassNotFoundException(name);
-        return clazz;
+        return loadedClass;
     }
 
     private Class<?> loadClassLocal(String name) throws ClassNotFoundException {

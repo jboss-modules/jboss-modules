@@ -124,7 +124,8 @@ final class FileResourceLoader implements ResourceLoader {
     }
 
     public ClassSpec getClassSpec(final String name) throws IOException {
-        final File file = new File(root, name);
+        final String fileName = name.replace('.', File.separatorChar) + ".class";
+        final File file = new File(root, fileName);
         final long size = file.length();
         final ClassSpec spec = new ClassSpec();
         final InputStream is = new FileInputStream(file);
@@ -133,7 +134,7 @@ final class FileResourceLoader implements ResourceLoader {
                 final int castSize = (int) size;
                 byte[] bytes = new byte[castSize];
                 int a = 0, res;
-                while ((res = is.read(bytes, a, castSize - a)) != -1) {
+                while ((res = is.read(bytes, a, castSize - a)) > 0) {
                     a += res;
                 }
                 // done

@@ -105,6 +105,7 @@ public class ModuleContentLoader {
      *
      * @param className The class name to get the specification for
      * @return The ClassSpec or null if not found
+     * @throws IOException If any issues occur getting the class spec
      */
     public ClassSpec getClassSpec(String className) throws IOException {
         for (ResourceLoader resourceLoader : resourceLoaders.values()) {

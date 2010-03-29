@@ -1,6 +1,8 @@
 package org.jboss.modules.basic;
 
-public final class ModuleIdentifier
+import org.jboss.modules.spi.ModuleId;
+
+public final class ModuleIdentifier implements ModuleId
 {
    private final String group;
    private final String artifact;
@@ -18,7 +20,7 @@ public final class ModuleIdentifier
       return group;
    }
 
-   public String getArtifact()
+   public String getName()
    {
       return artifact;
    }

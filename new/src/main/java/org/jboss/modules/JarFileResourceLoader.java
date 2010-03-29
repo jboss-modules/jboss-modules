@@ -50,8 +50,9 @@ final class JarFileResourceLoader implements ResourceLoader {
     }
 
     public ClassSpec getClassSpec(final String name) throws IOException {
+        final String fileName = name.replace('.', '/') + ".class";
         final ClassSpec spec = new ClassSpec();
-        final JarEntry entry = jarFile.getJarEntry(name);
+        final JarEntry entry = jarFile.getJarEntry(fileName);
         final CodeSigner[] codeSigners = entry.getCodeSigners();
         if (codeSigners != null) {
             spec.setCodeSource(new CodeSource(moduleIdentifier.toURL(rootName), codeSigners));
@@ -64,7 +65,7 @@ final class JarFileResourceLoader implements ResourceLoader {
                 final ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 final byte[] buf = new byte[16384];
                 int res;
-                while ((res = is.read(buf)) != -1) {
+                while ((res = is.read(buf)) > 0) {
                     baos.write(buf, 0, res);
                 }
                 // done
@@ -76,7 +77,7 @@ final class JarFileResourceLoader implements ResourceLoader {
                 final int castSize = (int) size;
                 byte[] bytes = new byte[castSize];
                 int a = 0, res;
-                while ((res = is.read(bytes, a, castSize - a)) != -1) {
+                while ((res = is.read(bytes, a, castSize - a)) > 0) {
                     a += res;
                 }
                 // done
