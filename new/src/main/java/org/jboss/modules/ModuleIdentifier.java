@@ -74,7 +74,7 @@ public final class ModuleIdentifier implements Serializable {
     }
 
     public boolean equals(final ModuleIdentifier o) {
-        return this == o || o != null && group.equals(o.group) && artifact.equals(o.artifact) && version.equals(o.version);
+        return this == o || o != null && group.equals(o.group) && artifact.equals(o.artifact) && (version == null ? o.version == null : version.equals(o.version));
     }
 
     @Override

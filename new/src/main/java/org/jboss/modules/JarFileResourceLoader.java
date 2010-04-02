@@ -53,6 +53,10 @@ final class JarFileResourceLoader implements ResourceLoader {
         final String fileName = name.replace('.', '/') + ".class";
         final ClassSpec spec = new ClassSpec();
         final JarEntry entry = jarFile.getJarEntry(fileName);
+        if (entry == null) {
+            // no such entry
+            return null;
+        }
         final CodeSigner[] codeSigners = entry.getCodeSigners();
         if (codeSigners != null) {
             spec.setCodeSource(new CodeSource(moduleIdentifier.toURL(rootName), codeSigners));
