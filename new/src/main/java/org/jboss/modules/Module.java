@@ -60,6 +60,7 @@ public final class Module {
     private final String mainClassName;
     private final ModuleClassLoader moduleClassLoader;
     private final ModuleLoader moduleLoader;
+    private final Set<Flag> flags;
 
     Module(final ModuleSpec spec, final List<Dependency> dependencies, final Set<Flag> flags, final ModuleLoader moduleLoader) {
         this.moduleLoader = moduleLoader;
@@ -67,9 +68,10 @@ public final class Module {
         contentLoader = spec.getContentLoader();
         mainClassName = spec.getMainClass();
         this.dependencies = dependencies;
+        this.flags = flags;
         // should be safe, so...
         //noinspection ThisEscapedInObjectConstruction
-        moduleClassLoader = new ModuleClassLoader(this, flags.contains(Flag.CHILD_FIRST));
+        moduleClassLoader = new ModuleClassLoader(this, flags);
     }
 
     public final Class<?> getExportedClass(String className) {

@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 
 /**
  * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
@@ -50,12 +51,12 @@ public final class ModuleClassLoader extends SecureClassLoader {
     }
 
     private final Module module;
-    private final boolean childFirst;
     private final Map<String, Package> packages = new HashMap<String, Package>();
+    private final Set<Module.Flag> flags;
 
-    ModuleClassLoader(Module module, boolean childFirst) {
+    ModuleClassLoader(final Module module, final Set<Module.Flag> flags) {
         this.module = module;
-        this.childFirst = childFirst;
+        this.flags = flags;
     }
 
     @Override
@@ -108,7 +109,7 @@ public final class ModuleClassLoader extends SecureClassLoader {
         }
 
         if(loadedClass == null) {
-            if (childFirst) {
+            if (flags.contains(Module.Flag.CHILD_FIRST)) {
                 loadedClass = loadClassLocal(name);
                 if (loadedClass == null) {
                     loadedClass = module.getImportedClass(name);
