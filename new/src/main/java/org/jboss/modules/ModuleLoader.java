@@ -3,6 +3,7 @@ package org.jboss.modules;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -16,7 +17,7 @@ public abstract class ModuleLoader {
     private static ThreadLocal<Set<ModuleIdentifier>> VISITED = new ThreadLocal<Set<ModuleIdentifier>>() {
         @Override
         protected Set<ModuleIdentifier> initialValue() {
-            return new HashSet<ModuleIdentifier>();
+            return new LinkedHashSet<ModuleIdentifier>();
         }
     };
 
@@ -33,7 +34,7 @@ public abstract class ModuleLoader {
         final Set<ModuleIdentifier> visited = VISITED.get();
 
         if(visited.contains(identifier))
-            throw new ModuleLoadException("Module cycle discovered: " + visited);
+            throw new ModuleLoadException("Failed to load " + identifier + "; module cycle discovered: " + visited);
 
         synchronized (moduleMap) {
             final Module module = moduleMap.get(identifier);

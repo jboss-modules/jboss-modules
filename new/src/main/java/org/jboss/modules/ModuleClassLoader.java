@@ -96,6 +96,10 @@ public final class ModuleClassLoader extends SecureClassLoader {
 
     @Override
     protected Class<?> findClass(String name) throws ClassNotFoundException {
+        if (name == null) {
+            throw new IllegalArgumentException("name is null");
+        }
+
         // Check if we have already loaded it..
         Class<?> loadedClass = findLoadedClass(name);
 

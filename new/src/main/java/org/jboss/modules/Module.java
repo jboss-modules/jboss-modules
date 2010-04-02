@@ -113,7 +113,7 @@ public final class Module {
 
     public final void run(final String[] args) throws NoSuchMethodException, InvocationTargetException {
         try {
-            if (moduleClassLoader == null) {
+            if (mainClassName == null) {
                 throw new NoSuchMethodException("No main class defined for " + this);
             }
             final Class<?> mainClass = getExportedClass(mainClassName);

@@ -119,7 +119,7 @@ final class ModuleXmlParser {
             throw new ModuleLoadException("No module.xml file found at " + moduleInfoFile);
         }
         try {
-            return parse(root, fis, moduleIdentifier);
+            return parse(root, fis, moduleInfoFile, moduleIdentifier);
         } finally {
             safeClose(fis);
         }
@@ -131,7 +131,7 @@ final class ModuleXmlParser {
         }
     }
 
-    private static ModuleSpec parse(final File root, InputStream source, final ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
+    private static ModuleSpec parse(final File root, InputStream source, final File moduleInfoFile, final ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
         try {
             final XMLInputFactory inputFactory = XMLInputFactory.newInstance();
             setIfSupported(inputFactory, XMLInputFactory.IS_VALIDATING, Boolean.FALSE);
@@ -143,7 +143,7 @@ final class ModuleXmlParser {
                 safeClose(streamReader);
             }
         } catch (XMLStreamException e) {
-            throw new ModuleLoadException("Failed to read module.xml", e);
+            throw new ModuleLoadException("Error loading module from " + moduleInfoFile.getPath(), e);
         }
     }
 
