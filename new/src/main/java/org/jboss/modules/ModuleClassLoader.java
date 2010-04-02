@@ -23,6 +23,7 @@
 package org.jboss.modules;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.security.SecureClassLoader;
@@ -55,6 +56,11 @@ public final class ModuleClassLoader extends SecureClassLoader {
     ModuleClassLoader(Module module, boolean childFirst) {
         this.module = module;
         this.childFirst = childFirst;
+    }
+
+    @Override
+    public Class<?> loadClass(final String name) throws ClassNotFoundException {
+        return loadClass(name, false);
     }
 
     @Override
