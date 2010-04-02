@@ -201,6 +201,15 @@ public final class ModuleClassLoader extends SecureClassLoader {
         };
     }
 
+    @Override
+    public InputStream getResourceAsStream(final String name) {
+        try {
+            return module.getExportedResource(name).openStream();
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
     /**
      * Get the module for this class loader.
      *
