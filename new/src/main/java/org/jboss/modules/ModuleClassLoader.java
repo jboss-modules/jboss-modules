@@ -49,7 +49,7 @@ public final class ModuleClassLoader extends SecureClassLoader {
     private final Module module;
     private final boolean childFirst;
 
-    public ModuleClassLoader(Module module, boolean childFirst) {
+    ModuleClassLoader(Module module, boolean childFirst) {
         this.module = module;
         this.childFirst = childFirst;
     }

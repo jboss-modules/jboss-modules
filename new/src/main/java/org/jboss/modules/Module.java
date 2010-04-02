@@ -63,12 +63,13 @@ public final class Module {
 
     Module(final ModuleSpec spec, final List<Dependency> dependencies, final Set<Flag> flags, final ModuleLoader moduleLoader) {
         this.moduleLoader = moduleLoader;
-        this.identifier = spec.getIdentifier();
-        this.contentLoader = spec.getContentLoader();
+        identifier = spec.getIdentifier();
+        contentLoader = spec.getContentLoader();
         mainClassName = spec.getMainClass();
         this.dependencies = dependencies;
-
-        this.moduleClassLoader = new ModuleClassLoader(this, flags.contains(Flag.CHILD_FIRST));
+        // should be safe, so...
+        //noinspection ThisEscapedInObjectConstruction
+        moduleClassLoader = new ModuleClassLoader(this, flags.contains(Flag.CHILD_FIRST));
     }
 
     public final Class<?> getExportedClass(String className) {
