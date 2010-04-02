@@ -29,9 +29,7 @@ import java.net.URL;
 import java.security.SecureClassLoader;
 import java.util.ArrayDeque;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 
@@ -51,7 +49,6 @@ public final class ModuleClassLoader extends SecureClassLoader {
     }
 
     private final Module module;
-    private final Map<String, Package> packages = new HashMap<String, Package>();
     private final Set<Module.Flag> flags;
 
     ModuleClassLoader(final Module module, final Set<Module.Flag> flags, final AssertionSetting setting) {
@@ -145,33 +142,32 @@ public final class ModuleClassLoader extends SecureClassLoader {
     private Class<?> defineClass(final String name, final ClassSpec classSpec) {
         // Ensure that the package is loaded
         final int lastIdx = name.lastIndexOf('.');
-        if (lastIdx != -1) getPackage(name.substring(0, lastIdx));
+        if (lastIdx != -1) {
+            // there's a package name; get the Package for it
+            final String packageName = name.substring(0, lastIdx);
+            final Package pkg = getPackage(packageName);
+            if (pkg != null) {
+                // Package is defined already
+                if (pkg.isSealed() && ! pkg.isSealed(classSpec.getCodeSource().getLocation())) {
+                    // use the same message as the JDK
+                    throw new SecurityException("sealing violation: package " + packageName + " is sealed");
+                }
+            } else {
+                final PackageSpec spec;
+                try {
+                    spec = getModule().getLocalPackageSpec(name);
+                    definePackage(name, spec);
+                } catch (IOException e) {
+                    definePackage(name, null);
+                }
+            }
+        }
         final Class<?> newClass = defineClass(name, classSpec.getBytes(), 0, classSpec.getBytes().length, classSpec.getCodeSource());
         final AssertionSetting setting = classSpec.getAssertionSetting();
         if (setting != AssertionSetting.INHERIT) {
             setClassAssertionStatus(name, setting == AssertionSetting.ENABLED);
         }
         return newClass;
-    }
-
-    @Override
-    protected Package getPackage(final String name) {
-        final Map<String, Package> packages = this.packages;
-        synchronized (packages) {
-            final Package loaded = packages.get(name);
-            if (loaded != null) {
-                return loaded;
-            }
-            final PackageSpec spec;
-            try {
-                spec = module.getLocalPackageSpec(name);
-            } catch (IOException e) {
-                return null;
-            }
-            final Package defined = definePackage(name, spec);
-            packages.put(name, defined);
-            return defined;
-        }
     }
 
     private Package definePackage(final String name, final PackageSpec spec) {
