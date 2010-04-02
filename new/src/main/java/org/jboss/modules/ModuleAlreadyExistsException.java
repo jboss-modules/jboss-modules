@@ -22,7 +22,7 @@
 
 package org.jboss.modules;
 
-public class ModuleAlreadyExistsException extends RuntimeException {
+public class ModuleAlreadyExistsException extends ModuleLoadException {
 
     private static final long serialVersionUID = -4645842152146185840L;
 
