@@ -1,10 +1,10 @@
 package org.jboss.modules;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 
@@ -13,10 +13,10 @@ import java.util.List;
  */
 public abstract class ModuleLoader {
 
-    private static ThreadLocal<Deque<ModuleIdentifier>> LOAD_CALL_STACK_HOLDER = new ThreadLocal<Deque<ModuleIdentifier>>() {
+    private static ThreadLocal<Set<ModuleIdentifier>> VISITED = new ThreadLocal<Set<ModuleIdentifier>>() {
         @Override
-        protected Deque<ModuleIdentifier> initialValue() {
-            return new ArrayDeque<ModuleIdentifier>();
+        protected Set<ModuleIdentifier> initialValue() {
+            return new HashSet<ModuleIdentifier>();
         }
     };
 
@@ -30,12 +30,19 @@ public abstract class ModuleLoader {
      * @throws ModuleLoadException if the Module can not be loaded
      */
     public Module loadModule(ModuleIdentifier identifier) throws ModuleLoadException {
-        final Deque<ModuleIdentifier> callStack = LOAD_CALL_STACK_HOLDER.get();
+        final Set<ModuleIdentifier> visited = VISITED.get();
 
-        if(callStack.contains(identifier))
-            throw new ModuleLoadException("Module cycle discovered: " + callStack);
+        if(visited.contains(identifier))
+            throw new ModuleLoadException("Module cycle discovered: " + visited);
 
-        callStack.push(identifier);
+        synchronized (moduleMap) {
+            final Module module = moduleMap.get(identifier);
+            if (module != null) {
+                return module;
+            }
+        }
+
+        visited.add(identifier);
         try {
             final Module module = findModule(identifier);
             if (module == null) {
@@ -43,7 +50,7 @@ public abstract class ModuleLoader {
             }
             return module;
         } finally {
-            callStack.pop();
+            visited.remove(identifier);
         }
     }
 
