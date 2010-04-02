@@ -152,6 +152,15 @@ public final class ModuleClassLoader extends SecureClassLoader {
         };
     }
 
+    /**
+     * Get the module for this class loader.
+     *
+     * @return the module
+     */
+    public Module getModule() {
+        return module;
+    }
+
     private static final class LoaderThreadHolder {
 
         private static final Thread LOADER_THREAD;

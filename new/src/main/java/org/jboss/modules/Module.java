@@ -108,7 +108,7 @@ public final class Module {
         return contentLoader.getResource(rootPath, resourcePath);
     }
 
-    public final void runMain(final String[] args) throws NoSuchMethodException, InvocationTargetException {
+    public final void run(final String[] args) throws NoSuchMethodException, InvocationTargetException {
         try {
             if (moduleClassLoader == null) {
                 throw new NoSuchMethodException("No main class defined for " + this);
@@ -136,6 +136,26 @@ public final class Module {
 
     public ModuleLoader getModuleLoader() {
         return moduleLoader;
+    }
+
+    /**
+     * Get the class loader for a module.
+     *
+     * @return the module class loader
+     */
+    public ModuleClassLoader getClassLoader() {
+        return moduleClassLoader;
+    }
+
+    /**
+     * Get the module for a loaded class, or {@code null} if the class did not come from any module.
+     *
+     * @param clazz the class
+     * @return the module it came from
+     */
+    public static Module forClass(Class<?> clazz) {
+        final ClassLoader cl = clazz.getClassLoader();
+        return cl instanceof ModuleClassLoader ? ((ModuleClassLoader) cl).getModule() : null;
     }
 
     public enum Flag {

@@ -108,7 +108,7 @@ public final class Main {
             return;
         }
         try {
-            module.runMain(moduleArgs);
+            module.run(moduleArgs);
         } catch (InvocationTargetException e) {
             throw e.getCause();
         }
