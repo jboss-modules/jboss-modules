@@ -50,7 +50,7 @@
     <xsd:complexType name="moduleDependencyType">
         <xsd:attribute name="group" type="xsd:string" use="required"/>
         <xsd:attribute name="name" type="xsd:string" use="required"/>
-        <xsd:attribute name="version" type="xsd:string" use="required"/>
+        <xsd:attribute name="version" type="xsd:string" use="optional"/>
         <xsd:attribute name="export" type="xsd:boolean" use="optional" default="false"/>
     </xsd:complexType>
 

@@ -378,7 +378,7 @@ final class ModuleXmlParser {
         String name = null;
         String version = null;
         boolean export = false;
-        final Set<Attribute> required = EnumSet.of(Attribute.NAME, Attribute.VERSION, Attribute.GROUP);
+        final Set<Attribute> required = EnumSet.of(Attribute.NAME, Attribute.GROUP);
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
             final Attribute attribute = Attribute.of(reader.getAttributeName(i));
