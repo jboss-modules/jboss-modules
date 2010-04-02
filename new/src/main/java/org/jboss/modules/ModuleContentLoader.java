@@ -35,7 +35,7 @@ import java.util.Map;
  * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public class ModuleContentLoader {
+public final class ModuleContentLoader {
 
     private final Map<String, ResourceLoader> resourceLoaders;
 
