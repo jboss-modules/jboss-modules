@@ -143,7 +143,12 @@ public final class ModuleClassLoader extends SecureClassLoader {
         // Ensure that the package is loaded
         final int lastIdx = name.lastIndexOf('.');
         if (lastIdx != -1) getPackage(name.substring(0, lastIdx));
-        return defineClass(name, classSpec.getBytes(), 0, classSpec.getBytes().length, classSpec.getCodeSource());
+        final Class<?> newClass = defineClass(name, classSpec.getBytes(), 0, classSpec.getBytes().length, classSpec.getCodeSource());
+        final AssertionSetting setting = classSpec.getAssertionSetting();
+        if (setting != AssertionSetting.INHERIT) {
+            setClassAssertionStatus(name, setting == AssertionSetting.ENABLED);
+        }
+        return newClass;
     }
 
     @Override
@@ -170,7 +175,12 @@ public final class ModuleClassLoader extends SecureClassLoader {
         if (spec == null) {
             return definePackage(name, null, null, null, null, null, null, null);
         } else {
-            return definePackage(name, spec.getSpecTitle(), spec.getSpecVersion(), spec.getSpecVendor(), spec.getImplTitle(), spec.getImplVersion(), spec.getImplVendor(), spec.getSealBase());
+            final Package pkg = definePackage(name, spec.getSpecTitle(), spec.getSpecVersion(), spec.getSpecVendor(), spec.getImplTitle(), spec.getImplVersion(), spec.getImplVendor(), spec.getSealBase());
+            final AssertionSetting setting = spec.getAssertionSetting();
+            if (setting != AssertionSetting.INHERIT) {
+                setPackageAssertionStatus(name, setting == AssertionSetting.ENABLED);
+            }
+            return pkg;
         }
     }
 
