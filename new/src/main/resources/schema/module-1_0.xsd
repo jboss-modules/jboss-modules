@@ -38,6 +38,7 @@
             <xsd:element name="resources" type="resourcesType" minOccurs="0"/>
             <xsd:element name="main-class" type="classNameType" minOccurs="0"/>
         </xsd:all>
+        <xsd:attribute name="flags" type="flagsType" use="optional"/>
     </xsd:complexType>
 
     <xsd:complexType name="dependenciesType">
@@ -69,5 +70,15 @@
         <!-- Relative path of resource from module.xml file -->
         <xsd:attribute name="path" type="xsd:string" use="required"/>
     </xsd:complexType>
+
+    <xsd:simpleType name="flagsType">
+        <xsd:list itemType="flagType"/>
+    </xsd:simpleType>
+
+    <xsd:simpleType name="flagType">
+        <xsd:restriction base="xsd:string">
+            <xsd:enumeration value="child-first"/>
+        </xsd:restriction>
+    </xsd:simpleType>
 </xsd:schema>
 

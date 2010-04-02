@@ -87,6 +87,7 @@ final class ModuleXmlParser {
         VERSION,
         EXPORT,
         PATH,
+        FLAGS,
         
         // default unknown attribute
         UNKNOWN;
@@ -100,6 +101,7 @@ final class ModuleXmlParser {
             attributesMap.put(new QName("version"), VERSION);
             attributesMap.put(new QName("export"), EXPORT);
             attributesMap.put(new QName("path"), PATH);
+            attributesMap.put(new QName("flags"), FLAGS);
             attributes = attributesMap;
         }
 
@@ -191,6 +193,10 @@ final class ModuleXmlParser {
         return new XMLStreamException(b.toString(), reader.getLocation());
     }
 
+    private static XMLStreamException unknownFlag(final String flag, final Location location) {
+        return new XMLStreamException("Invalid flag \"" + flag + "\" specified", location);
+    }
+
     private static XMLStreamException endOfDocument(final Location location) {
         return new XMLStreamException("Unexpected end of document", location);
     }
@@ -270,6 +276,25 @@ final class ModuleXmlParser {
     }
 
     private static void parseModuleContents(final File root, final XMLStreamReader reader, final ModuleSpec spec) throws XMLStreamException {
+        final int count = reader.getAttributeCount();
+        String flags = null;
+        for (int i = 0; i < count; i ++) {
+            final Attribute attribute = Attribute.of(reader.getAttributeName(i));
+            switch (attribute) {
+                case FLAGS:   flags = reader.getAttributeValue(i); break;
+                default: throw unexpectedContent(reader);
+            }
+        }
+        if (flags != null) {
+            for (String flag : flags.split("\\s+")) {
+                try {
+                    final Module.Flag flagVal = Module.Flag.valueOf(flag.toUpperCase().replace('-', '_'));
+                    spec.getModuleFlags().add(flagVal);
+                } catch (IllegalArgumentException e) {
+                    throw unknownFlag(flag, reader.getLocation());
+                }
+            }
+        }
         // xsd:all
         Set<Element> visited = EnumSet.noneOf(Element.class);
         while (reader.hasNext()) {
