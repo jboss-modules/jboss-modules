@@ -159,6 +159,10 @@ public final class Module {
         return cl instanceof ModuleClassLoader ? ((ModuleClassLoader) cl).getModule() : null;
     }
 
+    public PackageSpec getLocalPackageSpec(final String name) throws IOException {
+        return contentLoader.getPackageSpec(name);
+    }
+
     public enum Flag {
         // flags here
         CHILD_FIRST,

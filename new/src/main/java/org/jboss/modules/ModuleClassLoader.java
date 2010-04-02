@@ -28,7 +28,9 @@ import java.net.URL;
 import java.security.SecureClassLoader;
 import java.util.ArrayDeque;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Queue;
 
 /**
@@ -48,6 +50,7 @@ public final class ModuleClassLoader extends SecureClassLoader {
 
     private final Module module;
     private final boolean childFirst;
+    private final Map<String, Package> packages = new HashMap<String, Package>();
 
     ModuleClassLoader(Module module, boolean childFirst) {
         this.module = module;
@@ -126,7 +129,42 @@ public final class ModuleClassLoader extends SecureClassLoader {
         }
         if (classSpec == null)
             return null;
+        return defineClass(name, classSpec);
+    }
+
+    private Class<?> defineClass(final String name, final ClassSpec classSpec) {
+        // Ensure that the package is loaded
+        final int lastIdx = name.lastIndexOf('.');
+        if (lastIdx != -1) getPackage(name.substring(0, lastIdx));
         return defineClass(name, classSpec.getBytes(), 0, classSpec.getBytes().length, classSpec.getCodeSource());
+    }
+
+    @Override
+    protected Package getPackage(final String name) {
+        final Map<String, Package> packages = this.packages;
+        synchronized (packages) {
+            final Package loaded = packages.get(name);
+            if (loaded != null) {
+                return loaded;
+            }
+            final PackageSpec spec;
+            try {
+                spec = module.getLocalPackageSpec(name);
+            } catch (IOException e) {
+                return null;
+            }
+            final Package defined = definePackage(name, spec);
+            packages.put(name, defined);
+            return defined;
+        }
+    }
+
+    private Package definePackage(final String name, final PackageSpec spec) {
+        if (spec == null) {
+            return definePackage(name, null, null, null, null, null, null, null);
+        } else {
+            return definePackage(name, spec.getSpecTitle(), spec.getSpecVersion(), spec.getSpecVendor(), spec.getImplTitle(), spec.getImplVersion(), spec.getImplVendor(), spec.getSealBase());
+        }
     }
 
     @Override
