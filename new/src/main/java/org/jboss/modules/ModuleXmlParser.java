@@ -28,10 +28,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarFile;
@@ -278,7 +276,7 @@ final class ModuleXmlParser {
             switch (reader.next()) {
                 case XMLStreamConstants.END_ELEMENT: {
                     if (spec.getContentLoader() == null) {
-                        spec.setContentLoader(new ModuleContentLoader(Collections.<String, ResourceLoader>emptyMap()));
+                        spec.setContentLoader(ModuleContentLoader.EMPTY);
                     }
                     return;
                 }
@@ -407,9 +405,9 @@ final class ModuleXmlParser {
                 case XMLStreamConstants.START_ELEMENT: {
                     switch (Element.of(reader.getName())) {
                         case RESOURCE_ROOT: {
-                            final Map<String, ResourceLoader> loaders = new LinkedHashMap<String, ResourceLoader>();
-                            parseResourceRoot(root, spec.getIdentifier(), reader, loaders);
-                            spec.setContentLoader(new ModuleContentLoader(loaders));
+                            final ModuleContentLoader.Builder builder = ModuleContentLoader.build();
+                            parseResourceRoot(root, spec.getIdentifier(), reader, builder);
+                            spec.setContentLoader(builder.create());
                             break;
                         }
                         default: throw unexpectedContent(reader);
@@ -436,7 +434,7 @@ final class ModuleXmlParser {
         throw endOfDocument(reader.getLocation());
     }
 
-    private static void parseResourceRoot(final File root, final ModuleIdentifier identifier, final XMLStreamReader reader, final Map<String, ResourceLoader> loaders) throws XMLStreamException {
+    private static void parseResourceRoot(final File root, final ModuleIdentifier identifier, final XMLStreamReader reader, final ModuleContentLoader.Builder builder) throws XMLStreamException {
         String name = null;
         String path = null;
         final Set<Attribute> required = EnumSet.of(Attribute.PATH);
@@ -457,10 +455,10 @@ final class ModuleXmlParser {
         // todo add to spec
         final File file = new File(root, path);
         if (file.isDirectory()) {
-            loaders.put(name, new FileResourceLoader(identifier, file, name));
+            builder.add(name, new FileResourceLoader(identifier, file, name));
         } else {
             try {
-                loaders.put(name, new JarFileResourceLoader(identifier, new JarFile(file), name));
+                builder.add(name, new JarFileResourceLoader(identifier, new JarFile(file), name));
             } catch (IOException e) {
                 throw new XMLStreamException("Invalid JAR file specified", reader.getLocation(), e);
             }

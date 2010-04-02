@@ -23,6 +23,8 @@
 package org.jboss.modules;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -37,8 +39,54 @@ public class ModuleContentLoader {
 
     private final Map<String, ResourceLoader> resourceLoaders;
 
-    public ModuleContentLoader(Map<String, ResourceLoader> resourceLoaders) {
+    /**
+     * The empty module content loader.
+     */
+    public static final ModuleContentLoader EMPTY = new ModuleContentLoader(Collections.<String, ResourceLoader>emptyMap());
+
+    /**
+     * A builder for a module content loader.
+     *
+     * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+     */
+    public interface Builder {
+
+        /**
+         * Add a root to the loader.
+         *
+         * @param rootName the root name
+         * @param loader the resource loader
+         */
+        void add(String rootName, ResourceLoader loader);
+
+        /**
+         * Create the content loader.
+         * @return
+         */
+        ModuleContentLoader create();
+    }
+
+    private ModuleContentLoader(Map<String, ResourceLoader> resourceLoaders) {
         this.resourceLoaders = resourceLoaders;
+    }
+
+    /**
+     * Build a new module content loader.
+     *
+     * @return the builder
+     */
+    public static Builder build() {
+        return new Builder() {
+            private final Map<String, ResourceLoader> map = new LinkedHashMap<String, ResourceLoader>();
+
+            public void add(final String rootName, final ResourceLoader loader) {
+                map.put(rootName, loader);
+            }
+
+            public ModuleContentLoader create() {
+                return new ModuleContentLoader(new LinkedHashMap<String, ResourceLoader>(map));
+            }
+        };
     }
 
     /**
