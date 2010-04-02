@@ -47,9 +47,6 @@ public final class ModuleIdentifier implements Serializable {
         if (artifact == null) {
             throw new IllegalArgumentException("artifact is null");
         }
-        if (version == null) {
-            throw new IllegalArgumentException("version is null");
-        }
         this.group = group;
         this.artifact = artifact;
         this.version = version;
@@ -67,6 +64,10 @@ public final class ModuleIdentifier implements Serializable {
         return version;
     }
 
+    public boolean hasVersion() {
+        return version != null;
+    }
+
     @Override
     public boolean equals(final Object o) {
         return o instanceof ModuleIdentifier && equals((ModuleIdentifier) o);
@@ -78,15 +79,19 @@ public final class ModuleIdentifier implements Serializable {
 
     @Override
     public int hashCode() {
-        int result = group != null ? group.hashCode() : 0;
-        result = 31 * result + (artifact != null ? artifact.hashCode() : 0);
+        int result = group.hashCode();
+        result = 31 * result + artifact.hashCode();
         result = 31 * result + (version != null ? version.hashCode() : 0);
         return result;
     }
 
     @Override
     public String toString() {
-        return String.format("module:%s:%s:%s", group, artifact, version);
+        if (version == null) {
+            return String.format("module:%s:%s", group, artifact);
+        } else {
+            return String.format("module:%s:%s:%s", group, artifact, version);
+        }
     }
 
     public static ModuleIdentifier fromURL(URL url) throws MalformedURLException {
@@ -110,7 +115,7 @@ public final class ModuleIdentifier implements Serializable {
         }
         final int c2 = moduleSpec.indexOf(':', c1 + 1);
         if (c2 == -1) {
-            throw new MalformedURLException("Module URL requires a version");
+            return new ModuleIdentifier(moduleSpec.substring(0, c1), moduleSpec.substring(c1 + 1), null);
         }
         final int c3 = moduleSpec.indexOf(':', c2 + 1);
         return new ModuleIdentifier(moduleSpec.substring(0, c1), moduleSpec.substring(c1 + 1, c2), c3 == -1 ? moduleSpec.substring(c2 + 1) : moduleSpec.substring(c2 + 1, c3));
@@ -143,7 +148,7 @@ public final class ModuleIdentifier implements Serializable {
         }
         final int c2 = moduleSpec.indexOf(':', c1 + 1);
         if (c2 == -1) {
-            throw new URISyntaxException(uri.toString(), "Module URI requires a version");
+            return new ModuleIdentifier(moduleSpec.substring(0, c1), moduleSpec.substring(c1 + 1), null);
         }
         final int c3 = moduleSpec.indexOf(':', c2 + 1);
         return new ModuleIdentifier(moduleSpec.substring(0, c1), moduleSpec.substring(c1 + 1, c2), c3 == -1 ? moduleSpec.substring(c2 + 1) : moduleSpec.substring(c2 + 1, c3));
@@ -159,21 +164,29 @@ public final class ModuleIdentifier implements Serializable {
         }
         final int c2 = moduleSpec.indexOf(':', c1 + 1);
         if (c2 == -1) {
-            throw new IllegalArgumentException("Module specification requires a version");
+            return new ModuleIdentifier(moduleSpec.substring(0, c1), moduleSpec.substring(c1 + 1), null);
         }
         final int c3 = moduleSpec.indexOf(':', c2 + 1);
         return new ModuleIdentifier(moduleSpec.substring(0, c1), moduleSpec.substring(c1 + 1, c2), c3 == -1 ? moduleSpec.substring(c2 + 1) : moduleSpec.substring(c2 + 1, c3));
     }
 
+    private String toSpecString() {
+        if (version == null) {
+            return group + ":" + artifact;
+        } else {
+            return group + ":" + artifact + ":" + version;
+        }
+    }
+
     public URL toURL() throws MalformedURLException {
-        return new URL("module", null, -1, group + ":" + artifact + ":" + version);
+        return new URL("module", null, -1, toSpecString());
     }
 
     public URL toURL(String resourceRoot) throws MalformedURLException {
         if (resourceRoot == null) {
             return toURL();
         } else {
-            return new URL("module", null, -1, group + ":" + artifact + ":" + version + "/" + resourceRoot);
+            return new URL("module", null, -1, toSpecString() + "/" + resourceRoot);
         }
     }
 
@@ -181,9 +194,9 @@ public final class ModuleIdentifier implements Serializable {
         if (resourceName == null) {
             return toURL(resourceRoot);
         } else if (resourceRoot == null) {
-            return new URL("module", null, -1, group + ":" + artifact + ":" + version + "?" + resourceName);
+            return new URL("module", null, -1, toSpecString() + "?" + resourceName);
         } else {
-            return new URL("module", null, -1, group + ":" + artifact + ":" + version + "/" + resourceRoot + "?" + resourceName);
+            return new URL("module", null, -1, toSpecString() + "/" + resourceRoot + "?" + resourceName);
         }
     }
 
