@@ -71,7 +71,7 @@ public final class Module {
         this.flags = flags;
         // should be safe, so...
         //noinspection ThisEscapedInObjectConstruction
-        moduleClassLoader = new ModuleClassLoader(this, flags);
+        moduleClassLoader = new ModuleClassLoader(this, flags, spec.getAssertionSetting());
     }
 
     public final Class<?> getExportedClass(String className) {

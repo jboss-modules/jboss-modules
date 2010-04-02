@@ -40,6 +40,7 @@ public final class ModuleSpec {
     private ModuleIdentifier moduleIdentifier;
     private String mainClass;
     private ModuleContentLoader loader;
+    private AssertionSetting assertionSetting = AssertionSetting.INHERIT;
 
     public ModuleSpec(ModuleIdentifier moduleIdentifier) {
         this.moduleIdentifier = moduleIdentifier;
@@ -75,5 +76,13 @@ public final class ModuleSpec {
 
     public Set<Module.Flag> getModuleFlags() {
         return moduleFlags;
+    }
+
+    public AssertionSetting getAssertionSetting() {
+        return assertionSetting;
+    }
+
+    public void setAssertionSetting(final AssertionSetting assertionSetting) {
+        this.assertionSetting = assertionSetting;
     }
 }

@@ -54,9 +54,12 @@ public final class ModuleClassLoader extends SecureClassLoader {
     private final Map<String, Package> packages = new HashMap<String, Package>();
     private final Set<Module.Flag> flags;
 
-    ModuleClassLoader(final Module module, final Set<Module.Flag> flags) {
+    ModuleClassLoader(final Module module, final Set<Module.Flag> flags, final AssertionSetting setting) {
         this.module = module;
         this.flags = flags;
+        if (setting != AssertionSetting.INHERIT) {
+            setDefaultAssertionStatus(setting == AssertionSetting.ENABLED);
+        }
     }
 
     @Override
