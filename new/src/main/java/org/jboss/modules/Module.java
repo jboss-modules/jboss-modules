@@ -159,8 +159,12 @@ public final class Module {
         return cl instanceof ModuleClassLoader ? ((ModuleClassLoader) cl).getModule() : null;
     }
 
-    public PackageSpec getLocalPackageSpec(final String name) throws IOException {
+    PackageSpec getLocalPackageSpec(final String name) throws IOException {
         return contentLoader.getPackageSpec(name);
+    }
+
+    String getLocalLibrary(final String libname) {
+        return contentLoader.getLibrary(libname);
     }
 
     public enum Flag {

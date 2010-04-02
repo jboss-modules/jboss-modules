@@ -168,6 +168,11 @@ public final class ModuleClassLoader extends SecureClassLoader {
     }
 
     @Override
+    protected String findLibrary(final String libname) {
+        return module.getLocalLibrary(libname);
+    }
+
+    @Override
     public URL getResource(String name) {
         return module.getExportedResource(name).getURL();
     }

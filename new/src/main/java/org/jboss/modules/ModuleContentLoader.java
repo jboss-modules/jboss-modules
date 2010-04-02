@@ -179,4 +179,19 @@ public final class ModuleContentLoader {
         }
         return null;
     }
+
+    /**
+     * Get a library file with the given name by checking all resource loaders and returning the first
+     * instance found.
+     *
+     * @param libname the library name
+     * @return the path of the library file
+     */
+    public String getLibrary(final String libname) {
+        for (ResourceLoader resourceLoader : resourceLoaders.values()) {
+            final String res = resourceLoader.getLibrary(libname);
+            if (res != null) return res;
+        }
+        return null;
+    }
 }
