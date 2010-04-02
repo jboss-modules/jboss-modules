@@ -45,7 +45,7 @@ public final class Main {
         System.out.println("    -modulepath <search path of directories>");
         System.out.println("    -mp <search path of directories>");
         System.out.println("                  A list of directories, separated by '" + File.pathSeparator + "', where modules may be located");
-        System.out.println("                  If not specified, the value of the \"org.jboss.module.loader.path\" system property is used");
+        System.out.println("                  If not specified, the value of the \"module.path\" system property is used");
         System.out.println("    -version      Print version and exit\n");
         System.out.println("and module-spec is a valid module specification string");
     }
@@ -72,7 +72,7 @@ public final class Main {
                             System.exit(1);
                         }
                         modulePath = args[++i];
-                        System.setProperty("org.jboss.module.loader.path", modulePath);
+                        System.setProperty("module.path", modulePath);
                     } else {
                         System.err.printf("Invalid option '%s'\n", arg);
                         usage();
