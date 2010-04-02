@@ -83,7 +83,7 @@ public final class Main {
                     moduleIdentifier = ModuleIdentifier.fromString(arg);
                     int cnt = argsLen - i - 1;
                     moduleArgs = new String[cnt];
-                    System.arraycopy(args, i, moduleArgs, 0, cnt);
+                    System.arraycopy(args, i + 1, moduleArgs, 0, cnt);
                     break;
                 }
             } catch (IndexOutOfBoundsException e) {
