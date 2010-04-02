@@ -1,8 +1,9 @@
 package org.jboss.modules;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -12,10 +13,10 @@ import java.util.List;
  */
 public abstract class ModuleLoader {
 
-    private static ThreadLocal<LinkedList<ModuleIdentifier>> LOAD_CALL_STACK_HOLDER = new ThreadLocal<LinkedList<ModuleIdentifier>>() {
+    private static ThreadLocal<Deque<ModuleIdentifier>> LOAD_CALL_STACK_HOLDER = new ThreadLocal<Deque<ModuleIdentifier>>() {
         @Override
-        protected LinkedList<ModuleIdentifier> initialValue() {
-            return new LinkedList<ModuleIdentifier>();
+        protected Deque<ModuleIdentifier> initialValue() {
+            return new ArrayDeque<ModuleIdentifier>();
         }
     };
 
@@ -29,7 +30,7 @@ public abstract class ModuleLoader {
      * @throws ModuleLoadException if the Module can not be loaded
      */
     public Module loadModule(ModuleIdentifier identifier) throws ModuleLoadException {
-        final LinkedList<ModuleIdentifier> callStack = LOAD_CALL_STACK_HOLDER.get();
+        final Deque<ModuleIdentifier> callStack = LOAD_CALL_STACK_HOLDER.get();
 
         if(callStack.contains(identifier))
             throw new ModuleLoadException("Module cycle discovered: " + callStack);
