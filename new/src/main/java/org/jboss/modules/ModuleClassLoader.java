@@ -69,6 +69,9 @@ public final class ModuleClassLoader extends SecureClassLoader {
 
     @Override
     protected Class<?> loadClass(String className, boolean resolve) throws ClassNotFoundException {
+        if (className == null) {
+            throw new IllegalArgumentException("name is null");
+        }
         if (className.startsWith("java.")) {
             // always delegate to system
             final Class<?> systemClass = findSystemClass(className);
@@ -97,9 +100,6 @@ public final class ModuleClassLoader extends SecureClassLoader {
             return req.result;
         } else {
             // no deadlock risk!  Either the lock isn't held, or we're inside the class loader thread.
-            if (className == null) {
-                throw new IllegalArgumentException("name is null");
-            }
             // Check if we have already loaded it..
             Class<?> loadedClass = findLoadedClass(className);
             if (loadedClass != null) {
