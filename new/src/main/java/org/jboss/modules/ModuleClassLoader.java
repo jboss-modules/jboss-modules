@@ -291,6 +291,12 @@ public final class ModuleClassLoader extends SecureClassLoader {
     }
 
     static class LoaderThread extends Thread {
+
+        @Override
+        public void interrupt() {
+            // no interruption
+        }
+
         @Override
         public void run() {
             final Queue<LoadRequest> queue = LoaderThreadHolder.REQUEST_QUEUE;
@@ -299,11 +305,7 @@ public final class ModuleClassLoader extends SecureClassLoader {
                     LoadRequest request;
                     synchronized (queue) {
                         while ((request = queue.poll()) == null) {
-                            try {
-                                queue.wait();
-
-                            } catch (InterruptedException e) {
-                            }
+                            queue.wait();
                         }
                     }
 
