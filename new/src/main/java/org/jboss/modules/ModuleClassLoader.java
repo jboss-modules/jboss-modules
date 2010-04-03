@@ -137,7 +137,7 @@ public final class ModuleClassLoader extends SecureClassLoader {
             if (loadedClass == null) {
                 if (! flags.contains(Module.Flag.NO_BLACKLIST)) {
                     synchronized (this) {
-                        cache.put(className, loadedClass);
+                        cache.put(className, null);
                     }
                 }
                 throw new ClassNotFoundException(className);
