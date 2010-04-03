@@ -196,7 +196,6 @@ final class FileResourceLoader implements ResourceLoader {
             if (! file.exists()) {
                 return null;
             }
-            System.out.println("Loading from " + root + " -> " + name);
             return new FileEntryResource(name, file, moduleIdentifier.toURL(rootName, name));
         } catch (MalformedURLException e) {
             // must be invalid...?  (todo: check this out)

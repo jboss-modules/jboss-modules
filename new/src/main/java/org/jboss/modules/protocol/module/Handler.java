@@ -28,7 +28,10 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
 
+import org.jboss.modules.Module;
+import org.jboss.modules.ModuleLoadException;
 import org.jboss.modules.Resource;
+import org.jboss.modules.ResourceIdentifier;
 
 /**
  * The handler for "module:" URL types.  The URL format is:<br/>
@@ -37,7 +40,12 @@ import org.jboss.modules.Resource;
 public final class Handler extends URLStreamHandler {
 
     protected URLConnection openConnection(final URL u) throws IOException {
-        return new ResourceConnection(null, u);
+        final ResourceIdentifier identifier = ResourceIdentifier.fromURL(u);
+        try {
+            return new ResourceConnection(Module.getModule(identifier.getModuleIdentifier()).getExportedResource(identifier.getRoot(), identifier.getPath()), u);
+        } catch (ModuleLoadException e) {
+            throw new IOException("Cannot connect", e);
+        }
     }
 
     private class ResourceConnection extends URLConnection {
@@ -50,25 +58,15 @@ public final class Handler extends URLStreamHandler {
         }
 
         public void connect() throws IOException {
-            if (connected) {
-                // already connected
-                return;
-            }
-            final URL url = getURL();
-
-            connected = true;
         }
 
         public InputStream getInputStream() throws IOException {
-            connect();
-//            return resource.openStream();
-            return null;
+            return resource.openStream();
         }
 
         public int getContentLength() {
-//            final long size = resource.getSize();
-//            return size > (long) Integer.MAX_VALUE || size < 1L ? -1 : (int) size;
-            return -1;
+            final long size = resource.getSize();
+            return size > (long) Integer.MAX_VALUE || size < 1L ? -1 : (int) size;
         }
     }
 }

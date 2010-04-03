@@ -169,6 +169,10 @@ public final class Module {
         return contentLoader.getLibrary(libname);
     }
 
+    public static Module getModule(final ModuleIdentifier identifier) throws ModuleLoadException {
+        return InitialModuleLoader.INSTANCE.loadModule(identifier);
+    }
+
     public enum Flag {
         // flags here
         CHILD_FIRST,
