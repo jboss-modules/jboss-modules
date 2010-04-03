@@ -101,10 +101,7 @@ public final class ModuleClassLoader extends SecureClassLoader {
         } else {
             // no deadlock risk!  Either the lock isn't held, or we're inside the class loader thread.
             // Check if we have already loaded it..
-            Class<?> loadedClass = findLoadedClass(className);
-            if (loadedClass != null) {
-                return loadedClass;
-            }
+            Class<?> loadedClass;
             final Map<String, Class<?>> cache = this.cache;
             final boolean missing;
             synchronized (this) {
@@ -159,6 +156,14 @@ public final class ModuleClassLoader extends SecureClassLoader {
         try {
             classSpec = module.getLocalClassSpec(name);
         } catch (IOException e) {
+            throw new ClassNotFoundException(name, e);
+        } catch (RuntimeException e) {
+            System.err.print("Unexpected runtime exception in module loader: ");
+            e.printStackTrace(System.err);
+            throw new ClassNotFoundException(name, e);
+        } catch (Error e) {
+            System.err.print("Unexpected error in module loader: ");
+            e.printStackTrace(System.err);
             throw new ClassNotFoundException(name, e);
         }
         if (classSpec == null)
@@ -260,6 +265,14 @@ public final class ModuleClassLoader extends SecureClassLoader {
 
     public String toString() {
         return "ClassLoader for " + module;
+    }
+
+    public static ModuleClassLoader forModule(ModuleIdentifier identifier) throws ModuleLoadException {
+        return Module.getModule(identifier).getClassLoader();
+    }
+
+    public static ModuleClassLoader forModuleName(String identifier) throws ModuleLoadException {
+        return forModule(ModuleIdentifier.fromString(identifier));
     }
 
     private static final class LoaderThreadHolder {
