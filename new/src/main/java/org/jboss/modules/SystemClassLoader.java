@@ -22,8 +22,17 @@
 
 package org.jboss.modules;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOError;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * Special class loader which knows how to load modules for certain packages.
@@ -33,7 +42,30 @@ public final class SystemClassLoader extends ClassLoader {
     private static final Map<String, ModuleIdentifier> packageAutoLoads;
 
     static {
-        packageAutoLoads = new HashMap<String, ModuleIdentifier>();
+        packageAutoLoads = AccessController.doPrivileged(new PrivilegedAction<Map<String, ModuleIdentifier>>() {
+            public Map<String, ModuleIdentifier> run() {
+                final String automapFileName = System.getProperty("module.automap.filename");
+                if (automapFileName == null) {
+                    return Collections.emptyMap();
+                }
+                final File file = new File(automapFileName);
+                if (file.exists()) {
+                    final Properties props = new Properties();
+                    try {
+                        props.load(new InputStreamReader(new FileInputStream(file)));
+                    } catch (IOException e) {
+                        throw new IOError(e);
+                    }
+                    final Map<String, ModuleIdentifier> map = new HashMap<String, ModuleIdentifier>();
+                    for (String name : props.stringPropertyNames()) {
+                        map.put(name, ModuleIdentifier.fromString(props.getProperty(name)));
+                    }
+                    return map;
+                } else {
+                    return Collections.emptyMap();
+                }
+            }
+        });
     }
 
     public SystemClassLoader(final ClassLoader parent) {
