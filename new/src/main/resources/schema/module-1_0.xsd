@@ -78,6 +78,7 @@
     <xsd:simpleType name="flagType">
         <xsd:restriction base="xsd:string">
             <xsd:enumeration value="child-first"/>
+            <xsd:enumeration value="no-blacklist"/>
         </xsd:restriction>
     </xsd:simpleType>
 </xsd:schema>

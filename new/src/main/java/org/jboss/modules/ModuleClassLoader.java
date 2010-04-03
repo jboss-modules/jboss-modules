@@ -29,7 +29,9 @@ import java.net.URL;
 import java.security.SecureClassLoader;
 import java.util.ArrayDeque;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 
@@ -50,6 +52,7 @@ public final class ModuleClassLoader extends SecureClassLoader {
 
     private final Module module;
     private final Set<Module.Flag> flags;
+    private final Map<String, Class<?>> cache = new HashMap<String, Class<?>>(256);
 
     ModuleClassLoader(final Module module, final Set<Module.Flag> flags, final AssertionSetting setting) {
         this.module = module;
@@ -66,6 +69,10 @@ public final class ModuleClassLoader extends SecureClassLoader {
 
     @Override
     protected Class<?> loadClass(String className, boolean resolve) throws ClassNotFoundException {
+        if (className.startsWith("java.")) {
+            // always delegate to super
+            return super.loadClass(className, resolve);
+        }
         if (Thread.holdsLock(this) && Thread.currentThread() != LoaderThreadHolder.LOADER_THREAD) {
             // Only the classloader thread may take this lock; use a condition to relinquish it
             final LoadRequest req = new LoadRequest(className, resolve, this);
@@ -88,46 +95,59 @@ public final class ModuleClassLoader extends SecureClassLoader {
             return req.result;
         } else {
             // no deadlock risk!  Either the lock isn't held, or we're inside the class loader thread.
-            final Class<?> loadedClass = findClass(className);
+            if (className == null) {
+                throw new IllegalArgumentException("name is null");
+            }
+            // Check if we have already loaded it..
+            Class<?> loadedClass = findLoadedClass(className);
+            if (loadedClass != null) {
+                return loadedClass;
+            }
+            final Map<String, Class<?>> cache = this.cache;
+            final boolean missing;
+            synchronized (this) {
+                missing = cache.containsKey(className);
+                loadedClass = cache.get(className);
+            }
+            if (loadedClass != null) {
+                return loadedClass;
+            }
+            if (missing) {
+                throw new ClassNotFoundException(className);
+            }
+            if (flags.contains(Module.Flag.CHILD_FIRST)) {
+                loadedClass = loadClassLocal(className);
+                if (loadedClass == null) {
+                    loadedClass = module.getImportedClass(className);
+                }
+                if (loadedClass == null) try {
+                    loadedClass = findSystemClass(className);
+                } catch (ClassNotFoundException e) {
+                }
+            } else {
+                loadedClass = module.getImportedClass(className);
+                if (loadedClass == null) try {
+                    loadedClass = findSystemClass(className);
+                } catch (ClassNotFoundException e) {
+                }
+                if (loadedClass == null) {
+                    loadedClass = loadClassLocal(className);
+                }
+            }
+            if (loadedClass == null) {
+                if (! flags.contains(Module.Flag.NO_BLACKLIST)) {
+                    synchronized (this) {
+                        cache.put(className, loadedClass);
+                    }
+                }
+                throw new ClassNotFoundException(className);
+            }
+            synchronized (this) {
+                cache.put(className, loadedClass);
+            }
             if (loadedClass != null && resolve) resolveClass(loadedClass);
             return loadedClass;
         }
-    }
-
-    @Override
-    protected Class<?> findClass(String name) throws ClassNotFoundException {
-        if (name == null) {
-            throw new IllegalArgumentException("name is null");
-        }
-
-        // Check if we have already loaded it..
-        Class<?> loadedClass = findLoadedClass(name);
-
-        // Check the system.  Hmmm maybe this should be a default Module or something.
-        if(loadedClass == null) {
-            try {
-                loadedClass = findSystemClass(name);
-            } catch(ClassNotFoundException e) {
-                // Ignored
-            }
-        }
-
-        if(loadedClass == null) {
-            if (flags.contains(Module.Flag.CHILD_FIRST)) {
-                loadedClass = loadClassLocal(name);
-                if (loadedClass == null) {
-                    loadedClass = module.getImportedClass(name);
-                }
-            } else {
-                loadedClass = module.getImportedClass(name);
-                if (loadedClass == null) {
-                    loadedClass = loadClassLocal(name);
-                }
-            }
-        }
-        if (loadedClass == null)
-            throw new ClassNotFoundException(name);
-        return loadedClass;
     }
 
     private Class<?> loadClassLocal(String name) throws ClassNotFoundException {
