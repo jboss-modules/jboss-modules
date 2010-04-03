@@ -107,7 +107,10 @@ final class JarFileResourceLoader implements ResourceLoader {
     public PackageSpec getPackageSpec(final String name) throws IOException {
         final PackageSpec spec = new PackageSpec();
         final Manifest manifest = jarFile.getManifest();
-        final Attributes mainAttribute = manifest.getAttributes(name);
+        if (manifest == null) {
+            return spec;
+        }
+        final Attributes mainAttribute = manifest.getMainAttributes();
         final Attributes entryAttribute = manifest.getAttributes(name);
         spec.setSpecTitle(getDefinedAttribute(Attributes.Name.SPECIFICATION_TITLE, entryAttribute, mainAttribute));
         spec.setSpecVersion(getDefinedAttribute(Attributes.Name.SPECIFICATION_VERSION, entryAttribute, mainAttribute));

@@ -258,6 +258,10 @@ public final class ModuleClassLoader extends SecureClassLoader {
         return module;
     }
 
+    public String toString() {
+        return "ClassLoader for " + module;
+    }
+
     private static final class LoaderThreadHolder {
 
         private static final Thread LOADER_THREAD;
