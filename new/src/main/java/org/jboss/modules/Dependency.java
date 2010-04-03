@@ -25,7 +25,7 @@ package org.jboss.modules;
 /**
  * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
  */
-class Dependency {
+final class Dependency {
     private final Module module;
     private final boolean export;
 
