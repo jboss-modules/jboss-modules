@@ -23,9 +23,9 @@
 package org.jboss.modules;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -138,7 +138,7 @@ public final class ModuleContentLoader {
      * @return The Resource or an empty Iterable if none are found
      */
     public Iterable<Resource> getResources(String name) {
-        final List<Resource> resources = new LinkedList<Resource>();
+        final List<Resource> resources = new ArrayList<Resource>();
         for (ResourceLoader resourceLoader : resourceLoaders.values()) {
             final Resource resource = resourceLoader.getResource(name);
             if (resource != null)

@@ -422,17 +422,17 @@ final class ModuleXmlParser {
 
     private static void parseResources(final File root, final XMLStreamReader reader, final ModuleSpec spec) throws XMLStreamException {
         // xsd:choice
+        final ModuleContentLoader.Builder builder = ModuleContentLoader.build();
         while (reader.hasNext()) {
             switch (reader.next()) {
                 case XMLStreamConstants.END_ELEMENT: {
+                    spec.setContentLoader(builder.create());
                     return;
                 }
                 case XMLStreamConstants.START_ELEMENT: {
                     switch (Element.of(reader.getName())) {
                         case RESOURCE_ROOT: {
-                            final ModuleContentLoader.Builder builder = ModuleContentLoader.build();
                             parseResourceRoot(root, spec.getIdentifier(), reader, builder);
-                            spec.setContentLoader(builder.create());
                             break;
                         }
                         default: throw unexpectedContent(reader);

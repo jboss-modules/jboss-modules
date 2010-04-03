@@ -73,7 +73,7 @@ public final class SystemClassLoader extends ClassLoader {
     }
 
     protected Class<?> findClass(final String name) throws ClassNotFoundException {
-        final int idx = name.lastIndexOf('/');
+        final int idx = name.lastIndexOf('.');
         if (idx != -1) {
             final String pkgName = name.substring(0, idx);
             final ModuleIdentifier identifier = packageAutoLoads.get(pkgName);

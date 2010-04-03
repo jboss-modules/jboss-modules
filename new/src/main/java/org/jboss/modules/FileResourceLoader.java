@@ -126,6 +126,9 @@ final class FileResourceLoader implements ResourceLoader {
     public ClassSpec getClassSpec(final String name) throws IOException {
         final String fileName = name.replace('.', File.separatorChar) + ".class";
         final File file = new File(root, fileName);
+        if (! file.exists()) {
+            return null;
+        }
         final long size = file.length();
         final ClassSpec spec = new ClassSpec();
         final InputStream is = new FileInputStream(file);
@@ -189,7 +192,12 @@ final class FileResourceLoader implements ResourceLoader {
 
     public Resource getResource(final String name) {
         try {
-            return new FileEntryResource(name, new File(root, name), moduleIdentifier.toURL(rootName, name));
+            final File file = new File(root, name);
+            if (! file.exists()) {
+                return null;
+            }
+            System.out.println("Loading from " + root + " -> " + name);
+            return new FileEntryResource(name, file, moduleIdentifier.toURL(rootName, name));
         } catch (MalformedURLException e) {
             // must be invalid...?  (todo: check this out)
             return null;

@@ -217,7 +217,8 @@ public final class ModuleClassLoader extends SecureClassLoader {
 
     @Override
     public URL getResource(String name) {
-        return module.getExportedResource(name).getURL();
+        final Resource resource = module.getExportedResource(name);
+        return resource == null ? null : resource.getURL();
     }
 
     @Override
@@ -241,7 +242,8 @@ public final class ModuleClassLoader extends SecureClassLoader {
     @Override
     public InputStream getResourceAsStream(final String name) {
         try {
-            return module.getExportedResource(name).openStream();
+            final Resource resource = module.getExportedResource(name);
+            return resource == null ? null : resource.openStream();
         } catch (IOException e) {
             return null;
         }

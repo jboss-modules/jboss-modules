@@ -133,7 +133,11 @@ final class JarFileResourceLoader implements ResourceLoader {
 
     public Resource getResource(final String name) {
         try {
-            return new JarEntryResource(jarFile, jarFile.getJarEntry(name), moduleIdentifier.toURL(rootName, name));
+            final JarEntry entry = jarFile.getJarEntry(name);
+            if (entry == null) {
+                return null;
+            }
+            return new JarEntryResource(jarFile, entry, moduleIdentifier.toURL(rootName, name));
         } catch (MalformedURLException e) {
             // must be invalid...?  (todo: check this out)
             return null;
