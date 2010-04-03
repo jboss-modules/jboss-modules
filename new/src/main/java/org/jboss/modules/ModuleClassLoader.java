@@ -117,6 +117,7 @@ public final class ModuleClassLoader extends SecureClassLoader {
             if (missing) {
                 throw new ClassNotFoundException(className);
             }
+            final Set<Module.Flag> flags = this.flags;
             if (flags.contains(Module.Flag.CHILD_FIRST)) {
                 loadedClass = loadClassLocal(className);
                 if (loadedClass == null) {
