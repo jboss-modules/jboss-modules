@@ -70,8 +70,10 @@ public final class ModuleClassLoader extends SecureClassLoader {
     @Override
     protected Class<?> loadClass(String className, boolean resolve) throws ClassNotFoundException {
         if (className.startsWith("java.")) {
-            // always delegate to super
-            return super.loadClass(className, resolve);
+            // always delegate to system
+            final Class<?> systemClass = findSystemClass(className);
+            if (resolve) resolveClass(systemClass);
+            return systemClass;
         }
         if (Thread.holdsLock(this) && Thread.currentThread() != LoaderThreadHolder.LOADER_THREAD) {
             // Only the classloader thread may take this lock; use a condition to relinquish it
