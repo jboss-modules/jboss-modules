@@ -265,7 +265,7 @@ public final class ModuleClassLoader extends SecureClassLoader {
 
         static {
             Thread thr = new LoaderThread();
-            thr.setName("Module ClassLoader Thread");
+            thr.setName("ModuleClassLoader Thread");
             // This thread will always run as long as the VM is alive.
             thr.setDaemon(true);
             thr.start();
