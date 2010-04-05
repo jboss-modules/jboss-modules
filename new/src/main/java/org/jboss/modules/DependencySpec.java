@@ -24,21 +24,37 @@ package org.jboss.modules;
 
 /**
  * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
+ * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class DependencySpec {
-    private final ModuleIdentifier moduleIdentifier;
-    private final boolean export;
+    private ModuleIdentifier moduleIdentifier;
+    private boolean export;
+    private boolean optional;
 
-    public DependencySpec(ModuleIdentifier moduleIdentifier, boolean export) {
-        this.moduleIdentifier = moduleIdentifier;
-        this.export = export;
+    public DependencySpec() {
     }
 
     public boolean isExport() {
         return export;
     }
 
+    public void setExport(final boolean export) {
+        this.export = export;
+    }
+
     public ModuleIdentifier getModuleIdentifier() {
         return moduleIdentifier;
+    }
+
+    public void setModuleIdentifier(final ModuleIdentifier moduleIdentifier) {
+        this.moduleIdentifier = moduleIdentifier;
+    }
+
+    public boolean isOptional() {
+        return optional;
+    }
+
+    public void setOptional(final boolean optional) {
+        this.optional = optional;
     }
 }

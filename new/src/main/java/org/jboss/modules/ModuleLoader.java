@@ -84,7 +84,17 @@ public abstract class ModuleLoader {
             }
             final List<Dependency> dependencies = new ArrayList<Dependency>(moduleSpec.getDependencies().size());
             for (DependencySpec dependencySpec : moduleSpec.getDependencies()) {
-                final Dependency dependency = new Dependency(loadModule(dependencySpec.getModuleIdentifier()), dependencySpec.isExport());
+                final Module dependencyModule;
+                try {
+                    dependencyModule = loadModule(dependencySpec.getModuleIdentifier());
+                } catch (ModuleLoadException e) {
+                    if (dependencySpec.isOptional()) {
+                        continue;
+                    } else {
+                        throw e;
+                    }
+                }
+                final Dependency dependency = new Dependency(dependencyModule, dependencySpec.isExport());
                 dependencies.add(dependency);
             }
 

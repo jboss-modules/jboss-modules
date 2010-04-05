@@ -88,6 +88,7 @@ final class ModuleXmlParser {
         EXPORT,
         PATH,
         FLAGS,
+        OPTIONAL,
         
         // default unknown attribute
         UNKNOWN;
@@ -102,6 +103,7 @@ final class ModuleXmlParser {
             attributesMap.put(new QName("export"), EXPORT);
             attributesMap.put(new QName("path"), PATH);
             attributesMap.put(new QName("flags"), FLAGS);
+            attributesMap.put(new QName("optional"), OPTIONAL);
             attributes = attributesMap;
         }
 
@@ -378,6 +380,7 @@ final class ModuleXmlParser {
         String name = null;
         String version = null;
         boolean export = false;
+        boolean optional = false;
         final Set<Attribute> required = EnumSet.of(Attribute.NAME, Attribute.GROUP);
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
@@ -388,14 +391,18 @@ final class ModuleXmlParser {
                 case NAME:    name = reader.getAttributeValue(i); break;
                 case VERSION: version = reader.getAttributeValue(i); break;
                 case EXPORT:  export = Boolean.parseBoolean(reader.getAttributeValue(i)); break;
+                case OPTIONAL:optional = Boolean.parseBoolean(reader.getAttributeValue(i)); break;
                 default: throw unexpectedContent(reader);
             }
         }
         if (! required.isEmpty()) {
             throw missingAttributes(reader.getLocation(), required);
         }
-        // todo - assemble DependencySpec
-        spec.addDependency(new DependencySpec(new ModuleIdentifier(group, name, version), export));
+        final DependencySpec dependencySpec = new DependencySpec();
+        dependencySpec.setModuleIdentifier(new ModuleIdentifier(group, name, version));
+        dependencySpec.setExport(export);
+        dependencySpec.setOptional(optional);
+        spec.addDependency(dependencySpec);
         // consume remainder of element
         parseNoContent(reader);
     }

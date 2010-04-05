@@ -52,6 +52,7 @@
         <xsd:attribute name="name" type="xsd:string" use="required"/>
         <xsd:attribute name="version" type="xsd:string" use="optional"/>
         <xsd:attribute name="export" type="xsd:boolean" use="optional" default="false"/>
+        <xsd:attribute name="optional" type="xsd:boolean" use="optional" default="false"/>
     </xsd:complexType>
 
     <xsd:complexType name="classNameType">
