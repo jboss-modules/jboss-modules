@@ -29,6 +29,7 @@ import java.lang.reflect.Modifier;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.List;
+import java.util.ServiceLoader;
 import java.util.Set;
 
 /**
@@ -139,6 +140,43 @@ public final class Module {
 
     public ModuleLoader getModuleLoader() {
         return moduleLoader;
+    }
+
+    /**
+     * Load a service from this module.
+     *
+     * @param serviceType the service type class
+     * @param <S> the service type
+     * @return the service loader
+     */
+    public <S> ServiceLoader<S> loadService(Class<S> serviceType) {
+        return ServiceLoader.load(serviceType, moduleClassLoader);
+    }
+
+    /**
+     * Load a service from the named module.
+     *
+     * @param moduleIdentifier the module identifier
+     * @param serviceType the service type class
+     * @param <S> the service type
+     * @return the service loader
+     * @throws ModuleLoadException if the given module could not be loaded
+     */
+    public static <S> ServiceLoader<S> loadService(ModuleIdentifier moduleIdentifier, Class<S> serviceType) throws ModuleLoadException {
+        return Module.getModule(moduleIdentifier).loadService(serviceType);
+    }
+
+    /**
+     * Load a service from the named module.
+     *
+     * @param moduleIdentifier the module identifier
+     * @param serviceType the service type class
+     * @param <S> the service type
+     * @return the service loader
+     * @throws ModuleLoadException if the given module could not be loaded
+     */
+    public static <S> ServiceLoader<S> loadService(String moduleIdentifier, Class<S> serviceType) throws ModuleLoadException {
+        return loadService(ModuleIdentifier.fromString(moduleIdentifier), serviceType);
     }
 
     /**
