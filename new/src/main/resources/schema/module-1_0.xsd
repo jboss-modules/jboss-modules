@@ -39,6 +39,9 @@
             <xsd:element name="main-class" type="classNameType" minOccurs="0"/>
         </xsd:all>
         <xsd:attribute name="flags" type="flagsType" use="optional"/>
+        <xsd:attribute name="group" type="xsd:string" use="required"/>
+        <xsd:attribute name="name" type="xsd:string" use="required"/>
+        <xsd:attribute name="version" type="xsd:string" use="optional"/>
     </xsd:complexType>
 
     <xsd:complexType name="dependenciesType">

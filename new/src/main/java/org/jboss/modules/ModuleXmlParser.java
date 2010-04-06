@@ -203,6 +203,10 @@ final class ModuleXmlParser {
         return new XMLStreamException("Unexpected end of document", location);
     }
 
+    private static XMLStreamException invalidModuleName(final Location location, final ModuleIdentifier expected) {
+        return new XMLStreamException("Invalid/mismatched module name (expected " + expected + ")", location);
+    }
+
     private static XMLStreamException missingAttributes(final Location location, final Set<Attribute> required) {
         final StringBuilder b = new StringBuilder("Missing one or more required attributes:");
         for (Attribute attribute : required) {
@@ -280,12 +284,26 @@ final class ModuleXmlParser {
     private static void parseModuleContents(final File root, final XMLStreamReader reader, final ModuleSpec spec) throws XMLStreamException {
         final int count = reader.getAttributeCount();
         String flags = null;
+        String name = null;
+        String group = null;
+        String version = null;
+        final Set<Attribute> required = EnumSet.of(Attribute.NAME, Attribute.GROUP);
         for (int i = 0; i < count; i ++) {
             final Attribute attribute = Attribute.of(reader.getAttributeName(i));
+            required.remove(attribute);
             switch (attribute) {
                 case FLAGS:   flags = reader.getAttributeValue(i); break;
+                case GROUP:   group = reader.getAttributeValue(i); break;
+                case NAME:    name = reader.getAttributeValue(i); break;
+                case VERSION: version = reader.getAttributeValue(i); break;
                 default: throw unexpectedContent(reader);
             }
+        }
+        if (! required.isEmpty()) {
+            throw missingAttributes(reader.getLocation(), required);
+        }
+        if (! spec.getIdentifier().equals(new ModuleIdentifier(group, name, version))) {
+            throw invalidModuleName(reader.getLocation(), spec.getIdentifier());
         }
         if (flags != null) {
             for (String flag : flags.split("\\s+")) {
