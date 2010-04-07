@@ -65,7 +65,11 @@ final class InitialModuleLoader extends ModuleLoader {
         this.delegate = delegate;
     }
 
+    public Module loadModule(final ModuleIdentifier identifier) throws ModuleLoadException {
+        return delegate.loadModule(identifier);
+    }
+
     protected Module findModule(final ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
-        return delegate.loadModule(moduleIdentifier);
+        throw new UnsupportedOperationException();
     }
 }
