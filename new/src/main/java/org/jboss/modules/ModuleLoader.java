@@ -103,4 +103,24 @@ public abstract class ModuleLoader {
             return module;
         }
     }
+
+    /**
+     * Create an aggregate module based on a module identifier and list of dependencies to import/export.
+     *
+     * @param moduleIdentifier The module identifier
+     * @param dependencies The module identifiers to aggregate
+     * @return The loaded Module
+     * @throws ModuleLoadException If any dependent module can not be loaded
+     */
+    public Module createAggregate(ModuleIdentifier moduleIdentifier, List<ModuleIdentifier> dependencies) throws ModuleLoadException {
+
+        final ModuleSpec moduleSpec = new ModuleSpec(moduleIdentifier);
+        for(ModuleIdentifier identifier : dependencies) {
+            DependencySpec dependencySpec = new DependencySpec();
+            dependencySpec.setModuleIdentifier(identifier);
+            dependencySpec.setExport(true);
+            moduleSpec.addDependency(dependencySpec);
+        }
+        return defineModule(moduleSpec);
+    }
 }

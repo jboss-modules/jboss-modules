@@ -27,13 +27,7 @@ import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.security.SecureClassLoader;
-import java.util.ArrayDeque;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
@@ -273,6 +267,15 @@ public final class ModuleClassLoader extends SecureClassLoader {
 
     public static ModuleClassLoader forModuleName(String identifier) throws ModuleLoadException {
         return forModule(ModuleIdentifier.fromString(identifier));
+    }
+
+    public static ModuleClassLoader createAggregate(String identifier, List<String> dependencies) throws ModuleLoadException  {
+
+        List<ModuleIdentifier> depModuleIdentifiers = new ArrayList<ModuleIdentifier>(dependencies.size());
+        for(String dependencySpec : dependencies) {
+            depModuleIdentifiers.add(ModuleIdentifier.fromString(dependencySpec));
+        }
+        return InitialModuleLoader.INSTANCE.createAggregate(ModuleIdentifier.fromString(identifier), depModuleIdentifiers).getClassLoader();
     }
 
     private static final class LoaderThreadHolder {
