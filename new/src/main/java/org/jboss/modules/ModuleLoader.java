@@ -121,6 +121,8 @@ public abstract class ModuleLoader {
             dependencySpec.setExport(true);
             moduleSpec.addDependency(dependencySpec);
         }
+
+        moduleSpec.setContentLoader(ModuleContentLoader.build().create());
         return defineModule(moduleSpec);
     }
 }
