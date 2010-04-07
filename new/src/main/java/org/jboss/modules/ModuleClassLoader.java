@@ -26,6 +26,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.security.SecureClassLoader;
 import java.util.ArrayDeque;
 import java.util.Enumeration;
@@ -40,6 +42,7 @@ import java.util.Set;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class ModuleClassLoader extends SecureClassLoader {
+    private static final boolean debugDefines;
 
     static {
         try {
@@ -48,6 +51,11 @@ public final class ModuleClassLoader extends SecureClassLoader {
         } catch (Exception e) {
             // ignore
         }
+        debugDefines = AccessController.doPrivileged(new PrivilegedAction<Boolean>() {
+            public Boolean run() {
+                return Boolean.valueOf(System.getProperty("jboss.modules.debug.defineClass", "false"));
+            }
+        }).booleanValue();
     }
 
     private final Module module;
@@ -194,7 +202,16 @@ public final class ModuleClassLoader extends SecureClassLoader {
                 }
             }
         }
-        final Class<?> newClass = defineClass(name, classSpec.getBytes(), 0, classSpec.getBytes().length, classSpec.getCodeSource());
+        final Class<?> newClass;
+        try {
+            newClass = defineClass(name, classSpec.getBytes(), 0, classSpec.getBytes().length, classSpec.getCodeSource());
+        } catch (Error e) {
+            if (debugDefines) System.err.println("Failed to define class '" + name + "': " + e);
+            throw e;
+        } catch (RuntimeException e) {
+            if (debugDefines) System.err.println("Failed to define class '" + name + "': " + e);
+            throw e;
+        }
         final AssertionSetting setting = classSpec.getAssertionSetting();
         if (setting != AssertionSetting.INHERIT) {
             setClassAssertionStatus(name, setting == AssertionSetting.ENABLED);
