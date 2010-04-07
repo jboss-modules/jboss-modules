@@ -198,15 +198,16 @@ public final class ModuleClassLoader extends SecureClassLoader {
                 final PackageSpec spec;
                 try {
                     spec = getModule().getLocalPackageSpec(name);
-                    definePackage(name, spec);
+                    definePackage(packageName, spec);
                 } catch (IOException e) {
-                    definePackage(name, null);
+                    definePackage(packageName, null);
                 }
             }
         }
         final Class<?> newClass;
         try {
-            newClass = defineClass(name, classSpec.getBytes(), 0, classSpec.getBytes().length, classSpec.getCodeSource());
+            final byte[] bytes = classSpec.getBytes();
+            newClass = defineClass(name, bytes, 0, bytes.length, classSpec.getCodeSource());
         } catch (Error e) {
             if (debugDefines) System.err.println("Failed to define class '" + name + "': " + e);
             throw e;
