@@ -66,6 +66,6 @@ final class InitialModuleLoader extends ModuleLoader {
     }
 
     protected Module findModule(final ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
-        return delegate.findModule(moduleIdentifier);
+        return delegate.loadModule(moduleIdentifier);
     }
 }
