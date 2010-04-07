@@ -26,13 +26,16 @@ import java.io.File;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
-final class InitialModuleLoader extends ModuleLoader {
+final class InitialModuleLoader  {
 
-    static final InitialModuleLoader INSTANCE;
+    static final ModuleLoader INSTANCE;
+
+    private InitialModuleLoader() {
+    }
 
     static {
-        INSTANCE = AccessController.doPrivileged(new PrivilegedAction<InitialModuleLoader>() {
-            public InitialModuleLoader run() {
+        INSTANCE = AccessController.doPrivileged(new PrivilegedAction<ModuleLoader>() {
+            public ModuleLoader run() {
                 final String modulePath = System.getProperty("module.path");
                 final File[] roots;
                 if (modulePath == null) {
@@ -41,7 +44,7 @@ final class InitialModuleLoader extends ModuleLoader {
                 } else {
                     roots = getFiles(modulePath, 0, 0);
                 }
-                return new InitialModuleLoader(new LocalModuleLoader(roots));
+                return new LocalModuleLoader(roots);
             }
         });
     }
@@ -57,19 +60,5 @@ final class InitialModuleLoader extends ModuleLoader {
             files[arrayIdx] = new File(modulePath.substring(stringIdx, i)).getAbsoluteFile();
         }
         return files;
-    }
-
-    private final ModuleLoader delegate;
-
-    private InitialModuleLoader(final ModuleLoader delegate) {
-        this.delegate = delegate;
-    }
-
-    public Module loadModule(final ModuleIdentifier identifier) throws ModuleLoadException {
-        return delegate.loadModule(identifier);
-    }
-
-    protected Module findModule(final ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
-        throw new UnsupportedOperationException();
     }
 }
