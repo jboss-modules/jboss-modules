@@ -31,9 +31,11 @@ import java.security.PrivilegedAction;
 import java.security.SecureClassLoader;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
@@ -63,12 +65,18 @@ public final class ModuleClassLoader extends SecureClassLoader {
     private final Module module;
     private final Set<Module.Flag> flags;
     private final Map<String, Class<?>> cache = new HashMap<String, Class<?>>(256);
+    private final Set<String> blackList;
 
     ModuleClassLoader(final Module module, final Set<Module.Flag> flags, final AssertionSetting setting) {
         this.module = module;
         this.flags = flags;
         if (setting != AssertionSetting.INHERIT) {
             setDefaultAssertionStatus(setting == AssertionSetting.ENABLED);
+        }
+        if (flags.contains(Module.Flag.NO_BLACKLIST)) {
+            blackList = null;
+        } else {
+            blackList = Collections.newSetFromMap(new Cache());
         }
     }
 
@@ -113,16 +121,14 @@ public final class ModuleClassLoader extends SecureClassLoader {
             // Check if we have already loaded it..
             Class<?> loadedClass;
             final Map<String, Class<?>> cache = this.cache;
-            final boolean missing;
             synchronized (this) {
-                missing = cache.containsKey(className);
+                if (blackList.contains(className)) {
+                    throw new ClassNotFoundException(className);
+                }
                 loadedClass = cache.get(className);
             }
             if (loadedClass != null) {
                 return loadedClass;
-            }
-            if (missing) {
-                throw new ClassNotFoundException(className);
             }
             final Set<Module.Flag> flags = this.flags;
             if (flags.contains(Module.Flag.CHILD_FIRST)) {
@@ -147,7 +153,7 @@ public final class ModuleClassLoader extends SecureClassLoader {
             if (loadedClass == null) {
                 if (! flags.contains(Module.Flag.NO_BLACKLIST)) {
                     synchronized (this) {
-                        cache.put(className, null);
+                        blackList.add(className);
                     }
                 }
                 throw new ClassNotFoundException(className);
@@ -372,6 +378,19 @@ public final class ModuleClassLoader extends SecureClassLoader {
                     // ignore
                 }
             }
+        }
+    }
+
+    private static class Cache extends LinkedHashMap<String, Boolean> {
+
+        private static final long serialVersionUID = 3028457192008602040L;
+
+        private Cache() {
+            super(256, 0.75f, true);
+        }
+
+        protected boolean removeEldestEntry(final Map.Entry<String, Boolean> eldest) {
+            return size() > 1000;
         }
     }
 }
