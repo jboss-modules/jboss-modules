@@ -40,7 +40,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
-import sun.misc.Unsafe;
 
 /**
  * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
@@ -48,7 +47,6 @@ import sun.misc.Unsafe;
  */
 public final class ModuleClassLoader extends SecureClassLoader {
     private static final boolean debugDefines;
-    private static final Unsafe unsafe;
 
     static {
         try {
@@ -62,11 +60,6 @@ public final class ModuleClassLoader extends SecureClassLoader {
                 return Boolean.valueOf(System.getProperty("jboss.modules.debug.defineClass", "false"));
             }
         }).booleanValue();
-        unsafe = AccessController.doPrivileged(new PrivilegedAction<Unsafe>() {
-            public Unsafe run() {
-                return Unsafe.getUnsafe();
-            }
-        });
     }
 
     private final Module module;
@@ -103,88 +96,74 @@ public final class ModuleClassLoader extends SecureClassLoader {
             if (resolve) resolveClass(systemClass);
             return systemClass;
         }
-        return doLoadClass0(className, resolve);
-    }
-
-    private Class<?> doLoadClass0(final String className, final boolean resolve) throws ClassNotFoundException {
         if (Thread.holdsLock(this) && Thread.currentThread() != LoaderThreadHolder.LOADER_THREAD) {
-            unsafe.monitorExit(this);
-            try {
-                return doLoadClass0(className, resolve);
-            } finally {
-                unsafe.monitorEnter(this);
+            // Only the classloader thread may take this lock; use a condition to relinquish it
+            final LoadRequest req = new LoadRequest(className, resolve, this);
+            final Queue<LoadRequest> queue = LoaderThreadHolder.REQUEST_QUEUE;
+            synchronized (LoaderThreadHolder.REQUEST_QUEUE) {
+                queue.add(req);
+                queue.notify();
             }
-//            // Only the classloader thread may take this lock; use a condition to relinquish it
-//            final LoadRequest req = new LoadRequest(className, resolve, this);
-//            final Queue<LoadRequest> queue = LoaderThreadHolder.REQUEST_QUEUE;
-//            synchronized (LoaderThreadHolder.REQUEST_QUEUE) {
-//                queue.add(req);
-//                queue.notify();
-//            }
-//            boolean intr = false;
-//            try {
-//                while (!req.done) try {
-//                    wait();
-//                } catch (InterruptedException e) {
-//                    intr = true;
-//                }
-//            } finally {
-//                if (intr) Thread.currentThread().interrupt();
-//            }
-//
-//            return req.result;
+            boolean intr = false;
+            try {
+                while (!req.done) try {
+                    wait();
+                } catch (InterruptedException e) {
+                    intr = true;
+                }
+            } finally {
+                if (intr) Thread.currentThread().interrupt();
+            }
+
+            return req.result;
         } else {
             // no deadlock risk!  Either the lock isn't held, or we're inside the class loader thread.
             // Check if we have already loaded it..
-            return doLoadClass1(className, resolve);
-        }
-    }
-
-    private Class<?> doLoadClass1(final String className, final boolean resolve) throws ClassNotFoundException {
-        Class<?> loadedClass;
-        final Map<String, Class<?>> cache = this.cache;
-        synchronized (this) {
-            if (blackList.contains(className)) {
-                throw new ClassNotFoundException(className);
+            Class<?> loadedClass;
+            final Map<String, Class<?>> cache = this.cache;
+            synchronized (this) {
+                if (blackList.contains(className)) {
+                    throw new ClassNotFoundException(className);
+                }
+                loadedClass = cache.get(className);
             }
-            loadedClass = cache.get(className);
-        }
-        if (loadedClass != null) {
-            return loadedClass;
-        }
-        final Set<Module.Flag> flags = this.flags;
-        if (flags.contains(Module.Flag.CHILD_FIRST)) {
-            loadedClass = loadClassLocal(className);
-            if (loadedClass == null) {
-                loadedClass = module.getImportedClass(className);
+            if (loadedClass != null) {
+                return loadedClass;
             }
-            if (loadedClass == null) try {
-                loadedClass = findSystemClass(className);
-            } catch (ClassNotFoundException e) {
-            }
-        } else {
-            loadedClass = module.getImportedClass(className);
-            if (loadedClass == null) try {
-                loadedClass = findSystemClass(className);
-            } catch (ClassNotFoundException e) {
-            }
-            if (loadedClass == null) {
+            final Set<Module.Flag> flags = this.flags;
+            if (flags.contains(Module.Flag.CHILD_FIRST)) {
                 loadedClass = loadClassLocal(className);
-            }
-        }
-        if (loadedClass == null) {
-            if (! flags.contains(Module.Flag.NO_BLACKLIST)) {
-                synchronized (this) {
-                    blackList.add(className);
+                if (loadedClass == null) {
+                    loadedClass = module.getImportedClass(className);
+                }
+                if (loadedClass == null) try {
+                    loadedClass = findSystemClass(className);
+                } catch (ClassNotFoundException e) {
+                }
+            } else {
+                loadedClass = module.getImportedClass(className);
+                if (loadedClass == null) try {
+                    loadedClass = findSystemClass(className);
+                } catch (ClassNotFoundException e) {
+                }
+                if (loadedClass == null) {
+                    loadedClass = loadClassLocal(className);
                 }
             }
-            throw new ClassNotFoundException(className);
+            if (loadedClass == null) {
+                if (! flags.contains(Module.Flag.NO_BLACKLIST)) {
+                    synchronized (this) {
+                        blackList.add(className);
+                    }
+                }
+                throw new ClassNotFoundException(className);
+            }
+            synchronized (this) {
+                cache.put(className, loadedClass);
+            }
+            if (loadedClass != null && resolve) resolveClass(loadedClass);
+            return loadedClass;
         }
-        synchronized (this) {
-            cache.put(className, loadedClass);
-        }
-        if (loadedClass != null && resolve) resolveClass(loadedClass);
-        return loadedClass;
     }
 
     private Class<?> loadClassLocal(String name) throws ClassNotFoundException {
