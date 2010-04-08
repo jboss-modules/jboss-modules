@@ -1,10 +1,14 @@
 package org.jboss.modules;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
+
+import static org.jboss.modules.ConcurrentReferenceHashMap.ReferenceType.SOFT;
+import static org.jboss.modules.ConcurrentReferenceHashMap.ReferenceType.STRONG;
 
 /**
  * 
@@ -20,7 +24,9 @@ public abstract class ModuleLoader {
         }
     };
 
-    private final HashMap<ModuleIdentifier, Module> moduleMap = new HashMap<ModuleIdentifier, Module>();
+    private final ConcurrentMap<ModuleIdentifier, FutureModule> moduleMap = new ConcurrentReferenceHashMap<ModuleIdentifier, FutureModule>(
+            256, 0.5f, 32, STRONG, SOFT, EnumSet.noneOf(ConcurrentReferenceHashMap.Option.class)
+    );
 
     /**
      * Load a module based on an identifier.
@@ -35,23 +41,22 @@ public abstract class ModuleLoader {
         if(visited.contains(identifier))
             throw new ModuleLoadException("Failed to load " + identifier + "; module cycle discovered: " + visited);
 
-        synchronized (moduleMap) {
-            final Module module = moduleMap.get(identifier);
-            if (module != null) {
-                return module;
+        FutureModule futureModule = moduleMap.get(identifier);
+        if (futureModule == null) {
+            FutureModule newFuture = new FutureModule(identifier);
+            futureModule = moduleMap.putIfAbsent(identifier, newFuture);
+            if (futureModule == null) {
+                visited.add(identifier);
+                try {
+                    final Module module = findModule(identifier);
+                    if (module == null) throw new ModuleNotFoundException(identifier.toString());
+                    return module;
+                } finally {
+                    visited.remove(identifier);
+                }
             }
         }
-
-        visited.add(identifier);
-        try {
-            final Module module = findModule(identifier);
-            if (module == null) {
-                throw new ModuleNotFoundException(identifier.toString());
-            }
-            return module;
-        } finally {
-            visited.remove(identifier);
-        }
+        return futureModule.getModule();
     }
 
     /**
@@ -76,12 +81,17 @@ public abstract class ModuleLoader {
     protected final Module defineModule(ModuleSpec moduleSpec) throws ModuleLoadException {
 
         final ModuleIdentifier moduleIdentifier = moduleSpec.getIdentifier();
-
-        synchronized (moduleMap) {
-            final Module oldModule = moduleMap.get(moduleIdentifier);
-            if (oldModule != null) {
-                throw new ModuleAlreadyExistsException(moduleIdentifier.toString());
-            }
+        FutureModule futureModule = moduleMap.get(moduleIdentifier);
+        if (futureModule == null) {
+            FutureModule newFuture = new FutureModule(moduleIdentifier);
+            futureModule = moduleMap.putIfAbsent(moduleIdentifier, newFuture);
+            if (futureModule == null) futureModule = newFuture;
+        }
+        // early detect
+        if (futureModule.module != null) {
+            throw new ModuleAlreadyExistsException(moduleIdentifier.toString());
+        }
+        try {
             final List<Dependency> dependencies = new ArrayList<Dependency>(moduleSpec.getDependencies().size());
             for (DependencySpec dependencySpec : moduleSpec.getDependencies()) {
                 final Module dependencyModule;
@@ -97,10 +107,20 @@ public abstract class ModuleLoader {
                 final Dependency dependency = new Dependency(dependencyModule, dependencySpec.isExport());
                 dependencies.add(dependency);
             }
-
             final Module module = new Module(moduleSpec, dependencies, moduleSpec.getModuleFlags(), this);
-            moduleMap.put(moduleIdentifier, module);
+            synchronized (futureModule) {
+                futureModule.setModule(module);
+            }
             return module;
+        } catch (ModuleLoadException e) {
+            futureModule.setModule(null);
+            throw e;
+        } catch (RuntimeException e) {
+            futureModule.setModule(null);
+            throw e;
+        } catch (Error e) {
+            futureModule.setModule(null);
+            throw e;
         }
     }
 
@@ -124,5 +144,43 @@ public abstract class ModuleLoader {
 
         moduleSpec.setContentLoader(ModuleContentLoader.build().create());
         return defineModule(moduleSpec);
+    }
+
+    private static final class FutureModule {
+        private static final Object NOT_FOUND = new Object();
+
+        private final ModuleIdentifier identifier;
+        private volatile Object module;
+
+        FutureModule(final ModuleIdentifier identifier) {
+            this.identifier = identifier;
+        }
+
+        Module getModule() throws ModuleNotFoundException {
+            boolean intr = false;
+            try {
+                Object module = this.module;
+                if (module == null) synchronized (this) {
+                    while ((module = this.module) == null) {
+                        try {
+                            wait();
+                        } catch (InterruptedException e) {
+                            intr = true;
+                        }
+                    }
+                }
+                if (module == NOT_FOUND) throw new ModuleNotFoundException(identifier.toString());
+                return (Module) module;
+            } finally {
+                if (intr) Thread.currentThread().interrupt();
+            }
+        }
+
+        void setModule(Module m) throws ModuleAlreadyExistsException {
+            synchronized (this) {
+                module = m == null ? NOT_FOUND : m;
+                notifyAll();
+            }
+        }
     }
 }
