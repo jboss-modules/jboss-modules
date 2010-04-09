@@ -22,14 +22,22 @@
 
 package org.jboss.modules;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.MalformedURLException;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -200,6 +208,67 @@ final class FileResourceLoader implements ResourceLoader {
         } catch (MalformedURLException e) {
             // must be invalid...?  (todo: check this out)
             return null;
+        }
+    }
+
+    public Collection<String> getPaths() {
+        final List<String> index = new ArrayList<String>();
+        // First check for an index file
+        final File indexFile = new File(root.getPath() + ".index");
+        if (indexFile.exists()) {
+            try {
+                final BufferedReader r = new BufferedReader(new InputStreamReader(new FileInputStream(indexFile)));
+                try {
+                    String s;
+                    while ((s = r.readLine()) != null) {
+                        index.add(s.trim());
+                    }
+                    return index;
+                } finally {
+                    // if exception is thrown, undo index creation
+                    r.close();
+                }
+            } catch (IOException e) {
+                index.clear();
+            }
+        }
+        // Manually build index
+        buildIndex(index, root);
+        // Now try to write it
+        boolean ok = false;
+        try {
+            final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(indexFile)));
+            try {
+                for (String name : index) {
+                    writer.write(name);
+                    writer.write('\n');
+                }
+                writer.close();
+                ok = true;
+            } finally {
+                try {
+                    writer.close();
+                } catch (IOException e) {
+                    // ignored
+                }
+            }
+        } catch (IOException e) {
+            // failed, ignore
+        } finally {
+            if (! ok) {
+                // well, we tried...
+                indexFile.delete();
+            }
+        }
+        return index;
+    }
+
+    private void buildIndex(final List<String> index, final File root) {
+        for (File file : root.listFiles()) {
+            if (file.isDirectory()) {
+                index.add(file.getPath());
+                buildIndex(index, file);
+            }
         }
     }
 }

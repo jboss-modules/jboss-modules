@@ -23,11 +23,20 @@
 package org.jboss.modules;
 
 import java.io.IOException;
+import java.util.Collection;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public interface ResourceLoader {
+
+    /**
+     * Get the class specification for the given class name.  If no matching class is found, {@code null} is returned.
+     *
+     * @param name the name
+     * @return the class specification, or {@code null} if the named class is not found
+     * @throws IOException if an I/O error occurs
+     */
     ClassSpec getClassSpec(String name) throws IOException;
 
     /**
@@ -42,6 +51,14 @@ public interface ResourceLoader {
     PackageSpec getPackageSpec(String name) throws IOException;
 
     /**
+     * Get a resource with the given name.  If no such resource is available, {@code null} is returned.
+     *
+     * @param name the resource name
+     * @return the resource, or {@code null} if it is not available
+     */
+    Resource getResource(String name);
+
+    /**
      * Get the absolute physical filesystem path for a library with the given name.
      *
      * @param name the name
@@ -49,5 +66,10 @@ public interface ResourceLoader {
      */
     String getLibrary(String name);
 
-    Resource getResource(String name);
+    /**
+     * Get the collection of resource paths.  Called one time only when the resource loader is initialized.
+     *
+     * @return the resource paths
+     */
+    Collection<String> getPaths();
 }

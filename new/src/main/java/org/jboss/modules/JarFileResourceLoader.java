@@ -22,13 +22,20 @@
 
 package org.jboss.modules;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.security.CodeSigner;
 import java.security.CodeSource;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.LinkedHashSet;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -145,5 +152,103 @@ final class JarFileResourceLoader implements ResourceLoader {
             // must be invalid...?  (todo: check this out)
             return null;
         }
+    }
+
+    public Collection<String> getPaths() {
+        final Collection<String> index = new LinkedHashSet<String>();
+        // First check for an external index
+        final JarFile jarFile = this.jarFile;
+        final String jarFileName = jarFile.getName();
+        final File indexFile = new File(jarFileName + ".index");
+        if (indexFile.exists()) {
+            try {
+                final BufferedReader r = new BufferedReader(new InputStreamReader(new FileInputStream(indexFile)));
+                try {
+                    String s;
+                    while ((s = r.readLine()) != null) {
+                        index.add(s.trim());
+                    }
+                    return index;
+                } finally {
+                    // if exception is thrown, undo index creation
+                    r.close();
+                }
+            } catch (IOException e) {
+                index.clear();
+            }
+        }
+        // Next try INDEX.LIST...
+        final JarEntry indexListEntry = jarFile.getJarEntry("META-INF/INDEX.LIST");
+        if (indexListEntry != null) {
+            try {
+                final BufferedReader r = new BufferedReader(new InputStreamReader(jarFile.getInputStream(indexListEntry)));
+                try {
+                    String s;
+                    while ((s = r.readLine()) != null) {
+                        if (s.startsWith("JarIndex-Version: ")) {
+                            break;
+                        } else {
+                            // invalid
+                            throw new IOException();
+                        }
+                    }
+                    while ((s = r.readLine()) != null) {
+                        if (s.trim().length() == 0) {
+                            break;
+                        } else {
+                            // invalid
+                            throw new IOException();
+                        }
+                    }
+                    final int idx = Math.max(jarFileName.lastIndexOf('/'), jarFileName.lastIndexOf('\\'));
+                    final String ourJarName = jarFileName.substring(idx + 1);
+                    boolean ok = false;
+                    while ((s = r.readLine()) != null) {
+                        final String foundJarName = s.substring(s.lastIndexOf('/') + 1).trim();
+                        if (foundJarName.equals(ourJarName)) {
+                            // found!
+                            ok = true;
+                            break;
+                        }
+                        // nope, consume section.
+                        while ((s = r.readLine()) != null) {
+                            if (s.trim().length() == 0) {
+                                break;
+                            }
+                        }
+                    }
+                    if (! ok) {
+                        // no good, generate index instead
+                        throw new IOException();
+                    }
+                    while ((s = r.readLine()) != null) {
+                        if (s.trim().length() == 0) {
+                            break;
+                        }
+                        index.add(s.trim());
+                    }
+                    return index;
+                } finally {
+                    // if exception is thrown, undo index creation
+                    r.close();
+                }
+            } catch (IOException e) {
+                index.clear();
+            }
+        }
+        final Enumeration<JarEntry> entries = jarFile.entries();
+        while (entries.hasMoreElements()) {
+            final JarEntry jarEntry = entries.nextElement();
+            final String name = jarEntry.getName();
+            final int idx = name.lastIndexOf('/');
+            if (idx == -1) continue;
+            final String path = name.substring(0, idx);
+            if (path.length() == 0 || path.endsWith("/")) {
+                // invalid name, just skip...
+                continue;
+            }
+            index.add(path);
+        }
+        return index;
     }
 }
