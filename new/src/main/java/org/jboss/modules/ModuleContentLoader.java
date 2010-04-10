@@ -26,8 +26,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Module content loader used to load resources from a collection of ResourceLoaders.
@@ -38,6 +40,7 @@ import java.util.Map;
 public final class ModuleContentLoader {
 
     private final Map<String, ResourceLoader> resourceLoaders;
+    private final Set<String> localPaths;
 
     /**
      * The empty module content loader.
@@ -68,6 +71,12 @@ public final class ModuleContentLoader {
 
     private ModuleContentLoader(Map<String, ResourceLoader> resourceLoaders) {
         this.resourceLoaders = resourceLoaders;
+        // build master index
+        final Set<String> localPaths = new LinkedHashSet<String>();
+        for (ResourceLoader rl : resourceLoaders.values()) {
+            localPaths.addAll(rl.getPaths());
+        }
+        this.localPaths = localPaths;
     }
 
     /**
@@ -93,7 +102,7 @@ public final class ModuleContentLoader {
      * Get a resource loader by a root name
      *
      * @param root The resource loader root
-     * @return The ResourceLoader at the provided root or null if not found
+     * @return The ResourceLoader at the provided root or {@code null} if not found
      */
     public ResourceLoader getResourceLoader(String root) {
         return resourceLoaders.get(root);
@@ -104,7 +113,7 @@ public final class ModuleContentLoader {
      * resource loaders.
      *
      * @param name The resource name
-     * @return The resource or null if not found in any resource loader
+     * @return The resource or {@code null} if not found in any resource loader
      */
     public Resource getResource(String name) {
         for (ResourceLoader resourceLoader : resourceLoaders.values()) {
@@ -120,7 +129,7 @@ public final class ModuleContentLoader {
      *
      * @param root The root to get the resource from
      * @param name The name of the resource
-     * @return The resource or null if not found
+     * @return The resource or {@code null} if not found
      */
     public Resource getResource(String root, String name) {
         final ResourceLoader resourceLoader = resourceLoaders.get(root);
@@ -193,5 +202,14 @@ public final class ModuleContentLoader {
             if (res != null) return res;
         }
         return null;
+    }
+
+    /**
+     * Get the local paths exported by this content loader.
+     *
+     * @return the local paths
+     */
+    public Set<String> getLocalPaths() {
+        return localPaths;
     }
 }
