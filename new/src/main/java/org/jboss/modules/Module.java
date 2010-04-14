@@ -77,15 +77,17 @@ public final class Module {
 
     public final Class<?> getExportedClass(String className) {
         try {
-            return moduleClassLoader.loadClass(className);
-            // TODO: Need to make sure we should export the class (Maybe use Module.forClass(class)
+            return moduleClassLoader.loadClassExternal(className);
         } catch (ClassNotFoundException e) {
             return null;
         }
     }
 
-    Class<?> getImportedClass(final String className) {
+    Class<?> getImportedClass(final String className, final boolean exportsOnly) {
         for(Dependency dependency : dependencies) {
+            if(exportsOnly && !dependency.isExport())
+                continue;
+
             final Module module = dependency.getModule();
             Class<?> importedClass = module.getExportedClass(className);
             if(importedClass != null)

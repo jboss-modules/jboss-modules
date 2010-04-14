@@ -87,18 +87,31 @@ public final class ModuleClassLoader extends SecureClassLoader {
 
     @Override
     protected Class<?> loadClass(String className, boolean resolve) throws ClassNotFoundException {
+        Class<?> loadedClass = loadClassInternal(className);
+        if (resolve) resolveClass(loadedClass);
+        return loadedClass;
+    }
+
+    protected Class<?> loadClassInternal(String className) throws ClassNotFoundException {
+        return performLoadClass(className, false);
+    }
+
+    protected Class<?> loadClassExternal(String className) throws ClassNotFoundException {
+        return performLoadClass(className, true);
+    }
+
+    private Class<?> performLoadClass(String className, boolean exportsOnly) throws ClassNotFoundException {
+
         if (className == null) {
             throw new IllegalArgumentException("name is null");
         }
         if (className.startsWith("java.")) {
             // always delegate to system
-            final Class<?> systemClass = findSystemClass(className);
-            if (resolve) resolveClass(systemClass);
-            return systemClass;
+            return findSystemClass(className);
         }
         if (Thread.holdsLock(this) && Thread.currentThread() != LoaderThreadHolder.LOADER_THREAD) {
             // Only the classloader thread may take this lock; use a condition to relinquish it
-            final LoadRequest req = new LoadRequest(className, resolve, this);
+            final LoadRequest req = new LoadRequest(className, exportsOnly, this);
             final Queue<LoadRequest> queue = LoaderThreadHolder.REQUEST_QUEUE;
             synchronized (LoaderThreadHolder.REQUEST_QUEUE) {
                 queue.add(req);
@@ -122,9 +135,9 @@ public final class ModuleClassLoader extends SecureClassLoader {
             Class<?> loadedClass;
             final Map<String, Class<?>> cache = this.cache;
             synchronized (this) {
-                if (blackList.contains(className)) {
-                    throw new ClassNotFoundException(className);
-                }
+//                if (blackList.contains(className))` {
+//                    throw new ClassNotFoundException(className);
+//                }
                 loadedClass = cache.get(className);
             }
             if (loadedClass != null) {
@@ -134,14 +147,14 @@ public final class ModuleClassLoader extends SecureClassLoader {
             if (flags.contains(Module.Flag.CHILD_FIRST)) {
                 loadedClass = loadClassLocal(className);
                 if (loadedClass == null) {
-                    loadedClass = module.getImportedClass(className);
+                    loadedClass = module.getImportedClass(className, exportsOnly);
                 }
                 if (loadedClass == null) try {
                     loadedClass = findSystemClass(className);
                 } catch (ClassNotFoundException e) {
                 }
             } else {
-                loadedClass = module.getImportedClass(className);
+                loadedClass = module.getImportedClass(className, exportsOnly);
                 if (loadedClass == null) try {
                     loadedClass = findSystemClass(className);
                 } catch (ClassNotFoundException e) {
@@ -161,7 +174,6 @@ public final class ModuleClassLoader extends SecureClassLoader {
             synchronized (this) {
                 cache.put(className, loadedClass);
             }
-            if (loadedClass != null && resolve) resolveClass(loadedClass);
             return loadedClass;
         }
     }
@@ -332,12 +344,12 @@ public final class ModuleClassLoader extends SecureClassLoader {
         private final String className;
         private final ModuleClassLoader requester;
         private Class<?> result;
-        private boolean resolve;
+        private boolean exportsOnly;
         private boolean done;
 
-        public LoadRequest(final String className, final boolean resolve, final ModuleClassLoader requester) {
+        public LoadRequest(final String className, final boolean exportsOnly, final ModuleClassLoader requester) {
             this.className = className;
-            this.resolve = resolve;
+            this.exportsOnly = exportsOnly;
             this.requester = requester;
         }
     }
@@ -365,7 +377,7 @@ public final class ModuleClassLoader extends SecureClassLoader {
                     Class<?> result = null;
                     synchronized (loader) {
                         try {
-                            result = loader.loadClass(request.className, request.resolve);
+                            result = loader.performLoadClass(request.className, request.exportsOnly);
                         }
                         finally {
                             // no matter what, the requester MUST be notified
