@@ -85,7 +85,7 @@ public final class Module {
         for(Dependency dependency : dependencies) {
             final Module module = dependency.getModule();
             if(dependency.isExport()) {
-                allExportedPaths.addAll(dependency.getModule().getAllExportedPaths());
+                allExportedPaths.addAll(module.getAllExportedPaths());
             }
             for(String path : module.getAllExportedPaths()) {
                 if(!pathsToImports.containsKey(path))
