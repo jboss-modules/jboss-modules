@@ -135,9 +135,9 @@ public final class ModuleClassLoader extends SecureClassLoader {
             Class<?> loadedClass;
             final Map<String, Class<?>> cache = this.cache;
             synchronized (this) {
-//                if (blackList.contains(className))` {
-//                    throw new ClassNotFoundException(className);
-//                }
+                if (blackList.contains(className)) {
+                    throw new ClassNotFoundException(className);
+                }
                 loadedClass = cache.get(className);
             }
             if (loadedClass != null) {
@@ -163,7 +163,7 @@ public final class ModuleClassLoader extends SecureClassLoader {
                     loadedClass = loadClassLocal(className);
                 }
             }
-            if (loadedClass == null) {
+            if (loadedClass == null && !exportsOnly) {
                 if (! flags.contains(Module.Flag.NO_BLACKLIST)) {
                     synchronized (this) {
                         blackList.add(className);

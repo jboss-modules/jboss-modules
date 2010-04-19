@@ -22,6 +22,7 @@
 
 package org.jboss.modules;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -29,8 +30,12 @@ import java.lang.reflect.Modifier;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.List;
+import java.util.LinkedList;
 import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -62,6 +67,8 @@ public final class Module {
     private final ModuleClassLoader moduleClassLoader;
     private final ModuleLoader moduleLoader;
     private final Set<Flag> flags;
+    private final Set<String> allExportedPaths = new HashSet<String>();
+    private final Map<String, List<Dependency>> pathsToImports = new HashMap<String, List<Dependency>>();
 
     Module(final ModuleSpec spec, final List<Dependency> dependencies, final Set<Flag> flags, final ModuleLoader moduleLoader) {
         this.moduleLoader = moduleLoader;
@@ -73,6 +80,19 @@ public final class Module {
         // should be safe, so...
         //noinspection ThisEscapedInObjectConstruction
         moduleClassLoader = new ModuleClassLoader(this, flags, spec.getAssertionSetting());
+
+        allExportedPaths.addAll(contentLoader.getLocalPaths());
+        for(Dependency dependency : dependencies) {
+            final Module module = dependency.getModule();
+            if(dependency.isExport()) {
+                allExportedPaths.addAll(dependency.getModule().getAllExportedPaths());
+            }
+            for(String path : module.getAllExportedPaths()) {
+                if(!pathsToImports.containsKey(path))
+                    pathsToImports.put(path, new LinkedList<Dependency>());
+                pathsToImports.get(path).add(dependency);
+            }
+        }
     }
 
     public final Class<?> getExportedClass(String className) {
@@ -84,7 +104,17 @@ public final class Module {
     }
 
     Class<?> getImportedClass(final String className, final boolean exportsOnly) {
-        for(Dependency dependency : dependencies) {
+
+        final Map<String, List<Dependency>> pathsToImports = this.pathsToImports;
+
+        int idx =  className.lastIndexOf('.');
+        final String path = idx > -1 ? className.substring(0, idx).replace('.', File.separatorChar) : "" ;
+
+        final List<Dependency> dependenciesForPath = pathsToImports.get(path);
+        if(dependenciesForPath == null)
+            return null;
+
+        for(Dependency dependency : dependenciesForPath) {
             if(exportsOnly && !dependency.isExport())
                 continue;
 
@@ -188,6 +218,10 @@ public final class Module {
      */
     public ModuleClassLoader getClassLoader() {
         return moduleClassLoader;
+    }
+
+    public Set<String> getAllExportedPaths() {
+        return allExportedPaths;
     }
 
     /**

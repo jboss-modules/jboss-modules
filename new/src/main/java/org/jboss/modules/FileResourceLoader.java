@@ -233,7 +233,7 @@ final class FileResourceLoader implements ResourceLoader {
             }
         }
         // Manually build index
-        buildIndex(index, root);
+        buildIndex(index, root, "");
         // Now try to write it
         boolean ok = false;
         try {
@@ -263,11 +263,11 @@ final class FileResourceLoader implements ResourceLoader {
         return index;
     }
 
-    private void buildIndex(final List<String> index, final File root) {
+    private void buildIndex(final List<String> index, final File root, final String pathBase) {
         for (File file : root.listFiles()) {
             if (file.isDirectory()) {
-                index.add(file.getPath());
-                buildIndex(index, file);
+                index.add(pathBase + file.getName());
+                buildIndex(index, file, pathBase + file.getName() +  File.separatorChar);
             }
         }
     }
