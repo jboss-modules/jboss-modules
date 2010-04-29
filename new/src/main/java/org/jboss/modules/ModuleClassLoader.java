@@ -154,7 +154,7 @@ public final class ModuleClassLoader extends SecureClassLoader {
                 }
             }
             if (loadedClass == null) {
-                throw new ClassNotFoundException(className + " -- from [" + module + "]");
+                throw new ClassNotFoundException(className);
             }
             synchronized (this) {
                 cache.put(className, loadedClass);
@@ -236,11 +236,6 @@ public final class ModuleClassLoader extends SecureClassLoader {
             }
             return pkg;
         }
-    }
-
-    @Override
-    protected Package getPackage(String name) {
-        return super.getPackage(name);
     }
 
     @Override
