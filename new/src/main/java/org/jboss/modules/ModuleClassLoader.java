@@ -31,7 +31,6 @@ import java.security.PrivilegedAction;
 import java.security.SecureClassLoader;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -59,24 +58,18 @@ public final class ModuleClassLoader extends SecureClassLoader {
             public Boolean run() {
                 return Boolean.valueOf(System.getProperty("jboss.modules.debug.defineClass", "false"));
             }
-        }).booleanValue();
+        });
     }
 
     private final Module module;
     private final Set<Module.Flag> flags;
     private final Map<String, Class<?>> cache = new HashMap<String, Class<?>>(256);
-    private final Set<String> blackList;
 
     ModuleClassLoader(final Module module, final Set<Module.Flag> flags, final AssertionSetting setting) {
         this.module = module;
         this.flags = flags;
         if (setting != AssertionSetting.INHERIT) {
             setDefaultAssertionStatus(setting == AssertionSetting.ENABLED);
-        }
-        if (flags.contains(Module.Flag.NO_BLACKLIST)) {
-            blackList = null;
-        } else {
-            blackList = Collections.newSetFromMap(new Cache());
         }
     }
 
@@ -135,9 +128,6 @@ public final class ModuleClassLoader extends SecureClassLoader {
             Class<?> loadedClass;
             final Map<String, Class<?>> cache = this.cache;
             synchronized (this) {
-                if (blackList.contains(className)) {
-                    throw new ClassNotFoundException(className);
-                }
                 loadedClass = cache.get(className);
             }
             if (loadedClass != null) {
@@ -163,13 +153,8 @@ public final class ModuleClassLoader extends SecureClassLoader {
                     loadedClass = loadClassLocal(className);
                 }
             }
-            if (loadedClass == null && !exportsOnly) {
-                if (! flags.contains(Module.Flag.NO_BLACKLIST)) {
-                    synchronized (this) {
-                        blackList.add(className);
-                    }
-                }
-                throw new ClassNotFoundException(className);
+            if (loadedClass == null) {
+                throw new ClassNotFoundException(className + " -- from [" + module + "]");
             }
             synchronized (this) {
                 cache.put(className, loadedClass);
@@ -251,6 +236,11 @@ public final class ModuleClassLoader extends SecureClassLoader {
             }
             return pkg;
         }
+    }
+
+    @Override
+    protected Package getPackage(String name) {
+        return super.getPackage(name);
     }
 
     @Override
@@ -363,6 +353,13 @@ public final class ModuleClassLoader extends SecureClassLoader {
 
         @Override
         public void run() {
+            /*
+             This resolves a know deadlock that can occur if one thread is in the process of defining a package as part of
+             defining a class, and another thread is defining the system package that can result in loading a class.  One holds
+             the Package.pkgs lock and one holds the Classloader lock.
+            */
+            Package.getPackages();
+            
             final Queue<LoadRequest> queue = LoaderThreadHolder.REQUEST_QUEUE;
             for (; ;) {
                 try {

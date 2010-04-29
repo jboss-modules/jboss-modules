@@ -249,8 +249,7 @@ public final class Module {
 
     public enum Flag {
         // flags here
-        CHILD_FIRST,
-        NO_BLACKLIST,
+        CHILD_FIRST
     }
 
     public String toString() {
