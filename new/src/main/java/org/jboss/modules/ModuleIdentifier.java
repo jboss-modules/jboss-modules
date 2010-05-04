@@ -194,9 +194,9 @@ public final class ModuleIdentifier implements Serializable {
         if (resourceName == null) {
             return toURL(resourceRoot);
         } else if (resourceRoot == null) {
-            return new URL("module", null, -1, toSpecString() + "?" + resourceName);
+            return new URL("module", null, -1, toSpecString() + "?/" + resourceName);
         } else {
-            return new URL("module", null, -1, toSpecString() + "/" + resourceRoot + "?" + resourceName);
+            return new URL("module", null, -1, toSpecString() + "/" + resourceRoot + "?/" + resourceName);
         }
     }
 

@@ -82,7 +82,7 @@ public final class ResourceIdentifier implements Serializable {
 
     public static ResourceIdentifier fromURL(URL url) throws MalformedURLException {
         final ModuleIdentifier moduleIdentifier = ModuleIdentifier.fromURL(url);
-        final String moduleRootSpec = url.getFile();
+        final String moduleRootSpec = url.getPath();
         final int si = moduleRootSpec.indexOf('/');
         final String rootSpec;
         if (si == -1) {

@@ -154,7 +154,7 @@ public final class ModuleClassLoader extends SecureClassLoader {
                 }
             }
             if (loadedClass == null) {
-                throw new ClassNotFoundException(className);
+                throw new ClassNotFoundException(className + " from [" + module+ "]");
             }
             synchronized (this) {
                 cache.put(className, loadedClass);

@@ -144,7 +144,10 @@ final class JarFileResourceLoader implements ResourceLoader {
     public Resource getResource(final String name) {
         try {
             final JarFile jarFile = this.jarFile;
-            final JarEntry entry = jarFile.getJarEntry(name);
+            String entryName = name;
+            if(entryName.startsWith("/"))
+                entryName = entryName.substring(1);
+            final JarEntry entry = jarFile.getJarEntry(entryName);
             if (entry == null) {
                 return null;
             }
