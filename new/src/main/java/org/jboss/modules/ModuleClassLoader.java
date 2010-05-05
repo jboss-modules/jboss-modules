@@ -237,11 +237,6 @@ public final class ModuleClassLoader extends SecureClassLoader {
     }
 
     @Override
-    protected Package getPackage(String name) {
-        return super.getPackage(name);
-    }
-
-    @Override
     protected String findLibrary(final String libname) {
         return module.getLocalLibrary(libname);
     }
