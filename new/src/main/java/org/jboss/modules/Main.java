@@ -24,6 +24,10 @@ package org.jboss.modules;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+
+import java.util.logging.LogManager;
 
 public final class Main {
 
@@ -46,6 +50,8 @@ public final class Main {
         System.out.println("    -mp <search path of directories>");
         System.out.println("                  A list of directories, separated by '" + File.pathSeparator + "', where modules may be located");
         System.out.println("                  If not specified, the value of the \"module.path\" system property is used");
+        System.out.println("    -logmodule <module-name>");
+        System.out.println("                  The module to use to load the system logmanager");
         System.out.println("    -version      Print version and exit\n");
         System.out.println("and module-spec is a valid module specification string");
     }
@@ -55,6 +61,7 @@ public final class Main {
         String[] moduleArgs = null;
         String modulePath = null;
         ModuleIdentifier moduleIdentifier = null;
+        ModuleIdentifier logManagerModuleIdentifier = null;
         for (int i = 0, argsLength = argsLen; i < argsLength; i++) {
             final String arg = args[i];
             try {
@@ -73,6 +80,8 @@ public final class Main {
                         }
                         modulePath = args[++i];
                         System.setProperty("module.path", modulePath);
+                    } else if ("-logmodule".equals(arg)) {
+                        logManagerModuleIdentifier = ModuleIdentifier.fromString(args[++i]);
                     } else {
                         System.err.printf("Invalid option '%s'\n", arg);
                         usage();
@@ -99,6 +108,15 @@ public final class Main {
             System.exit(1);
         }
         final ModuleLoader loader = InitialModuleLoader.INSTANCE;
+        if (logManagerModuleIdentifier != null) {
+            final ModuleClassLoader classLoader = ModuleClassLoader.forModule(logManagerModuleIdentifier);
+            final ClassLoader old = setContextClassLoader(classLoader);
+            try {
+                LogManager.getLogManager();
+            } finally {
+                setContextClassLoader(old);
+            }
+        }
         final Module module;
         try {
             module = loader.loadModule(moduleIdentifier);
@@ -113,5 +131,25 @@ public final class Main {
             throw e.getCause();
         }
         return;
+    }
+
+    private static ClassLoader setContextClassLoader(final ClassLoader classLoader) {
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            return AccessController.doPrivileged(new PrivilegedAction<ClassLoader>() {
+                public ClassLoader run() {
+                    return doSetContextClassLoader(classLoader);
+                }
+            });
+        }
+        return doSetContextClassLoader(classLoader);
+    }
+
+    private static ClassLoader doSetContextClassLoader(final ClassLoader classLoader) {
+        try {
+            return Thread.currentThread().getContextClassLoader();
+        } finally {
+            Thread.currentThread().setContextClassLoader(classLoader);
+        }
     }
 }
