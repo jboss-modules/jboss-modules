@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<jboss-module xmlns="urn:jboss:module:1.0">
-    <export package="org.jboss.test.other"/>
-    <import group="circular" module="a-module" version="1.0"/>
-</jboss-module>
