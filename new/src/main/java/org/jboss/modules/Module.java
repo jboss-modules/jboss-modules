@@ -131,7 +131,30 @@ public final class Module {
     }
 
     public final Resource getExportedResource(final String resourcePath) {
+        // TODO: obey order flags
+        Resource resource = getImportedResource(resourcePath);
+        if(resource != null)
+            return resource;
         return contentLoader.getResource(resourcePath);
+    }
+
+    Resource getImportedResource(final String resourcePath) {
+        final Map<String, List<Dependency>> pathsToImports = this.pathsToImports;
+
+        int idx =  resourcePath.lastIndexOf('/');
+        final String path = idx > -1 ? resourcePath.substring(0, idx) : resourcePath ;
+
+        final List<Dependency> dependenciesForPath = pathsToImports.get(path);
+        if(dependenciesForPath == null)
+            return null;
+
+        for(Dependency dependency : dependenciesForPath) {
+            final Module module = dependency.getModule();
+            Resource importedResource = module.getExportedResource(resourcePath);
+            if(importedResource != null)
+                return importedResource;
+        }
+        return null;
     }
 
     public final Iterable<Resource> getExportedResources(final String resourcePath) {

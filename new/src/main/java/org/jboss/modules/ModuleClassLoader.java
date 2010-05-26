@@ -34,7 +34,6 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
@@ -58,7 +57,7 @@ public final class ModuleClassLoader extends SecureClassLoader {
             public Boolean run() {
                 return Boolean.valueOf(System.getProperty("jboss.modules.debug.defineClass", "false"));
             }
-        });
+        }).booleanValue();
     }
 
     private final Module module;
@@ -139,9 +138,8 @@ public final class ModuleClassLoader extends SecureClassLoader {
                 if (loadedClass == null) {
                     loadedClass = module.getImportedClass(className, exportsOnly);
                 }
-                if (loadedClass == null) try {
+                if (loadedClass == null) {
                     loadedClass = findSystemClass(className);
-                } catch (ClassNotFoundException e) {
                 }
             } else {
                 loadedClass = module.getImportedClass(className, exportsOnly);
@@ -382,19 +380,6 @@ public final class ModuleClassLoader extends SecureClassLoader {
                     // ignore
                 }
             }
-        }
-    }
-
-    private static class Cache extends LinkedHashMap<String, Boolean> {
-
-        private static final long serialVersionUID = 3028457192008602040L;
-
-        private Cache() {
-            super(256, 0.75f, true);
-        }
-
-        protected boolean removeEldestEntry(final Map.Entry<String, Boolean> eldest) {
-            return size() > 1000;
         }
     }
 }
