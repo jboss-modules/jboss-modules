@@ -23,13 +23,16 @@
 package org.jboss.modules;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.MalformedURLException;
 import java.security.CodeSigner;
 import java.security.CodeSource;
@@ -252,6 +255,32 @@ final class JarFileResourceLoader implements ResourceLoader {
                 continue;
             }
             index.add(path);
+        }
+        // Now try to write it
+        boolean ok = false;
+        try {
+            final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(indexFile)));
+            try {
+                for (String name : index) {
+                    writer.write(name);
+                    writer.write('\n');
+                }
+                writer.close();
+                ok = true;
+            } finally {
+                try {
+                    writer.close();
+                } catch (IOException e) {
+                    // ignored
+                }
+            }
+        } catch (IOException e) {
+            // failed, ignore
+        } finally {
+            if (! ok) {
+                // well, we tried...
+                indexFile.delete();
+            }
         }
         return index;
     }
