@@ -86,7 +86,11 @@ final class FileResourceLoader implements ResourceLoader {
                 } else {
                     realName = "unknown";
                 }
-                if (sysArch.startsWith("X86_64")) {
+                if (sysArch.startsWith("SPARCV9")) {
+                    realArch = "sparcv9";
+                } else if (sysArch.startsWith("SPARC")) {
+                    realArch = "sparc";
+                } else if (sysArch.startsWith("X86_64")) {
                     realArch = "x86_64";
                 } else if (sysArch.startsWith("I386") || sysArch.startsWith("I586") || sysArch.startsWith("I686") || sysArch.startsWith("X86")) {
                     realArch = "i686";
