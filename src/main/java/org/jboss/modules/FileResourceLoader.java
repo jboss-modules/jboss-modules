@@ -86,7 +86,7 @@ final class FileResourceLoader implements ResourceLoader {
                 } else {
                     realName = "unknown";
                 }
-                if (sysArch.startsWith("SPARCV9")) {
+                if (sysArch.startsWith("SPARCV9") || sysArch.startsWith("SPARC64")) {
                     realArch = "sparcv9";
                 } else if (sysArch.startsWith("SPARC")) {
                     realArch = "sparc";
