@@ -260,6 +260,60 @@ public final class Module {
         return cl instanceof ModuleClassLoader ? ((ModuleClassLoader) cl).getModule() : null;
     }
 
+    /**
+     * Load a class from a module.
+     *
+     * @param moduleIdentifier the identifier of the module from which the class should be loaded
+     * @param className the class name to load
+     * @param initialize {@code true} to initialize the class
+     * @return the class
+     * @throws ModuleLoadException if the module could not be loaded
+     * @throws ClassNotFoundException if the class could not be loaded
+     */
+    public static Class<?> loadClass(final ModuleIdentifier moduleIdentifier, final String className, final boolean initialize) throws ModuleLoadException, ClassNotFoundException {
+        return Class.forName(className, initialize, ModuleClassLoader.forModule(moduleIdentifier));
+    }
+
+    /**
+     * Load a class from a module.  The class will be initialized.
+     *
+     * @param moduleIdentifier the identifier of the module from which the class should be loaded
+     * @param className the class name to load
+     * @return the class
+     * @throws ModuleLoadException if the module could not be loaded
+     * @throws ClassNotFoundException if the class could not be loaded
+     */
+    public static Class<?> loadClass(final ModuleIdentifier moduleIdentifier, final String className) throws ModuleLoadException, ClassNotFoundException {
+        return Class.forName(className, true, ModuleClassLoader.forModule(moduleIdentifier));
+    }
+
+    /**
+     * Load a class from a module.
+     *
+     * @param moduleIdentifierString the identifier of the module from which the class should be loaded
+     * @param className the class name to load
+     * @param initialize {@code true} to initialize the class
+     * @return the class
+     * @throws ModuleLoadException if the module could not be loaded
+     * @throws ClassNotFoundException if the class could not be loaded
+     */
+    public static Class<?> loadClass(final String moduleIdentifierString, final String className, final boolean initialize) throws ModuleLoadException, ClassNotFoundException {
+        return Class.forName(className, initialize, ModuleClassLoader.forModule(ModuleIdentifier.fromString(moduleIdentifierString)));
+    }
+
+    /**
+     * Load a class from a module.  The class will be initialized.
+     *
+     * @param moduleIdentifierString the identifier of the module from which the class should be loaded
+     * @param className the class name to load
+     * @return the class
+     * @throws ModuleLoadException if the module could not be loaded
+     * @throws ClassNotFoundException if the class could not be loaded
+     */
+    public static Class<?> loadClass(final String moduleIdentifierString, final String className) throws ModuleLoadException, ClassNotFoundException {
+        return Class.forName(className, true, ModuleClassLoader.forModule(ModuleIdentifier.fromString(moduleIdentifierString)));
+    }
+
     PackageSpec getLocalPackageSpec(final String name) throws IOException {
         return contentLoader.getPackageSpec(name);
     }
