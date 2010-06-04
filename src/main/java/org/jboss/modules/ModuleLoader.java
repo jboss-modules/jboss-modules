@@ -17,7 +17,7 @@ import static org.jboss.modules.ConcurrentReferenceHashMap.ReferenceType.STRONG;
  */
 public abstract class ModuleLoader {
 
-    private static ThreadLocal<Set<ModuleIdentifier>> VISITED = new ThreadLocal<Set<ModuleIdentifier>>() {
+    private ThreadLocal<Set<ModuleIdentifier>> VISITED = new ThreadLocal<Set<ModuleIdentifier>>() {
         @Override
         protected Set<ModuleIdentifier> initialValue() {
             return new LinkedHashSet<ModuleIdentifier>();

@@ -60,6 +60,8 @@ public final class Module {
         });
     }
 
+    private static ModuleLoaderSelector moduleLoaderSelector = ModuleLoaderSelector.DEFAULT;
+
     private final ModuleIdentifier identifier;
     private final List<Dependency> dependencies;
     private final ModuleContentLoader contentLoader;
@@ -267,7 +269,7 @@ public final class Module {
     }
 
     public static Module getModule(final ModuleIdentifier identifier) throws ModuleLoadException {
-        return InitialModuleLoader.INSTANCE.loadModule(identifier);
+        return moduleLoaderSelector.getCurrentLoader().loadModule(identifier);
     }
 
     public enum Flag {
@@ -277,5 +279,10 @@ public final class Module {
 
     public String toString() {
         return "Module \"" + identifier + "\"";
+    }
+
+    public static void setModuleLoaderSelector(final ModuleLoaderSelector moduleLoaderSelector) {
+        if(moduleLoaderSelector == null) throw new IllegalArgumentException("ModuleLoaderSelector can not be null");
+        Module.moduleLoaderSelector = moduleLoaderSelector;
     }
 }
