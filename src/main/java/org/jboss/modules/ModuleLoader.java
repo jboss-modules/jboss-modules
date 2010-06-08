@@ -28,6 +28,16 @@ public abstract class ModuleLoader {
         }
     };
 
+    /**
+     * Set the logger to be used for module load events.
+     *
+     * @param moduleLogger the logger to use
+     */
+    public static void setLogger(ModuleLogger moduleLogger) {
+        // todo perm check
+        log = moduleLogger;
+    }
+
     private ThreadLocal<Set<ModuleIdentifier>> VISITED = new ThreadLocal<Set<ModuleIdentifier>>() {
         @Override
         protected Set<ModuleIdentifier> initialValue() {
