@@ -17,6 +17,17 @@ import static org.jboss.modules.ConcurrentReferenceHashMap.ReferenceType.STRONG;
  */
 public abstract class ModuleLoader {
 
+    private static volatile ModuleLogger log = new ModuleLogger() {
+        public void moduleLoading(final ModuleIdentifier identifier) {
+        }
+
+        public void moduleLoaded(final ModuleIdentifier identifier) {
+        }
+
+        public void moduleLoadFailed(final ModuleIdentifier identifier, final Throwable cause) {
+        }
+    };
+
     private ThreadLocal<Set<ModuleIdentifier>> VISITED = new ThreadLocal<Set<ModuleIdentifier>>() {
         @Override
         protected Set<ModuleIdentifier> initialValue() {
@@ -48,8 +59,14 @@ public abstract class ModuleLoader {
             if (futureModule == null) {
                 visited.add(identifier);
                 try {
+                    log.moduleLoading(identifier);
                     final Module module = findModule(identifier);
-                    if (module == null) throw new ModuleNotFoundException(identifier.toString());
+                    if (module == null) {
+                        final ModuleNotFoundException e = new ModuleNotFoundException(identifier.toString());
+                        log.moduleLoadFailed(identifier, e);
+                        throw e;
+                    }
+                    log.moduleLoaded(identifier);
                     return module;
                 } finally {
                     visited.remove(identifier);
@@ -114,12 +131,15 @@ public abstract class ModuleLoader {
             return module;
         } catch (ModuleLoadException e) {
             futureModule.setModule(null);
+            log.moduleLoadFailed(moduleIdentifier, e);
             throw e;
         } catch (RuntimeException e) {
             futureModule.setModule(null);
+            log.moduleLoadFailed(moduleIdentifier, e);
             throw e;
         } catch (Error e) {
             futureModule.setModule(null);
+            log.moduleLoadFailed(moduleIdentifier, e);
             throw e;
         }
     }
