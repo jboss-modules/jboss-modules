@@ -32,6 +32,11 @@ import java.util.Enumeration;
 import java.util.Queue;
 
 /**
+ * A classloader which can delegate to multiple other classloaders without risk of deadlock.  A concurrent class loader
+ * should only ever be delegated to by another concurrent class loader; however a concurrent class loader <i>may</i>
+ * delegate to a standard hierarchical class loader.  In other words, holding a lock on another class loader while invoking
+ * a method on this class loader may cause an unexpected deadlock.
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public abstract class ConcurrentClassLoader extends SecureClassLoader {
