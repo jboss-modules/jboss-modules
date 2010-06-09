@@ -20,7 +20,7 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.jboss.modules.protocol.module;
+package org.jboss.modules;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,16 +28,11 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
 
-import org.jboss.modules.Module;
-import org.jboss.modules.ModuleLoadException;
-import org.jboss.modules.Resource;
-import org.jboss.modules.ResourceIdentifier;
-
 /**
  * The handler for "module:" URL types.  The URL format is:<br/>
  * <pre><code>        module:groupId:moduleName[:slot][/root/name][?path/to/resource]</code></pre>
  */
-public final class Handler extends URLStreamHandler {
+final class ModuleProtocolHandler extends URLStreamHandler {
 
     protected URLConnection openConnection(final URL u) throws IOException {
         final ResourceIdentifier identifier = ResourceIdentifier.fromURL(u);
