@@ -159,7 +159,7 @@ public abstract class ModuleLoader {
             final ModuleContentLoader contentLoader = moduleSpec.getContentLoader();
             exportedPaths.addAll(contentLoader.getFilteredLocalPaths());
             
-            final Module module = new Module(moduleSpec, dependencies, moduleSpec.getModuleFlags(), this, exportedPaths, pathsToImports);
+            final Module module = new Module(moduleSpec, moduleSpec.getModuleFlags(), this, exportedPaths, pathsToImports);
             synchronized (futureModule) {
                 futureModule.setModule(module);
             }
