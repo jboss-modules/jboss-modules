@@ -30,6 +30,7 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -179,14 +180,28 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
 
     @Override
     public URL findResource(String name, boolean exportsOnly) {
-        final Resource resource = module.getExportedResource(name);
-        return resource == null ? null : resource.getURL();
+        URL resource = null;
+        final Set<Module.Flag> flags = this.flags;
+        if (flags.contains(Module.Flag.CHILD_FIRST)) {
+            resource = module.getLocalResource(name);
+            if (resource == null) {
+                resource = module.getImportedResource(name, exportsOnly);
+            }
+        } else {
+            resource = module.getImportedResource(name, exportsOnly);
+            if (resource == null) {
+                resource = module.getLocalResource(name);
+            }
+        }
+        return resource;
     }
 
     @Override
     public Enumeration<URL> findResources(String name, boolean exportsOnly) throws IOException {
-        final Iterable<Resource> resources = module.getExportedResources(name);
-        final Iterator<Resource> iterator = resources.iterator();
+        final Set<URL> resources = new HashSet<URL>();
+        resources.addAll(module.getLocalResources(name));
+        resources.addAll(module.getImportedResources(name, exportsOnly));
+        final Iterator<URL> iterator = resources.iterator();
 
         return new Enumeration<URL>() {
             @Override
@@ -196,7 +211,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
 
             @Override
             public URL nextElement() {
-                return iterator.next().getURL();
+                return iterator.next();
             }
         };
     }
@@ -204,7 +219,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
     @Override
     public InputStream findResourceAsStream(final String name, boolean exportsOnly) {
         try {
-            final Resource resource = module.getExportedResource(name);
+            final URL resource = module.getExportedResource(name);
             return resource == null ? null : resource.openStream();
         } catch (IOException e) {
             return null;

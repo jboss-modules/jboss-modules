@@ -30,6 +30,11 @@ import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
@@ -53,22 +58,18 @@ public final class Module {
     private static ModuleLoaderSelector moduleLoaderSelector = ModuleLoaderSelector.DEFAULT;
 
     private final ModuleIdentifier identifier;
-    private final List<Dependency> dependencies;
     private final ModuleContentLoader contentLoader;
     private final String mainClassName;
     private final ModuleClassLoader moduleClassLoader;
     private final ModuleLoader moduleLoader;
-    private final Set<Flag> flags;
     private final Set<String> exportedPaths;
     private final Map<String, List<Dependency>> pathsToImports;
 
-    Module(final ModuleSpec spec, final List<Dependency> dependencies, final Set<Flag> flags, final ModuleLoader moduleLoader, final Set<String> exportedPaths, final Map<String, List<Dependency>> pathsToImports) {
+    Module(final ModuleSpec spec, final Set<Flag> flags, final ModuleLoader moduleLoader, final Set<String> exportedPaths, final Map<String, List<Dependency>> pathsToImports) {
         this.moduleLoader = moduleLoader;
         identifier = spec.getIdentifier();
         contentLoader = spec.getContentLoader();
         mainClassName = spec.getMainClass();
-        this.dependencies = dependencies;
-        this.flags = flags;
         // should be safe, so...
         //noinspection ThisEscapedInObjectConstruction
         moduleClassLoader = new ModuleClassLoader(this, flags, spec.getAssertionSetting());
@@ -112,15 +113,11 @@ public final class Module {
         return contentLoader.getClassSpec(className);
     }
 
-    public final Resource getExportedResource(final String resourcePath) {
-        // TODO: obey order flags
-        Resource resource = getImportedResource(resourcePath);
-        if(resource != null)
-            return resource;
-        return contentLoader.getResource(resourcePath);
+    public final URL getExportedResource(final String resourcePath) {
+        return moduleClassLoader.findResource(resourcePath, true);
     }
 
-    Resource getImportedResource(final String resourcePath) {
+    final URL getImportedResource(final String resourcePath, final boolean exportsOnly) {
         final Map<String, List<Dependency>> pathsToImports = this.pathsToImports;
 
         int idx =  resourcePath.lastIndexOf('/');
@@ -131,22 +128,70 @@ public final class Module {
             return null;
 
         for(Dependency dependency : dependenciesForPath) {
+            if(exportsOnly && !dependency.isExport())
+                continue;
+            
             final Module module = dependency.getModule();
-            Resource importedResource = module.getExportedResource(resourcePath);
+            URL importedResource = module.getExportedResource(resourcePath);
             if(importedResource != null)
                 return importedResource;
         }
         return null;
     }
 
-    public final Iterable<Resource> getExportedResources(final String resourcePath) {
-        // todo filter...
-        return contentLoader.getResources(resourcePath);
+    final URL getLocalResource(String resourcePath) {
+        final Resource localResource = contentLoader.getResource(resourcePath);
+        return localResource != null ? localResource.getURL() : null;
     }
 
     public final Resource getExportedResource(final String rootPath, final String resourcePath) {
-        // todo filter...
         return contentLoader.getResource(rootPath, resourcePath);
+    }
+
+    public final Collection<URL> getExportedResources(final String resourcePath) throws IOException {
+        final List<URL> exportedResources = new ArrayList<URL>();
+        final Enumeration<URL> resources = moduleClassLoader.findResources(resourcePath, true);
+        if(resources == null)
+            return exportedResources;
+        while(resources.hasMoreElements()) {
+            final URL resource = resources.nextElement();
+            exportedResources.add(resource);
+        }
+        return exportedResources;
+    }
+
+    final Collection<URL> getLocalResources(final String resourcePath) {
+        Iterable<Resource> resources = contentLoader.getResources(resourcePath);
+        if(resources != null) {
+            final List<URL> urls = new ArrayList<URL>();
+            for(Resource resource : resources) {
+                urls.add(resource.getURL());
+            }
+            return urls;
+        }
+        return Collections.emptyList();
+    }
+
+    final Collection<URL> getImportedResources(final String resourcePath, final boolean exportsOnly) throws IOException {
+        final Map<String, List<Dependency>> pathsToImports = this.pathsToImports;
+
+        int idx =  resourcePath.lastIndexOf('/');
+        final String path = idx > -1 ? resourcePath.substring(0, idx) : resourcePath ;
+
+        final List<Dependency> dependenciesForPath = pathsToImports.get(path);
+        if(dependenciesForPath == null)
+            return Collections.emptySet();
+
+        final Set<URL> importedUrls = new HashSet<URL>();
+        for(Dependency dependency : dependenciesForPath) {
+            if(exportsOnly && !dependency.isExport())
+                continue;
+            final Module module = dependency.getModule();
+            Collection<URL> importedResources = module.getExportedResources(resourcePath);
+            if(importedResources != null)
+                importedUrls.addAll(importedResources);
+        }
+        return importedUrls;
     }
 
     public final void run(final String[] args) throws NoSuchMethodException, InvocationTargetException {
