@@ -45,7 +45,7 @@ import java.util.jar.Manifest;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-final class FileResourceLoader implements ResourceLoader {
+final class FileResourceLoader extends AbstractResourceLoader{
     private static final String ARCH_NAME;
 
     static {

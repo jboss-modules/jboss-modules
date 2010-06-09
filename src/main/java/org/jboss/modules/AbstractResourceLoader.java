@@ -26,42 +26,13 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
- * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * Base resource loaded that managed the Export filter.
+ *
+ * @author John Bailey
  */
-public final class DependencySpec implements ExportFilterable {
-    private ModuleIdentifier moduleIdentifier;
-    private boolean export;
-    private boolean optional;
+public abstract class AbstractResourceLoader implements ResourceLoader {
     private final Set<String> exportIncludes = new HashSet<String>();
     private final Set<String> exportExcludes = new HashSet<String>();
-
-    public DependencySpec() {
-    }
-
-    public boolean isExport() {
-        return export;
-    }
-
-    public void setExport(final boolean export) {
-        this.export = export;
-    }
-
-    public ModuleIdentifier getModuleIdentifier() {
-        return moduleIdentifier;
-    }
-
-    public void setModuleIdentifier(final ModuleIdentifier moduleIdentifier) {
-        this.moduleIdentifier = moduleIdentifier;
-    }
-
-    public boolean isOptional() {
-        return optional;
-    }
-
-    public void setOptional(final boolean optional) {
-        this.optional = optional;
-    }
 
     public void addExportExclude(String path) {
         exportExcludes.add(path);

@@ -28,7 +28,7 @@ import java.util.Collection;
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public interface ResourceLoader {
+public interface ResourceLoader extends ExportFilterable {
 
     /**
      * Get the class specification for the given class name.  If no matching class is found, {@code null} is returned.

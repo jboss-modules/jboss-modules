@@ -24,7 +24,9 @@ package org.jboss.modules;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -41,6 +43,7 @@ public final class ModuleContentLoader {
 
     private final Map<String, ResourceLoader> resourceLoaders;
     private final Set<String> localPaths;
+    private final Set<String> filteredLocalPaths;
 
     /**
      * The empty module content loader.
@@ -73,10 +76,20 @@ public final class ModuleContentLoader {
         this.resourceLoaders = resourceLoaders;
         // build master index
         final Set<String> localPaths = new LinkedHashSet<String>();
+        final Set<String> filteredLocalPaths = new HashSet<String>();
         for (ResourceLoader rl : resourceLoaders.values()) {
-            localPaths.addAll(rl.getPaths());
+            final Collection<String> rlPaths = rl.getPaths();
+
+            final ExportFilter exportFilter = rl.getExportFilter();
+            for(String localPath : rlPaths) {
+                localPaths.add(localPath);
+                if(exportFilter.shouldExport(localPath)) {
+                    filteredLocalPaths.add(localPath);       
+                }
+            }
         }
         this.localPaths = localPaths;
+        this.filteredLocalPaths = filteredLocalPaths;
     }
 
     /**
@@ -211,5 +224,13 @@ public final class ModuleContentLoader {
      */
     public Set<String> getLocalPaths() {
         return localPaths;
+    }
+
+    /**
+     * Get filtered local paths
+     *
+     */
+    public Set<String> getFilteredLocalPaths() {
+        return filteredLocalPaths;
     }
 }

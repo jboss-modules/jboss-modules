@@ -2,8 +2,11 @@ package org.jboss.modules;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
@@ -118,6 +121,9 @@ public abstract class ModuleLoader {
         if (futureModule.module != null) {
             throw new ModuleAlreadyExistsException(moduleIdentifier.toString());
         }
+
+        final Map<String, List<Dependency>> pathsToImports = new HashMap<String, List<Dependency>>();
+        final Set<String> exportedPaths = new HashSet<String>();
         try {
             final List<Dependency> dependencies = new ArrayList<Dependency>(moduleSpec.getDependencies().size());
             for (DependencySpec dependencySpec : moduleSpec.getDependencies()) {
@@ -133,8 +139,27 @@ public abstract class ModuleLoader {
                 }
                 final Dependency dependency = new Dependency(dependencyModule, dependencySpec.isExport());
                 dependencies.add(dependency);
+
+                final ExportFilter filter = dependencySpec.getExportFilter();
+
+                final Set<String> moduleExportedPaths = dependencyModule.getExportedPaths();
+                if(dependency.isExport()) {
+                    for(String exportedPath : moduleExportedPaths) {
+                        if(filter.shouldExport(exportedPath))
+                            exportedPaths.add(exportedPath);
+                    }
+                }
+                for(String path : moduleExportedPaths) {
+                    if(!pathsToImports.containsKey(path))
+                        pathsToImports.put(path, new ArrayList<Dependency>());
+                    pathsToImports.get(path).add(dependency);
+                }
             }
-            final Module module = new Module(moduleSpec, dependencies, moduleSpec.getModuleFlags(), this);
+
+            final ModuleContentLoader contentLoader = moduleSpec.getContentLoader();
+            exportedPaths.addAll(contentLoader.getFilteredLocalPaths());
+            
+            final Module module = new Module(moduleSpec, dependencies, moduleSpec.getModuleFlags(), this, exportedPaths, pathsToImports);
             synchronized (futureModule) {
                 futureModule.setModule(module);
             }

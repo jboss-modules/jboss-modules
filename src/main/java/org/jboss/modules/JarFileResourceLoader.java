@@ -48,7 +48,7 @@ import java.util.jar.Manifest;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-final class JarFileResourceLoader implements ResourceLoader {
+final class JarFileResourceLoader extends AbstractResourceLoader {
     private final ModuleIdentifier moduleIdentifier;
     private final JarFile jarFile;
     private final String rootName;

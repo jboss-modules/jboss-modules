@@ -30,12 +30,10 @@ import java.lang.reflect.Modifier;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.List;
-import java.util.LinkedList;
+import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.HashMap;
+
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -69,10 +67,10 @@ public final class Module {
     private final ModuleClassLoader moduleClassLoader;
     private final ModuleLoader moduleLoader;
     private final Set<Flag> flags;
-    private final Set<String> allExportedPaths = new HashSet<String>();
-    private final Map<String, List<Dependency>> pathsToImports = new HashMap<String, List<Dependency>>();
+    private final Set<String> exportedPaths;
+    private final Map<String, List<Dependency>> pathsToImports;
 
-    Module(final ModuleSpec spec, final List<Dependency> dependencies, final Set<Flag> flags, final ModuleLoader moduleLoader) {
+    Module(final ModuleSpec spec, final List<Dependency> dependencies, final Set<Flag> flags, final ModuleLoader moduleLoader, final Set<String> exportedPaths, final Map<String, List<Dependency>> pathsToImports) {
         this.moduleLoader = moduleLoader;
         identifier = spec.getIdentifier();
         contentLoader = spec.getContentLoader();
@@ -83,18 +81,8 @@ public final class Module {
         //noinspection ThisEscapedInObjectConstruction
         moduleClassLoader = new ModuleClassLoader(this, flags, spec.getAssertionSetting());
 
-        allExportedPaths.addAll(contentLoader.getLocalPaths());
-        for(Dependency dependency : dependencies) {
-            final Module module = dependency.getModule();
-            if(dependency.isExport()) {
-                allExportedPaths.addAll(module.getAllExportedPaths());
-            }
-            for(String path : module.getAllExportedPaths()) {
-                if(!pathsToImports.containsKey(path))
-                    pathsToImports.put(path, new LinkedList<Dependency>());
-                pathsToImports.get(path).add(dependency);
-            }
-        }
+        this.exportedPaths = exportedPaths;
+        this.pathsToImports = pathsToImports;
     }
 
     public final Class<?> getExportedClass(String className) {
@@ -245,8 +233,13 @@ public final class Module {
         return moduleClassLoader;
     }
 
-    public Set<String> getAllExportedPaths() {
-        return allExportedPaths;
+    /**
+     * Get all the paths exported by this module.
+     *
+     * @return the paths that are exported by this module 
+     */
+    public Set<String> getExportedPaths() {
+        return exportedPaths;
     }
 
     /**

@@ -56,6 +56,9 @@ final class ModuleXmlParser {
     enum Element {
         MODULE,
         DEPENDENCIES,
+        EXPORTS,
+        INCLUDE,
+        EXLCUDE,
         RESOURCES,
         MAIN_CLASS,
         RESOURCE_ROOT,
@@ -72,6 +75,9 @@ final class ModuleXmlParser {
             elementsMap.put(new QName(NAMESPACE, "resources"), Element.RESOURCES);
             elementsMap.put(new QName(NAMESPACE, "main-class"), Element.MAIN_CLASS);
             elementsMap.put(new QName(NAMESPACE, "resource-root"), Element.RESOURCE_ROOT);
+            elementsMap.put(new QName(NAMESPACE, "exports"), Element.EXPORTS);
+            elementsMap.put(new QName(NAMESPACE, "include"), Element.INCLUDE);
+            elementsMap.put(new QName(NAMESPACE, "exclude"), Element.EXLCUDE);
             elements = elementsMap;
         }
 
@@ -421,8 +427,9 @@ final class ModuleXmlParser {
         dependencySpec.setExport(export);
         dependencySpec.setOptional(optional);
         spec.addDependency(dependencySpec);
-        // consume remainder of element
-        parseNoContent(reader);
+
+        // Process the nested <exports> element
+        parseForExports(reader, dependencySpec);
     }
 
     private static void parseMainClass(final XMLStreamReader reader, final ModuleSpec spec) throws XMLStreamException {
@@ -504,15 +511,130 @@ final class ModuleXmlParser {
         if (name == null) name = path;
         // todo add to spec
         final File file = new File(root, path);
+
+        final ResourceLoader resourceLoader;
         if (file.isDirectory()) {
-            builder.add(name, new FileResourceLoader(identifier, file, name));
+            resourceLoader = new FileResourceLoader(identifier, file, name);
         } else {
             try {
-                builder.add(name, new JarFileResourceLoader(identifier, new JarFile(file), name));
+                resourceLoader = new JarFileResourceLoader(identifier, new JarFile(file), name);
             } catch (IOException e) {
                 throw new XMLStreamException("Invalid JAR file specified", reader.getLocation(), e);
             }
         }
+        builder.add(name, resourceLoader);
+
+        // Process the nested <exports> element
+        parseForExports(reader, resourceLoader);
+    }
+
+    private static void parseForExports(final XMLStreamReader reader, final ExportFilterable filterable) throws XMLStreamException {
+        while (reader.hasNext()) {
+            switch (reader.next()) {
+                case XMLStreamConstants.END_ELEMENT: {
+                    return;
+                }
+                case XMLStreamConstants.START_ELEMENT: {
+                    switch (Element.of(reader.getName())) {
+                        case EXPORTS: parseExports(reader, filterable); break;
+                        default: throw unexpectedContent(reader);
+                    }
+                    break;
+                }
+                case XMLStreamConstants.CHARACTERS: {
+                    if (! reader.isWhiteSpace()) {
+                        throw unexpectedContent(reader);
+                    }
+                    // ignore
+                    break;
+                }
+                case XMLStreamConstants.COMMENT:
+                case XMLStreamConstants.SPACE: {
+                    // ignore
+                    break;
+                }
+                default: {
+                    throw unexpectedContent(reader);
+                }
+            }
+        }
+    }
+
+    private static void parseExports(final XMLStreamReader reader, final ExportFilterable filterable) throws XMLStreamException {
+        // xsd:choice
+        while (reader.hasNext()) {
+            switch (reader.next()) {
+                case XMLStreamConstants.END_ELEMENT: {
+                    return;
+                }
+                case XMLStreamConstants.START_ELEMENT: {
+                    switch (Element.of(reader.getName())) {
+                        case INCLUDE: parseInclude(reader, filterable); break;
+                        case EXLCUDE: parseExclude(reader, filterable); break;
+                        default: throw unexpectedContent(reader);
+                    }
+                    break;
+                }
+                case XMLStreamConstants.CHARACTERS: {
+                    if (! reader.isWhiteSpace()) {
+                        throw unexpectedContent(reader);
+                    }
+                    // ignore
+                    break;
+                }
+                case XMLStreamConstants.COMMENT:
+                case XMLStreamConstants.SPACE: {
+                    // ignore
+                    break;
+                }
+                default: {
+                    throw unexpectedContent(reader);
+                }
+            }
+        }
+        throw endOfDocument(reader.getLocation());
+    }
+
+    private static void parseInclude(final XMLStreamReader reader, final ExportFilterable filterable) throws XMLStreamException {
+        String path = null;
+        final Set<Attribute> required = EnumSet.of(Attribute.PATH);
+        final int count = reader.getAttributeCount();
+        for (int i = 0; i < count; i ++) {
+            final Attribute attribute = Attribute.of(reader.getAttributeName(i));
+            required.remove(attribute);
+            switch (attribute) {
+                case PATH: path = reader.getAttributeValue(i); break;
+                default: throw unexpectedContent(reader);
+            }
+        }
+        if (! required.isEmpty()) {
+            throw missingAttributes(reader.getLocation(), required);
+        }
+
+        filterable.addExportInclude(path);
+
+        // consume remainder of element
+        parseNoContent(reader);
+    }
+
+    private static void parseExclude(final XMLStreamReader reader, final ExportFilterable filterable) throws XMLStreamException {
+        String path = null;
+        final Set<Attribute> required = EnumSet.of(Attribute.PATH);
+        final int count = reader.getAttributeCount();
+        for (int i = 0; i < count; i ++) {
+            final Attribute attribute = Attribute.of(reader.getAttributeName(i));
+            required.remove(attribute);
+            switch (attribute) {
+                case PATH: path = reader.getAttributeValue(i); break;
+                default: throw unexpectedContent(reader);
+            }
+        }
+        if (! required.isEmpty()) {
+            throw missingAttributes(reader.getLocation(), required);
+        }
+
+        filterable.addExportExclude(path);
+
         // consume remainder of element
         parseNoContent(reader);
     }
