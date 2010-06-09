@@ -81,14 +81,14 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         }
         final Set<Module.Flag> flags = this.flags;
         if (flags.contains(Module.Flag.CHILD_FIRST)) {
-            loadedClass = loadClassLocal(className);
+            loadedClass = loadClassLocal(className, exportsOnly);
             if (loadedClass == null) {
                 loadedClass = getImportedClass(className, exportsOnly);
             }
         } else {
             loadedClass = getImportedClass(className, exportsOnly);
             if (loadedClass == null) {
-                loadedClass = loadClassLocal(className);
+                loadedClass = loadClassLocal(className, exportsOnly);
             }
         }
         if (loadedClass == null) {
@@ -101,8 +101,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
 
         final Map<String, List<Dependency>> pathsToImports = module.getPathsToImports();
 
-        int idx =  className.lastIndexOf('.');
-        final String path = idx > -1 ? className.substring(0, idx).replace('.', File.separatorChar) : "" ;
+        final String path = getPathFromClassName(className);
 
         final List<Dependency> dependenciesForPath = pathsToImports.get(path);
         if(dependenciesForPath == null)
@@ -122,25 +121,32 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         return null;
     }
 
-    private Class<?> loadClassLocal(String name) throws ClassNotFoundException {
+    private Class<?> loadClassLocal(final String className, final boolean exportOnly) throws ClassNotFoundException {
+        if(exportOnly) {
+            final String path = getPathFromClassName(className);
+            final Set<String> exportedPaths = module.getExportedPaths();
+            if(!exportedPaths.contains(path))
+                return null;
+        }
+
         // Check to see if we can load it
         ClassSpec classSpec = null;
         try {
-            classSpec = contentLoader.getClassSpec(name);
+            classSpec = contentLoader.getClassSpec(className);
         } catch (IOException e) {
-            throw new ClassNotFoundException(name, e);
+            throw new ClassNotFoundException(className, e);
         } catch (RuntimeException e) {
             System.err.print("Unexpected runtime exception in module loader: ");
             e.printStackTrace(System.err);
-            throw new ClassNotFoundException(name, e);
+            throw new ClassNotFoundException(className, e);
         } catch (Error e) {
             System.err.print("Unexpected error in module loader: ");
             e.printStackTrace(System.err);
-            throw new ClassNotFoundException(name, e);
+            throw new ClassNotFoundException(className, e);
         }
         if (classSpec == null)
             return null;
-        return defineClass(name, classSpec);
+        return defineClass(className, classSpec);
     }
 
     private Class<?> defineClass(final String name, final ClassSpec classSpec) {
@@ -197,28 +203,33 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         }
     }
 
+    private String getPathFromClassName(final String className) {
+        int idx =  className.lastIndexOf('.');
+        return idx > -1 ? className.substring(0, idx).replace('.', File.separatorChar) : "" ;
+    }
+
     @Override
     protected String findLibrary(final String libname) {
         return contentLoader.getLibrary(libname);
     }
 
-    Resource getRawResource(String root, String name) {
+    Resource getRawResource(final String root, final String name) {
         return contentLoader.getResource(root, name);
     }
 
     @Override
-    public URL findResource(String name, boolean exportsOnly) {
+    public URL findResource(final String name, final boolean exportsOnly) {
         URL resource = null;
         final Set<Module.Flag> flags = this.flags;
         if (flags.contains(Module.Flag.CHILD_FIRST)) {
-            resource = getLocalResource(name);
+            resource = getLocalResource(name, exportsOnly);
             if (resource == null) {
                 resource = getImportedResource(name, exportsOnly);
             }
         } else {
             resource = getImportedResource(name, exportsOnly);
             if (resource == null) {
-                resource = getLocalResource(name);
+                resource = getLocalResource(name, exportsOnly);
             }
         }
         return resource;
@@ -227,8 +238,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
     final URL getImportedResource(final String resourcePath, final boolean exportsOnly) {
         final Map<String, List<Dependency>> pathsToImports = module.getPathsToImports();
 
-        int idx =  resourcePath.lastIndexOf('/');
-        final String path = idx > -1 ? resourcePath.substring(0, idx) : resourcePath ;
+        final String path = getPathFromResourceName(resourcePath);
 
         final List<Dependency> dependenciesForPath = pathsToImports.get(path);
         if(dependenciesForPath == null)
@@ -246,15 +256,21 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         return null;
     }
 
-    final URL getLocalResource(String resourcePath) {
+    final URL getLocalResource(final String resourcePath, final boolean exportOnly) {
+        if(exportOnly) {
+            final String path = getPathFromResourceName(resourcePath);
+            final Set<String> exportedPaths = module.getExportedPaths();
+            if(!exportedPaths.contains(path))
+                return null;
+        }
         final Resource localResource = contentLoader.getResource(resourcePath);
         return localResource != null ? localResource.getURL() : null;
     }
 
     @Override
-    public Enumeration<URL> findResources(String name, boolean exportsOnly) throws IOException {
+    public Enumeration<URL> findResources(final String name, final boolean exportsOnly) throws IOException {
         final Set<URL> resources = new HashSet<URL>();
-        resources.addAll(getLocalResources(name));
+        resources.addAll(getLocalResources(name, exportsOnly));
         resources.addAll(getImportedResources(name, exportsOnly));
         final Iterator<URL> iterator = resources.iterator();
 
@@ -271,7 +287,14 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         };
     }
 
-    final Collection<URL> getLocalResources(final String resourcePath) {
+    final Collection<URL> getLocalResources(final String resourcePath, final boolean exportOnly) {
+        if(exportOnly) {
+            final String path = getPathFromResourceName(resourcePath);
+            final Set<String> exportedPaths = module.getExportedPaths();
+            if(!exportedPaths.contains(path))
+                return Collections.emptyList();
+        }
+
         Iterable<Resource> resources = contentLoader.getResources(resourcePath);
         if(resources != null) {
             final List<URL> urls = new ArrayList<URL>();
@@ -286,8 +309,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
     final Collection<URL> getImportedResources(final String resourcePath, final boolean exportsOnly) throws IOException {
         final Map<String, List<Dependency>> pathsToImports = module.getPathsToImports();
 
-        int idx =  resourcePath.lastIndexOf('/');
-        final String path = idx > -1 ? resourcePath.substring(0, idx) : resourcePath ;
+        final String path = getPathFromResourceName(resourcePath);
 
         final List<Dependency> dependenciesForPath = pathsToImports.get(path);
         if(dependenciesForPath == null)
@@ -319,6 +341,12 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         }
     }
 
+    private String getPathFromResourceName(final String resourcePath) {
+        int idx =  resourcePath.lastIndexOf('/');
+        final String path = idx > -1 ? resourcePath.substring(0, idx) : resourcePath;
+        return path;
+    }
+
     /**
      * Get the module for this class loader.
      *
@@ -332,15 +360,15 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         return "ClassLoader for " + module;
     }
 
-    public static ModuleClassLoader forModule(ModuleIdentifier identifier) throws ModuleLoadException {
+    public static ModuleClassLoader forModule(final ModuleIdentifier identifier) throws ModuleLoadException {
         return Module.getModule(identifier).getClassLoader();
     }
 
-    public static ModuleClassLoader forModuleName(String identifier) throws ModuleLoadException {
+    public static ModuleClassLoader forModuleName(final String identifier) throws ModuleLoadException {
         return forModule(ModuleIdentifier.fromString(identifier));
     }
 
-    public static ModuleClassLoader createAggregate(String identifier, List<String> dependencies) throws ModuleLoadException  {
+    public static ModuleClassLoader createAggregate(final String identifier, final List<String> dependencies) throws ModuleLoadException  {
 
         List<ModuleIdentifier> depModuleIdentifiers = new ArrayList<ModuleIdentifier>(dependencies.size());
         for(String dependencySpec : dependencies) {
