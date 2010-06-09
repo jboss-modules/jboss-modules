@@ -58,7 +58,7 @@ final class ModuleXmlParser {
         DEPENDENCIES,
         EXPORTS,
         INCLUDE,
-        EXLCUDE,
+        EXCLUDE,
         RESOURCES,
         MAIN_CLASS,
         RESOURCE_ROOT,
@@ -77,7 +77,7 @@ final class ModuleXmlParser {
             elementsMap.put(new QName(NAMESPACE, "resource-root"), Element.RESOURCE_ROOT);
             elementsMap.put(new QName(NAMESPACE, "exports"), Element.EXPORTS);
             elementsMap.put(new QName(NAMESPACE, "include"), Element.INCLUDE);
-            elementsMap.put(new QName(NAMESPACE, "exclude"), Element.EXLCUDE);
+            elementsMap.put(new QName(NAMESPACE, "exclude"), Element.EXCLUDE);
             elements = elementsMap;
         }
 
@@ -570,7 +570,7 @@ final class ModuleXmlParser {
                 case XMLStreamConstants.START_ELEMENT: {
                     switch (Element.of(reader.getName())) {
                         case INCLUDE: parseInclude(reader, filterable); break;
-                        case EXLCUDE: parseExclude(reader, filterable); break;
+                        case EXCLUDE: parseExclude(reader, filterable); break;
                         default: throw unexpectedContent(reader);
                     }
                     break;
