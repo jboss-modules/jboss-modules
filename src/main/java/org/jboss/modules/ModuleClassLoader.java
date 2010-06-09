@@ -28,20 +28,17 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.security.SecureClassLoader;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Queue;
 import java.util.Set;
 
 /**
  * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class ModuleClassLoader extends SecureClassLoader {
+public class ModuleClassLoader extends ConcurrentClassLoader {
     private static final boolean debugDefines;
 
     static {
@@ -69,86 +66,35 @@ public final class ModuleClassLoader extends SecureClassLoader {
         }
     }
 
-    @Override
-    public Class<?> loadClass(final String name) throws ClassNotFoundException {
-        return loadClass(name, false);
-    }
-
-    @Override
-    protected Class<?> loadClass(String className, boolean resolve) throws ClassNotFoundException {
-        Class<?> loadedClass = loadClassInternal(className);
-        if (resolve) resolveClass(loadedClass);
-        return loadedClass;
-    }
-
-    protected Class<?> loadClassInternal(String className) throws ClassNotFoundException {
-        return performLoadClass(className, false);
-    }
-
-    protected Class<?> loadClassExternal(String className) throws ClassNotFoundException {
-        return performLoadClass(className, true);
-    }
-
-    private Class<?> performLoadClass(String className, boolean exportsOnly) throws ClassNotFoundException {
-
-        if (className == null) {
-            throw new IllegalArgumentException("name is null");
-        }
-        if (className.startsWith("java.")) {
-            // always delegate to system
-            return findSystemClass(className);
-        }
-        if (Thread.holdsLock(this) && Thread.currentThread() != LoaderThreadHolder.LOADER_THREAD) {
-            // Only the classloader thread may take this lock; use a condition to relinquish it
-            final LoadRequest req = new LoadRequest(className, exportsOnly, this);
-            final Queue<LoadRequest> queue = LoaderThreadHolder.REQUEST_QUEUE;
-            synchronized (LoaderThreadHolder.REQUEST_QUEUE) {
-                queue.add(req);
-                queue.notify();
-            }
-            boolean intr = false;
-            try {
-                while (!req.done) try {
-                    wait();
-                } catch (InterruptedException e) {
-                    intr = true;
-                }
-            } finally {
-                if (intr) Thread.currentThread().interrupt();
-            }
-
-            return req.result;
-        } else {
-            // no deadlock risk!  Either the lock isn't held, or we're inside the class loader thread.
-            // Check if we have already loaded it..
-            Class<?> loadedClass = findLoadedClass(className);
-            if (loadedClass != null) {
-                return loadedClass;
-            }
-            final Set<Module.Flag> flags = this.flags;
-            if (flags.contains(Module.Flag.CHILD_FIRST)) {
-                loadedClass = loadClassLocal(className);
-                if (loadedClass == null) {
-                    loadedClass = module.getImportedClass(className, exportsOnly);
-                }
-                if (loadedClass == null) {
-                    loadedClass = findSystemClass(className);
-                }
-            } else {
-                loadedClass = module.getImportedClass(className, exportsOnly);
-                if (loadedClass == null) try {
-                    loadedClass = findSystemClass(className);
-                } catch (ClassNotFoundException e) {
-                }
-                if (loadedClass == null) {
-                    loadedClass = loadClassLocal(className);
-                }
-            }
-            if (loadedClass == null) {
-                throw new ClassNotFoundException(className + " from [" + module+ "]");
-            }
+    protected Class<?> findClass(String className, boolean exportsOnly) throws ClassNotFoundException {
+        // Check if we have already loaded it..
+        Class<?> loadedClass = findLoadedClass(className);
+        if (loadedClass != null) {
             return loadedClass;
         }
+        final Set<Module.Flag> flags = this.flags;
+        if (flags.contains(Module.Flag.CHILD_FIRST)) {
+            loadedClass = loadClassLocal(className);
+            if (loadedClass == null) {
+                loadedClass = module.getImportedClass(className, exportsOnly);
+            }
+            if (loadedClass == null) {
+                loadedClass = findSystemClass(className);
+            }
+        } else {
+            loadedClass = module.getImportedClass(className, exportsOnly);
+            if (loadedClass == null) try {
+                loadedClass = findSystemClass(className);
+            } catch (ClassNotFoundException e) {
+            }
+            if (loadedClass == null) {
+                loadedClass = loadClassLocal(className);
+            }
+        }
+        if (loadedClass == null) {
+            throw new ClassNotFoundException(className + " from [" + module+ "]");
+        }
+        return loadedClass;
     }
 
     private Class<?> loadClassLocal(String name) throws ClassNotFoundException {
@@ -293,83 +239,5 @@ public final class ModuleClassLoader extends SecureClassLoader {
             depModuleIdentifiers.add(ModuleIdentifier.fromString(dependencySpec));
         }
         return InitialModuleLoader.INSTANCE.createAggregate(ModuleIdentifier.fromString(identifier), depModuleIdentifiers).getClassLoader();
-    }
-
-    private static final class LoaderThreadHolder {
-
-        private static final Thread LOADER_THREAD;
-        private static final Queue<LoadRequest> REQUEST_QUEUE = new ArrayDeque<LoadRequest>();
-
-        static {
-            Thread thr = new LoaderThread();
-            thr.setName("ModuleClassLoader Thread");
-            // This thread will always run as long as the VM is alive.
-            thr.setDaemon(true);
-            thr.start();
-            LOADER_THREAD = thr;
-        }
-
-        private LoaderThreadHolder() {
-        }
-    }
-
-    static class LoadRequest {
-        private final String className;
-        private final ModuleClassLoader requester;
-        private Class<?> result;
-        private boolean exportsOnly;
-        private boolean done;
-
-        public LoadRequest(final String className, final boolean exportsOnly, final ModuleClassLoader requester) {
-            this.className = className;
-            this.exportsOnly = exportsOnly;
-            this.requester = requester;
-        }
-    }
-
-    static class LoaderThread extends Thread {
-
-        @Override
-        public void interrupt() {
-            // no interruption
-        }
-
-        @Override
-        public void run() {
-            /*
-             This resolves a know deadlock that can occur if one thread is in the process of defining a package as part of
-             defining a class, and another thread is defining the system package that can result in loading a class.  One holds
-             the Package.pkgs lock and one holds the Classloader lock.
-            */
-            Package.getPackages();
-            
-            final Queue<LoadRequest> queue = LoaderThreadHolder.REQUEST_QUEUE;
-            for (; ;) {
-                try {
-                    LoadRequest request;
-                    synchronized (queue) {
-                        while ((request = queue.poll()) == null) {
-                            queue.wait();
-                        }
-                    }
-
-                    final ModuleClassLoader loader = request.requester;
-                    Class<?> result = null;
-                    synchronized (loader) {
-                        try {
-                            result = loader.performLoadClass(request.className, request.exportsOnly);
-                        }
-                        finally {
-                            // no matter what, the requester MUST be notified
-                            request.result = result;
-                            request.done = true;
-                            loader.notifyAll();
-                        }
-                    }
-                } catch (Throwable t) {
-                    // ignore
-                }
-            }
-        }
     }
 }

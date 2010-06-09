@@ -87,7 +87,7 @@ public final class Module {
 
     public final Class<?> getExportedClass(String className) {
         try {
-            return moduleClassLoader.loadClassExternal(className);
+            return moduleClassLoader.loadExportedClass(className);
         } catch (ClassNotFoundException e) {
             return null;
         }

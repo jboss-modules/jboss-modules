@@ -40,6 +40,11 @@ public final class ModuleIdentifier implements Serializable {
     private final String artifact;
     private final String version;
 
+    /**
+     * The system module.
+     */
+    public static final ModuleIdentifier SYSTEM = new ModuleIdentifier("system", "system", null);
+
     public ModuleIdentifier(final String group, final String artifact, final String version) {
         if (group == null) {
             throw new IllegalArgumentException("group is null");
