@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -36,7 +37,16 @@ import java.util.Set;
 final class SystemModuleClassLoader extends ModuleClassLoader {
 
     SystemModuleClassLoader(final Module module, final Set<Module.Flag> flags, final AssertionSetting setting) {
-        super(module, flags, setting);
+        super(module, flags, setting, null);
+    }
+
+    Set<String> getExportedPaths() {
+        final Package[] packages = getPackages();
+        final HashSet<String> set = new HashSet<String>(packages.length);
+        for (Package pkg : packages) {
+            set.add(pkg.getName().replace('.', '/'));
+        }
+        return set;
     }
 
     protected Class<?> findClass(final String className, final boolean exportsOnly) throws ClassNotFoundException {
@@ -57,5 +67,13 @@ final class SystemModuleClassLoader extends ModuleClassLoader {
 
     public InputStream findResourceAsStream(final String name, final boolean exportsOnly) {
         return getSystemResourceAsStream(name);
+    }
+
+    Resource getRawResource(final String root, final String name) {
+        if ("".equals(root)) {
+            return new URLResource(getResource(name));
+        } else {
+            return null;
+        }
     }
 }

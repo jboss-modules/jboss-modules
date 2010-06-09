@@ -215,14 +215,28 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
         if (name.startsWith("java/")) {
             return getSystemResource(name);
         }
-        return findResource(name);
+        return findResource(name, false);
+    }
+
+    public final URL getExportedResource(final String name) {
+        if (name.startsWith("java/")) {
+            return getSystemResource(name);
+        }
+        return findResource(name, true);
     }
 
     public final Enumeration<URL> getResources(final String name) throws IOException {
         if (name.startsWith("java/")) {
             return getSystemResources(name);
         }
-        return findResources(name);
+        return findResources(name, false);
+    }
+
+    public final Enumeration<URL> getExportedResources(final String name) throws IOException {
+        if (name.startsWith("java/")) {
+            return getSystemResources(name);
+        }
+        return findResources(name, true);
     }
 
     protected URL findResource(final String name, final boolean exportsOnly) {
@@ -255,5 +269,12 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
             return getSystemResourceAsStream(name);
         }
         return findResourceAsStream(name, false);
+    }
+
+    public final InputStream getExportedResourceAsStream(final String name) {
+        if (name.startsWith("java/")) {
+            return getSystemResourceAsStream(name);
+        }
+        return findResourceAsStream(name, true);
     }
 }

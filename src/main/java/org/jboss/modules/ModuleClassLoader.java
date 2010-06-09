@@ -62,10 +62,12 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
 
     private final Module module;
     private final Set<Module.Flag> flags;
+    private final ModuleContentLoader contentLoader;
 
-    ModuleClassLoader(final Module module, final Set<Module.Flag> flags, final AssertionSetting setting) {
+    ModuleClassLoader(final Module module, final Set<Module.Flag> flags, final AssertionSetting setting, final ModuleContentLoader contentLoader) {
         this.module = module;
         this.flags = flags;
+        this.contentLoader = contentLoader;
         if (setting != AssertionSetting.INHERIT) {
             setDefaultAssertionStatus(setting == AssertionSetting.ENABLED);
         }
@@ -83,15 +85,8 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
             if (loadedClass == null) {
                 loadedClass = getImportedClass(className, exportsOnly);
             }
-            if (loadedClass == null) {
-                loadedClass = findSystemClass(className);
-            }
         } else {
             loadedClass = getImportedClass(className, exportsOnly);
-            if (loadedClass == null) try {
-                loadedClass = findSystemClass(className);
-            } catch (ClassNotFoundException e) {
-            }
             if (loadedClass == null) {
                 loadedClass = loadClassLocal(className);
             }
@@ -131,7 +126,6 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         // Check to see if we can load it
         ClassSpec classSpec = null;
         try {
-            final ModuleContentLoader contentLoader = module.getContentLoader();
             classSpec = contentLoader.getClassSpec(name);
         } catch (IOException e) {
             throw new ClassNotFoundException(name, e);
@@ -165,7 +159,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
             } else {
                 final PackageSpec spec;
                 try {
-                    spec = getModule().getLocalPackageSpec(name);
+                    spec = contentLoader.getPackageSpec(name);
                     definePackage(packageName, spec);
                 } catch (IOException e) {
                     definePackage(packageName, null);
@@ -205,7 +199,11 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
 
     @Override
     protected String findLibrary(final String libname) {
-        return module.getLocalLibrary(libname);
+        return contentLoader.getLibrary(libname);
+    }
+
+    Resource getRawResource(String root, String name) {
+        return contentLoader.getResource(root, name);
     }
 
     @Override
@@ -249,7 +247,6 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
     }
 
     final URL getLocalResource(String resourcePath) {
-        final ModuleContentLoader contentLoader = module.getContentLoader();
         final Resource localResource = contentLoader.getResource(resourcePath);
         return localResource != null ? localResource.getURL() : null;
     }
@@ -275,7 +272,6 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
     }
 
     final Collection<URL> getLocalResources(final String resourcePath) {
-        final ModuleContentLoader contentLoader = module.getContentLoader();
         Iterable<Resource> resources = contentLoader.getResources(resourcePath);
         if(resources != null) {
             final List<URL> urls = new ArrayList<URL>();

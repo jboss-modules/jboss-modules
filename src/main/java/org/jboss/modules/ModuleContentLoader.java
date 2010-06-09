@@ -63,7 +63,7 @@ public final class ModuleContentLoader {
          * @param rootName the root name
          * @param loader the resource loader
          */
-        void add(String rootName, ResourceLoader loader);
+        Builder add(String rootName, ResourceLoader loader);
 
         /**
          * Create the content loader.
@@ -101,8 +101,9 @@ public final class ModuleContentLoader {
         return new Builder() {
             private final Map<String, ResourceLoader> map = new LinkedHashMap<String, ResourceLoader>();
 
-            public void add(final String rootName, final ResourceLoader loader) {
+            public Builder add(final String rootName, final ResourceLoader loader) {
                 map.put(rootName, loader);
+                return this;
             }
 
             public ModuleContentLoader create() {

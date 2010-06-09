@@ -22,7 +22,6 @@
 
 package org.jboss.modules;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -30,11 +29,7 @@ import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
@@ -55,10 +50,11 @@ public final class Module {
         });
     }
 
+    public static final Module SYSTEM = new Module();
+
     private static ModuleLoaderSelector moduleLoaderSelector = ModuleLoaderSelector.DEFAULT;
 
     private final ModuleIdentifier identifier;
-    private final ModuleContentLoader contentLoader;
     private final String mainClassName;
     private final ModuleClassLoader moduleClassLoader;
     private final ModuleLoader moduleLoader;
@@ -68,18 +64,28 @@ public final class Module {
     Module(final ModuleSpec spec, final Set<Flag> flags, final ModuleLoader moduleLoader, final Set<String> exportedPaths, final Map<String, List<Dependency>> pathsToImports) {
         this.moduleLoader = moduleLoader;
         identifier = spec.getIdentifier();
-        contentLoader = spec.getContentLoader();
         mainClassName = spec.getMainClass();
         // should be safe, so...
         //noinspection ThisEscapedInObjectConstruction
-        moduleClassLoader = new ModuleClassLoader(this, flags, spec.getAssertionSetting());
+        moduleClassLoader = new ModuleClassLoader(this, flags, spec.getAssertionSetting(), spec.getContentLoader());
 
         this.exportedPaths = exportedPaths;
         this.pathsToImports = pathsToImports;
     }
 
+    private Module() {
+        identifier = ModuleIdentifier.SYSTEM;
+        mainClassName = null;
+        //noinspection ThisEscapedInObjectConstruction
+        final SystemModuleClassLoader smcl = new SystemModuleClassLoader(this, Collections.<Flag>emptySet(), AssertionSetting.INHERIT);
+        moduleClassLoader = smcl;
+        exportedPaths = smcl.getExportedPaths();
+        pathsToImports = null; // bypassed by the system MCL
+        moduleLoader = InitialModuleLoader.INSTANCE;
+    }
+
     public final Resource getExportedResource(final String rootPath, final String resourcePath) {
-        return contentLoader.getResource(rootPath, resourcePath);
+        return moduleClassLoader.getRawResource(rootPath, resourcePath);
     }
 
     public final void run(final String[] args) throws NoSuchMethodException, InvocationTargetException, ClassNotFoundException {
@@ -232,14 +238,6 @@ public final class Module {
         return Class.forName(className, true, ModuleClassLoader.forModule(ModuleIdentifier.fromString(moduleIdentifierString)));
     }
 
-    PackageSpec getLocalPackageSpec(final String name) throws IOException {
-        return contentLoader.getPackageSpec(name);
-    }
-
-    String getLocalLibrary(final String libname) {
-        return contentLoader.getLibrary(libname);
-    }
-
     public static Module getModule(final ModuleIdentifier identifier) throws ModuleLoadException {
         return moduleLoaderSelector.getCurrentLoader().loadModule(identifier);
     }
@@ -256,10 +254,6 @@ public final class Module {
     public static void setModuleLoaderSelector(final ModuleLoaderSelector moduleLoaderSelector) {
         if(moduleLoaderSelector == null) throw new IllegalArgumentException("ModuleLoaderSelector can not be null");
         Module.moduleLoaderSelector = moduleLoaderSelector;
-    }
-
-    ModuleContentLoader getContentLoader() {
-        return contentLoader;
     }
 
     Map<String, List<Dependency>> getPathsToImports() {

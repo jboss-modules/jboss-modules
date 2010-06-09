@@ -60,6 +60,10 @@ public abstract class ModuleLoader {
      * @throws ModuleLoadException if the Module can not be loaded
      */
     public Module loadModule(ModuleIdentifier identifier) throws ModuleLoadException {
+        if (identifier.equals(ModuleIdentifier.SYSTEM)) {
+            return Module.SYSTEM;
+        }
+
         final Set<ModuleIdentifier> visited = VISITED.get();
 
         if(visited.contains(identifier))
