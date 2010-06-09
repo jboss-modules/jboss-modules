@@ -78,128 +78,16 @@ public final class Module {
         this.pathsToImports = pathsToImports;
     }
 
-    public final Class<?> getExportedClass(String className) {
-        try {
-            return moduleClassLoader.loadExportedClass(className);
-        } catch (ClassNotFoundException e) {
-            return null;
-        }
-    }
-
-    Class<?> getImportedClass(final String className, final boolean exportsOnly) {
-
-        final Map<String, List<Dependency>> pathsToImports = this.pathsToImports;
-
-        int idx =  className.lastIndexOf('.');
-        final String path = idx > -1 ? className.substring(0, idx).replace('.', File.separatorChar) : "" ;
-
-        final List<Dependency> dependenciesForPath = pathsToImports.get(path);
-        if(dependenciesForPath == null)
-            return null;
-
-        for(Dependency dependency : dependenciesForPath) {
-            if(exportsOnly && !dependency.isExport())
-                continue;
-
-            final Module module = dependency.getModule();
-            Class<?> importedClass = module.getExportedClass(className);
-            if(importedClass != null)
-                return importedClass;
-        }
-        return null;
-    }
-
-    ClassSpec getLocalClassSpec(String className) throws IOException {
-        return contentLoader.getClassSpec(className);
-    }
-
-    public final URL getExportedResource(final String resourcePath) {
-        return moduleClassLoader.findResource(resourcePath, true);
-    }
-
-    final URL getImportedResource(final String resourcePath, final boolean exportsOnly) {
-        final Map<String, List<Dependency>> pathsToImports = this.pathsToImports;
-
-        int idx =  resourcePath.lastIndexOf('/');
-        final String path = idx > -1 ? resourcePath.substring(0, idx) : resourcePath ;
-
-        final List<Dependency> dependenciesForPath = pathsToImports.get(path);
-        if(dependenciesForPath == null)
-            return null;
-
-        for(Dependency dependency : dependenciesForPath) {
-            if(exportsOnly && !dependency.isExport())
-                continue;
-            
-            final Module module = dependency.getModule();
-            URL importedResource = module.getExportedResource(resourcePath);
-            if(importedResource != null)
-                return importedResource;
-        }
-        return null;
-    }
-
-    final URL getLocalResource(String resourcePath) {
-        final Resource localResource = contentLoader.getResource(resourcePath);
-        return localResource != null ? localResource.getURL() : null;
-    }
-
     public final Resource getExportedResource(final String rootPath, final String resourcePath) {
         return contentLoader.getResource(rootPath, resourcePath);
     }
 
-    public final Collection<URL> getExportedResources(final String resourcePath) throws IOException {
-        final List<URL> exportedResources = new ArrayList<URL>();
-        final Enumeration<URL> resources = moduleClassLoader.findResources(resourcePath, true);
-        if(resources == null)
-            return exportedResources;
-        while(resources.hasMoreElements()) {
-            final URL resource = resources.nextElement();
-            exportedResources.add(resource);
-        }
-        return exportedResources;
-    }
-
-    final Collection<URL> getLocalResources(final String resourcePath) {
-        Iterable<Resource> resources = contentLoader.getResources(resourcePath);
-        if(resources != null) {
-            final List<URL> urls = new ArrayList<URL>();
-            for(Resource resource : resources) {
-                urls.add(resource.getURL());
-            }
-            return urls;
-        }
-        return Collections.emptyList();
-    }
-
-    final Collection<URL> getImportedResources(final String resourcePath, final boolean exportsOnly) throws IOException {
-        final Map<String, List<Dependency>> pathsToImports = this.pathsToImports;
-
-        int idx =  resourcePath.lastIndexOf('/');
-        final String path = idx > -1 ? resourcePath.substring(0, idx) : resourcePath ;
-
-        final List<Dependency> dependenciesForPath = pathsToImports.get(path);
-        if(dependenciesForPath == null)
-            return Collections.emptySet();
-
-        final Set<URL> importedUrls = new HashSet<URL>();
-        for(Dependency dependency : dependenciesForPath) {
-            if(exportsOnly && !dependency.isExport())
-                continue;
-            final Module module = dependency.getModule();
-            Collection<URL> importedResources = module.getExportedResources(resourcePath);
-            if(importedResources != null)
-                importedUrls.addAll(importedResources);
-        }
-        return importedUrls;
-    }
-
-    public final void run(final String[] args) throws NoSuchMethodException, InvocationTargetException {
+    public final void run(final String[] args) throws NoSuchMethodException, InvocationTargetException, ClassNotFoundException {
         try {
             if (mainClassName == null) {
                 throw new NoSuchMethodException("No main class defined for " + this);
             }
-            final Class<?> mainClass = getExportedClass(mainClassName);
+            final Class<?> mainClass = moduleClassLoader.loadExportedClass(mainClassName);
             if (mainClass == null) {
                 throw new NoSuchMethodException("No main class named '" + mainClassName + "' found in " + this);
             }
@@ -368,5 +256,13 @@ public final class Module {
     public static void setModuleLoaderSelector(final ModuleLoaderSelector moduleLoaderSelector) {
         if(moduleLoaderSelector == null) throw new IllegalArgumentException("ModuleLoaderSelector can not be null");
         Module.moduleLoaderSelector = moduleLoaderSelector;
+    }
+
+    ModuleContentLoader getContentLoader() {
+        return contentLoader;
+    }
+
+    Map<String, List<Dependency>> getPathsToImports() {
+        return pathsToImports;
     }
 }
