@@ -32,10 +32,8 @@ import java.security.SecureClassLoader;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 
@@ -62,7 +60,6 @@ public final class ModuleClassLoader extends SecureClassLoader {
 
     private final Module module;
     private final Set<Module.Flag> flags;
-    private final Map<String, Class<?>> cache = new HashMap<String, Class<?>>(256);
 
     ModuleClassLoader(final Module module, final Set<Module.Flag> flags, final AssertionSetting setting) {
         this.module = module;
@@ -124,11 +121,7 @@ public final class ModuleClassLoader extends SecureClassLoader {
         } else {
             // no deadlock risk!  Either the lock isn't held, or we're inside the class loader thread.
             // Check if we have already loaded it..
-            Class<?> loadedClass;
-            final Map<String, Class<?>> cache = this.cache;
-            synchronized (this) {
-                loadedClass = cache.get(className);
-            }
+            Class<?> loadedClass = findLoadedClass(className);
             if (loadedClass != null) {
                 return loadedClass;
             }
@@ -153,9 +146,6 @@ public final class ModuleClassLoader extends SecureClassLoader {
             }
             if (loadedClass == null) {
                 throw new ClassNotFoundException(className + " from [" + module+ "]");
-            }
-            synchronized (this) {
-                cache.put(className, loadedClass);
             }
             return loadedClass;
         }
