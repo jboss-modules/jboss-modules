@@ -178,6 +178,7 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
                     Class<?> result = null;
                     synchronized (loader) {
                         try {
+                            // todo - maybe move the actual method call outside of the synch block, to improve concurrency?
                             result = loader.performLoadClass(request.className, request.exportsOnly);
                         }
                         finally {
