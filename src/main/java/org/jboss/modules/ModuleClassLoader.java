@@ -178,13 +178,13 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
     }
 
     @Override
-    public URL getResource(String name) {
+    public URL findResource(String name, boolean exportsOnly) {
         final Resource resource = module.getExportedResource(name);
         return resource == null ? null : resource.getURL();
     }
 
     @Override
-    public Enumeration<URL> getResources(String name) throws IOException {
+    public Enumeration<URL> findResources(String name, boolean exportsOnly) throws IOException {
         final Iterable<Resource> resources = module.getExportedResources(name);
         final Iterator<Resource> iterator = resources.iterator();
 
@@ -202,7 +202,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
     }
 
     @Override
-    public InputStream getResourceAsStream(final String name) {
+    public InputStream findResourceAsStream(final String name, boolean exportsOnly) {
         try {
             final Resource resource = module.getExportedResource(name);
             return resource == null ? null : resource.openStream();

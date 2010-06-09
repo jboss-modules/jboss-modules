@@ -22,8 +22,13 @@
 
 package org.jboss.modules;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.security.SecureClassLoader;
 import java.util.ArrayDeque;
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.Queue;
 
 /**
@@ -31,7 +36,9 @@ import java.util.Queue;
  */
 public abstract class ConcurrentClassLoader extends SecureClassLoader {
 
-    protected Class<?> performLoadClass(String className, boolean exportsOnly) throws ClassNotFoundException {
+    protected static final Enumeration<URL> EMPTY_ENUMERATION = Collections.enumeration(Collections.<URL>emptySet());
+
+    private Class<?> performLoadClass(String className, boolean exportsOnly) throws ClassNotFoundException {
 
         if (className == null) {
             throw new IllegalArgumentException("name is null");
@@ -191,18 +198,57 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
      * @return the class
      * @throws ClassNotFoundException if the class is not found
      */
-    protected Class<?> findClass(String className, boolean exportsOnly) throws ClassNotFoundException {
+    protected Class<?> findClass(final String className, boolean exportsOnly) throws ClassNotFoundException {
         throw new ClassNotFoundException(className);
     }
 
-    /**
-     * Not supported.
-     *
-     * @param className the class name
-     * @return nothing
-     * @throws ClassNotFoundException always
-     */
     protected final Class<?> findClass(final String className) throws ClassNotFoundException {
-        throw new ClassNotFoundException(className);
+        return findClass(className, false);
+    }
+
+    public final URL getResource(final String name) {
+        if (name.startsWith("java/")) {
+            return getSystemResource(name);
+        }
+        return findResource(name);
+    }
+
+    public final Enumeration<URL> getResources(final String name) throws IOException {
+        if (name.startsWith("java/")) {
+            return getSystemResources(name);
+        }
+        return findResources(name);
+    }
+
+    protected URL findResource(final String name, final boolean exportsOnly) {
+        return null;
+    }
+
+    protected final URL findResource(final String name) {
+        return findResource(name, false);
+    }
+
+    protected Enumeration<URL> findResources(final String name, final boolean exportsOnly) throws IOException {
+        return EMPTY_ENUMERATION;
+    }
+
+    protected final Enumeration<URL> findResources(final String name) throws IOException {
+        return findResources(name, false);
+    }
+
+    protected InputStream findResourceAsStream(final String name, final boolean exportsOnly) {
+        final URL url = findResource(name, exportsOnly);
+        try {
+            return url == null ? null : url.openStream();
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    public final InputStream getResourceAsStream(final String name) {
+        if (name.startsWith("java/")) {
+            return getSystemResourceAsStream(name);
+        }
+        return findResourceAsStream(name, false);
     }
 }
