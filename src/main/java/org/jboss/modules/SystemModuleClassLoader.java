@@ -22,12 +22,15 @@
 
 package org.jboss.modules;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 /**
  * The special module classloader for the system module.
@@ -40,13 +43,79 @@ final class SystemModuleClassLoader extends ModuleClassLoader {
         super(module, flags, setting, null);
     }
 
+
     Set<String> getExportedPaths() {
-        final Package[] packages = getPackages();
-        final HashSet<String> set = new HashSet<String>(packages.length);
-        for (Package pkg : packages) {
-            set.add(pkg.getName().replace('.', '/'));
+        final HashSet<String> packageSet = new HashSet<String>(128);
+        final HashSet<String> jarSet = new HashSet<String>(128);
+        processClassPathItem(System.getProperty("sun.boot.class.path"), jarSet, packageSet);
+        processClassPathItem(System.getProperty("java.class.path"), jarSet, packageSet);
+        return packageSet;
+    }
+
+    private void processClassPathItem(final String classPath, final Set<String> jarSet, final Set<String> packageSet) {
+        if (classPath == null) return;
+        int s = 0, e;
+        do {
+            e = classPath.indexOf(File.pathSeparatorChar, s);
+            String item = e == -1 ? classPath.substring(s) : classPath.substring(s, e);
+            if (! jarSet.contains(item)) {
+                final File file = new File(item);
+                if (file.isDirectory()) {
+                    processDirectory0(packageSet, file);
+                } else {
+                    try {
+                        final ZipFile zipFile = new ZipFile(file);
+                        try {
+                            final Enumeration<? extends ZipEntry> entries = zipFile.entries();
+                            while (entries.hasMoreElements()) {
+                                final ZipEntry entry = entries.nextElement();
+                                final String name = entry.getName();
+                                final int lastSlash = name.lastIndexOf('/');
+                                if (lastSlash != -1) {
+                                    final String dirName = name.substring(0, lastSlash);
+                                    if (dirName.equals("META-INF")) {
+                                        // skip non-exported META-INF
+                                        continue;
+                                    }
+                                    packageSet.add(dirName);
+                                }
+                            }
+                        } finally {
+                            zipFile.close();
+                        }
+                    } catch (IOException ex) {
+                        // ignore
+                    }
+                }
+            }
+            s = e + 1;
+        } while (e != -1);
+    }
+
+    private static void processDirectory0(final Set<String> packageSet, final File file) {
+        for (File entry : file.listFiles()) {
+            if (entry.getName().equals("META-INF")) {
+                // skip non-exported META-INF
+                continue;
+            }
+            if (entry.isDirectory()) {
+                processDirectory1(packageSet, entry);
+            } else {
+                final String parent = entry.getParent();
+                if (parent != null) packageSet.add(parent);
+            }
         }
-        return set;
+    }
+
+    private static void processDirectory1(final Set<String> packageSet, final File file) {
+        for (File entry : file.listFiles()) {
+            if (entry.isDirectory()) {
+                processDirectory1(packageSet, entry);
+            } else {
+                final String parent = entry.getParent();
+                if (parent != null) packageSet.add(parent);
+            }
+        }
     }
 
     protected Class<?> findClass(final String className, final boolean exportsOnly) throws ClassNotFoundException {
