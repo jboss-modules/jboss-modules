@@ -51,6 +51,9 @@
     </xsd:complexType>
 
     <xsd:complexType name="moduleDependencyType">
+        <xsd:choice minOccurs="0" maxOccurs="unbounded">
+            <xsd:element name="exports" type="exportsType"/>
+        </xsd:choice>
         <xsd:attribute name="group" type="xsd:string" use="required"/>
         <xsd:attribute name="name" type="xsd:string" use="required"/>
         <xsd:attribute name="version" type="xsd:string" use="optional"/>
@@ -69,6 +72,9 @@
     </xsd:complexType>
 
     <xsd:complexType name="resourceType">
+        <xsd:choice minOccurs="0" maxOccurs="unbounded">
+            <xsd:element name="exports" type="exportsType"/>
+        </xsd:choice>
         <!-- If unspec, name defaults to path -->
         <xsd:attribute name="name" type="xsd:string" use="optional"/>
         <!-- Relative path of resource from module.xml file -->
@@ -85,5 +91,17 @@
             <xsd:enumeration value="no-blacklist"/>
         </xsd:restriction>
     </xsd:simpleType>
+
+    <xsd:complexType name="exportsType">
+        <xsd:choice minOccurs="0" maxOccurs="unbounded">
+            <xsd:element name="include" type="includeExcludeType" minOccurs="0"/>
+            <xsd:element name="exclude" type="includeExcludeType" minOccurs="0"/>
+        </xsd:choice>
+    </xsd:complexType>
+
+    <xsd:complexType name="includeExcludeType">
+        <xsd:attribute name="path" type="xsd:string" use="required"/>
+    </xsd:complexType>
+
 </xsd:schema>
 
