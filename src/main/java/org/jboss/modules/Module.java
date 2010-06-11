@@ -22,7 +22,6 @@
 
 package org.jboss.modules;
 
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -167,7 +166,7 @@ public final class Module {
     /**
      * Get all the paths exported by this module.
      *
-     * @return the paths that are exported by this module 
+     * @return the paths that are exported by this module
      */
     public Set<String> getExportedPaths() {
         return exportedPaths;
