@@ -24,6 +24,9 @@ package org.jboss.modules;
 
 import org.junit.BeforeClass;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 
 /**
@@ -32,10 +35,28 @@ import java.net.URL;
  * @author John Bailey
  */
 public class AbstractModuleTestCase {
+    protected static final ModuleIdentifier MODULE_ID = new ModuleIdentifier("test", "test", "1.0");
+
     @BeforeClass
     public static void initUrlHandler() {
         try {
             URL.setURLStreamHandlerFactory(new ModularURLStreamHandlerFactory());
-        } catch(Throwable t) {}
+        } catch (Throwable t) {
+        }
+    }
+
+    protected byte[] readBytes(final InputStream is) throws IOException {
+
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        try {
+            byte[] buff = new byte[1024];
+            int read;
+            while ((read = is.read(buff)) > -1) {
+                os.write(buff, 0, read);
+            }
+        } finally {
+            is.close();
+        }
+        return os.toByteArray();
     }
 }

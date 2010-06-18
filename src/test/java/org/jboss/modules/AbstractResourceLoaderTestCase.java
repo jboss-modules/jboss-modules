@@ -46,7 +46,6 @@ import static org.junit.Assert.assertTrue;
  */
 public abstract class AbstractResourceLoaderTestCase extends AbstractModuleTestCase {
 
-    protected static final ModuleIdentifier MODULE_ID = new ModuleIdentifier("test", "test", "1.0");
     protected ResourceLoader loader;
 
     @Before
@@ -127,20 +126,5 @@ public abstract class AbstractResourceLoaderTestCase extends AbstractModuleTestC
         assertNull(spec.getImplTitle());
         assertNull(spec.getImplVersion());
         assertNull(spec.getImplVendor());
-    }
-
-    private byte[] readBytes(final InputStream is) throws IOException {
-
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        try {
-            byte[] buff = new byte[1024];
-            int read;
-            while((read = is.read(buff)) > -1) {
-                os.write(buff, 0, read);
-            }
-        } finally {
-            is.close();
-        }
-        return os.toByteArray(); 
     }
 }

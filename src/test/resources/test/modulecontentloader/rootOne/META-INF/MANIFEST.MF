@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+
+Name: org/jboss/modules/test
+Specification-Title: JBoss Modules Test Classes
+Specification-Version: 0.1
+Specification-Vendor: JBoss
+Implementation-Title: org.jboss.modules.test
+Implementation-Version: 1.0
+Implementation-Vendor: JBoss
