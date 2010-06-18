@@ -99,19 +99,21 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
 
     Class<?> getImportedClass(final String className, final boolean exportsOnly) {
 
-        final Map<String, List<Dependency>> pathsToImports = module.getPathsToImports();
+        final Map<String, List<Module.DependencyImport>> pathsToImports = module.getPathsToImports();
 
         final String path = getPathFromClassName(className);
 
-        final List<Dependency> dependenciesForPath = pathsToImports.get(path);
+        final List<Module.DependencyImport> dependenciesForPath = pathsToImports.get(path);
         if(dependenciesForPath == null)
             return null;
 
-        for(Dependency dependency : dependenciesForPath) {
-            if(exportsOnly && !dependency.isExport())
+        for(Module.DependencyImport dependencyImport : dependenciesForPath) {
+            final Dependency dependency = dependencyImport.getDependency();
+            if(exportsOnly && (!dependency.isExport() || !dependencyImport.isExport()))
                 continue;
 
             final Module module = dependency.getModule();
+
             try {
                 Class<?> importedClass = module.getClassLoader().loadExportedClass(className);
                 if(importedClass != null)
@@ -236,16 +238,17 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
     }
 
     final URL getImportedResource(final String resourcePath, final boolean exportsOnly) {
-        final Map<String, List<Dependency>> pathsToImports = module.getPathsToImports();
+        final Map<String, List<Module.DependencyImport>> pathsToImports = module.getPathsToImports();
 
         final String path = getPathFromResourceName(resourcePath);
 
-        final List<Dependency> dependenciesForPath = pathsToImports.get(path);
+        final List<Module.DependencyImport> dependenciesForPath = pathsToImports.get(path);
         if(dependenciesForPath == null)
             return null;
 
-        for(Dependency dependency : dependenciesForPath) {
-            if(exportsOnly && !dependency.isExport())
+        for(Module.DependencyImport dependencyImport : dependenciesForPath) {
+            final Dependency dependency = dependencyImport.getDependency();
+            if(exportsOnly && (!dependency.isExport() || !dependencyImport.isExport()))
                 continue;
 
             final Module module = dependency.getModule();
@@ -307,18 +310,20 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
     }
 
     final Collection<URL> getImportedResources(final String resourcePath, final boolean exportsOnly) throws IOException {
-        final Map<String, List<Dependency>> pathsToImports = module.getPathsToImports();
+        final Map<String, List<Module.DependencyImport>> pathsToImports = module.getPathsToImports();
 
         final String path = getPathFromResourceName(resourcePath);
 
-        final List<Dependency> dependenciesForPath = pathsToImports.get(path);
+        final List<Module.DependencyImport> dependenciesForPath = pathsToImports.get(path);
         if(dependenciesForPath == null)
             return Collections.emptySet();
 
         final Set<URL> importedUrls = new HashSet<URL>();
-        for(Dependency dependency : dependenciesForPath) {
-            if(exportsOnly && !dependency.isExport())
+        for(Module.DependencyImport dependencyImport : dependenciesForPath) {
+            final Dependency dependency = dependencyImport.getDependency();
+            if(exportsOnly && (!dependency.isExport() || !dependencyImport.isExport()))
                 continue;
+
             final Module module = dependency.getModule();
             final Enumeration<URL> importedResources = module.getClassLoader().findResources(resourcePath, true);
             if(importedResources != null) {

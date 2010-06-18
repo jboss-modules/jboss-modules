@@ -58,9 +58,9 @@ public final class Module {
     private final ModuleClassLoader moduleClassLoader;
     private final ModuleLoader moduleLoader;
     private final Set<String> exportedPaths;
-    private final Map<String, List<Dependency>> pathsToImports;
+    private final Map<String, List<DependencyImport>> pathsToImports;
 
-    Module(final ModuleSpec spec, final Set<Flag> flags, final ModuleLoader moduleLoader, final Set<String> exportedPaths, final Map<String, List<Dependency>> pathsToImports) {
+    Module(final ModuleSpec spec, final Set<Flag> flags, final ModuleLoader moduleLoader, final Set<String> exportedPaths, final Map<String, List<DependencyImport>> pathsToImports) {
         this.moduleLoader = moduleLoader;
         identifier = spec.getIdentifier();
         mainClassName = spec.getMainClass();
@@ -255,7 +255,25 @@ public final class Module {
         Module.moduleLoaderSelector = moduleLoaderSelector;
     }
 
-    Map<String, List<Dependency>> getPathsToImports() {
+    Map<String, List<DependencyImport>> getPathsToImports() {
         return pathsToImports;
+    }
+
+    static class DependencyImport {
+        private final Dependency dependency;
+        private final boolean export;
+
+        DependencyImport(Dependency dependency, boolean export) {
+            this.dependency = dependency;
+            this.export = export;
+        }
+
+        public Dependency getDependency() {
+            return dependency;
+        }
+
+        public boolean isExport() {
+            return export;
+        }
     }
 }

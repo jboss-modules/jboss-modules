@@ -126,7 +126,7 @@ public abstract class ModuleLoader {
             throw new ModuleAlreadyExistsException(moduleIdentifier.toString());
         }
 
-        final Map<String, List<Dependency>> pathsToImports = new HashMap<String, List<Dependency>>();
+        final Map<String, List<Module.DependencyImport>> pathsToImports = new HashMap<String, List<Module.DependencyImport>>();
         final Set<String> exportedPaths = new HashSet<String>();
         try {
             final List<Dependency> dependencies = new ArrayList<Dependency>(moduleSpec.getDependencies().size());
@@ -147,16 +147,15 @@ public abstract class ModuleLoader {
                 final ExportFilter filter = dependencySpec.getExportFilter();
 
                 final Set<String> moduleExportedPaths = dependencyModule.getExportedPaths();
-                if(dependency.isExport()) {
-                    for(String exportedPath : moduleExportedPaths) {
-                        if(filter.shouldExport(exportedPath))
-                            exportedPaths.add(exportedPath);
+                final boolean depExported = dependency.isExport();
+                for(String exportedPath : moduleExportedPaths) {
+                    final boolean shouldExport = depExported && filter.shouldExport(exportedPath);
+                    if(shouldExport) {
+                        exportedPaths.add(exportedPath);
                     }
-                }
-                for(String path : moduleExportedPaths) {
-                    if(!pathsToImports.containsKey(path))
-                        pathsToImports.put(path, new ArrayList<Dependency>());
-                    pathsToImports.get(path).add(dependency);
+                    if(!pathsToImports.containsKey(exportedPath))
+                        pathsToImports.put(exportedPath, new ArrayList<Module.DependencyImport>());
+                    pathsToImports.get(exportedPath).add(new Module.DependencyImport(dependency, shouldExport));
                 }
             }
 
