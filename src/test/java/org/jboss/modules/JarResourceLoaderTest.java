@@ -39,8 +39,7 @@ public class JarResourceLoaderTest extends AbstractResourceLoaderTestCase {
     private JarFile jarFile;
 
     protected ResourceLoader createLoader() throws Exception {
-        final URL url = getClass().getClassLoader().getResource("test/jarresourceloader/test.jar");
-        final File file = new File(url.toURI());
+        final File file = getResource("test/jarresourceloader/test.jar");
         jarFile = new JarFile(file);
         return new JarFileResourceLoader(MODULE_ID, jarFile, "test-root");
     }

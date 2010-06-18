@@ -169,8 +169,7 @@ public class ModuleContentLoaderTest extends AbstractModuleTestCase {
     }
 
     private ResourceLoader createLoader(final String rootName) throws Exception {
-        final URL url = getClass().getClassLoader().getResource("test/modulecontentloader/" + rootName);
-        final File resourceRoot = new File(url.toURI());
+        final File resourceRoot = getResource("test/modulecontentloader/" + rootName);
         return new FileResourceLoader(MODULE_ID, resourceRoot, rootName);
     }
 }

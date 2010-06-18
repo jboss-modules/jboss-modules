@@ -37,9 +37,7 @@ public class FileResourceLoaderTest extends AbstractResourceLoaderTestCase {
     private File resourceRoot;
 
     protected ResourceLoader createLoader() throws Exception {
-        final URL url = getClass().getClassLoader().getResource("test/fileresourceloader");
-
-        resourceRoot = new File(url.toURI());
+        resourceRoot = getResource("test/fileresourceloader");
 
         return new FileResourceLoader(MODULE_ID, resourceRoot, "test-root");
     }

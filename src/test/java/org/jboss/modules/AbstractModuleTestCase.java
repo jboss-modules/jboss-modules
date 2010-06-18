@@ -25,9 +25,12 @@ package org.jboss.modules;
 import org.junit.BeforeClass;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+
+import static org.junit.Assert.assertNotNull;
 
 /**
  * Abstract Test Case used as a base for all module tests.
@@ -39,10 +42,8 @@ public class AbstractModuleTestCase {
 
     @BeforeClass
     public static void initUrlHandler() {
-        try {
-            URL.setURLStreamHandlerFactory(new ModularURLStreamHandlerFactory());
-        } catch (Throwable t) {
-        }
+        // Hack just to kick off Module's static init
+        assertNotNull(Module.SYSTEM);
     }
 
     protected byte[] readBytes(final InputStream is) throws IOException {
@@ -58,5 +59,10 @@ public class AbstractModuleTestCase {
             is.close();
         }
         return os.toByteArray();
+    }
+
+    protected File getResource(final String path) throws Exception {
+        final URL url = getClass().getClassLoader().getResource(path);
+        return new File(url.toURI());
     }
 }
