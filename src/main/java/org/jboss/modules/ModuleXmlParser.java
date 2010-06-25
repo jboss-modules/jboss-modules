@@ -223,7 +223,7 @@ final class ModuleXmlParser {
 
     private static ModuleSpec parseDocument(final File root, XMLStreamReader reader, ModuleSpec spec) throws XMLStreamException {
         while (reader.hasNext()) {
-            switch (reader.next()) {
+            switch (reader.nextTag()) {
                 case XMLStreamConstants.START_DOCUMENT: {
                     parseRootElement(root, reader, spec);
                     return spec;
@@ -236,18 +236,6 @@ final class ModuleXmlParser {
                     parseEndDocument(reader);
                     return spec;
                 }
-                case XMLStreamConstants.CHARACTERS: {
-                    if (! reader.isWhiteSpace()) {
-                        throw unexpectedContent(reader);
-                    }
-                    // ignore
-                    break;
-                }
-                case XMLStreamConstants.COMMENT:
-                case XMLStreamConstants.SPACE: {
-                    // ignore
-                    break;
-                }
                 default: {
                     throw unexpectedContent(reader);
                 }
@@ -258,7 +246,7 @@ final class ModuleXmlParser {
 
     private static void parseRootElement(final File root, final XMLStreamReader reader, final ModuleSpec spec) throws XMLStreamException {
         while (reader.hasNext()) {
-            switch (reader.next()) {
+            switch (reader.nextTag()) {
                 case XMLStreamConstants.START_ELEMENT: {
                     if (Element.of(reader.getName()) != Element.MODULE) {
                         throw unexpectedContent(reader);
@@ -266,18 +254,6 @@ final class ModuleXmlParser {
                     parseModuleContents(root, reader, spec);
                     parseEndDocument(reader);
                     return;
-                }
-                case XMLStreamConstants.CHARACTERS: {
-                    if (! reader.isWhiteSpace()) {
-                        throw unexpectedContent(reader);
-                    }
-                    // ignore
-                    break;
-                }
-                case XMLStreamConstants.COMMENT:
-                case XMLStreamConstants.SPACE: {
-                    // ignore
-                    break;
                 }
                 default: {
                     throw unexpectedContent(reader);
@@ -324,7 +300,7 @@ final class ModuleXmlParser {
         // xsd:all
         Set<Element> visited = EnumSet.noneOf(Element.class);
         while (reader.hasNext()) {
-            switch (reader.next()) {
+            switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {
                     if (spec.getContentLoader() == null) {
                         spec.setContentLoader(ModuleContentLoader.EMPTY);
@@ -345,18 +321,6 @@ final class ModuleXmlParser {
                     }
                     break;
                 }
-                case XMLStreamConstants.CHARACTERS: {
-                    if (! reader.isWhiteSpace()) {
-                        throw unexpectedContent(reader);
-                    }
-                    // ignore
-                    break;
-                }
-                case XMLStreamConstants.COMMENT:
-                case XMLStreamConstants.SPACE: {
-                    // ignore
-                    break;
-                }
                 default: {
                     throw unexpectedContent(reader);
                 }
@@ -368,7 +332,7 @@ final class ModuleXmlParser {
     private static void parseDependencies(final XMLStreamReader reader, final ModuleSpec spec) throws XMLStreamException {
         // xsd:choice
         while (reader.hasNext()) {
-            switch (reader.next()) {
+            switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {
                     return;
                 }
@@ -377,18 +341,6 @@ final class ModuleXmlParser {
                         case MODULE: parseModuleDependency(reader, spec); break;
                         default: throw unexpectedContent(reader);
                     }
-                    break;
-                }
-                case XMLStreamConstants.CHARACTERS: {
-                    if (! reader.isWhiteSpace()) {
-                        throw unexpectedContent(reader);
-                    }
-                    // ignore
-                    break;
-                }
-                case XMLStreamConstants.COMMENT:
-                case XMLStreamConstants.SPACE: {
-                    // ignore
                     break;
                 }
                 default: {
@@ -456,7 +408,7 @@ final class ModuleXmlParser {
         // xsd:choice
         final ModuleContentLoader.Builder builder = ModuleContentLoader.build();
         while (reader.hasNext()) {
-            switch (reader.next()) {
+            switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {
                     spec.setContentLoader(builder.create());
                     return;
@@ -469,18 +421,6 @@ final class ModuleXmlParser {
                         }
                         default: throw unexpectedContent(reader);
                     }
-                    break;
-                }
-                case XMLStreamConstants.CHARACTERS: {
-                    if (! reader.isWhiteSpace()) {
-                        throw unexpectedContent(reader);
-                    }
-                    // ignore
-                    break;
-                }
-                case XMLStreamConstants.COMMENT:
-                case XMLStreamConstants.SPACE: {
-                    // ignore
                     break;
                 }
                 default: {
@@ -530,7 +470,7 @@ final class ModuleXmlParser {
 
     private static void parseForExports(final XMLStreamReader reader, final ExportFilterable filterable) throws XMLStreamException {
         while (reader.hasNext()) {
-            switch (reader.next()) {
+            switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {
                     return;
                 }
@@ -539,18 +479,6 @@ final class ModuleXmlParser {
                         case EXPORTS: parseExports(reader, filterable); break;
                         default: throw unexpectedContent(reader);
                     }
-                    break;
-                }
-                case XMLStreamConstants.CHARACTERS: {
-                    if (! reader.isWhiteSpace()) {
-                        throw unexpectedContent(reader);
-                    }
-                    // ignore
-                    break;
-                }
-                case XMLStreamConstants.COMMENT:
-                case XMLStreamConstants.SPACE: {
-                    // ignore
                     break;
                 }
                 default: {
@@ -563,7 +491,7 @@ final class ModuleXmlParser {
     private static void parseExports(final XMLStreamReader reader, final ExportFilterable filterable) throws XMLStreamException {
         // xsd:choice
         while (reader.hasNext()) {
-            switch (reader.next()) {
+            switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {
                     return;
                 }
@@ -573,18 +501,6 @@ final class ModuleXmlParser {
                         case EXCLUDE: parseExclude(reader, filterable); break;
                         default: throw unexpectedContent(reader);
                     }
-                    break;
-                }
-                case XMLStreamConstants.CHARACTERS: {
-                    if (! reader.isWhiteSpace()) {
-                        throw unexpectedContent(reader);
-                    }
-                    // ignore
-                    break;
-                }
-                case XMLStreamConstants.COMMENT:
-                case XMLStreamConstants.SPACE: {
-                    // ignore
                     break;
                 }
                 default: {
@@ -641,21 +557,9 @@ final class ModuleXmlParser {
 
     private static void parseNoContent(final XMLStreamReader reader) throws XMLStreamException {
         while (reader.hasNext()) {
-            switch (reader.next()) {
+            switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {
                     return;
-                }
-                case XMLStreamConstants.CHARACTERS: {
-                    if (! reader.isWhiteSpace()) {
-                        throw unexpectedContent(reader);
-                    }
-                    // ignore
-                    break;
-                }
-                case XMLStreamConstants.COMMENT:
-                case XMLStreamConstants.SPACE: {
-                    // ignore
-                    break;
                 }
                 default: {
                     throw unexpectedContent(reader);

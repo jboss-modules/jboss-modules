@@ -25,8 +25,6 @@
                     <showWarnings>true</showWarnings>
                     <optimize>true</optimize>
                     <compilerVersion>1.6</compilerVersion>
-                    <fork>true</fork>
-                    <executable>${JAVA_HOME}/bin/javac</executable>
                 </configuration>
             </plugin>
 
