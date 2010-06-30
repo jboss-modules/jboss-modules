@@ -22,6 +22,8 @@
 
 package org.jboss.modules;
 
+import org.jboss.modules.test.TestClass;
+import org.jboss.modules.util.TestResourceLoader;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -33,6 +35,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.jboss.modules.util.Util.readBytes;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -53,11 +56,15 @@ public class ModuleContentLoaderTest extends AbstractModuleTestCase {
     public void setupContentLoader() throws Exception {
         ModuleContentLoader.Builder builder = ModuleContentLoader.build();
 
-        builder.add("rootOne", createLoader("rootOne"));
-        builder.add("rootTwo", createLoader("rootTwo"));
+        final TestResourceLoader.TestResourceLoaderBuilder rootOneBuilder = TestResourceLoader.build();
+        rootOneBuilder.addResources(getResource("test/modulecontentloader/rootOne"))
+            .addClass(TestClass.class);
 
-        // Copy the classfile over
-        copyResource("org/jboss/modules/test/TestClass.class", "test/modulecontentloader/rootOne", "org/jboss/modules/test");
+        final TestResourceLoader.TestResourceLoaderBuilder rootTwoBuilder = TestResourceLoader.build();
+        rootTwoBuilder.addResources(getResource("test/modulecontentloader/rootTwo"));
+
+        builder.add("rootOne", rootOneBuilder.create());
+        builder.add("rootTwo", rootTwoBuilder.create());
 
         moduleContentLoader = builder.create();
     }
@@ -73,7 +80,7 @@ public class ModuleContentLoaderTest extends AbstractModuleTestCase {
         assertNotNull(resource);
         List<String> roots = new ArrayList<String>(2);
 
-        final Pattern pattern = Pattern.compile("root\\w\\w\\w$");
+        final Pattern pattern = Pattern.compile("root\\w\\w\\w");
         for(Resource aResource : resources) {
             final String path = aResource.getURL().getPath();
             final Matcher matcher = pattern.matcher(path);
@@ -125,12 +132,15 @@ public class ModuleContentLoaderTest extends AbstractModuleTestCase {
 
         final ModuleContentLoader.Builder builder = ModuleContentLoader.build();
 
-        ResourceLoader rootOneLoader = createLoader("rootOne");
-        rootOneLoader.addExportExclude("org/**");
-        rootOneLoader.addExportInclude("META-INF");
-        rootOneLoader.addExportInclude("org/jboss/modules/**");
+        final TestResourceLoader.TestResourceLoaderBuilder rootBuilder = TestResourceLoader.build();
+            rootBuilder
+                .addResources(getResource("test/modulecontentloader/rootOne"))
+                .addClass(TestClass.class)
+                .addExportExclude("org/**")
+                .addExportInclude("META-INF")
+                .addExportInclude("org/jboss/modules/**");
 
-        builder.add("rootOne", rootOneLoader);
+        builder.add("rootOne", rootBuilder.create());
 
         final ModuleContentLoader filteredLoader = builder.create();
 
@@ -168,10 +178,5 @@ public class ModuleContentLoaderTest extends AbstractModuleTestCase {
         assertEquals("org.jboss.modules.test", spec.getImplTitle());
         assertEquals("1.0", spec.getImplVersion());
         assertEquals("JBoss", spec.getImplVendor());
-    }
-
-    private ResourceLoader createLoader(final String rootName) throws Exception {
-        final File resourceRoot = getResource("test/modulecontentloader/" + rootName);
-        return new FileResourceLoader(MODULE_ID, resourceRoot, rootName);
     }
 }

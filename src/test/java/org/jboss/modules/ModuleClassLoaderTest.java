@@ -22,6 +22,10 @@
 
 package org.jboss.modules;
 
+import org.jboss.modules.test.ImportedClass;
+import org.jboss.modules.test.TestClass;
+import org.jboss.modules.util.ModuleSpecBuilder;
+import org.jboss.modules.util.TestModuleLoader;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -37,21 +41,45 @@ import static org.junit.Assert.fail;
  */
 public class ModuleClassLoaderTest extends AbstractModuleTestCase {
 
-    private ModuleLoader moduleLoader;
+    private static final ModuleIdentifier MODULE_WITH_CONTENT_ID = new ModuleIdentifier("test", "test-with-content", "1.0");
+    private static final ModuleIdentifier MODULE_TO_IMPORT_ID = new ModuleIdentifier("test", "test-to-import", "1.0");
+    private static final ModuleIdentifier MODULE_WITH_EXPORT_ID = new ModuleIdentifier("test", "test-with-export", "1.0");
+    private static final ModuleIdentifier MODULE_WITH_FILTERED_EXPORT_ID = new ModuleIdentifier("test", "test-with-filtered-export", "1.0");
+
+    private TestModuleLoader moduleLoader;
 
     @Before
     public void setupModuleLoader() throws Exception {
-        final File repoRoot = getResource("test/repo");
-        moduleLoader = new LocalModuleLoader(new File[]{repoRoot});
+        moduleLoader = new TestModuleLoader();
 
-        // Move some classes over
-        copyResource("org/jboss/modules/test/TestClass.class", "test/repo/test/test-with-content/1.0", "rootOne/org/jboss/modules/test");
-        copyResource("org/jboss/modules/test/ImportedClass.class", "test/repo/test/test-to-import/1.0", "rootOne/org/jboss/modules/test");
+        final ModuleSpecBuilder moduleWithContentBuilder = moduleLoader.buildModuleSpec(MODULE_WITH_CONTENT_ID);
+        moduleWithContentBuilder.addRoot("rootOne")
+            .addClass(TestClass.class);
+        moduleWithContentBuilder
+            .addDependency(MODULE_TO_IMPORT_ID);
+        moduleWithContentBuilder.install();
+
+        final ModuleSpecBuilder moduleToImportBuilder = moduleLoader.buildModuleSpec(MODULE_TO_IMPORT_ID);
+        moduleToImportBuilder.addRoot("rootOne")
+            .addClass(ImportedClass.class);
+        moduleToImportBuilder.install();
+
+        final ModuleSpecBuilder moduleWithExportBuilder = moduleLoader.buildModuleSpec(MODULE_WITH_EXPORT_ID);
+        moduleWithExportBuilder
+            .addDependency(MODULE_TO_IMPORT_ID).setExport(true);
+        moduleWithExportBuilder.install();
+
+        final ModuleSpecBuilder moduleWithExportFilterBuilder = moduleLoader.buildModuleSpec(MODULE_WITH_FILTERED_EXPORT_ID);
+        moduleWithExportFilterBuilder
+            .addDependency(MODULE_TO_IMPORT_ID)
+                .setExport(true)
+                .addExportExclude("org/jboss/**");
+        moduleWithExportFilterBuilder.install();
     }
 
     @Test
     public void testLocalClassLoad() throws Exception {
-        final Module testModule = moduleLoader.loadModule(new ModuleIdentifier("test", "test-with-content", "1.0"));
+        final Module testModule = moduleLoader.loadModule(MODULE_WITH_CONTENT_ID);
         final ModuleClassLoader classLoader = testModule.getClassLoader();
 
         try {
@@ -64,7 +92,7 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
 
     @Test
     public void testImportClassLoad() throws Exception {
-        final Module testModule = moduleLoader.loadModule(new ModuleIdentifier("test", "test-with-content", "1.0"));
+        final Module testModule = moduleLoader.loadModule(MODULE_WITH_CONTENT_ID);
         final ModuleClassLoader classLoader = testModule.getClassLoader();
 
         try {
@@ -77,7 +105,7 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
 
     @Test
     public void testExportClassLoad() throws Exception {
-        final Module testModule = moduleLoader.loadModule(new ModuleIdentifier("test", "test-with-content", "1.0"));
+        final Module testModule = moduleLoader.loadModule(MODULE_WITH_CONTENT_ID);
         final ModuleClassLoader classLoader = testModule.getClassLoader();
 
         try {
@@ -86,7 +114,7 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
         } catch (ClassNotFoundException expected) {
         }
 
-        final Module exportingModule = moduleLoader.loadModule(new ModuleIdentifier("test", "test-with-export", "1.0"));
+        final Module exportingModule = moduleLoader.loadModule(MODULE_WITH_EXPORT_ID);
         final ModuleClassLoader exportingClassLoader = exportingModule.getClassLoader();
 
         try {
@@ -99,7 +127,7 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
 
     @Test
     public void testFilteredExportClassLoad() throws Exception {
-        final Module testModule = moduleLoader.loadModule(new ModuleIdentifier("test", "test-with-filtered-export", "1.0"));
+        final Module testModule = moduleLoader.loadModule(MODULE_WITH_FILTERED_EXPORT_ID);
         final ModuleClassLoader classLoader = testModule.getClassLoader();
 
         try {

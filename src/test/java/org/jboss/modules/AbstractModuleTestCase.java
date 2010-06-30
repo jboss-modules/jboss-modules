@@ -22,6 +22,7 @@
 
 package org.jboss.modules;
 
+import org.jboss.modules.util.Util;
 import org.junit.BeforeClass;
 
 import java.io.ByteArrayOutputStream;
@@ -48,24 +49,8 @@ public class AbstractModuleTestCase {
         assertNotNull(Module.SYSTEM);
     }
 
-    protected byte[] readBytes(final InputStream is) throws IOException {
-
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        try {
-            byte[] buff = new byte[1024];
-            int read;
-            while ((read = is.read(buff)) > -1) {
-                os.write(buff, 0, read);
-            }
-        } finally {
-            is.close();
-        }
-        return os.toByteArray();
-    }
-
     protected File getResource(final String path) throws Exception {
-        final URL url = getClass().getClassLoader().getResource(path);
-        return new File(url.toURI());
+        return Util.getResourceFile(getClass(), path);
     }
 
     protected void copyResource(final String inputResource, final String outputBase, final String outputPath) throws Exception {
