@@ -22,7 +22,11 @@
 
 package org.jboss.modules;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -110,11 +114,38 @@ public final class Main {
         final ModuleLoader loader = InitialModuleLoader.INSTANCE;
         if (logManagerModuleIdentifier != null) {
             final ModuleClassLoader classLoader = ModuleClassLoader.forModule(logManagerModuleIdentifier);
-            final ClassLoader old = setContextClassLoader(classLoader);
-            try {
-                LogManager.getLogManager();
-            } finally {
-                setContextClassLoader(old);
+            final InputStream stream = classLoader.getResourceAsStream("META-INF/services/java.util.logging.LogManager");
+            if (stream != null) {
+                try {
+                    final BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
+                    String name = null;
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        final int i = line.indexOf('#');
+                        if (i != -1) {
+                            line = line.substring(0, i);
+                        }
+                        line = line.trim();
+                        if (line.length() == 0) continue;
+                        name = line;
+                        break;
+                    }
+                    if (name != null) {
+                        System.setProperty("java.util.logging.manager", name);
+                        final ClassLoader old = setContextClassLoader(classLoader);
+                        try {
+                            LogManager.getLogManager();
+                        } finally {
+                            setContextClassLoader(old);
+                        }
+                    }
+                } finally {
+                    try {
+                        stream.close();
+                    } catch (IOException ignored) {
+                        // ignore
+                    }
+                }
             }
         }
         final Module module;
