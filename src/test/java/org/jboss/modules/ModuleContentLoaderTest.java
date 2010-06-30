@@ -56,6 +56,9 @@ public class ModuleContentLoaderTest extends AbstractModuleTestCase {
         builder.add("rootOne", createLoader("rootOne"));
         builder.add("rootTwo", createLoader("rootTwo"));
 
+        // Copy the classfile over
+        copyResource("org/jboss/modules/test/TestClass.class", "test/modulecontentloader/rootOne", "org/jboss/modules/test");
+
         moduleContentLoader = builder.create();
     }
 
@@ -65,7 +68,6 @@ public class ModuleContentLoaderTest extends AbstractModuleTestCase {
         assertNotNull(resource);
         resource = moduleContentLoader.getResource("testTwo.txt");
         assertNotNull(resource);
-
 
         Iterable<Resource> resources = moduleContentLoader.getResources("/nested/nested.txt");
         assertNotNull(resource);

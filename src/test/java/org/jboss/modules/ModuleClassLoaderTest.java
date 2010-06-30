@@ -43,6 +43,10 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
     public void setupModuleLoader() throws Exception {
         final File repoRoot = getResource("test/repo");
         moduleLoader = new LocalModuleLoader(new File[]{repoRoot});
+
+        // Move some classes over
+        copyResource("org/jboss/modules/test/TestClass.class", "test/repo/test/test-with-content/1.0", "rootOne/org/jboss/modules/test");
+        copyResource("org/jboss/modules/test/ImportedClass.class", "test/repo/test/test-to-import/1.0", "rootOne/org/jboss/modules/test");
     }
 
     @Test
