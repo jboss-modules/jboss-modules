@@ -25,7 +25,6 @@ package org.jboss.modules;
 import org.junit.Assert;
 
 import java.io.File;
-import java.net.URL;
 
 /**
  * Test the functionality of the FileResourceLoader

@@ -32,7 +32,7 @@ import java.util.Enumeration;
 import java.util.List;
 
 /**
- * Utility class providing commonly used test utilites.
+ * Utility class providing commonly used test utilities.
  * 
  * @author John E. Bailey
  */
