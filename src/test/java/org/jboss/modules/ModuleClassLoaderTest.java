@@ -29,9 +29,18 @@ import org.jboss.modules.util.TestModuleLoader;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.List;
 
+import static org.jboss.modules.util.Util.toList;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**
@@ -54,14 +63,16 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
 
         final ModuleSpecBuilder moduleWithContentBuilder = moduleLoader.buildModuleSpec(MODULE_WITH_CONTENT_ID);
         moduleWithContentBuilder.addRoot("rootOne")
-            .addClass(TestClass.class);
+            .addClass(TestClass.class)
+            .addResources(getResource("test/modulecontentloader/rootOne"));
         moduleWithContentBuilder
             .addDependency(MODULE_TO_IMPORT_ID);
         moduleWithContentBuilder.install();
 
         final ModuleSpecBuilder moduleToImportBuilder = moduleLoader.buildModuleSpec(MODULE_TO_IMPORT_ID);
         moduleToImportBuilder.addRoot("rootOne")
-            .addClass(ImportedClass.class);
+            .addClass(ImportedClass.class)
+            .addResources(getResource("test/modulecontentloader/rootTwo"));
         moduleToImportBuilder.install();
 
         final ModuleSpecBuilder moduleWithExportBuilder = moduleLoader.buildModuleSpec(MODULE_WITH_EXPORT_ID);
@@ -73,7 +84,9 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
         moduleWithExportFilterBuilder
             .addDependency(MODULE_TO_IMPORT_ID)
                 .setExport(true)
-                .addExportExclude("org/jboss/**");
+                .addExportExclude("org/jboss/**")
+                .addExportExclude("nested");
+
         moduleWithExportFilterBuilder.install();
     }
 
@@ -87,6 +100,18 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
             assertNotNull(testClass);
         } catch (ClassNotFoundException e) {
             fail("Should have loaded local class");
+        }
+    }
+
+    @Test
+    public void testLocalClassLoadNotFound() throws Exception {
+        final Module testModule = moduleLoader.loadModule(MODULE_WITH_CONTENT_ID);
+        final ModuleClassLoader classLoader = testModule.getClassLoader();
+
+        try {
+            Class<?> testClass = classLoader.loadClass("org.jboss.modules.test.BogusClass");
+            fail("Should have thrown ClassNotFoundException");
+        } catch (ClassNotFoundException expected) {
         }
     }
 
@@ -137,4 +162,130 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
         }
     }
 
+    @Test
+    public void testLocalResourceRetrieval() throws Exception {
+        final Module testModule = moduleLoader.loadModule(MODULE_WITH_CONTENT_ID);
+        final ModuleClassLoader classLoader = testModule.getClassLoader();
+        final URL resUrl = classLoader.getResource("test.txt");
+        assertNotNull(resUrl);
+    }
+
+    @Test
+    public void testLocalResourceRetrievalNotFound() throws Exception {
+        final Module testModule = moduleLoader.loadModule(MODULE_WITH_CONTENT_ID);
+        final ModuleClassLoader classLoader = testModule.getClassLoader();
+        final URL resUrl = classLoader.getResource("bogus.txt");
+        assertNull(resUrl);
+    }
+
+    @Test
+    public void testImportResourceRetrieval() throws Exception {
+        final Module testModule = moduleLoader.loadModule(MODULE_WITH_CONTENT_ID);
+        final ModuleClassLoader classLoader = testModule.getClassLoader();
+        final URL resUrl = classLoader.getResource("testTwo.txt");
+        assertNotNull(resUrl);
+    }
+
+    @Test
+    public void testExportResourceRetrieval() throws Exception {
+        final Module testModule = moduleLoader.loadModule(MODULE_WITH_CONTENT_ID);
+        final ModuleClassLoader classLoader = testModule.getClassLoader();
+
+        URL resUrl = classLoader.getExportedResource("testTwo.txt");
+        assertNull(resUrl);
+
+        final Module exportingModule = moduleLoader.loadModule(MODULE_WITH_EXPORT_ID);
+        final ModuleClassLoader exportingClassLoader = exportingModule.getClassLoader();
+
+        resUrl = exportingClassLoader.getExportedResource("testTwo.txt");
+        assertNotNull(resUrl);
+    }
+
+    @Test
+    public void testFilteredExportResourceRetrieval() throws Exception {
+        final Module testModule = moduleLoader.loadModule(MODULE_WITH_FILTERED_EXPORT_ID);
+        final ModuleClassLoader classLoader = testModule.getClassLoader();
+
+        URL resUrl = classLoader.getResource("nested/nested.txt");
+        assertNotNull(resUrl);
+
+        resUrl = classLoader.getExportedResource("nested/nested.txt");
+        assertNull(resUrl);
+    }
+
+    @Test
+    public void testLocalResourcesRetrieval() throws Exception {
+        final Module testModule = moduleLoader.loadModule(MODULE_WITH_CONTENT_ID);
+        final ModuleClassLoader classLoader = testModule.getClassLoader();
+        final Enumeration<URL> resUrls = classLoader.getResources("test.txt");
+        assertNotNull(resUrls);
+        final List<URL> resUrlList = toList(resUrls);
+        assertEquals(1, resUrlList.size());
+        assertTrue(resUrlList.get(0).getPath().contains("rootOne"));
+    }
+
+    @Test
+    public void testLocalResourcesRetrievalNotFound() throws Exception {
+        final Module testModule = moduleLoader.loadModule(MODULE_WITH_CONTENT_ID);
+        final ModuleClassLoader classLoader = testModule.getClassLoader();
+        final Enumeration<URL> resUrls = classLoader.getResources("bogus.txt");
+        assertNotNull(resUrls);
+        final List<URL> resUrlList = toList(resUrls);
+        assertTrue(resUrlList.isEmpty());
+    }
+
+    @Test
+    public void testImportResourcesRetrieval() throws Exception {
+        final Module testModule = moduleLoader.loadModule(MODULE_WITH_CONTENT_ID);
+        final ModuleClassLoader classLoader = testModule.getClassLoader();
+        final Enumeration<URL> resUrls = classLoader.getResources("testTwo.txt");
+        assertNotNull(resUrls);
+        final List<URL> resUrlList = toList(resUrls);
+        assertEquals(1, resUrlList.size());
+        assertTrue(resUrlList.get(0).getPath().contains("rootTwo"));
+    }
+
+    @Test
+    public void testLocalAndImportResourcesRetrieval() throws Exception {
+        final Module testModule = moduleLoader.loadModule(MODULE_WITH_CONTENT_ID);
+        final ModuleClassLoader classLoader = testModule.getClassLoader();
+        final Enumeration<URL> resUrls = classLoader.getResources("nested/nested.txt");
+        assertNotNull(resUrls);
+        final List<URL> resUrlList = toList(resUrls);
+        assertEquals(2, resUrlList.size());
+        assertTrue(resUrlList.get(0).getPath().contains("rootTwo"));
+        assertTrue(resUrlList.get(1).getPath().contains("rootOne"));
+    }
+
+    @Test
+    public void testExportResourcesRetrieval() throws Exception {
+        final Module testModule = moduleLoader.loadModule(MODULE_WITH_CONTENT_ID);
+        final ModuleClassLoader classLoader = testModule.getClassLoader();
+
+        Enumeration<URL> resUrls = classLoader.getExportedResources("testTwo.txt");
+        List<URL> resUrlList = toList(resUrls);
+        assertTrue(resUrlList.isEmpty());
+
+        final Module exportingModule = moduleLoader.loadModule(MODULE_WITH_EXPORT_ID);
+        final ModuleClassLoader exportingClassLoader = exportingModule.getClassLoader();
+
+        resUrls = exportingClassLoader.getExportedResources("testTwo.txt");
+        resUrlList = toList(resUrls);
+        assertEquals(1, resUrlList.size());
+        assertTrue(resUrlList.get(0).getPath().contains("rootTwo"));
+    }
+
+    @Test
+    public void testFilteredExportsResourceRetrieval() throws Exception {
+        final Module testModule = moduleLoader.loadModule(MODULE_WITH_FILTERED_EXPORT_ID);
+        final ModuleClassLoader classLoader = testModule.getClassLoader();
+
+        Enumeration<URL> resUrls = classLoader.getResources("nested/nested.txt");
+        List<URL> resUrlList = toList(resUrls);
+        assertFalse(resUrlList.isEmpty());
+
+        resUrls = classLoader.getExportedResources("nested/nested.txt");
+        resUrlList = toList(resUrls);
+        assertTrue(resUrlList.isEmpty());
+    }
 }

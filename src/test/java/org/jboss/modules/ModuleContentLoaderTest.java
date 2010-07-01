@@ -27,7 +27,6 @@ import org.jboss.modules.util.TestResourceLoader;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -91,6 +90,12 @@ public class ModuleContentLoaderTest extends AbstractModuleTestCase {
         assertEquals(2, roots.size());
         assertTrue(roots.contains("rootOne"));
         assertTrue(roots.contains("rootTwo"));
+    }
+
+    @Test
+    public void testDelegatedResourceLoadNotFound() throws Exception {
+        Resource resource = moduleContentLoader.getResource("bogus.txt");
+        assertNull(resource);
     }
 
      @Test
@@ -168,6 +173,12 @@ public class ModuleContentLoaderTest extends AbstractModuleTestCase {
     }
 
     @Test
+    public void testDelegatingGetClassSpecNotFound() throws Exception {
+        ClassSpec spec = moduleContentLoader.getClassSpec("org.jboss.modules.test.BogusClass");
+        assertNull(spec);
+    }
+
+    @Test
     public void testDelegatingGetPackageSpec() throws Exception {
         PackageSpec spec = moduleContentLoader.getPackageSpec("org/jboss/modules/test");
         assertNotNull(spec);
@@ -178,5 +189,18 @@ public class ModuleContentLoaderTest extends AbstractModuleTestCase {
         assertEquals("org.jboss.modules.test", spec.getImplTitle());
         assertEquals("1.0", spec.getImplVersion());
         assertEquals("JBoss", spec.getImplVendor());
+    }
+
+    @Test
+    public void testDelegatingGetPackageSpecNotFound() throws Exception {
+        PackageSpec spec = moduleContentLoader.getPackageSpec("org/jboss/modules/bogus");
+        assertNotNull(spec);
+
+        assertNull(spec.getSpecTitle());
+        assertNull(spec.getSpecVersion());
+        assertNull(spec.getSpecVendor());
+        assertNull(spec.getImplTitle());
+        assertNull(spec.getImplVersion());
+        assertNull(spec.getImplVendor());
     }
 }

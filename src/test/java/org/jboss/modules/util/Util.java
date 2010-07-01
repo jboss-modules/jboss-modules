@@ -27,6 +27,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
 
 /**
  * Utility class providing commonly used test utilites.
@@ -56,5 +59,13 @@ public class Util {
 
     public static File getResourceFile(final Class baseClass, final String path) throws Exception {
         return new File(getResource(baseClass, path).toURI());
+    }
+
+    public static <T> List<T> toList(Enumeration<T> enumeration) {
+        final List<T> list = new ArrayList<T>();
+        while(enumeration.hasMoreElements()) {
+            list.add(enumeration.nextElement());
+        }
+        return list;
     }
 }
