@@ -25,13 +25,9 @@ package org.jboss.modules;
 import org.jboss.modules.util.Util;
 import org.junit.BeforeClass;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
 
 import static org.junit.Assert.assertNotNull;
 
