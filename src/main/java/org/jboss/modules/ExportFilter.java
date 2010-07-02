@@ -39,21 +39,19 @@ public class ExportFilter {
     private final Pattern[] includes;
     private final Pattern[] excludes;
 
-    public ExportFilter(Set<String> includes, Set<String> excludes) {
-        this.includes = new Pattern[includes.size()];
+    public ExportFilter(final String[] includes, final String[] excludes) {
+        this.includes = new Pattern[includes.length];
         int i = 0;
         for(String includeGlob : includes) {
-            this.includes[i] = getGlobPattern(includeGlob);
-            i++;   
+            this.includes[i++] = getGlobPattern(includeGlob);
         }
-        this.excludes = new Pattern[excludes.size() + 2];
+        this.excludes = new Pattern[excludes.length + 2];
         i = 0;
         for(String excludeGlob : excludes) {
-            this.excludes[i] = getGlobPattern(excludeGlob);
-            i++;
+            this.excludes[i++] = getGlobPattern(excludeGlob);
         }
-        this.excludes[this.excludes.length - 2] = META_INF_PATTERN;
-        this.excludes[this.excludes.length - 1] = META_INF_CHILD_PATTERN;
+        this.excludes[i++] = META_INF_PATTERN;
+        this.excludes[i++] = META_INF_CHILD_PATTERN;
     }
 
     /**

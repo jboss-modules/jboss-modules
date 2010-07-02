@@ -24,8 +24,6 @@ package org.jboss.modules;
 
 import org.junit.Test;
 
-import java.util.Collections;
-
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -36,24 +34,26 @@ import static org.junit.Assert.assertTrue;
  */
 public class ExportFilterTest {
 
+    private static final String[] EMPTY = new String[0];
+
     @Test
     public void testExcludes() throws Exception {
-        ExportFilter exportFilter = new ExportFilter(Collections.<String>emptySet(), Collections.singleton("foo/**"));
+        ExportFilter exportFilter = new ExportFilter(EMPTY, new String[] {"foo/**"});
         assertTrue(exportFilter.shouldExport("foo"));
         assertFalse(exportFilter.shouldExport("foo/bar"));
         assertFalse(exportFilter.shouldExport("foo/bar/baz"));
 
-        exportFilter = new ExportFilter(Collections.<String>emptySet(), Collections.singleton("foo/*"));
+        exportFilter = new ExportFilter(EMPTY, new String[] {"foo/*"});
         assertTrue(exportFilter.shouldExport("foo"));
         assertFalse(exportFilter.shouldExport("foo/bar"));
         assertTrue(exportFilter.shouldExport("foo/bar/baz"));
 
-        exportFilter = new ExportFilter(Collections.<String>emptySet(), Collections.singleton("foo"));
+        exportFilter = new ExportFilter(EMPTY, new String[] {"foo"});
         assertFalse(exportFilter.shouldExport("foo"));
         assertTrue(exportFilter.shouldExport("foo/bar"));
         assertTrue(exportFilter.shouldExport("foo/bar/baz"));
 
-        exportFilter = new ExportFilter(Collections.<String>emptySet(), Collections.singleton("**/bar/**"));
+        exportFilter = new ExportFilter(EMPTY, new String[] {"**/bar/**"});
         assertTrue(exportFilter.shouldExport("foo"));
         assertTrue(exportFilter.shouldExport("foo/bar"));
         assertFalse(exportFilter.shouldExport("foo/bar/baz"));
@@ -62,22 +62,22 @@ public class ExportFilterTest {
 
     @Test
     public void testIncludes() throws Exception {
-        ExportFilter exportFilter = new ExportFilter(Collections.singleton("foo/**"), Collections.singleton("**"));
+        ExportFilter exportFilter = new ExportFilter(new String[] {"foo/**"}, new String[] {"**"});
         assertFalse(exportFilter.shouldExport("foo"));
         assertTrue(exportFilter.shouldExport("foo/bar"));
         assertTrue(exportFilter.shouldExport("foo/bar/baz"));
 
-        exportFilter = new ExportFilter(Collections.singleton("foo/*"), Collections.singleton("**"));
+        exportFilter = new ExportFilter(new String[] {"foo/*"}, new String[] {"**"});
         assertFalse(exportFilter.shouldExport("foo"));
         assertTrue(exportFilter.shouldExport("foo/bar"));
         assertFalse(exportFilter.shouldExport("foo/bar/baz"));
 
-        exportFilter = new ExportFilter(Collections.singleton("foo"), Collections.singleton("**"));
+        exportFilter = new ExportFilter(new String[] {"foo"}, new String[] {"**"});
         assertTrue(exportFilter.shouldExport("foo"));
         assertFalse(exportFilter.shouldExport("foo/bar"));
         assertFalse(exportFilter.shouldExport("foo/bar/baz"));
 
-        exportFilter = new ExportFilter(Collections.singleton("**/bar/**"), Collections.singleton("**"));
+        exportFilter = new ExportFilter(new String[] {"**/bar/**"}, new String[] {"**"});
         assertFalse(exportFilter.shouldExport("foo"));
         assertFalse(exportFilter.shouldExport("foo/bar"));
         assertTrue(exportFilter.shouldExport("foo/bar/baz"));

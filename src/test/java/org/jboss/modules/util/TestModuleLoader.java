@@ -54,12 +54,7 @@ public class TestModuleLoader extends ModuleLoader {
         return module;
     }
 
-    public ModuleSpecBuilder buildModuleSpec(final ModuleIdentifier moduleIdentifier) {
-        return new ModuleSpecBuilder(moduleIdentifier, this);
-
-    }
-
-    void addModuleSpec(final ModuleSpec moduleSpec) {
+    public void addModuleSpec(final ModuleSpec moduleSpec) {
         moduleSpecs.put(moduleSpec.getIdentifier(), moduleSpec); 
     }
 }

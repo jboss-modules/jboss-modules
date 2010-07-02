@@ -129,7 +129,7 @@ public abstract class ModuleLoader {
         final Map<String, List<Module.DependencyImport>> pathsToImports = new HashMap<String, List<Module.DependencyImport>>();
         final Set<String> exportedPaths = new HashSet<String>();
         try {
-            final List<Dependency> dependencies = new ArrayList<Dependency>(moduleSpec.getDependencies().size());
+            final List<Dependency> dependencies = new ArrayList<Dependency>(moduleSpec.getDependencies().length);
             for (DependencySpec dependencySpec : moduleSpec.getDependencies()) {
                 final Module dependencyModule;
                 try {
@@ -191,17 +191,11 @@ public abstract class ModuleLoader {
      * @throws ModuleLoadException If any dependent module can not be loaded
      */
     public Module createAggregate(ModuleIdentifier moduleIdentifier, List<ModuleIdentifier> dependencies) throws ModuleLoadException {
-
-        final ModuleSpec moduleSpec = new ModuleSpec(moduleIdentifier);
+        final ModuleSpec.Builder moduleSpecBuilder = ModuleSpec.build(moduleIdentifier);
         for(ModuleIdentifier identifier : dependencies) {
-            DependencySpec dependencySpec = new DependencySpec();
-            dependencySpec.setModuleIdentifier(identifier);
-            dependencySpec.setExport(true);
-            moduleSpec.addDependency(dependencySpec);
+            moduleSpecBuilder.addDependency(moduleIdentifier).setExport(true);
         }
-
-        moduleSpec.setContentLoader(ModuleContentLoader.build().create());
-        return defineModule(moduleSpec);
+        return defineModule(moduleSpecBuilder.create());
     }
 
     private static final class FutureModule {

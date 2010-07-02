@@ -24,8 +24,8 @@ package org.jboss.modules;
 
 import org.jboss.modules.test.ImportedClass;
 import org.jboss.modules.test.TestClass;
-import org.jboss.modules.util.ModuleSpecBuilder;
 import org.jboss.modules.util.TestModuleLoader;
+import org.jboss.modules.util.TestResourceLoader;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -59,33 +59,38 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
     public void setupModuleLoader() throws Exception {
         moduleLoader = new TestModuleLoader();
 
-        final ModuleSpecBuilder moduleWithContentBuilder = moduleLoader.buildModuleSpec(MODULE_WITH_CONTENT_ID);
-        moduleWithContentBuilder.addRoot("rootOne")
-            .addClass(TestClass.class)
-            .addResources(getResource("test/modulecontentloader/rootOne"));
-        moduleWithContentBuilder
-            .addDependency(MODULE_TO_IMPORT_ID);
-        moduleWithContentBuilder.install();
+        final ModuleSpec.Builder moduleWithContentBuilder = ModuleSpec.build(MODULE_WITH_CONTENT_ID);
+        moduleWithContentBuilder.addRoot("rootOne",
+            TestResourceLoader.build()
+                .addClass(TestClass.class)
+                .addResources(getResource("test/modulecontentloader/rootOne"))
+                .create()
+        );
+        moduleWithContentBuilder.addDependency(MODULE_TO_IMPORT_ID);
+        moduleLoader.addModuleSpec(moduleWithContentBuilder.create());
 
-        final ModuleSpecBuilder moduleToImportBuilder = moduleLoader.buildModuleSpec(MODULE_TO_IMPORT_ID);
-        moduleToImportBuilder.addRoot("rootOne")
-            .addClass(ImportedClass.class)
-            .addResources(getResource("test/modulecontentloader/rootTwo"));
-        moduleToImportBuilder.install();
+        final ModuleSpec.Builder moduleToImportBuilder = ModuleSpec.build(MODULE_TO_IMPORT_ID);
+        moduleToImportBuilder.addRoot("rootOne",
+            TestResourceLoader.build()
+                .addClass(ImportedClass.class)
+                .addResources(getResource("test/modulecontentloader/rootTwo"))
+                .create()
+        );
+        moduleLoader.addModuleSpec(moduleToImportBuilder.create());
 
-        final ModuleSpecBuilder moduleWithExportBuilder = moduleLoader.buildModuleSpec(MODULE_WITH_EXPORT_ID);
+        final ModuleSpec.Builder moduleWithExportBuilder = ModuleSpec.build(MODULE_WITH_EXPORT_ID);
         moduleWithExportBuilder
             .addDependency(MODULE_TO_IMPORT_ID).setExport(true);
-        moduleWithExportBuilder.install();
+        moduleLoader.addModuleSpec(moduleWithExportBuilder.create());
 
-        final ModuleSpecBuilder moduleWithExportFilterBuilder = moduleLoader.buildModuleSpec(MODULE_WITH_FILTERED_EXPORT_ID);
+        final ModuleSpec.Builder moduleWithExportFilterBuilder = ModuleSpec.build(MODULE_WITH_FILTERED_EXPORT_ID);
         moduleWithExportFilterBuilder
             .addDependency(MODULE_TO_IMPORT_ID)
                 .setExport(true)
                 .addExportExclude("org/jboss/**")
                 .addExportExclude("nested");
 
-        moduleWithExportFilterBuilder.install();
+        moduleLoader.addModuleSpec(moduleWithExportFilterBuilder.create());
     }
 
     @Test

@@ -22,57 +22,83 @@
 
 package org.jboss.modules;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class DependencySpec implements ExportFilterable {
-    private ModuleIdentifier moduleIdentifier;
-    private boolean export;
-    private boolean optional;
-    private final Set<String> exportIncludes = new HashSet<String>();
-    private final Set<String> exportExcludes = new HashSet<String>();
+public final class DependencySpec {
+    private final ModuleIdentifier moduleIdentifier;
+    private final boolean export;
+    private final  boolean optional;
+    private final String[] exportIncludes;
+    private final String[] exportExcludes;
 
-    public DependencySpec() {
+    public DependencySpec(ModuleIdentifier moduleIdentifier, boolean export, boolean optional, String[] exportIncludes, String[] exportExcludes) {
+        this.moduleIdentifier = moduleIdentifier;
+        this.export = export;
+        this.optional = optional;
+        this.exportIncludes = exportIncludes;
+        this.exportExcludes = exportExcludes;
     }
 
     public boolean isExport() {
         return export;
     }
 
-    public void setExport(final boolean export) {
-        this.export = export;
-    }
-
     public ModuleIdentifier getModuleIdentifier() {
         return moduleIdentifier;
-    }
-
-    public void setModuleIdentifier(final ModuleIdentifier moduleIdentifier) {
-        this.moduleIdentifier = moduleIdentifier;
     }
 
     public boolean isOptional() {
         return optional;
     }
 
-    public void setOptional(final boolean optional) {
-        this.optional = optional;
-    }
-
-    public void addExportExclude(String path) {
-        exportExcludes.add(path);
-    }
-
-    public void addExportInclude(String path) {
-        exportIncludes.add(path);
-    }
-
-    @Override
     public ExportFilter getExportFilter() {
         return new ExportFilter(exportIncludes, exportExcludes);
+    }
+
+    public interface Builder extends ExportFilterable<Builder> {
+        Builder setExport(final boolean export);
+        Builder setOptional(final boolean optional);
+        Builder addExportInclude(final String path);
+        Builder addExportExclude(final String path);
+        DependencySpec create();
+    }
+
+    public static Builder build(final ModuleIdentifier moduleIdentifier) {
+        return new Builder() {
+            private boolean export;
+            private boolean optional;
+            private final List<String> exportIncludes = new ArrayList<String>();
+            private final List<String> exportExcludes = new ArrayList<String>();
+
+            public Builder setExport(final boolean export) {
+                this.export = export;
+                return this;
+            }
+
+            public Builder setOptional(final boolean optional) {
+                this.optional = optional;
+                return this;
+            }
+
+            public Builder addExportInclude(final String path) {
+                exportIncludes.add(path);
+                return this;
+            }
+
+            public Builder addExportExclude(final String path) {
+                exportExcludes.add(path);
+                return this;
+            }
+
+            @Override
+            public DependencySpec create() {
+                return new DependencySpec(moduleIdentifier, export, optional, exportIncludes.toArray(new String[exportIncludes.size()]), exportExcludes.toArray(new String[exportExcludes.size()]));
+            }
+        };
     }
 }

@@ -22,10 +22,10 @@
 
 package org.jboss.modules;
 
-import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Set;
+
 
 /**
  * Module Specification.
@@ -34,44 +34,37 @@ import java.util.Set;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class ModuleSpec {
-    private final List<DependencySpec> dependencies = new ArrayList<DependencySpec>();
-    private final Set<Module.Flag> moduleFlags = EnumSet.noneOf(Module.Flag.class);
+    private final DependencySpec[] dependencies;
+    private final Set<Module.Flag> moduleFlags;
 
-    private ModuleIdentifier moduleIdentifier;
-    private String mainClass;
-    private ModuleContentLoader loader;
-    private AssertionSetting assertionSetting = AssertionSetting.INHERIT;
+    private final ModuleIdentifier moduleIdentifier;
+    private final String mainClass;
+    private final ModuleContentLoader loader;
+    private final AssertionSetting assertionSetting;
 
-    public ModuleSpec(ModuleIdentifier moduleIdentifier) {
+    public ModuleSpec(ModuleIdentifier moduleIdentifier, DependencySpec[] dependencies, ModuleContentLoader loader, Set<Module.Flag> moduleFlags, AssertionSetting assertionSetting, String mainClass) {
         this.moduleIdentifier = moduleIdentifier;
+        this.dependencies = dependencies;
+        this.loader = loader;
+        this.moduleFlags = moduleFlags;
+        this.assertionSetting = assertionSetting;
+        this.mainClass = mainClass;
     }
 
     public ModuleIdentifier getIdentifier() {
         return moduleIdentifier;
     }
 
-    public List<DependencySpec> getDependencies() {
+    public DependencySpec[] getDependencies() {
         return dependencies;
-    }
-
-    void addDependency(final DependencySpec dependencySpec) {
-        dependencies.add(dependencySpec);
     }
 
     public String getMainClass() {
         return mainClass;
     }
 
-    public void setMainClass(final String mainClass) {
-        this.mainClass = mainClass;
-    }
-
     public ModuleContentLoader getContentLoader() {
         return loader;
-    }
-
-    public void setContentLoader(final ModuleContentLoader loader) {
-        this.loader = loader;
     }
 
     public Set<Module.Flag> getModuleFlags() {
@@ -82,7 +75,68 @@ public final class ModuleSpec {
         return assertionSetting;
     }
 
-    public void setAssertionSetting(final AssertionSetting assertionSetting) {
-        this.assertionSetting = assertionSetting;
+    public interface Builder {
+        Builder setMainClass(final String mainClass);
+        Builder setAssertionSetting(AssertionSetting assertionSetting);
+        Builder addModuleFlag(Module.Flag flag);
+        DependencySpec.Builder addDependency(final ModuleIdentifier moduleIdentifier);
+        Builder addRoot(final String rootName, final ResourceLoader resourceLoader);
+        ModuleSpec create();
+        ModuleIdentifier getIdentifier();
+    }
+
+    public static final Builder build(final ModuleIdentifier moduleIdentifier) {
+        return new Builder() {
+            private final Set<Module.Flag> moduleFlags = EnumSet.noneOf(Module.Flag.class);
+            private String mainClass;
+            private AssertionSetting assertionSetting = AssertionSetting.INHERIT;
+
+            private final ModuleContentLoader.Builder moduleContentLoaderBuilder = ModuleContentLoader.build();
+            private final Set<DependencySpec.Builder> dependencyBuilders = new HashSet<DependencySpec.Builder>();
+
+            public Builder setMainClass(final String mainClass) {
+                this.mainClass = mainClass;
+                return this;
+            }
+
+            @Override
+            public Builder setAssertionSetting(AssertionSetting assertionSetting) {
+                this.assertionSetting = assertionSetting;
+                return this;
+            }
+
+            @Override
+            public Builder addModuleFlag(Module.Flag flag) {
+                moduleFlags.add(flag);
+                return this;
+            }
+
+            public DependencySpec.Builder addDependency(final ModuleIdentifier moduleIdentifier) {
+                final DependencySpec.Builder dependencySpecBuilder = DependencySpec.build(moduleIdentifier);
+                dependencyBuilders.add(dependencySpecBuilder);
+                return dependencySpecBuilder;
+            }
+
+            public Builder addRoot(final String rootName, final ResourceLoader resourceLoader) {
+                moduleContentLoaderBuilder.add(rootName, resourceLoader);
+                return this;
+            }
+
+            public ModuleSpec create() {
+                final ModuleContentLoader.Builder moduleContentLoaderBuilder = this.moduleContentLoaderBuilder;
+                final Set<DependencySpec.Builder> dependencyBuilders = this.dependencyBuilders;
+                final DependencySpec[] dependencySpecs = new DependencySpec[dependencyBuilders.size()];
+                int i = 0;
+                for(DependencySpec.Builder dependencyBuilder : dependencyBuilders) {
+                    dependencySpecs[i++] = dependencyBuilder.create();
+                }
+                return new ModuleSpec(moduleIdentifier, dependencySpecs, moduleContentLoaderBuilder.create(), moduleFlags, assertionSetting, mainClass);
+            }
+
+            @Override
+            public ModuleIdentifier getIdentifier() {
+                return moduleIdentifier;
+            }
+        };
     }
 }
