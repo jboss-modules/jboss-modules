@@ -24,6 +24,7 @@ package org.jboss.modules.util;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -33,17 +34,17 @@ import java.util.List;
 
 /**
  * Utility class providing commonly used test utilities.
- * 
+ *
  * @author John E. Bailey
  */
 public class Util {
-    
+
     public static byte[] readBytes(final InputStream is) throws IOException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         try {
             byte[] buff = new byte[1024];
             int read;
-            while ((read = is.read(buff)) > -1) {
+            while((read = is.read(buff)) > -1) {
                 os.write(buff, 0, read);
             }
         } finally {
@@ -53,7 +54,7 @@ public class Util {
     }
 
     public static URL getResource(final Class baseClass, final String path) throws Exception {
-        final URL url =  baseClass.getClassLoader().getResource(path);
+        final URL url = baseClass.getClassLoader().getResource(path);
         return url;
     }
 
@@ -68,4 +69,18 @@ public class Util {
         }
         return list;
     }
+
+    public static byte[] getClassBytes(final Class aClass) throws Exception {
+        final String resourcePath = getResourceNameOfClass(aClass);
+        final File classFile = Util.getResourceFile(aClass, resourcePath);
+        byte[] classBytes = Util.readBytes(new FileInputStream(classFile));
+        return classBytes;
+    }
+
+    public static String getResourceNameOfClass(final Class<?> aClass) throws IllegalArgumentException {
+        final String nameAsResourcePath = aClass.getName().replace('.', '/');
+        final String resourceName = nameAsResourcePath + ".class";
+        return resourceName;
+    }
+
 }

@@ -42,6 +42,7 @@ import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
 import static junit.framework.Assert.assertTrue;
+import static org.jboss.modules.util.Util.getClassBytes;
 
 /**
  * A test resource loader that simple retrieves resources frm maps.  This allows tests to build
@@ -243,9 +244,7 @@ public class TestResourceLoader extends AbstractResourceLoader {
         public TestResourceLoaderBuilder addClass(final Class aClass) throws Exception {
             final ClassSpec classSpec = new ClassSpec();
             classSpec.setCodeSource(aClass.getProtectionDomain().getCodeSource());
-            final String resourcePath = getResourceNameOfClass(aClass);
-            final File classFile = Util.getResourceFile(aClass, resourcePath);
-            byte[] classBytes = Util.readBytes(new FileInputStream(classFile));
+            final byte[] classBytes = getClassBytes(aClass);
             classSpec.setBytes(classBytes);
             addClassSpec(aClass.getName(), classSpec);
             return this;
@@ -264,20 +263,15 @@ public class TestResourceLoader extends AbstractResourceLoader {
             return this;
         }
 
-        private String getResourceNameOfClass(final Class<?> aClass) throws IllegalArgumentException {
-            final String nameAsResourcePath = aClass.getName().replace('.', '/');
-            final String resourceName = nameAsResourcePath + ".class";
-            return resourceName;
-        }
-    
-            public TestResourceLoaderBuilder addExportInclude(final String path) {
-                resourceLoader.addExportInclude(path);
-                return this;
-            }
 
-            public TestResourceLoaderBuilder addExportExclude(final String path) {
-                resourceLoader.addExportExclude(path);
-                return this;
-            }
+        public TestResourceLoaderBuilder addExportInclude(final String path) {
+            resourceLoader.addExportInclude(path);
+            return this;
+        }
+
+        public TestResourceLoaderBuilder addExportExclude(final String path) {
+            resourceLoader.addExportExclude(path);
+            return this;
+        }
     }
 }
