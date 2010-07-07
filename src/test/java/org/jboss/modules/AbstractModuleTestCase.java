@@ -22,12 +22,16 @@
 
 package org.jboss.modules;
 
+import java.io.Closeable;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import org.jboss.modules.util.Util;
 import org.junit.BeforeClass;
 
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 
 import static org.junit.Assert.assertNotNull;
 
@@ -62,17 +66,30 @@ public class AbstractModuleTestCase {
                 throw new RuntimeException("Failed to create output directory");
         }
         final File outputFile = new File(outputDirectory, resource.getName());
-        FileReader in = null;
-        FileWriter out = null;
+        final InputStream in = new FileInputStream(resource);
         try {
-            in = new FileReader(resource);
-            out = new FileWriter(outputFile);
-            int c;
-            while ((c = in.read()) != -1)
-                out.write(c);
+            final OutputStream out = new FileOutputStream(outputFile);
+            try {
+                final byte[] b = new byte[8192];
+                int c;
+                while ((c = in.read(b)) != -1) {
+                    out.write(b, 0, c);
+                }
+                out.close();
+                in.close();
+            } finally {
+                safeClose(out);
+            }
         } finally {
-            if(in != null) in.close();
-            if(out != null) out.close();
+            safeClose(in);
+        }
+    }
+
+    private static void safeClose(final Closeable closeable) {
+        if (closeable != null) try {
+            closeable.close();
+        } catch (IOException e) {
+            // meh
         }
     }
 }
