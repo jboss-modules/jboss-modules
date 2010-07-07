@@ -20,25 +20,10 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.jboss.modules;
+package org.jboss.modules.test;
 
 /**
- * Contract establishing the ability to include and exclude paths.
- *
- * @author John Bailey
+ * @author John E. Bailey
  */
-public interface ExportFilterable<T> {
-    /**
-     * Add a path glob to be included
-     *
-     * @param path the path glob
-     */
-    T addExportInclude(String path);
-
-    /**
-     * Add a path glob to be excluded
-     *
-     * @param path the path glob
-     */
-    T addExportExclude(String path);
+public class ClassA extends ClassB {
 }

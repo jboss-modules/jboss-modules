@@ -146,7 +146,7 @@ final class ModuleXmlParser {
             setIfSupported(inputFactory, XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
             final XMLStreamReader streamReader = inputFactory.createXMLStreamReader(source);
             try {
-                return parseDocument(root, streamReader, new ModuleSpec(moduleIdentifier));
+                return parseDocument(root, streamReader, ModuleSpec.build(moduleIdentifier));
             } finally {
                 safeClose(streamReader);
             }
@@ -221,20 +221,20 @@ final class ModuleXmlParser {
         return new XMLStreamException(b.toString(), location);
     }
 
-    private static ModuleSpec parseDocument(final File root, XMLStreamReader reader, ModuleSpec spec) throws XMLStreamException {
+    private static ModuleSpec parseDocument(final File root, XMLStreamReader reader, ModuleSpec.Builder specBuilder) throws XMLStreamException {
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case XMLStreamConstants.START_DOCUMENT: {
-                    parseRootElement(root, reader, spec);
-                    return spec;
+                    parseRootElement(root, reader, specBuilder);
+                    return specBuilder.create();
                 }
                 case XMLStreamConstants.START_ELEMENT: {
                     if (Element.of(reader.getName()) != Element.MODULE) {
                         throw unexpectedContent(reader);
                     }
-                    parseModuleContents(root, reader, spec);
+                    parseModuleContents(root, reader, specBuilder);
                     parseEndDocument(reader);
-                    return spec;
+                    return specBuilder.create();
                 }
                 default: {
                     throw unexpectedContent(reader);
@@ -244,14 +244,14 @@ final class ModuleXmlParser {
         throw endOfDocument(reader.getLocation());
     }
 
-    private static void parseRootElement(final File root, final XMLStreamReader reader, final ModuleSpec spec) throws XMLStreamException {
+    private static void parseRootElement(final File root, final XMLStreamReader reader, final ModuleSpec.Builder specBuilder) throws XMLStreamException {
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case XMLStreamConstants.START_ELEMENT: {
                     if (Element.of(reader.getName()) != Element.MODULE) {
                         throw unexpectedContent(reader);
                     }
-                    parseModuleContents(root, reader, spec);
+                    parseModuleContents(root, reader, specBuilder);
                     parseEndDocument(reader);
                     return;
                 }
@@ -263,7 +263,7 @@ final class ModuleXmlParser {
         throw endOfDocument(reader.getLocation());
     }
 
-    private static void parseModuleContents(final File root, final XMLStreamReader reader, final ModuleSpec spec) throws XMLStreamException {
+    private static void parseModuleContents(final File root, final XMLStreamReader reader, final ModuleSpec.Builder specBuilder) throws XMLStreamException {
         final int count = reader.getAttributeCount();
         String flags = null;
         String name = null;
@@ -284,14 +284,14 @@ final class ModuleXmlParser {
         if (! required.isEmpty()) {
             throw missingAttributes(reader.getLocation(), required);
         }
-        if (! spec.getIdentifier().equals(new ModuleIdentifier(group, name, version))) {
-            throw invalidModuleName(reader.getLocation(), spec.getIdentifier());
+        if (! specBuilder.getIdentifier().equals(new ModuleIdentifier(group, name, version))) {
+            throw invalidModuleName(reader.getLocation(), specBuilder.getIdentifier());
         }
         if (flags != null) {
             for (String flag : flags.split("\\s+")) {
                 try {
                     final Module.Flag flagVal = Module.Flag.valueOf(flag.toUpperCase().replace('-', '_'));
-                    spec.getModuleFlags().add(flagVal);
+                    specBuilder.addModuleFlag(flagVal);
                 } catch (IllegalArgumentException e) {
                     throw unknownFlag(flag, reader.getLocation());
                 }
@@ -302,9 +302,6 @@ final class ModuleXmlParser {
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {
-                    if (spec.getContentLoader() == null) {
-                        spec.setContentLoader(ModuleContentLoader.EMPTY);
-                    }
                     return;
                 }
                 case XMLStreamConstants.START_ELEMENT: {
@@ -314,9 +311,9 @@ final class ModuleXmlParser {
                     }
                     visited.add(element);
                     switch (element) {
-                        case DEPENDENCIES: parseDependencies(reader, spec); break;
-                        case MAIN_CLASS:   parseMainClass(reader, spec); break;
-                        case RESOURCES:    parseResources(root, reader, spec); break;
+                        case DEPENDENCIES: parseDependencies(reader, specBuilder); break;
+                        case MAIN_CLASS:   parseMainClass(reader, specBuilder); break;
+                        case RESOURCES:    parseResources(root, reader, specBuilder); break;
                         default: throw unexpectedContent(reader);
                     }
                     break;
@@ -329,7 +326,7 @@ final class ModuleXmlParser {
         throw endOfDocument(reader.getLocation());
     }
 
-    private static void parseDependencies(final XMLStreamReader reader, final ModuleSpec spec) throws XMLStreamException {
+    private static void parseDependencies(final XMLStreamReader reader, final ModuleSpec.Builder specBuilder) throws XMLStreamException {
         // xsd:choice
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
@@ -338,7 +335,7 @@ final class ModuleXmlParser {
                 }
                 case XMLStreamConstants.START_ELEMENT: {
                     switch (Element.of(reader.getName())) {
-                        case MODULE: parseModuleDependency(reader, spec); break;
+                        case MODULE: parseModuleDependency(reader, specBuilder); break;
                         default: throw unexpectedContent(reader);
                     }
                     break;
@@ -351,7 +348,7 @@ final class ModuleXmlParser {
         throw endOfDocument(reader.getLocation());
     }
 
-    private static void parseModuleDependency(final XMLStreamReader reader, final ModuleSpec spec) throws XMLStreamException {
+    private static void parseModuleDependency(final XMLStreamReader reader, final ModuleSpec.Builder specBuilder) throws XMLStreamException {
         String group = null;
         String name = null;
         String version = null;
@@ -374,17 +371,15 @@ final class ModuleXmlParser {
         if (! required.isEmpty()) {
             throw missingAttributes(reader.getLocation(), required);
         }
-        final DependencySpec dependencySpec = new DependencySpec();
-        dependencySpec.setModuleIdentifier(new ModuleIdentifier(group, name, version));
-        dependencySpec.setExport(export);
-        dependencySpec.setOptional(optional);
-        spec.addDependency(dependencySpec);
+        final DependencySpec.Builder dependencySpecBuilder = specBuilder.addDependency(new ModuleIdentifier(group, name, version))
+            .setExport(export)
+            .setOptional(optional);
 
         // Process the nested <exports> element
-        parseForExports(reader, dependencySpec);
+        parseForExports(reader, dependencySpecBuilder);
     }
 
-    private static void parseMainClass(final XMLStreamReader reader, final ModuleSpec spec) throws XMLStreamException {
+    private static void parseMainClass(final XMLStreamReader reader, final ModuleSpec.Builder specBuilder) throws XMLStreamException {
         String name = null;
         final Set<Attribute> required = EnumSet.of(Attribute.NAME);
         final int count = reader.getAttributeCount();
@@ -399,24 +394,22 @@ final class ModuleXmlParser {
         if (! required.isEmpty()) {
             throw missingAttributes(reader.getLocation(), required);
         }
-        spec.setMainClass(name);
+        specBuilder.setMainClass(name);
         // consume remainder of element
         parseNoContent(reader);
     }
 
-    private static void parseResources(final File root, final XMLStreamReader reader, final ModuleSpec spec) throws XMLStreamException {
+    private static void parseResources(final File root, final XMLStreamReader reader, final ModuleSpec.Builder specBuilder) throws XMLStreamException {
         // xsd:choice
-        final ModuleContentLoader.Builder builder = ModuleContentLoader.build();
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {
-                    spec.setContentLoader(builder.create());
                     return;
                 }
                 case XMLStreamConstants.START_ELEMENT: {
                     switch (Element.of(reader.getName())) {
                         case RESOURCE_ROOT: {
-                            parseResourceRoot(root, spec.getIdentifier(), reader, builder);
+                            parseResourceRoot(root, reader, specBuilder);
                             break;
                         }
                         default: throw unexpectedContent(reader);
@@ -431,7 +424,8 @@ final class ModuleXmlParser {
         throw endOfDocument(reader.getLocation());
     }
 
-    private static void parseResourceRoot(final File root, final ModuleIdentifier identifier, final XMLStreamReader reader, final ModuleContentLoader.Builder builder) throws XMLStreamException {
+    private static void parseResourceRoot(final File root, final XMLStreamReader reader, final ModuleSpec.Builder specBuilder) throws XMLStreamException {
+        final ModuleIdentifier identifier = specBuilder.getIdentifier();
         String name = null;
         String path = null;
         final Set<Attribute> required = EnumSet.of(Attribute.PATH);
@@ -462,7 +456,7 @@ final class ModuleXmlParser {
                 throw new XMLStreamException("Invalid JAR file specified", reader.getLocation(), e);
             }
         }
-        builder.add(name, resourceLoader);
+        specBuilder.addRoot(name, resourceLoader);
 
         // Process the nested <exports> element
         parseForExports(reader, resourceLoader);

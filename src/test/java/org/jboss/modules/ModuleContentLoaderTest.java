@@ -22,10 +22,11 @@
 
 package org.jboss.modules;
 
+import org.jboss.modules.test.TestClass;
+import org.jboss.modules.util.TestResourceLoader;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -33,6 +34,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.jboss.modules.util.Util.readBytes;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -53,8 +55,15 @@ public class ModuleContentLoaderTest extends AbstractModuleTestCase {
     public void setupContentLoader() throws Exception {
         ModuleContentLoader.Builder builder = ModuleContentLoader.build();
 
-        builder.add("rootOne", createLoader("rootOne"));
-        builder.add("rootTwo", createLoader("rootTwo"));
+        final TestResourceLoader.TestResourceLoaderBuilder rootOneBuilder = TestResourceLoader.build();
+        rootOneBuilder.addResources(getResource("test/modulecontentloader/rootOne"))
+            .addClass(TestClass.class);
+
+        final TestResourceLoader.TestResourceLoaderBuilder rootTwoBuilder = TestResourceLoader.build();
+        rootTwoBuilder.addResources(getResource("test/modulecontentloader/rootTwo"));
+
+        builder.add("rootOne", rootOneBuilder.create());
+        builder.add("rootTwo", rootTwoBuilder.create());
 
         moduleContentLoader = builder.create();
     }
@@ -66,12 +75,11 @@ public class ModuleContentLoaderTest extends AbstractModuleTestCase {
         resource = moduleContentLoader.getResource("testTwo.txt");
         assertNotNull(resource);
 
-
         Iterable<Resource> resources = moduleContentLoader.getResources("/nested/nested.txt");
         assertNotNull(resource);
         List<String> roots = new ArrayList<String>(2);
 
-        final Pattern pattern = Pattern.compile("root\\w\\w\\w$");
+        final Pattern pattern = Pattern.compile("root\\w\\w\\w");
         for(Resource aResource : resources) {
             final String path = aResource.getURL().getPath();
             final Matcher matcher = pattern.matcher(path);
@@ -82,6 +90,12 @@ public class ModuleContentLoaderTest extends AbstractModuleTestCase {
         assertEquals(2, roots.size());
         assertTrue(roots.contains("rootOne"));
         assertTrue(roots.contains("rootTwo"));
+    }
+
+    @Test
+    public void testDelegatedResourceLoadNotFound() throws Exception {
+        Resource resource = moduleContentLoader.getResource("bogus.txt");
+        assertNull(resource);
     }
 
      @Test
@@ -123,12 +137,15 @@ public class ModuleContentLoaderTest extends AbstractModuleTestCase {
 
         final ModuleContentLoader.Builder builder = ModuleContentLoader.build();
 
-        ResourceLoader rootOneLoader = createLoader("rootOne");
-        rootOneLoader.addExportExclude("org/**");
-        rootOneLoader.addExportInclude("META-INF");
-        rootOneLoader.addExportInclude("org/jboss/modules/**");
+        final TestResourceLoader.TestResourceLoaderBuilder rootBuilder = TestResourceLoader.build();
+            rootBuilder
+                .addResources(getResource("test/modulecontentloader/rootOne"))
+                .addClass(TestClass.class)
+                .addExportExclude("org/**")
+                .addExportInclude("META-INF")
+                .addExportInclude("org/jboss/modules/**");
 
-        builder.add("rootOne", rootOneLoader);
+        builder.add("rootOne", rootBuilder.create());
 
         final ModuleContentLoader filteredLoader = builder.create();
 
@@ -156,6 +173,12 @@ public class ModuleContentLoaderTest extends AbstractModuleTestCase {
     }
 
     @Test
+    public void testDelegatingGetClassSpecNotFound() throws Exception {
+        ClassSpec spec = moduleContentLoader.getClassSpec("org.jboss.modules.test.BogusClass");
+        assertNull(spec);
+    }
+
+    @Test
     public void testDelegatingGetPackageSpec() throws Exception {
         PackageSpec spec = moduleContentLoader.getPackageSpec("org/jboss/modules/test");
         assertNotNull(spec);
@@ -168,8 +191,16 @@ public class ModuleContentLoaderTest extends AbstractModuleTestCase {
         assertEquals("JBoss", spec.getImplVendor());
     }
 
-    private ResourceLoader createLoader(final String rootName) throws Exception {
-        final File resourceRoot = getResource("test/modulecontentloader/" + rootName);
-        return new FileResourceLoader(MODULE_ID, resourceRoot, rootName);
+    @Test
+    public void testDelegatingGetPackageSpecNotFound() throws Exception {
+        PackageSpec spec = moduleContentLoader.getPackageSpec("org/jboss/modules/bogus");
+        assertNotNull(spec);
+
+        assertNull(spec.getSpecTitle());
+        assertNull(spec.getSpecVersion());
+        assertNull(spec.getSpecVendor());
+        assertNull(spec.getImplTitle());
+        assertNull(spec.getImplVersion());
+        assertNull(spec.getImplVendor());
     }
 }

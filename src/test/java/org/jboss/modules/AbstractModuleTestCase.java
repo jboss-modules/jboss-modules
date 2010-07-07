@@ -22,13 +22,12 @@
 
 package org.jboss.modules;
 
+import org.jboss.modules.util.Util;
 import org.junit.BeforeClass;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
+import java.io.FileReader;
+import java.io.FileWriter;
 
 import static org.junit.Assert.assertNotNull;
 
@@ -46,23 +45,34 @@ public class AbstractModuleTestCase {
         assertNotNull(Module.SYSTEM);
     }
 
-    protected byte[] readBytes(final InputStream is) throws IOException {
-
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        try {
-            byte[] buff = new byte[1024];
-            int read;
-            while ((read = is.read(buff)) > -1) {
-                os.write(buff, 0, read);
-            }
-        } finally {
-            is.close();
-        }
-        return os.toByteArray();
+    protected File getResource(final String path) throws Exception {
+        return Util.getResourceFile(getClass(), path);
     }
 
-    protected File getResource(final String path) throws Exception {
-        final URL url = getClass().getClassLoader().getResource(path);
-        return new File(url.toURI());
+    protected void copyResource(final String inputResource, final String outputBase, final String outputPath) throws Exception {
+        final File resource = getResource(inputResource);
+        final File outputDirectory = new File(getResource(outputBase), outputPath);
+
+        if(!resource.exists())
+            throw new IllegalArgumentException("Resource does not exist");
+        if (outputDirectory.exists() && outputDirectory.isFile())
+            throw new IllegalArgumentException("OutputDirectory must be a directory");
+        if (!outputDirectory.exists()) {
+            if (!outputDirectory.mkdirs())
+                throw new RuntimeException("Failed to create output directory");
+        }
+        final File outputFile = new File(outputDirectory, resource.getName());
+        FileReader in = null;
+        FileWriter out = null;
+        try {
+            in = new FileReader(resource);
+            out = new FileWriter(outputFile);
+            int c;
+            while ((c = in.read()) != -1)
+                out.write(c);
+        } finally {
+            if(in != null) in.close();
+            if(out != null) out.close();
+        }
     }
 }

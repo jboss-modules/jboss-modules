@@ -22,7 +22,9 @@
 
 package org.jboss.modules;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -31,19 +33,20 @@ import java.util.Set;
  * @author John Bailey
  */
 public abstract class AbstractResourceLoader implements ResourceLoader {
-    private final Set<String> exportIncludes = new HashSet<String>();
-    private final Set<String> exportExcludes = new HashSet<String>();
+    private final List<String> exportIncludes = new ArrayList<String>();
+    private final List<String> exportExcludes = new ArrayList<String>();
 
-    public void addExportExclude(String path) {
+    public Void addExportExclude(String path) {
         exportExcludes.add(path);
+        return null;
     }
 
-    public void addExportInclude(String path) {
+    public Void addExportInclude(String path) {
         exportIncludes.add(path);
+        return null;
     }
 
-    @Override
     public ExportFilter getExportFilter() {
-        return new ExportFilter(exportIncludes, exportExcludes);
+        return new ExportFilter(exportIncludes.toArray(new String[exportExcludes.size()]), exportExcludes.toArray(new String[exportExcludes.size()]));
     }
 }

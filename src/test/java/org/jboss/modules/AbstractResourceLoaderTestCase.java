@@ -28,6 +28,7 @@ import org.junit.Test;
 import java.net.URL;
 import java.util.Collection;
 
+import static org.jboss.modules.util.Util.readBytes;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -123,5 +124,22 @@ public abstract class AbstractResourceLoaderTestCase extends AbstractModuleTestC
         assertNull(spec.getImplTitle());
         assertNull(spec.getImplVersion());
         assertNull(spec.getImplVendor());
+    }
+
+    /**
+     * This test has some repeated bits from the ExportFilterTest, but the main purpose
+     * of this test is to verify the ExportFilter is being created correctly.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testExportFiltering() throws Exception {
+        loader = createLoader();
+        loader.addExportExclude("nested/**");
+        loader.addExportInclude("nested/other/**");
+        ExportFilter exportFilter = loader.getExportFilter();
+        assertFalse(exportFilter.shouldExport("nested/test"));
+        assertFalse(exportFilter.shouldExport("nested/other"));
+        assertTrue(exportFilter.shouldExport("nested/other/test"));
     }
 }
