@@ -22,33 +22,63 @@
 package org.jboss.modules;
 
 /**
- * A simple Logger abstraction.
+ * A {@link ModuleLogger} implementation that does not log.
  * 
  * @author thomas.diesler@jboss.com
  * @since 13-Jul-2010
  */
-public interface ModuleLogger
+public class NoopModuleLogger implements ModuleLogger
 {
-   enum Level
+   private static ModuleLogger instance = new NoopModuleLogger();
+   
+   public static ModuleLogger getInstance()
    {
-      TRACE, DEBUG, WARN, ERROR
+      return instance;
    }
 
-   boolean isTraceEnabled();
+   @Override
+   public boolean isTraceEnabled()
+   {
+      return false;
+   }
 
-   void trace(String message);
+   @Override
+   public void trace(String message)
+   {
+   }
 
-   void trace(String message, Throwable th);
+   @Override
+   public void trace(String message, Throwable th)
+   {
+   }
 
-   void debug(String message);
+   @Override
+   public void debug(String message)
+   {
+   }
 
-   void debug(String message, Throwable th);
+   @Override
+   public void debug(String message, Throwable th)
+   {
+   }
 
-   void warn(String message);
+   @Override
+   public void warn(String message)
+   {
+   }
 
-   void warn(String message, Throwable th);
+   @Override
+   public void warn(String message, Throwable th)
+   {
+   }
 
-   void error(String message);
+   @Override
+   public void error(String message)
+   {
+   }
 
-   void error(String message, Throwable th);
+   @Override
+   public void error(String message, Throwable th)
+   {
+   }
 }

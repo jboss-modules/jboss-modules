@@ -43,8 +43,7 @@ final class SystemModuleClassLoader extends ModuleClassLoader {
         super(module, flags, setting, null);
     }
 
-
-    Set<String> getExportedPaths() {
+    protected Set<String> getExportedPaths() {
         final HashSet<String> packageSet = new HashSet<String>(128);
         final HashSet<String> jarSet = new HashSet<String>(128);
         processClassPathItem(System.getProperty("sun.boot.class.path"), jarSet, packageSet);

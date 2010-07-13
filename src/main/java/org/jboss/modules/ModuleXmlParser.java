@@ -45,6 +45,7 @@ import javax.xml.stream.XMLStreamReader;
  * A fast, validating module.xml parser.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author thomas.diesler@jboss.com
  */
 final class ModuleXmlParser {
 

@@ -41,8 +41,12 @@ import java.util.Set;
 /**
  * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author thomas.diesler@jboss.com
  */
 public class ModuleClassLoader extends ConcurrentClassLoader {
+   
+    private ModuleLogger log = NoopModuleLogger.getInstance();
+    
     private static final boolean debugDefines;
 
     static {
@@ -72,39 +76,95 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         }
     }
 
+    public void setModuleLogger(ModuleLogger logger) {
+       log = (logger != null ? logger : NoopModuleLogger.getInstance());
+    }
+
+   protected Set<String> getExportedPaths() {
+       return Collections.emptySet();
+    }
+    
     protected Class<?> findClass(String className, boolean exportsOnly) throws ClassNotFoundException {
         // Check if we have already loaded it..
         Class<?> loadedClass = findLoadedClass(className);
         if (loadedClass != null) {
             return loadedClass;
         }
+        
+        boolean traceEnabled = log.isTraceEnabled();
+        if (traceEnabled == true)
+           log.trace("findClass [" + className + "] from [" + module + "] ...");
+        
         final Set<Module.Flag> flags = this.flags;
         if (flags.contains(Module.Flag.CHILD_FIRST)) {
+           
+           if (traceEnabled == true)
+              log.trace("Attempting to loadClassLocal [" + className + "] from [" + module + "] ...");
+           
             loadedClass = loadClassLocal(className, exportsOnly);
+            if (loadedClass != null) {
+               if (traceEnabled == true)
+                  log.trace("Found loadClassLocal [" + className + "] from [" + module + "]");
+            }
+            
             if (loadedClass == null) {
+               
+               if (traceEnabled == true)
+                  log.trace("Attempting to getImportedClass [" + className + "] from [" + module + "] ...");
+               
                 loadedClass = getImportedClass(className, exportsOnly);
+                if (loadedClass != null) {
+                   if (traceEnabled == true)
+                      log.trace("Found getImportedClass [" + className + "] from [" + module + "]");
+                }
             }
         } else {
+           
+           if (traceEnabled == true)
+              log.trace("Attempting to getImportedClass [" + className + "] from [" + module + "] ...");
+           
             loadedClass = getImportedClass(className, exportsOnly);
+            if (loadedClass != null) {
+               if (traceEnabled == true)
+                  log.trace("Found getImportedClass [" + className + "] from [" + module + "]");
+            }
+            
             if (loadedClass == null) {
+               
+               if (traceEnabled == true)
+                  log.trace("Attempting to loadClassLocal [" + className + "] from [" + module + "] ...");
+               
                 loadedClass = loadClassLocal(className, exportsOnly);
+                if (loadedClass != null) {
+                   if (traceEnabled == true)
+                      log.trace("Found loadClassLocal [" + className + "] from [" + module + "]");
+                }
             }
         }
         if (loadedClass == null) {
-            throw new ClassNotFoundException(className + " from [" + module+ "]");
+           
+           if (traceEnabled == true)
+              log.trace("Class not found [" + className + "] from [" + module + "]");
+           
+            throw new ClassNotFoundException(className + " from [" + module + "]");
         }
         return loadedClass;
     }
 
     Class<?> getImportedClass(final String className, final boolean exportsOnly) {
 
+        boolean traceEnabled = log.isTraceEnabled();
+
         final Map<String, List<Module.DependencyImport>> pathsToImports = module.getPathsToImports();
 
         final String path = getPathFromClassName(className);
 
         final List<Module.DependencyImport> dependenciesForPath = pathsToImports.get(path);
-        if(dependenciesForPath == null)
+        if(dependenciesForPath == null) {
+           if (traceEnabled == true)
+              log.trace("No dependencies for path [" + path + "] from [" + module + "]");
             return null;
+        }
 
         for(Module.DependencyImport dependencyImport : dependenciesForPath) {
             final Dependency dependency = dependencyImport.getDependency();
@@ -112,11 +172,16 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
                 continue;
 
             final Module module = dependency.getModule();
+            if (traceEnabled == true)
+               log.trace("Attempting to getImportedClass [" + className + "] from [" + module + "] ...");
 
             try {
                 Class<?> importedClass = module.getClassLoader().loadExportedClass(className);
-                if(importedClass != null)
+                if(importedClass != null) {
+                   if (traceEnabled == true)
+                      log.trace("Found getImportedClass [" + className + "] from [" + module + "]");
                     return importedClass;
+                }
             } catch (ClassNotFoundException ignored){}
         }
         return null;

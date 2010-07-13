@@ -42,7 +42,7 @@ import static org.jboss.modules.ConcurrentReferenceHashMap.ReferenceType.STRONG;
  */
 public abstract class ModuleLoader {
 
-    private static volatile ModuleLogger log = new ModuleLogger() {
+    private static volatile ModuleLoadLogger log = new ModuleLoadLogger() {
         public void moduleLoading(final ModuleIdentifier identifier) {
         }
 
@@ -58,7 +58,7 @@ public abstract class ModuleLoader {
      *
      * @param moduleLogger the logger to use
      */
-    public static void setLogger(ModuleLogger moduleLogger) {
+    public static void setLogger(ModuleLoadLogger moduleLogger) {
         // todo perm check
         log = moduleLogger;
     }
