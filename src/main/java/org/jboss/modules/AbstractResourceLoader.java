@@ -23,9 +23,7 @@
 package org.jboss.modules;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Base resource loaded that managed the Export filter.
@@ -47,6 +45,6 @@ public abstract class AbstractResourceLoader implements ResourceLoader {
     }
 
     public ExportFilter getExportFilter() {
-        return new ExportFilter(exportIncludes.toArray(new String[exportExcludes.size()]), exportExcludes.toArray(new String[exportExcludes.size()]));
+        return new ExportFilter(exportIncludes.toArray(new String[exportIncludes.size()]), exportExcludes.toArray(new String[exportExcludes.size()]));
     }
 }
