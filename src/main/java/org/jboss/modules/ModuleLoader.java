@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
-import static org.jboss.modules.ConcurrentReferenceHashMap.ReferenceType.SOFT;
+import static org.jboss.modules.ConcurrentReferenceHashMap.ReferenceType.WEAK;
 import static org.jboss.modules.ConcurrentReferenceHashMap.ReferenceType.STRONG;
 
 /**
@@ -71,7 +71,7 @@ public abstract class ModuleLoader {
     };
 
     private final ConcurrentMap<ModuleIdentifier, FutureModule> moduleMap = new ConcurrentReferenceHashMap<ModuleIdentifier, FutureModule>(
-            256, 0.5f, 32, STRONG, SOFT, EnumSet.noneOf(ConcurrentReferenceHashMap.Option.class)
+            256, 0.5f, 32, STRONG, WEAK, EnumSet.noneOf(ConcurrentReferenceHashMap.Option.class)
     );
 
     /**
