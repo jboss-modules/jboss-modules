@@ -22,7 +22,6 @@
 
 package org.jboss.modules;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
@@ -207,7 +206,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
 
     private String getPathFromClassName(final String className) {
         int idx =  className.lastIndexOf('.');
-        return idx > -1 ? className.substring(0, idx).replace('.', File.separatorChar) : "" ;
+        return idx > -1 ? className.substring(0, idx).replace('.', '/') : "" ;
     }
 
     @Override

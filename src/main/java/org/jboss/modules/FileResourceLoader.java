@@ -136,7 +136,7 @@ final class FileResourceLoader extends AbstractResourceLoader{
     }
 
     public ClassSpec getClassSpec(final String name) throws IOException {
-        final String fileName = name.replace('.', File.separatorChar) + ".class";
+        final String fileName = name.replace('.', '/') + ".class";
         final File file = new File(root, fileName);
         if (! file.exists()) {
             return null;
@@ -198,7 +198,7 @@ final class FileResourceLoader extends AbstractResourceLoader{
     }
 
     public String getLibrary(final String name) {
-        final File file = new File(root, ARCH_NAME + File.separator + name);
+        final File file = new File(root, ARCH_NAME + "/" + name);
         return file.exists() ? file.getAbsolutePath() : null;
     }
 
@@ -271,7 +271,7 @@ final class FileResourceLoader extends AbstractResourceLoader{
         for (File file : root.listFiles()) {
             if (file.isDirectory()) {
                 index.add(pathBase + file.getName());
-                buildIndex(index, file, pathBase + file.getName() +  File.separatorChar);
+                buildIndex(index, file, pathBase + file.getName() + "/");
             }
         }
     }
