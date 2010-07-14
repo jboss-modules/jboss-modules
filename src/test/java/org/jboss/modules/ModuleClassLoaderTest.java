@@ -30,7 +30,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 
@@ -257,7 +256,6 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
         assertNotNull(resUrls);
         final List<URL> resUrlList = toList(resUrls);
         assertEquals(2, resUrlList.size());
-        final List<String> paths = new ArrayList<String>(resUrlList.size());
         boolean rootOne = false;
         boolean rootTwo = false;
         for(URL resUrl : resUrlList) {
@@ -265,7 +263,6 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
                 rootOne = resUrl.getPath().contains("rootOne");
             if(!rootTwo)
                 rootTwo = resUrl.getPath().contains("rootTwo");
-            paths.add(resUrl.getPath());
         }
         assertTrue(rootOne);
         assertTrue(rootTwo);
