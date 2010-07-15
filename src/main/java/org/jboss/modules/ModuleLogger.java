@@ -23,32 +23,35 @@ package org.jboss.modules;
 
 /**
  * A simple Logger abstraction.
- * 
+ *
  * @author thomas.diesler@jboss.com
  * @since 13-Jul-2010
  */
-public interface ModuleLogger
-{
-   enum Level
-   {
-      TRACE, DEBUG, WARN, ERROR
-   }
+public interface ModuleLogger {
 
-   boolean isTraceEnabled();
+    enum Level {
 
-   void trace(String message);
+        TRACE,
+        DEBUG,
+        WARN,
+        ERROR
+    }
 
-   void trace(String message, Throwable th);
+    boolean isTraceEnabled();
 
-   void debug(String message);
+    void trace(String message);
 
-   void debug(String message, Throwable th);
+    void trace(String message, Throwable th);
 
-   void warn(String message);
+    void debug(String message);
 
-   void warn(String message, Throwable th);
+    void debug(String message, Throwable th);
 
-   void error(String message);
+    void warn(String message);
 
-   void error(String message, Throwable th);
+    void warn(String message, Throwable th);
+
+    void error(String message);
+
+    void error(String message, Throwable th);
 }

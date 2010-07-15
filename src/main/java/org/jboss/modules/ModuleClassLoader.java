@@ -80,10 +80,6 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
        log = (logger != null ? logger : NoopModuleLogger.getInstance());
     }
 
-   protected Set<String> getExportedPaths() {
-       return Collections.emptySet();
-    }
-    
     protected Class<?> findClass(String className, boolean exportsOnly) throws ClassNotFoundException {
         // Check if we have already loaded it..
         Class<?> loadedClass = findLoadedClass(className);
