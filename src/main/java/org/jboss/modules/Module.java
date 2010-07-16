@@ -28,11 +28,15 @@ import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 /**
@@ -61,19 +65,23 @@ public final class Module {
     private final String mainClassName;
     private final ModuleClassLoader moduleClassLoader;
     private final ModuleLoader moduleLoader;
-    private final Set<String> exportedPaths;
-    private final Map<String, List<DependencyImport>> pathsToImports;
+    private List<Dependency> dependencies;
+    private Set<DependencyExport> exportedDependencies;
+    private final AtomicBoolean exportsDetermined = new AtomicBoolean();
+    private Map<String, List<DependencyImport>> pathsToImports;
+    private final AtomicBoolean importsDetermined = new AtomicBoolean();
+    private Set<String> localExportedPaths;
 
-    Module(final ModuleSpec spec, final Set<Flag> flags, final ModuleLoader moduleLoader, final Set<String> exportedPaths, final Map<String, List<DependencyImport>> pathsToImports) {
+    Module(final ModuleSpec spec, final Set<Flag> flags, final ModuleLoader moduleLoader) {
         this.moduleLoader = moduleLoader;
         identifier = spec.getIdentifier();
         mainClassName = spec.getMainClass();
+        final ModuleContentLoader moduleContentLoader = spec.getContentLoader();
         // should be safe, so...
         //noinspection ThisEscapedInObjectConstruction
-        moduleClassLoader = new ModuleClassLoader(this, flags, spec.getAssertionSetting(), spec.getContentLoader());
+        moduleClassLoader = new ModuleClassLoader(this, flags, spec.getAssertionSetting(), moduleContentLoader);
 
-        this.exportedPaths = exportedPaths;
-        this.pathsToImports = pathsToImports;
+        localExportedPaths = moduleContentLoader.getFilteredLocalPaths();
     }
 
     private Module() {
@@ -82,9 +90,16 @@ public final class Module {
         //noinspection ThisEscapedInObjectConstruction
         final SystemModuleClassLoader smcl = new SystemModuleClassLoader(this, Collections.<Flag>emptySet(), AssertionSetting.INHERIT);
         moduleClassLoader = smcl;
-        exportedPaths = smcl.getExportedPaths();
+        localExportedPaths = smcl.getExportedPaths();
         pathsToImports = null; // bypassed by the system MCL
         moduleLoader = InitialModuleLoader.INSTANCE;
+    }
+
+    void setDependencies(final List<Dependency> dependencies) {
+        if(this.dependencies != null) {
+            throw new IllegalStateException("Module dependencies can only be set once");
+        }
+        this.dependencies = dependencies;
     }
 
     public final Resource getExportedResource(final String rootPath, final String resourcePath) {
@@ -173,7 +188,60 @@ public final class Module {
      * @return the paths that are exported by this module
      */
     public Set<String> getExportedPaths() {
-        return exportedPaths;
+        return localExportedPaths;
+    }
+
+    Map<String, List<DependencyImport>> getPathsToImports() {
+        if(importsDetermined.compareAndSet(false, true)) {
+            pathsToImports = new HashMap<String, List<DependencyImport>>();
+            for(Dependency dependency : dependencies) {
+                final Module dependencyModule = dependency.getModule();
+                final ExportFilter filter = dependency.getExportFilter();
+
+                final Set<DependencyExport> moduleExportedDependencies = dependencyModule.getExportedDependencies();
+
+                for(DependencyExport dependencyExport : moduleExportedDependencies) {
+                    final Module dependencyExportModule = dependencyExport.module;
+                    if(dependencyExportModule.equals(this));
+                    final Set<String> dependenciesLocalExports = dependencyExportModule.getExportedPaths();
+                    for(String exportPath : dependenciesLocalExports) {
+                        final boolean shouldExport = dependency.isExport() && filter.shouldExport(exportPath) && dependencyExport.exportFilter.shouldExport(exportPath);
+                        if(!pathsToImports.containsKey(exportPath))
+                            pathsToImports.put(exportPath, new ArrayList<DependencyImport>());
+                        pathsToImports.get(exportPath).add(new DependencyImport(dependencyExportModule, shouldExport));
+                    }
+                }
+
+                final Set<String> dependenciesLocalExports = dependencyModule.getExportedPaths();
+                for(String exportPath : dependenciesLocalExports) {
+                    final boolean shouldExport = dependency.isExport() && filter.shouldExport(exportPath);
+                    if(!pathsToImports.containsKey(exportPath))
+                        pathsToImports.put(exportPath, new ArrayList<DependencyImport>());
+                    pathsToImports.get(exportPath).add(new DependencyImport(dependencyModule, shouldExport));
+                }
+            }
+        }
+        return pathsToImports;
+    }
+
+    Set<DependencyExport> getExportedDependencies() {
+        if(exportsDetermined.compareAndSet(false, true)) {
+            exportedDependencies = new HashSet<DependencyExport>();
+            for(Dependency dependency : dependencies) {
+                if(dependency.isExport()) {
+                    final Module dependencyModule = dependency.getModule();
+                    exportedDependencies.add(new DependencyExport(dependencyModule, dependency.getExportFilter()));
+                    final Set<DependencyExport> dependencyExports = dependencyModule.getExportedDependencies();
+                    for(DependencyExport dependencyExport : dependencyExports) {
+                        final Module exportModule = dependencyExport.module;
+                        if(exportModule.equals(this))
+                            continue;
+                        exportedDependencies.add(new DependencyExport(exportModule, new DelegatingExportFilter(dependencyExport.exportFilter, dependency.getExportFilter())));
+                    }
+                }
+            }
+        }
+        return exportedDependencies;
     }
 
     /**
@@ -259,25 +327,35 @@ public final class Module {
         Module.moduleLoaderSelector = moduleLoaderSelector;
     }
 
-    Map<String, List<DependencyImport>> getPathsToImports() {
-        return pathsToImports;
-    }
-
-    static class DependencyImport {
-        private final Dependency dependency;
+    static final class DependencyImport {
+        private final Module module;
         private final boolean export;
 
-        DependencyImport(Dependency dependency, boolean export) {
-            this.dependency = dependency;
+        DependencyImport(Module module, boolean export) {
+            this.module = module;
             this.export = export;
         }
 
-        public Dependency getDependency() {
-            return dependency;
+        public Module getModule() {
+            return module;
         }
 
         public boolean isExport() {
             return export;
+        }
+    }
+
+    static final class DependencyExport {
+        private final Module module;
+        private final ExportFilter exportFilter;
+
+        DependencyExport(Module module, ExportFilter exportFilter) {
+            this.module = module;
+            this.exportFilter = exportFilter;
+        }
+
+        Module getModule() {
+            return module;
         }
     }
 }

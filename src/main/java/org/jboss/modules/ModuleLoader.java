@@ -25,15 +25,12 @@ package org.jboss.modules;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
-import static org.jboss.modules.ConcurrentReferenceHashMap.ReferenceType.WEAK;
 import static org.jboss.modules.ConcurrentReferenceHashMap.ReferenceType.STRONG;
+import static org.jboss.modules.ConcurrentReferenceHashMap.ReferenceType.WEAK;
 
 /**
  * 
@@ -63,10 +60,10 @@ public abstract class ModuleLoader {
         log = moduleLogger;
     }
 
-    private ThreadLocal<Set<ModuleIdentifier>> VISITED = new ThreadLocal<Set<ModuleIdentifier>>() {
+    private ThreadLocal<Map<ModuleIdentifier, Module>> VISITED = new ThreadLocal<Map<ModuleIdentifier, Module>>() {
         @Override
-        protected Set<ModuleIdentifier> initialValue() {
-            return new LinkedHashSet<ModuleIdentifier>();
+        protected Map<ModuleIdentifier, Module> initialValue() {
+            return new HashMap<ModuleIdentifier, Module>();
         }
     };
 
@@ -86,30 +83,20 @@ public abstract class ModuleLoader {
             return Module.SYSTEM;
         }
 
-        final Set<ModuleIdentifier> visited = VISITED.get();
-
-        if(visited.contains(identifier))
-            throw new ModuleLoadException("Failed to load " + identifier + "; module cycle discovered: " + visited);
-
         FutureModule futureModule = moduleMap.get(identifier);
         if (futureModule == null) {
             FutureModule newFuture = new FutureModule(identifier);
             futureModule = moduleMap.putIfAbsent(identifier, newFuture);
             if (futureModule == null) {
-                visited.add(identifier);
-                try {
-                    log.moduleLoading(identifier);
-                    final Module module = findModule(identifier);
-                    if (module == null) {
-                        final ModuleNotFoundException e = new ModuleNotFoundException(identifier.toString());
-                        log.moduleLoadFailed(identifier, e);
-                        throw e;
-                    }
-                    log.moduleLoaded(identifier);
-                    return module;
-                } finally {
-                    visited.remove(identifier);
+                log.moduleLoading(identifier);
+                final Module module = findModule(identifier);
+                if (module == null) {
+                    final ModuleNotFoundException e = new ModuleNotFoundException(identifier.toString());
+                    log.moduleLoadFailed(identifier, e);
+                    throw e;
                 }
+                log.moduleLoaded(identifier);
+                return module;
             }
         }
         return futureModule.getModule();
@@ -148,14 +135,18 @@ public abstract class ModuleLoader {
             throw new ModuleAlreadyExistsException(moduleIdentifier.toString());
         }
 
-        final Map<String, List<Module.DependencyImport>> pathsToImports = new HashMap<String, List<Module.DependencyImport>>();
-        final Set<String> exportedPaths = new HashSet<String>();
+        final Module module = new Module(moduleSpec, moduleSpec.getModuleFlags(), this);
+        final Map<ModuleIdentifier, Module> visited = VISITED.get();
+        visited.put(moduleIdentifier, module);
         try {
             final List<Dependency> dependencies = new ArrayList<Dependency>(moduleSpec.getDependencies().length);
             for (DependencySpec dependencySpec : moduleSpec.getDependencies()) {
-                final Module dependencyModule;
+                final ModuleIdentifier dependencyIdentifier = dependencySpec.getModuleIdentifier();
+                Module dependencyModule;
                 try {
-                    dependencyModule = loadModule(dependencySpec.getModuleIdentifier());
+                    dependencyModule = visited.get(dependencyIdentifier);
+                    if(dependencyModule == null)
+                        dependencyModule = loadModule(dependencySpec.getModuleIdentifier());
                 } catch (ModuleLoadException e) {
                     if (dependencySpec.isOptional()) {
                         continue;
@@ -163,28 +154,10 @@ public abstract class ModuleLoader {
                         throw e;
                     }
                 }
-                final Dependency dependency = new Dependency(dependencyModule, dependencySpec.isExport());
+                final Dependency dependency = new Dependency(dependencyModule, dependencySpec.isExport(), dependencySpec.getExportFilter());
                 dependencies.add(dependency);
-
-                final ExportFilter filter = dependencySpec.getExportFilter();
-
-                final Set<String> moduleExportedPaths = dependencyModule.getExportedPaths();
-                final boolean depExported = dependency.isExport();
-                for(String exportedPath : moduleExportedPaths) {
-                    final boolean shouldExport = depExported && filter.shouldExport(exportedPath);
-                    if(shouldExport) {
-                        exportedPaths.add(exportedPath);
-                    }
-                    if(!pathsToImports.containsKey(exportedPath))
-                        pathsToImports.put(exportedPath, new ArrayList<Module.DependencyImport>());
-                    pathsToImports.get(exportedPath).add(new Module.DependencyImport(dependency, shouldExport));
-                }
             }
-
-            final ModuleContentLoader contentLoader = moduleSpec.getContentLoader();
-            exportedPaths.addAll(contentLoader.getFilteredLocalPaths());
-            
-            final Module module = new Module(moduleSpec, moduleSpec.getModuleFlags(), this, exportedPaths, pathsToImports);
+            module.setDependencies(dependencies);
             synchronized (futureModule) {
                 futureModule.setModule(module);
             }
@@ -201,6 +174,8 @@ public abstract class ModuleLoader {
             futureModule.setModule(null);
             log.moduleLoadFailed(moduleIdentifier, e);
             throw e;
+        } finally {
+            visited.remove(moduleIdentifier);
         }
     }
 

@@ -57,7 +57,7 @@ public final class DependencySpec {
     }
 
     public ExportFilter getExportFilter() {
-        return new ExportFilter(exportIncludes, exportExcludes);
+        return new ExportFilterImpl(exportIncludes, exportExcludes);
     }
 
     public interface Builder extends ExportFilterable<Builder> {

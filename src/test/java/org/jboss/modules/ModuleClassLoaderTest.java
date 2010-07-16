@@ -53,6 +53,9 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
     private static final ModuleIdentifier MODULE_WITH_EXPORT_ID = new ModuleIdentifier("test", "test-with-export", "1.0");
     private static final ModuleIdentifier MODULE_WITH_FILTERED_EXPORT_ID = new ModuleIdentifier("test", "test-with-filtered-export", "1.0");
 
+    private static final ModuleIdentifier MODULE_WITH_CIRCULAR_DEP_A = new ModuleIdentifier("test", "test-with-circular-dep-a", "1.0");
+    private static final ModuleIdentifier MODULE_WITH_CIRCULAR_DEP_B = new ModuleIdentifier("test", "test-with-circular-dep-b", "1.0");
+
     private TestModuleLoader moduleLoader;
 
     @Before
@@ -91,6 +94,24 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
                 .addExportExclude("nested");
 
         moduleLoader.addModuleSpec(moduleWithExportFilterBuilder.create());
+
+        final ModuleSpec.Builder moduleWithCircularABuilder = ModuleSpec.build(MODULE_WITH_CIRCULAR_DEP_A);
+        moduleWithCircularABuilder.addDependency(MODULE_WITH_CIRCULAR_DEP_B).setExport(true);
+        moduleWithCircularABuilder.addRoot("rootOne",
+            TestResourceLoader.build()
+                .addClass(TestClass.class)
+                .create()
+        );
+        moduleLoader.addModuleSpec(moduleWithCircularABuilder.create());
+
+        final ModuleSpec.Builder moduleWithCircularBBuilder = ModuleSpec.build(MODULE_WITH_CIRCULAR_DEP_B);
+        moduleWithCircularBBuilder.addRoot("rootOne",
+            TestResourceLoader.build()
+                 .addClass(ImportedClass.class)
+                 .create()
+        );
+        moduleWithCircularBBuilder.addDependency(MODULE_WITH_CIRCULAR_DEP_A).setExport(true);
+        moduleLoader.addModuleSpec(moduleWithCircularBBuilder.create());
     }
 
     @Test
@@ -163,6 +184,18 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
             fail("Should have thrown ClassNotFoundException");
         } catch (ClassNotFoundException expected) {
         }
+    }
+
+    @Test
+    public void testCircularClassLoad() throws Exception {
+        final Module moduleA = moduleLoader.loadModule(MODULE_WITH_CIRCULAR_DEP_A);
+        final ModuleClassLoader classLoaderA = moduleA.getClassLoader();
+        final Module moduleB = moduleLoader.loadModule(MODULE_WITH_CIRCULAR_DEP_B);
+        final ModuleClassLoader classLoaderB = moduleB.getClassLoader();
+        Class<?> testClass = classLoaderA.loadExportedClass("org.jboss.modules.test.ImportedClass");
+        assertNotNull(testClass);
+        testClass = classLoaderB.loadExportedClass("org.jboss.modules.test.TestClass");
+        assertNotNull(testClass);
     }
 
     @Test

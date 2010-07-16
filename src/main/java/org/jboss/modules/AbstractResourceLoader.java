@@ -45,6 +45,6 @@ public abstract class AbstractResourceLoader implements ResourceLoader {
     }
 
     public ExportFilter getExportFilter() {
-        return new ExportFilter(exportIncludes.toArray(new String[exportIncludes.size()]), exportExcludes.toArray(new String[exportExcludes.size()]));
+        return new ExportFilterImpl(exportIncludes.toArray(new String[exportIncludes.size()]), exportExcludes.toArray(new String[exportExcludes.size()]));
     }
 }

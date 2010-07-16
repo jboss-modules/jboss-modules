@@ -148,7 +148,6 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
     }
 
     Class<?> getImportedClass(final String className, final boolean exportsOnly) {
-
         boolean traceEnabled = log.isTraceEnabled();
 
         final Map<String, List<Module.DependencyImport>> pathsToImports = module.getPathsToImports();
@@ -163,19 +162,18 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         }
 
         for(Module.DependencyImport dependencyImport : dependenciesForPath) {
-            final Dependency dependency = dependencyImport.getDependency();
-            if(exportsOnly && (!dependency.isExport() || !dependencyImport.isExport()))
+            final Module dependency = dependencyImport.getModule();
+            if(exportsOnly && !dependencyImport.isExport())
                 continue;
 
-            final Module module = dependency.getModule();
             if (traceEnabled == true)
-               log.trace("Attempting to getImportedClass [" + className + "] from [" + module + "] ...");
+               log.trace("Attempting to getImportedClass [" + className + "] from [" + dependency + "] ...");
 
             try {
-                Class<?> importedClass = module.getClassLoader().loadExportedClass(className);
+                Class<?> importedClass = dependency.getClassLoader().loadClassLocal(className, exportsOnly);
                 if(importedClass != null) {
                    if (traceEnabled == true)
-                      log.trace("Found getImportedClass [" + className + "] from [" + module + "]");
+                      log.trace("Found getImportedClass [" + className + "] from [" + dependency + "]");
                     return importedClass;
                 }
             } catch (ClassNotFoundException ignored){}
@@ -307,12 +305,11 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
             return null;
 
         for(Module.DependencyImport dependencyImport : dependenciesForPath) {
-            final Dependency dependency = dependencyImport.getDependency();
-            if(exportsOnly && (!dependency.isExport() || !dependencyImport.isExport()))
+            final Module dependency = dependencyImport.getModule();
+            if(exportsOnly && !dependencyImport.isExport())
                 continue;
 
-            final Module module = dependency.getModule();
-            URL importedResource = module.getClassLoader().findResource(resourcePath, true);
+            URL importedResource = dependency.getClassLoader().findResource(resourcePath, true);
             if(importedResource != null)
                 return importedResource;
         }
@@ -380,12 +377,11 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
 
         final Set<URL> importedUrls = new HashSet<URL>();
         for(Module.DependencyImport dependencyImport : dependenciesForPath) {
-            final Dependency dependency = dependencyImport.getDependency();
-            if(exportsOnly && (!dependency.isExport() || !dependencyImport.isExport()))
+            final Module dependency = dependencyImport.getModule();
+            if(exportsOnly && !dependencyImport.isExport())
                 continue;
 
-            final Module module = dependency.getModule();
-            final Enumeration<URL> importedResources = module.getClassLoader().findResources(resourcePath, true);
+            final Enumeration<URL> importedResources = dependency.getClassLoader().findResources(resourcePath, true);
             if(importedResources != null) {
                 while(importedResources.hasMoreElements()) {
                     final URL importedResource = importedResources.nextElement();

@@ -38,22 +38,22 @@ public class ExportFilterTest {
 
     @Test
     public void testExcludes() throws Exception {
-        ExportFilter exportFilter = new ExportFilter(EMPTY, new String[] {"foo/**"});
+        ExportFilter exportFilter = new ExportFilterImpl(EMPTY, new String[] {"foo/**"});
         assertTrue(exportFilter.shouldExport("foo"));
         assertFalse(exportFilter.shouldExport("foo/bar"));
         assertFalse(exportFilter.shouldExport("foo/bar/baz"));
 
-        exportFilter = new ExportFilter(EMPTY, new String[] {"foo/*"});
+        exportFilter = new ExportFilterImpl(EMPTY, new String[] {"foo/*"});
         assertTrue(exportFilter.shouldExport("foo"));
         assertFalse(exportFilter.shouldExport("foo/bar"));
         assertTrue(exportFilter.shouldExport("foo/bar/baz"));
 
-        exportFilter = new ExportFilter(EMPTY, new String[] {"foo"});
+        exportFilter = new ExportFilterImpl(EMPTY, new String[] {"foo"});
         assertFalse(exportFilter.shouldExport("foo"));
         assertTrue(exportFilter.shouldExport("foo/bar"));
         assertTrue(exportFilter.shouldExport("foo/bar/baz"));
 
-        exportFilter = new ExportFilter(EMPTY, new String[] {"**/bar/**"});
+        exportFilter = new ExportFilterImpl(EMPTY, new String[] {"**/bar/**"});
         assertTrue(exportFilter.shouldExport("foo"));
         assertTrue(exportFilter.shouldExport("foo/bar"));
         assertFalse(exportFilter.shouldExport("foo/bar/baz"));
@@ -62,25 +62,37 @@ public class ExportFilterTest {
 
     @Test
     public void testIncludes() throws Exception {
-        ExportFilter exportFilter = new ExportFilter(new String[] {"foo/**"}, new String[] {"**"});
+        ExportFilter exportFilter = new ExportFilterImpl(new String[] {"foo/**"}, new String[] {"**"});
         assertFalse(exportFilter.shouldExport("foo"));
         assertTrue(exportFilter.shouldExport("foo/bar"));
         assertTrue(exportFilter.shouldExport("foo/bar/baz"));
 
-        exportFilter = new ExportFilter(new String[] {"foo/*"}, new String[] {"**"});
+        exportFilter = new ExportFilterImpl(new String[] {"foo/*"}, new String[] {"**"});
         assertFalse(exportFilter.shouldExport("foo"));
         assertTrue(exportFilter.shouldExport("foo/bar"));
         assertFalse(exportFilter.shouldExport("foo/bar/baz"));
 
-        exportFilter = new ExportFilter(new String[] {"foo"}, new String[] {"**"});
+        exportFilter = new ExportFilterImpl(new String[] {"foo"}, new String[] {"**"});
         assertTrue(exportFilter.shouldExport("foo"));
         assertFalse(exportFilter.shouldExport("foo/bar"));
         assertFalse(exportFilter.shouldExport("foo/bar/baz"));
 
-        exportFilter = new ExportFilter(new String[] {"**/bar/**"}, new String[] {"**"});
+        exportFilter = new ExportFilterImpl(new String[] {"**/bar/**"}, new String[] {"**"});
         assertFalse(exportFilter.shouldExport("foo"));
         assertFalse(exportFilter.shouldExport("foo/bar"));
         assertTrue(exportFilter.shouldExport("foo/bar/baz"));
         assertTrue(exportFilter.shouldExport("foo/baz/bar/biff"));
+    }
+
+    @Test
+    public void testDelegating() throws Exception {
+        ExportFilter exportFilterOne = new ExportFilterImpl(EMPTY, new String[] {"foo/*"});
+        ExportFilter exportFilterTwo = new ExportFilterImpl(EMPTY, new String[] {"**/bar/*"});
+        ExportFilter exportFilterThree = new ExportFilterImpl(EMPTY, new String[] {"baz/**"});
+        ExportFilter exportFilter = new DelegatingExportFilter(exportFilterOne, exportFilterTwo, exportFilterThree);
+        assertTrue(exportFilter.shouldExport("foo"));
+        assertFalse(exportFilter.shouldExport("foo/bar"));
+        assertFalse(exportFilter.shouldExport("foo/bar/baz"));
+        assertFalse(exportFilter.shouldExport("baz/foo/bar"));
     }
 }

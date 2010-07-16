@@ -28,17 +28,23 @@ package org.jboss.modules;
 final class Dependency {
     private final Module module;
     private final boolean export;
+    private final ExportFilter exportFilter;
 
-    public Dependency(Module module, boolean export) {
+    Dependency(Module module, boolean export, ExportFilter exportFilter) {
         this.module = module;
         this.export = export;
+        this.exportFilter = exportFilter;
     }
 
-    public Module getModule() {
+    Module getModule() {
         return module;
     }
 
-    public boolean isExport() {
+    boolean isExport() {
         return export;
+    }
+
+    ExportFilter getExportFilter() {
+        return exportFilter;
     }
 }
