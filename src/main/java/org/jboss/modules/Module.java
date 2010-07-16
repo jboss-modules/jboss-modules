@@ -43,7 +43,11 @@ public final class Module {
     static {
         AccessController.doPrivileged(new PrivilegedAction<Void>() {
             public Void run() {
-                URL.setURLStreamHandlerFactory(new ModularURLStreamHandlerFactory());
+                try {
+                    URL.setURLStreamHandlerFactory(new ModularURLStreamHandlerFactory());
+                } catch (Throwable t) {
+                    // todo log a warning or something
+                }
                 return null;
             }
         });
