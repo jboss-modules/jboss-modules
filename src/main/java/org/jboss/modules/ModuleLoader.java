@@ -190,7 +190,7 @@ public abstract class ModuleLoader {
     public Module createAggregate(ModuleIdentifier moduleIdentifier, List<ModuleIdentifier> dependencies) throws ModuleLoadException {
         final ModuleSpec.Builder moduleSpecBuilder = ModuleSpec.build(moduleIdentifier);
         for(ModuleIdentifier identifier : dependencies) {
-            moduleSpecBuilder.addDependency(moduleIdentifier).setExport(true);
+            moduleSpecBuilder.addDependency(identifier).setExport(true);
         }
         return defineModule(moduleSpecBuilder.create());
     }
