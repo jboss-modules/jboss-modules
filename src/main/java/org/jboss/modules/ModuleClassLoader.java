@@ -170,7 +170,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
                log.trace("Attempting to getImportedClass [" + className + "] from [" + dependency + "] ...");
 
             try {
-                Class<?> importedClass = dependency.getClassLoader().loadClassLocal(className, exportsOnly);
+                Class<?> importedClass = dependency.getClassLoader().loadClassLocal(className, true, exportsOnly);
                 if(importedClass != null) {
                    if (traceEnabled == true)
                       log.trace("Found getImportedClass [" + className + "] from [" + dependency + "]");
@@ -182,6 +182,18 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
     }
 
     private Class<?> loadClassLocal(final String className, final boolean exportOnly) throws ClassNotFoundException {
+        return loadClassLocal(className, false, exportOnly);
+    }
+
+    private Class<?> loadClassLocal(final String className, final boolean checkPreviouslyLoaded, final boolean exportOnly) throws ClassNotFoundException {
+        if(checkPreviouslyLoaded) {
+            // Check if we have already loaded it..
+            Class<?> loadedClass = findLoadedClass(className);
+            if (loadedClass != null) {
+                return loadedClass;
+            }
+        }
+
         if(exportOnly) {
             final String path = getPathFromClassName(className);
             final Set<String> exportedPaths = module.getExportedPaths();

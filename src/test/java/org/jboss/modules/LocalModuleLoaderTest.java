@@ -66,7 +66,9 @@ public class LocalModuleLoaderTest extends AbstractModuleTestCase {
 
     @Test
     public void testLoadWithCircularDeps() throws Exception {
-        assertNotNull(moduleLoader.loadModule(new ModuleIdentifier("test", "test-circular-deps", "1.0")));
-        assertNotNull(moduleLoader.loadModule(new ModuleIdentifier("test", "test-circular-deps-other", "1.0")));
+        assertNotNull(moduleLoader.loadModule(new ModuleIdentifier("test", "test-circular-deps-A", "1.0")));
+        assertNotNull(moduleLoader.loadModule(new ModuleIdentifier("test", "test-circular-deps-B", "1.0")));
+        assertNotNull(moduleLoader.loadModule(new ModuleIdentifier("test", "test-circular-deps-C", "1.0")));
+        assertNotNull(moduleLoader.loadModule(new ModuleIdentifier("test", "test-circular-deps-D", "1.0")));
     }
 }
