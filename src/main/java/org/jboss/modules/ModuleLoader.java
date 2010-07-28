@@ -60,7 +60,7 @@ public abstract class ModuleLoader {
         log = moduleLogger;
     }
 
-    private ThreadLocal<Map<ModuleIdentifier, Module>> VISITED = new ThreadLocal<Map<ModuleIdentifier, Module>>() {
+    private static final ThreadLocal<Map<ModuleIdentifier, Module>> VISITED = new ThreadLocal<Map<ModuleIdentifier, Module>>() {
         @Override
         protected Map<ModuleIdentifier, Module> initialValue() {
             return new HashMap<ModuleIdentifier, Module>();
