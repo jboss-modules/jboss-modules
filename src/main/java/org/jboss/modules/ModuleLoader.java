@@ -72,13 +72,26 @@ public abstract class ModuleLoader {
     );
 
     /**
-     * Load a module based on an identifier.
+     * Load a module based on an identifier.  By default, no delegation is done and this method simply invokes
+     * {@link #loadLocalModule(ModuleIdentifier)}.  A delegating module loader will delegate to the appropriate module
+     * loader based on
      *
      * @param identifier The module identifier
      * @return The loaded Module
      * @throws ModuleLoadException if the Module can not be loaded
      */
     public Module loadModule(ModuleIdentifier identifier) throws ModuleLoadException {
+        return loadLocalModule(identifier);
+    }
+
+    /**
+     * Load a module from this module loader.
+     *
+     * @param identifier the module identifier
+     * @return the module
+     * @throws ModuleLoadException
+     */
+    protected final Module loadLocalModule(ModuleIdentifier identifier) throws ModuleLoadException {
         if (identifier.equals(ModuleIdentifier.SYSTEM)) {
             return Module.SYSTEM;
         }
@@ -88,28 +101,41 @@ public abstract class ModuleLoader {
             FutureModule newFuture = new FutureModule(identifier);
             futureModule = moduleMap.putIfAbsent(identifier, newFuture);
             if (futureModule == null) {
-                log.moduleLoading(identifier);
-                final Module module = findModule(identifier);
-                if (module == null) {
-                    final ModuleNotFoundException e = new ModuleNotFoundException(identifier.toString());
-                    log.moduleLoadFailed(identifier, e);
-                    throw e;
+                boolean ok = false;
+                try {
+                    log.moduleLoading(identifier);
+                    final Module module = findModule(identifier);
+                    if (module == null) {
+                        final ModuleNotFoundException e = new ModuleNotFoundException(identifier.toString());
+                        log.moduleLoadFailed(identifier, e);
+                        throw e;
+                    }
+                    log.moduleLoaded(identifier);
+                    ok = true;
+                    return module;
+                } finally {
+                    if (! ok) {
+                        moduleMap.remove(identifier, newFuture);
+                    }
                 }
-                log.moduleLoaded(identifier);
-                return module;
             }
         }
         return futureModule.getModule();
     }
 
     /**
-     * Find a Module by its identifier.  This should be overriden by sub-classes
-     * to provide custom Module loading strategies.  Implementations of this method
-     * should call {@link #defineModule}
+     * Find a Module in this ModuleLoader by its identifier.  This should be overriden by sub-classes
+     * to implement the Module loading strategy for this loader.  Implementations of this method
+     * should call {@link #defineModule(ModuleSpec)} to create the module instance.  This method should only directly
+     * define a module with the identifier passed in.  If other modules need to be defined,
+     * <p/>
+     * If no module is found in this module loader with the given identifier, then this method should return {@code null}.
+     * If the module is found but some problem occurred (for example, a transitive dependency failed to load) then this
+     * method should throw a {@link ModuleLoadException} of the relevant type.
      *
      * @param moduleIdentifier The modules Identifier
-     * @return The Module
-     * @throws ModuleLoadException If any problems occur finding the module
+     * @return the module, or {@code null} if no module is found with the given identifier
+     * @throws ModuleLoadException if any problems occur finding the module
      */
     protected abstract Module findModule(final ModuleIdentifier moduleIdentifier) throws ModuleLoadException;
 
