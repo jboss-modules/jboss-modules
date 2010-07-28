@@ -22,6 +22,12 @@
 
 package org.jboss.modules;
 
+import javax.xml.namespace.QName;
+import javax.xml.stream.Location;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
@@ -33,13 +39,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarFile;
-
-import javax.xml.namespace.QName;
-import javax.xml.stream.Location;
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
 
 /**
  * A fast, validating module.xml parser.
@@ -58,6 +57,7 @@ final class ModuleXmlParser {
         MODULE,
         DEPENDENCIES,
         EXPORTS,
+        IMPORTS,
         INCLUDE,
         EXCLUDE,
         RESOURCES,
@@ -77,6 +77,7 @@ final class ModuleXmlParser {
             elementsMap.put(new QName(NAMESPACE, "main-class"), Element.MAIN_CLASS);
             elementsMap.put(new QName(NAMESPACE, "resource-root"), Element.RESOURCE_ROOT);
             elementsMap.put(new QName(NAMESPACE, "exports"), Element.EXPORTS);
+            elementsMap.put(new QName(NAMESPACE, "imports"), Element.IMPORTS);
             elementsMap.put(new QName(NAMESPACE, "include"), Element.INCLUDE);
             elementsMap.put(new QName(NAMESPACE, "exclude"), Element.EXCLUDE);
             elements = elementsMap;
@@ -376,8 +377,24 @@ final class ModuleXmlParser {
             .setExport(export)
             .setOptional(optional);
 
-        // Process the nested <exports> element
-        parseForExports(reader, dependencySpecBuilder);
+         while (reader.hasNext()) {
+            switch (reader.nextTag()) {
+                case XMLStreamConstants.END_ELEMENT: {
+                    return;
+                }
+                case XMLStreamConstants.START_ELEMENT: {
+                    switch (Element.of(reader.getName())) {
+                        case EXPORTS: parseExports(reader, dependencySpecBuilder); break;
+                        case IMPORTS: parseImports(reader, dependencySpecBuilder); break;
+                        default: throw unexpectedContent(reader);
+                    }
+                    break;
+                }
+                default: {
+                    throw unexpectedContent(reader);
+                }
+            }
+        }
     }
 
     private static void parseMainClass(final XMLStreamReader reader, final ModuleSpec.Builder specBuilder) throws XMLStreamException {
@@ -459,11 +476,6 @@ final class ModuleXmlParser {
         }
         specBuilder.addRoot(name, resourceLoader);
 
-        // Process the nested <exports> element
-        parseForExports(reader, resourceLoader);
-    }
-
-    private static void parseForExports(final XMLStreamReader reader, final ExportFilterable filterable) throws XMLStreamException {
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {
@@ -471,7 +483,7 @@ final class ModuleXmlParser {
                 }
                 case XMLStreamConstants.START_ELEMENT: {
                     switch (Element.of(reader.getName())) {
-                        case EXPORTS: parseExports(reader, filterable); break;
+                        case EXPORTS: parseExports(reader, resourceLoader); break;
                         default: throw unexpectedContent(reader);
                     }
                     break;
@@ -492,8 +504,8 @@ final class ModuleXmlParser {
                 }
                 case XMLStreamConstants.START_ELEMENT: {
                     switch (Element.of(reader.getName())) {
-                        case INCLUDE: parseInclude(reader, filterable); break;
-                        case EXCLUDE: parseExclude(reader, filterable); break;
+                        case INCLUDE: parseExportInclude(reader, filterable); break;
+                        case EXCLUDE: parseExportExclude(reader, filterable); break;
                         default: throw unexpectedContent(reader);
                     }
                     break;
@@ -506,7 +518,7 @@ final class ModuleXmlParser {
         throw endOfDocument(reader.getLocation());
     }
 
-    private static void parseInclude(final XMLStreamReader reader, final ExportFilterable filterable) throws XMLStreamException {
+    private static void parseExportInclude(final XMLStreamReader reader, final ExportFilterable filterable) throws XMLStreamException {
         String path = null;
         final Set<Attribute> required = EnumSet.of(Attribute.PATH);
         final int count = reader.getAttributeCount();
@@ -528,7 +540,7 @@ final class ModuleXmlParser {
         parseNoContent(reader);
     }
 
-    private static void parseExclude(final XMLStreamReader reader, final ExportFilterable filterable) throws XMLStreamException {
+    private static void parseExportExclude(final XMLStreamReader reader, final ExportFilterable filterable) throws XMLStreamException {
         String path = null;
         final Set<Attribute> required = EnumSet.of(Attribute.PATH);
         final int count = reader.getAttributeCount();
@@ -545,6 +557,73 @@ final class ModuleXmlParser {
         }
 
         filterable.addExportExclude(path);
+
+        // consume remainder of element
+        parseNoContent(reader);
+    }
+
+    private static void parseImports(final XMLStreamReader reader, final ImportFilterable filterable) throws XMLStreamException {
+        // xsd:choice
+        while (reader.hasNext()) {
+            switch (reader.nextTag()) {
+                case XMLStreamConstants.END_ELEMENT: {
+                    return;
+                }
+                case XMLStreamConstants.START_ELEMENT: {
+                    switch (Element.of(reader.getName())) {
+                        case INCLUDE: parseImportInclude(reader, filterable); break;
+                        case EXCLUDE: parseImportExclude(reader, filterable); break;
+                        default: throw unexpectedContent(reader);
+                    }
+                    break;
+                }
+                default: {
+                    throw unexpectedContent(reader);
+                }
+            }
+        }
+        throw endOfDocument(reader.getLocation());
+    }
+
+    private static void parseImportInclude(final XMLStreamReader reader, final ImportFilterable filterable) throws XMLStreamException {
+        String path = null;
+        final Set<Attribute> required = EnumSet.of(Attribute.PATH);
+        final int count = reader.getAttributeCount();
+        for (int i = 0; i < count; i ++) {
+            final Attribute attribute = Attribute.of(reader.getAttributeName(i));
+            required.remove(attribute);
+            switch (attribute) {
+                case PATH: path = reader.getAttributeValue(i); break;
+                default: throw unexpectedContent(reader);
+            }
+        }
+        if (! required.isEmpty()) {
+            throw missingAttributes(reader.getLocation(), required);
+        }
+
+        filterable.addImportInclude(path);
+
+        // consume remainder of element
+        parseNoContent(reader);
+    }
+
+    private static void parseImportExclude(final XMLStreamReader reader, final ImportFilterable filterable) throws XMLStreamException {
+        String path = null;
+        final Set<Attribute> required = EnumSet.of(Attribute.PATH);
+        final int count = reader.getAttributeCount();
+        for (int i = 0; i < count; i ++) {
+            final Attribute attribute = Attribute.of(reader.getAttributeName(i));
+            required.remove(attribute);
+            switch (attribute) {
+                case PATH: path = reader.getAttributeValue(i); break;
+                default: throw unexpectedContent(reader);
+            }
+        }
+        if (! required.isEmpty()) {
+            throw missingAttributes(reader.getLocation(), required);
+        }
+
+        filterable.addImportExclude(path);
 
         // consume remainder of element
         parseNoContent(reader);

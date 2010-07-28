@@ -23,16 +23,23 @@
 package org.jboss.modules;
 
 /**
- * Filter used to determine whether an path should be included or excluded from exports.
- *
- * @author John Bailey
+ * PathFilter implementation that delegates to other filters.
+ * 
+ * @author John E. Bailey
  */
-public interface ExportFilter {
-    /**
-     * Determine whether a path should be exported.
-     *
-     * @param path the path to check
-     * @return true if the path should be exported, false if not
-     */
-    boolean shouldExport(String path);
+public class DelegatingPathFilter implements PathFilter {
+    private final PathFilter[] delegates;
+
+    public DelegatingPathFilter(final PathFilter... delegates) {
+        this.delegates = delegates;
+    }
+
+    @Override
+    public boolean accept(String path) {
+        for(PathFilter filter : delegates) {
+            if(!filter.accept(path))
+                return false;
+        }
+        return true;
+    }
 }

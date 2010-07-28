@@ -22,31 +22,23 @@
 
 package org.jboss.modules;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
- * Base resource loaded that managed the Export filter.
+ * Contract establishing the ability to include and exclude import paths.
  *
  * @author John Bailey
  */
-public abstract class AbstractResourceLoader implements ResourceLoader {
-    private final List<String> exportIncludes = new ArrayList<String>();
-    private final List<String> exportExcludes = new ArrayList<String>();
+public interface ImportFilterable<T> {
+    /**
+     * Add a path glob to be included
+     *
+     * @param path the path glob
+     */
+    T addImportInclude(String path);
 
-    public Void addExportExclude(String path) {
-        exportExcludes.add(path);
-        return null;
-    }
-
-    public Void addExportInclude(String path) {
-        exportIncludes.add(path);
-        return null;
-    }
-
-    public PathFilter getExportFilter() {
-        exportExcludes.add("META-INF");
-        exportExcludes.add("META-INF/**");
-        return new PathFilterImpl(exportIncludes.toArray(new String[exportIncludes.size()]), exportExcludes.toArray(new String[exportExcludes.size()]));
-    }
+    /**
+     * Add a path glob to be excluded
+     *
+     * @param path the path glob
+     */
+    T addImportExclude(String path);
 }

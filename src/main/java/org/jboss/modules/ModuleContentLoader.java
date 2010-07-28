@@ -80,10 +80,10 @@ public final class ModuleContentLoader {
         for (ResourceLoader rl : resourceLoaders.values()) {
             final Collection<String> rlPaths = rl.getPaths();
 
-            final ExportFilter exportFilter = rl.getExportFilter();
+            final PathFilter exportFilter = rl.getExportFilter();
             for(String localPath : rlPaths) {
                 localPaths.add(localPath);
-                if(exportFilter.shouldExport(localPath)) {
+                if(exportFilter.accept(localPath)) {
                     filteredLocalPaths.add(localPath);       
                 }
             }

@@ -60,7 +60,7 @@ public abstract class ModuleLoader {
         log = moduleLogger;
     }
 
-    private ThreadLocal<Map<ModuleIdentifier, Module>> VISITED = new ThreadLocal<Map<ModuleIdentifier, Module>>() {
+    private static final ThreadLocal<Map<ModuleIdentifier, Module>> VISITED = new ThreadLocal<Map<ModuleIdentifier, Module>>() {
         @Override
         protected Map<ModuleIdentifier, Module> initialValue() {
             return new HashMap<ModuleIdentifier, Module>();
@@ -154,7 +154,7 @@ public abstract class ModuleLoader {
                         throw e;
                     }
                 }
-                final Dependency dependency = new Dependency(dependencyModule, dependencySpec.isExport(), dependencySpec.getExportFilter());
+                final Dependency dependency = new Dependency(dependencyModule, dependencySpec.isExport(), dependencySpec.getExportFilter(), dependencySpec.getImportFilter());
                 dependencies.add(dependency);
             }
             module.setDependencies(dependencies);

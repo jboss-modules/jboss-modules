@@ -196,7 +196,8 @@ public final class Module {
             pathsToImports = new HashMap<String, List<DependencyImport>>();
             for(Dependency dependency : dependencies) {
                 final Module dependencyModule = dependency.getModule();
-                final ExportFilter filter = dependency.getExportFilter();
+                final PathFilter exportFilter = dependency.getExportFilter();
+                final PathFilter importFilter = dependency.getImportFilter();
 
                 final Set<DependencyExport> moduleExportedDependencies = dependencyModule.getExportedDependencies();
 
@@ -205,19 +206,23 @@ public final class Module {
                     if(dependencyExportModule.equals(this));
                     final Set<String> dependenciesLocalExports = dependencyExportModule.getExportedPaths();
                     for(String exportPath : dependenciesLocalExports) {
-                        final boolean shouldExport = dependency.isExport() && filter.shouldExport(exportPath) && dependencyExport.exportFilter.shouldExport(exportPath);
-                        if(!pathsToImports.containsKey(exportPath))
-                            pathsToImports.put(exportPath, new ArrayList<DependencyImport>());
-                        pathsToImports.get(exportPath).add(new DependencyImport(dependencyExportModule, shouldExport));
+                        if(importFilter.accept(exportPath)) {
+                            final boolean shouldExport = dependency.isExport() && exportFilter.accept(exportPath) && dependencyExport.exportFilter.accept(exportPath);
+                            if(!pathsToImports.containsKey(exportPath))
+                                pathsToImports.put(exportPath, new ArrayList<DependencyImport>());
+                            pathsToImports.get(exportPath).add(new DependencyImport(dependencyExportModule, shouldExport));
+                        }
                     }
                 }
 
                 final Set<String> dependenciesLocalExports = dependencyModule.getExportedPaths();
                 for(String exportPath : dependenciesLocalExports) {
-                    final boolean shouldExport = dependency.isExport() && filter.shouldExport(exportPath);
-                    if(!pathsToImports.containsKey(exportPath))
-                        pathsToImports.put(exportPath, new ArrayList<DependencyImport>());
-                    pathsToImports.get(exportPath).add(new DependencyImport(dependencyModule, shouldExport));
+                    if(importFilter.accept(exportPath)) {
+                        final boolean shouldExport = dependency.isExport() && exportFilter.accept(exportPath);
+                        if(!pathsToImports.containsKey(exportPath))
+                            pathsToImports.put(exportPath, new ArrayList<DependencyImport>());
+                        pathsToImports.get(exportPath).add(new DependencyImport(dependencyModule, shouldExport));
+                    }
                 }
             }
         }
@@ -236,7 +241,7 @@ public final class Module {
                         final Module exportModule = dependencyExport.module;
                         if(exportModule.equals(this))
                             continue;
-                        exportedDependencies.add(new DependencyExport(exportModule, new DelegatingExportFilter(dependencyExport.exportFilter, dependency.getExportFilter())));
+                        exportedDependencies.add(new DependencyExport(exportModule, new DelegatingPathFilter(dependencyExport.exportFilter, dependency.getExportFilter())));
                     }
                 }
             }
@@ -347,9 +352,9 @@ public final class Module {
 
     static final class DependencyExport {
         private final Module module;
-        private final ExportFilter exportFilter;
+        private final PathFilter exportFilter;
 
-        DependencyExport(Module module, ExportFilter exportFilter) {
+        DependencyExport(Module module, PathFilter exportFilter) {
             this.module = module;
             this.exportFilter = exportFilter;
         }
