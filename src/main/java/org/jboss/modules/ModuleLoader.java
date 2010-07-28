@@ -39,27 +39,6 @@ import static org.jboss.modules.ConcurrentReferenceHashMap.ReferenceType.WEAK;
  */
 public abstract class ModuleLoader {
 
-    private static volatile ModuleLoadLogger log = new ModuleLoadLogger() {
-        public void moduleLoading(final ModuleIdentifier identifier) {
-        }
-
-        public void moduleLoaded(final ModuleIdentifier identifier) {
-        }
-
-        public void moduleLoadFailed(final ModuleIdentifier identifier, final Throwable cause) {
-        }
-    };
-
-    /**
-     * Set the logger to be used for module load events.
-     *
-     * @param moduleLogger the logger to use
-     */
-    public static void setLogger(ModuleLoadLogger moduleLogger) {
-        // todo perm check
-        log = moduleLogger;
-    }
-
     private static final ThreadLocal<Map<ModuleIdentifier, Module>> VISITED = new ThreadLocal<Map<ModuleIdentifier, Module>>() {
         @Override
         protected Map<ModuleIdentifier, Module> initialValue() {
@@ -103,15 +82,16 @@ public abstract class ModuleLoader {
             if (futureModule == null) {
                 boolean ok = false;
                 try {
-                    log.moduleLoading(identifier);
+                    final ModuleLogger log = Module.log;
+                    log.trace("Loading module %s", identifier);
                     final ModuleSpec moduleSpec = findModule(identifier);
                     if (moduleSpec == null) {
                         final ModuleNotFoundException e = new ModuleNotFoundException(identifier.toString());
-                        log.moduleLoadFailed(identifier, e);
+                        log.trace(e, "Failed to load module %s", identifier);
                         throw e;
                     }
                     ok = true;
-                    log.moduleLoaded(identifier);
+                    log.trace("Loaded module %s", identifier);
                     return defineModule(moduleSpec);
                 } finally {
                     if (! ok) {
@@ -187,13 +167,13 @@ public abstract class ModuleLoader {
             }
             return module;
         } catch (ModuleLoadException e) {
-            log.moduleLoadFailed(moduleIdentifier, e);
+            Module.log.trace(e, "Failed to load module %s", moduleIdentifier);
             throw e;
         } catch (RuntimeException e) {
-            log.moduleLoadFailed(moduleIdentifier, e);
+            Module.log.trace(e, "Failed to load module %s", moduleIdentifier);
             throw e;
         } catch (Error e) {
-            log.moduleLoadFailed(moduleIdentifier, e);
+            Module.log.trace(e, "Failed to load module %s", moduleIdentifier);
             throw e;
         } finally {
             visited.remove(moduleIdentifier);

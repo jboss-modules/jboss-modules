@@ -40,6 +40,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 
 /**
+ * A module is a unit of classes and other resources, along with the specification of what is imported and exported
+ * by this module from and to other modules.  Modules are created by {@link ModuleLoader}s which build modules from
+ * various configuration information and resource roots.
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
  */
@@ -57,7 +61,12 @@ public final class Module {
         });
     }
 
+    /**
+     * The system module, which is always available.
+     */
     public static final Module SYSTEM = new Module();
+
+    static volatile ModuleLogger log = NoopModuleLogger.getInstance();
 
     private static ModuleLoaderSelector moduleLoaderSelector = ModuleLoaderSelector.DEFAULT;
 
@@ -102,10 +111,25 @@ public final class Module {
         this.dependencies = dependencies;
     }
 
+    /**
+     * Get an exported resource from a specific root in this module.
+     *
+     * @param rootPath the module root to search
+     * @param resourcePath the path of the resource
+     * @return the resource
+     */
     public final Resource getExportedResource(final String rootPath, final String resourcePath) {
         return moduleClassLoader.getRawResource(rootPath, resourcePath);
     }
 
+    /**
+     * Run a module's main class, if any.
+     *
+     * @param args the arguments to pass
+     * @throws NoSuchMethodException if there is no main method
+     * @throws InvocationTargetException if the main method failed
+     * @throws ClassNotFoundException if the main class is not found
+     */
     public final void run(final String[] args) throws NoSuchMethodException, InvocationTargetException, ClassNotFoundException {
         try {
             if (mainClassName == null) {
@@ -128,10 +152,20 @@ public final class Module {
         }
     }
 
+    /**
+     * Get this module's identifier.
+     *
+     * @return the identifier
+     */
     public ModuleIdentifier getIdentifier() {
         return identifier;
     }
 
+    /**
+     * Get the module loader which created this module.
+     *
+     * @return the module loader of this module
+     */
     public ModuleLoader getModuleLoader() {
         return moduleLoader;
     }
@@ -309,22 +343,62 @@ public final class Module {
         return Class.forName(className, true, ModuleClassLoader.forModule(ModuleIdentifier.fromString(moduleIdentifierString)));
     }
 
+    /**
+     * Get the module with the given identifier from the current module loader as returned by {@link ModuleLoaderSelector#getCurrentLoader()}
+     * on the current module loader selector.
+     *
+     * @param identifier the module identifier
+     * @return the module
+     * @throws ModuleLoadException if an error occurs
+     */
     public static Module getModule(final ModuleIdentifier identifier) throws ModuleLoadException {
         return moduleLoaderSelector.getCurrentLoader().loadModule(identifier);
     }
 
+    /**
+     * The enumeration of flag values which can be used to configure a module instance.
+     */
     public enum Flag {
         // flags here
+        /**
+         * Indicates that the module's local resources should be loaded before consulting external imports.
+         */
         CHILD_FIRST
     }
 
+    /**
+     * Get the string representation of this module.
+     *
+     * @return the string representation
+     */
     public String toString() {
         return "Module \"" + identifier + "\"";
     }
 
+    /**
+     * Set the current module loader selector.
+     *
+     * @param moduleLoaderSelector the new selector, must not be {@code null}
+     */
     public static void setModuleLoaderSelector(final ModuleLoaderSelector moduleLoaderSelector) {
-        if(moduleLoaderSelector == null) throw new IllegalArgumentException("ModuleLoaderSelector can not be null");
+        if (moduleLoaderSelector == null) {
+            throw new IllegalArgumentException("moduleLoaderSelector is null");
+        }
+        // todo: perm check
         Module.moduleLoaderSelector = moduleLoaderSelector;
+    }
+
+    /**
+     * Change the logger used by the module system.
+     *
+     * @param logger the new logger, must not be {@code null}
+     */
+    public static void setModuleLogger(final ModuleLogger logger) {
+        if (logger == null) {
+            throw new IllegalArgumentException("logger is null");
+        }
+        // todo: perm check
+        log = logger;
     }
 
     static final class DependencyImport {

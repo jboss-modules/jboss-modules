@@ -138,6 +138,7 @@ public final class Main {
                         } finally {
                             setContextClassLoader(old);
                         }
+                        Module.setModuleLogger(new JDKModuleLogger());
                     }
                 } finally {
                     try {

@@ -25,7 +25,7 @@ package org.jboss.modules;
  * A {@link ModuleLogger} implementation that does not log.
  *
  * @author thomas.diesler@jboss.com
- * @since 13-Jul-2010
+ * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public class NoopModuleLogger implements ModuleLogger {
 
@@ -36,39 +36,42 @@ public class NoopModuleLogger implements ModuleLogger {
     }
 
     @Override
-    public boolean isTraceEnabled() {
-        return false;
-    }
-
-    @Override
     public void trace(String message) {
     }
 
     @Override
-    public void trace(String message, Throwable th) {
+    public void trace(final String format, final Object arg1) {
     }
 
     @Override
-    public void debug(String message) {
+    public void trace(final String format, final Object arg1, final Object arg2) {
     }
 
     @Override
-    public void debug(String message, Throwable th) {
+    public void trace(final String format, final Object arg1, final Object arg2, final Object arg3) {
     }
 
     @Override
-    public void warn(String message) {
+    public void trace(final String format, final Object... args) {
     }
 
     @Override
-    public void warn(String message, Throwable th) {
+    public void trace(final Throwable t, final String message) {
     }
 
     @Override
-    public void error(String message) {
+    public void trace(final Throwable t, final String format, final Object arg1) {
     }
 
     @Override
-    public void error(String message, Throwable th) {
+    public void trace(final Throwable t, final String format, final Object arg1, final Object arg2) {
+    }
+
+    @Override
+    public void trace(final Throwable t, final String format, final Object arg1, final Object arg2, final Object arg3) {
+    }
+
+    @Override
+    public void trace(final Throwable t, final String format, final Object... args) {
     }
 }

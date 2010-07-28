@@ -19,123 +19,122 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
+
 package org.jboss.modules;
 
-import java.io.OutputStream;
-import java.io.PrintStream;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
- * A {@link ModuleLogger} implementation that logs all output (including trace) to an output or print stream.
+ * A {@code ModuleLogger} which logs to a JDK logging category.
  *
- * @author thomas.diesler@jboss.com
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public class StreamModuleLogger implements ModuleLogger {
+public final class JDKModuleLogger implements ModuleLogger {
 
-    private PrintStream print;
+    private static final Level TRACE;
+
+    static {
+        Level level = null;
+        try {
+            level = Level.parse("TRACE");
+        } catch (IllegalArgumentException ignored) {
+            level = Level.FINEST;
+        }
+        TRACE = level;
+    }
+
+    @SuppressWarnings({ "NonConstantLogger" })
+    private final Logger logger;
 
     /**
      * Construct a new instance.
      *
-     * @param stream the print stream to write to
+     * @param logger the logger to write to
      */
-    public StreamModuleLogger(PrintStream stream) {
-        if (stream == null) {
-            throw new IllegalArgumentException("stream is null");
-        }
-        print = new PrintStream(stream);
+    public JDKModuleLogger(final Logger logger) {
+        this.logger = logger;
     }
 
     /**
      * Construct a new instance.
      *
-     * @param stream the output stream to write to
+     * @param category the name of the logger category to write to
      */
-    public StreamModuleLogger(OutputStream stream) {
-        this(new PrintStream(stream));
+    public JDKModuleLogger(final String category) {
+        this(Logger.getLogger(category));
+    }
+
+    /**
+     * Construct a new instance using the category {@code org.jboss.modules}.
+     */
+    public JDKModuleLogger() {
+        this("org.jboss.modules");
     }
 
     /** {@inheritDoc} */
     public void trace(final String message) {
-        print.print("modules TRACE: ");
-        print.println(message);
-        print.flush();
+        logger.log(TRACE, message);
     }
 
     /** {@inheritDoc} */
     public void trace(final String format, final Object arg1) {
-        print.print("modules TRACE: ");
-        print.printf(format, arg1);
-        print.println();
-        print.flush();
+        if (logger.isLoggable(TRACE)) {
+            logger.log(TRACE, String.format(format, arg1));
+        }
     }
 
     /** {@inheritDoc} */
     public void trace(final String format, final Object arg1, final Object arg2) {
-        print.print("modules TRACE: ");
-        print.printf(format, arg1, arg2);
-        print.println();
-        print.flush();
+        if (logger.isLoggable(TRACE)) {
+            logger.log(TRACE, String.format(format, arg1, arg2));
+        }
     }
 
     /** {@inheritDoc} */
     public void trace(final String format, final Object arg1, final Object arg2, final Object arg3) {
-        print.print("modules TRACE: ");
-        print.printf(format, arg1, arg2, arg3);
-        print.println();
-        print.flush();
+        if (logger.isLoggable(TRACE)) {
+            logger.log(TRACE, String.format(format, arg1, arg2, arg3));
+        }
     }
 
     /** {@inheritDoc} */
     public void trace(final String format, final Object... args) {
-        print.print("modules TRACE: ");
-        print.printf(format, (Object[]) args);
-        print.println();
-        print.flush();
+        if (logger.isLoggable(TRACE)) {
+            logger.log(TRACE, String.format(format, (Object[]) args));
+        }
     }
 
     /** {@inheritDoc} */
     public void trace(final Throwable t, final String message) {
-        print.print("modules TRACE: ");
-        print.print(message);
-        print.print(": ");
-        t.printStackTrace(print);
-        print.flush();
+        logger.log(TRACE, message, t);
     }
 
     /** {@inheritDoc} */
     public void trace(final Throwable t, final String format, final Object arg1) {
-        print.print("modules TRACE: ");
-        print.printf(format, arg1);
-        print.print(": ");
-        t.printStackTrace(print);
-        print.flush();
+        if (logger.isLoggable(TRACE)) {
+            logger.log(TRACE, String.format(format, arg1), t);
+        }
     }
 
     /** {@inheritDoc} */
     public void trace(final Throwable t, final String format, final Object arg1, final Object arg2) {
-        print.print("modules TRACE: ");
-        print.printf(format, arg1, arg2);
-        print.print(": ");
-        t.printStackTrace(print);
-        print.flush();
+        if (logger.isLoggable(TRACE)) {
+            logger.log(TRACE, String.format(format, arg1, arg2), t);
+        }
     }
 
     /** {@inheritDoc} */
     public void trace(final Throwable t, final String format, final Object arg1, final Object arg2, final Object arg3) {
-        print.print("modules TRACE: ");
-        print.printf(format, arg1, arg2, arg3);
-        print.print(": ");
-        t.printStackTrace(print);
-        print.flush();
+        if (logger.isLoggable(TRACE)) {
+            logger.log(TRACE, String.format(format, arg1, arg2, arg3), t);
+        }
     }
 
     /** {@inheritDoc} */
     public void trace(final Throwable t, final String format, final Object... args) {
-        print.print("modules TRACE: ");
-        print.printf(format, args);
-        print.print(": ");
-        t.printStackTrace(print);
-        print.flush();
+        if (logger.isLoggable(TRACE)) {
+            logger.log(TRACE, String.format(format, (Object[]) args), t);
+        }
     }
 }

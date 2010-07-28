@@ -33,8 +33,6 @@ import org.junit.BeforeClass;
 
 import java.io.File;
 
-import static org.junit.Assert.assertNotNull;
-
 /**
  * Abstract Test Case used as a base for all module tests.
  *
@@ -45,8 +43,8 @@ public class AbstractModuleTestCase {
 
     @BeforeClass
     public static void initUrlHandler() {
-        // Hack just to kick off Module's static init
-        assertNotNull(Module.SYSTEM);
+        // this also kicks off Module's static init
+        Module.setModuleLogger(new StreamModuleLogger(System.out));
     }
 
     protected File getResource(final String path) throws Exception {
