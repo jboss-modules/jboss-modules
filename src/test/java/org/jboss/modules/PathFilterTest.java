@@ -46,12 +46,12 @@ public class PathFilterTest {
         pathFilter = new PathFilterImpl(EMPTY, new String[] {"foo/*"});
         assertTrue(pathFilter.accept("foo"));
         assertFalse(pathFilter.accept("foo/bar"));
-        assertTrue(pathFilter.accept("foo/bar/baz"));
+        assertFalse(pathFilter.accept("foo/bar/baz"));
 
         pathFilter = new PathFilterImpl(EMPTY, new String[] {"foo"});
         assertFalse(pathFilter.accept("foo"));
-        assertTrue(pathFilter.accept("foo/bar"));
-        assertTrue(pathFilter.accept("foo/bar/baz"));
+        assertFalse(pathFilter.accept("foo/bar"));
+        assertFalse(pathFilter.accept("foo/bar/baz"));
 
         pathFilter = new PathFilterImpl(EMPTY, new String[] {"**/bar/**"});
         assertTrue(pathFilter.accept("foo"));
@@ -70,12 +70,12 @@ public class PathFilterTest {
         pathFilter = new PathFilterImpl(new String[] {"foo/*"}, new String[] {"**"});
         assertFalse(pathFilter.accept("foo"));
         assertTrue(pathFilter.accept("foo/bar"));
-        assertFalse(pathFilter.accept("foo/bar/baz"));
+        assertTrue(pathFilter.accept("foo/bar/baz"));
 
         pathFilter = new PathFilterImpl(new String[] {"foo"}, new String[] {"**"});
         assertTrue(pathFilter.accept("foo"));
-        assertFalse(pathFilter.accept("foo/bar"));
-        assertFalse(pathFilter.accept("foo/bar/baz"));
+        assertTrue(pathFilter.accept("foo/bar"));
+        assertTrue(pathFilter.accept("foo/bar/baz"));
 
         pathFilter = new PathFilterImpl(new String[] {"**/bar/**"}, new String[] {"**"});
         assertFalse(pathFilter.accept("foo"));
