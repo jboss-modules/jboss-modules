@@ -137,9 +137,9 @@ public abstract class AbstractResourceLoaderTestCase extends AbstractModuleTestC
         loader = createLoader();
         loader.addExportExclude("nested/**");
         loader.addExportInclude("nested/other/**");
-        ExportFilter exportFilter = loader.getExportFilter();
-        assertFalse(exportFilter.shouldExport("nested/test"));
-        assertFalse(exportFilter.shouldExport("nested/other"));
-        assertTrue(exportFilter.shouldExport("nested/other/test"));
+        PathFilter exportFilter = loader.getExportFilter();
+        assertFalse(exportFilter.accept("nested/test"));
+        assertFalse(exportFilter.accept("nested/other"));
+        assertTrue(exportFilter.accept("nested/other/test"));
     }
 }

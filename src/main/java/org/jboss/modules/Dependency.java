@@ -28,12 +28,14 @@ package org.jboss.modules;
 final class Dependency {
     private final Module module;
     private final boolean export;
-    private final ExportFilter exportFilter;
+    private final PathFilter exportFilter;
+    private final PathFilter importFilter;
 
-    Dependency(Module module, boolean export, ExportFilter exportFilter) {
+    Dependency(Module module, boolean export, PathFilter exportFilter, PathFilter importFilter) {
         this.module = module;
         this.export = export;
         this.exportFilter = exportFilter;
+        this.importFilter = importFilter;
     }
 
     Module getModule() {
@@ -44,7 +46,11 @@ final class Dependency {
         return export;
     }
 
-    ExportFilter getExportFilter() {
+    PathFilter getExportFilter() {
         return exportFilter;
+    }
+
+    public PathFilter getImportFilter() {
+        return importFilter;
     }
 }

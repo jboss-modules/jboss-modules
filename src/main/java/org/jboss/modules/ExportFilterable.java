@@ -23,7 +23,7 @@
 package org.jboss.modules;
 
 /**
- * Contract establishing the ability to include and exclude paths.
+ * Contract establishing the ability to include and exclude export paths.
  *
  * @author John Bailey
  */

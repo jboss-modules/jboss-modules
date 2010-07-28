@@ -35,13 +35,17 @@ public final class DependencySpec {
     private final  boolean optional;
     private final String[] exportIncludes;
     private final String[] exportExcludes;
+    private final String[] importIncludes;
+    private final String[] importExcludes;
 
-    public DependencySpec(ModuleIdentifier moduleIdentifier, boolean export, boolean optional, String[] exportIncludes, String[] exportExcludes) {
+    public DependencySpec(ModuleIdentifier moduleIdentifier, boolean export, boolean optional, String[] exportIncludes, String[] exportExcludes, String[] importIncludes, String[] importExcludes) {
         this.moduleIdentifier = moduleIdentifier;
         this.export = export;
         this.optional = optional;
         this.exportIncludes = exportIncludes;
         this.exportExcludes = exportExcludes;
+        this.importIncludes = importIncludes;
+        this.importExcludes = importExcludes;
     }
 
     public boolean isExport() {
@@ -56,15 +60,17 @@ public final class DependencySpec {
         return optional;
     }
 
-    public ExportFilter getExportFilter() {
-        return new ExportFilterImpl(exportIncludes, exportExcludes);
+    public PathFilter getExportFilter() {
+        return new PathFilterImpl(exportIncludes, exportExcludes);
     }
 
-    public interface Builder extends ExportFilterable<Builder> {
+    public PathFilter getImportFilter() {
+        return new PathFilterImpl(importIncludes, importExcludes);
+    }
+
+    public interface Builder extends ExportFilterable<Builder>, ImportFilterable<Builder> {
         Builder setExport(final boolean export);
         Builder setOptional(final boolean optional);
-        Builder addExportInclude(final String path);
-        Builder addExportExclude(final String path);
         DependencySpec create();
     }
 
@@ -74,6 +80,8 @@ public final class DependencySpec {
             private boolean optional;
             private final List<String> exportIncludes = new ArrayList<String>();
             private final List<String> exportExcludes = new ArrayList<String>();
+            private final List<String> importIncludes = new ArrayList<String>();
+            private final List<String> importExcludes = new ArrayList<String>();
 
             public Builder setExport(final boolean export) {
                 this.export = export;
@@ -96,8 +104,23 @@ public final class DependencySpec {
             }
 
             @Override
+            public Builder addImportInclude(String path) {
+                importIncludes.add(path);
+                return this;
+            }
+
+            @Override
+            public Builder addImportExclude(String path) {
+                importExcludes.add(path);
+                return this;
+            }
+
+            @Override
             public DependencySpec create() {
-                return new DependencySpec(moduleIdentifier, export, optional, exportIncludes.toArray(new String[exportIncludes.size()]), exportExcludes.toArray(new String[exportExcludes.size()]));
+                return new DependencySpec(moduleIdentifier, export, optional,
+                        exportIncludes.toArray(new String[exportIncludes.size()]), exportExcludes.toArray(new String[exportExcludes.size()]),
+                        importIncludes.toArray(new String[importIncludes.size()]), importExcludes.toArray(new String[importExcludes.size()])
+                );
             }
         };
     }

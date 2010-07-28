@@ -75,9 +75,9 @@ public interface ResourceLoader extends ExportFilterable<Void> {
 
 
     /**
-     * Get an ExportFilter for this resource
+     * Get an export filter for this resource
      *
      * @return the export filter
      */
-    ExportFilter getExportFilter();
+    PathFilter getExportFilter();
 }

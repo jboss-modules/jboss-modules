@@ -158,7 +158,7 @@ public abstract class ModuleLoader {
                         throw e;
                     }
                 }
-                final Dependency dependency = new Dependency(dependencyModule, dependencySpec.isExport(), dependencySpec.getExportFilter());
+                final Dependency dependency = new Dependency(dependencyModule, dependencySpec.isExport(), dependencySpec.getExportFilter(), dependencySpec.getImportFilter());
                 dependencies.add(dependency);
             }
             module.setDependencies(dependencies);
