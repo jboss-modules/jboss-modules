@@ -40,18 +40,12 @@ import java.util.Map;
 public class TestModuleLoader extends ModuleLoader {
 
     private final Map<ModuleIdentifier, ModuleSpec> moduleSpecs = new HashMap<ModuleIdentifier, ModuleSpec>();
-    private final Map<ModuleIdentifier, Module> loadedModules = new HashMap<ModuleIdentifier, Module>();
 
     @Override
-    protected Module findModule(ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
-        if(loadedModules.containsKey(moduleIdentifier)) {
-            return loadedModules.get(moduleIdentifier);
-        }
+    protected ModuleSpec findModule(ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
         final ModuleSpec moduleSpec = moduleSpecs.get(moduleIdentifier);
         if(moduleSpec == null) throw new ModuleLoadException("No module spec found for module " + moduleIdentifier);
-        final Module module = defineModule(moduleSpec);
-        loadedModules.put(moduleIdentifier, module);
-        return module;
+        return moduleSpec;
     }
 
     public void addModuleSpec(final ModuleSpec moduleSpec) {

@@ -36,17 +36,13 @@ public class LocalModuleLoader extends ModuleLoader {
     }
 
     @Override
-    protected Module findModule(final ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
+    protected ModuleSpec findModule(final ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
         final File moduleRoot = getModuleRoot(moduleIdentifier);
         if (moduleRoot == null)
             throw new ModuleNotFoundException("Module " + moduleIdentifier + " is not found");
 
         final File moduleXml = new File(moduleRoot, "module.xml");
-
-        ModuleSpec moduleSpec;
-        moduleSpec = parseModuleInfoFile(moduleIdentifier, moduleRoot, moduleXml);
-
-        return defineModule(moduleSpec);
+        return parseModuleInfoFile(moduleIdentifier, moduleRoot, moduleXml);
     }
 
     private File getModuleRoot(final ModuleIdentifier moduleIdentifier) {
