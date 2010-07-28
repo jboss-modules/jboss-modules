@@ -84,7 +84,8 @@ public class PathFilterImpl implements PathFilter {
      * <li><code>"**"</code> - match zero or more characters, including slashes</li>
      * <li><code>"/"</code> - match one or more slash characters.  Consecutive {@code /} characters are collapsed down into one.</li>
      * </ul>
-     * In addition, like {@code ant}, if the pattern ends with a {@code /}, then an implicit <code>"**"</code> will be appended.
+     * In addition, any glob pattern matches all subdirectories thereof.  A glob pattern ending in {@code /} is equivalent
+     * to a glob pattern ending in <code>/**</code> in that the named directory is not itself included in the glob.
      * <p/>
      * <b>See also:</b> <a href="http://ant.apache.org/manual/dirtasks.html#patterns">"Patterns" in the Ant Manual</a>
      *
@@ -127,6 +128,8 @@ public class PathFilterImpl implements PathFilter {
         if (lastWasSlash) {
             // ends in /, append **
             patternBuilder.append(".*");
+        } else {
+            patternBuilder.append("(?:/.*)?");
         }
         patternBuilder.append("$");
         return Pattern.compile(patternBuilder.toString());
