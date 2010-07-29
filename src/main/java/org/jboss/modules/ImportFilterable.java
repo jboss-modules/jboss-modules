@@ -27,18 +27,18 @@ package org.jboss.modules;
  *
  * @author John Bailey
  */
-public interface ImportFilterable<T> {
+public interface ImportFilterable {
     /**
      * Add a path glob to be included
      *
      * @param path the path glob
      */
-    T addImportInclude(String path);
+    ImportFilterable addImportInclude(String path);
 
     /**
      * Add a path glob to be excluded
      *
      * @param path the path glob
      */
-    T addImportExclude(String path);
+    ImportFilterable addImportExclude(String path);
 }

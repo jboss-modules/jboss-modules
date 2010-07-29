@@ -68,7 +68,7 @@ public final class DependencySpec {
         return new PathFilterImpl(importIncludes, importExcludes);
     }
 
-    public interface Builder extends ExportFilterable<Builder>, ImportFilterable<Builder> {
+    public interface Builder extends ExportFilterable, ImportFilterable {
         Builder setExport(final boolean export);
         Builder setOptional(final boolean optional);
         DependencySpec create();

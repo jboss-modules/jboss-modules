@@ -27,18 +27,18 @@ package org.jboss.modules;
  *
  * @author John Bailey
  */
-public interface ExportFilterable<T> {
+public interface ExportFilterable {
     /**
      * Add a path glob to be included
      *
      * @param path the path glob
      */
-    T addExportInclude(String path);
+    ExportFilterable addExportInclude(String path);
 
     /**
      * Add a path glob to be excluded
      *
      * @param path the path glob
      */
-    T addExportExclude(String path);
+    ExportFilterable addExportExclude(String path);
 }

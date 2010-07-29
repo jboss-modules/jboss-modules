@@ -34,14 +34,14 @@ public abstract class AbstractResourceLoader implements ResourceLoader {
     private final List<String> exportIncludes = new ArrayList<String>();
     private final List<String> exportExcludes = new ArrayList<String>();
 
-    public Void addExportExclude(String path) {
+    public ResourceLoader addExportExclude(String path) {
         exportExcludes.add(path);
-        return null;
+        return this;
     }
 
-    public Void addExportInclude(String path) {
+    public ResourceLoader addExportInclude(String path) {
         exportIncludes.add(path);
-        return null;
+        return this;
     }
 
     public PathFilter getExportFilter() {
