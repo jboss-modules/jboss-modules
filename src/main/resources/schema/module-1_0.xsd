@@ -52,7 +52,8 @@
 
     <xsd:complexType name="moduleDependencyType">
         <xsd:choice minOccurs="0" maxOccurs="unbounded">
-            <xsd:element name="exports" type="exportsType"/>
+            <xsd:element name="exports" type="filterType"/>
+            <xsd:element name="imports" type="filterType"/>
         </xsd:choice>
         <xsd:attribute name="group" type="xsd:string" use="required"/>
         <xsd:attribute name="name" type="xsd:string" use="required"/>
@@ -73,7 +74,7 @@
 
     <xsd:complexType name="resourceType">
         <xsd:choice minOccurs="0" maxOccurs="unbounded">
-            <xsd:element name="exports" type="exportsType"/>
+            <xsd:element name="exports" type="filterType"/>
         </xsd:choice>
         <!-- If unspec, name defaults to path -->
         <xsd:attribute name="name" type="xsd:string" use="optional"/>
@@ -92,7 +93,7 @@
         </xsd:restriction>
     </xsd:simpleType>
 
-    <xsd:complexType name="exportsType">
+    <xsd:complexType name="filterType">
         <xsd:choice minOccurs="0" maxOccurs="unbounded">
             <xsd:element name="include" type="includeExcludeType" minOccurs="0"/>
             <xsd:element name="exclude" type="includeExcludeType" minOccurs="0"/>
