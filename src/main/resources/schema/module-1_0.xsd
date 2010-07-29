@@ -95,12 +95,12 @@
 
     <xsd:complexType name="filterType">
         <xsd:choice minOccurs="0" maxOccurs="unbounded">
-            <xsd:element name="include" type="includeExcludeType" minOccurs="0"/>
-            <xsd:element name="exclude" type="includeExcludeType" minOccurs="0"/>
+            <xsd:element name="include" type="pathSpecType" minOccurs="0"/>
+            <xsd:element name="exclude" type="pathSpecType" minOccurs="0"/>
         </xsd:choice>
     </xsd:complexType>
 
-    <xsd:complexType name="includeExcludeType">
+    <xsd:complexType name="pathSpecType">
         <xsd:attribute name="path" type="xsd:string" use="required"/>
     </xsd:complexType>
 
