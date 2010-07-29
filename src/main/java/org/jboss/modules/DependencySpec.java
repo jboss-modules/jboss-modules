@@ -71,6 +71,10 @@ public final class DependencySpec {
     public interface Builder extends ExportFilterable, ImportFilterable {
         Builder setExport(final boolean export);
         Builder setOptional(final boolean optional);
+        Builder addImportInclude(String path);
+        Builder addImportExclude(String path);
+        Builder addExportInclude(String path);
+        Builder addExportExclude(String path);
         DependencySpec create();
     }
 
