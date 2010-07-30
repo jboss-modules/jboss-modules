@@ -90,16 +90,16 @@ public final class Module {
         //noinspection ThisEscapedInObjectConstruction
         moduleClassLoader = new ModuleClassLoader(this, flags, spec.getAssertionSetting(), moduleContentLoader);
 
-        localExportedPaths = moduleContentLoader.getFilteredLocalPaths();
+        localExportedPaths = Collections.unmodifiableSet(moduleContentLoader.getFilteredLocalPaths());
     }
 
     private Module() {
         identifier = ModuleIdentifier.SYSTEM;
         mainClassName = null;
         //noinspection ThisEscapedInObjectConstruction
-        final SystemModuleClassLoader smcl = new SystemModuleClassLoader(this, Collections.<Flag>emptySet(), AssertionSetting.INHERIT);
-        moduleClassLoader = smcl;
-        localExportedPaths = smcl.getExportedPaths();
+        final SystemModuleClassLoader classLoader = new SystemModuleClassLoader(this, Collections.<Flag>emptySet(), AssertionSetting.INHERIT);
+        moduleClassLoader = classLoader;
+        localExportedPaths = Collections.unmodifiableSet(classLoader.getExportedPaths());
         pathsToImports = null; // bypassed by the system MCL
         moduleLoader = InitialModuleLoader.INSTANCE;
     }
