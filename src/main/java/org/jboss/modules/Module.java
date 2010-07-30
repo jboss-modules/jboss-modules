@@ -291,7 +291,7 @@ public final class Module {
      */
     public static Module forClass(Class<?> clazz) {
         final ClassLoader cl = clazz.getClassLoader();
-        return cl instanceof ModuleClassLoader ? ((ModuleClassLoader) cl).getModule() : null;
+        return cl instanceof ModuleClassLoader ? ((ModuleClassLoader) cl).getModule() : cl == null || cl == ClassLoader.getSystemClassLoader() ? SYSTEM : null;
     }
 
     /**
