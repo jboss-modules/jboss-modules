@@ -56,7 +56,7 @@ public final class ModuleSpec {
     }
 
     public DependencySpec[] getDependencies() {
-        return dependencies;
+        return dependencies.clone();
     }
 
     public String getMainClass() {
