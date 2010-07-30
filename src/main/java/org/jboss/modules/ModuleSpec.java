@@ -85,7 +85,7 @@ public final class ModuleSpec {
         ModuleIdentifier getIdentifier();
     }
 
-    public static final Builder build(final ModuleIdentifier moduleIdentifier) {
+    public static Builder build(final ModuleIdentifier moduleIdentifier) {
         return new Builder() {
             private final Set<Module.Flag> moduleFlags = EnumSet.noneOf(Module.Flag.class);
             private String mainClass;
