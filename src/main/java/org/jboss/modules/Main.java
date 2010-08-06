@@ -134,11 +134,16 @@ public final class Main {
                         System.setProperty("java.util.logging.manager", name);
                         final ClassLoader old = setContextClassLoader(classLoader);
                         try {
-                            LogManager.getLogManager();
+                            if (LogManager.getLogManager().getClass() == LogManager.class) {
+                                System.err.println("WARNING: Failed to load the specified logmodule " + logManagerModuleIdentifier);
+                            } else {
+                                Module.setModuleLogger(new JDKModuleLogger());
+                            }
                         } finally {
                             setContextClassLoader(old);
                         }
-                        Module.setModuleLogger(new JDKModuleLogger());
+                    } else {
+                        System.err.println("WARNING: No log manager services defined in specified logmodule " + logManagerModuleIdentifier);
                     }
                 } finally {
                     try {
@@ -147,6 +152,8 @@ public final class Main {
                         // ignore
                     }
                 }
+            } else {
+                System.err.println("WARNING: No log manager service descriptor found in specified logmodule " + logManagerModuleIdentifier);
             }
         }
         final Module module;
