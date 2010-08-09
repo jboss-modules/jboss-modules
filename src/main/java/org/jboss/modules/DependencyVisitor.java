@@ -23,22 +23,27 @@
 package org.jboss.modules;
 
 /**
- * Contract establishing the ability to include and exclude export paths.
+ * A visitor which can process dependencies.
  *
- * @author John Bailey
+ * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public interface ExportFilterable {
-    /**
-     * Add a path glob to be included
-     *
-     * @param path the path glob
-     */
-    ExportFilterable addExportInclude(String path);
+// this annotation is because IDEA doesn't understand generics in javadoc links
+@SuppressWarnings({ "JavadocReference" })
+interface DependencyVisitor {
 
     /**
-     * Add a path glob to be excluded
+     * Process a local dependency.
      *
-     * @param path the path glob
+     * @param item the dependency item
+     * @return the return value to pass to the caller of {@link Dependency#accept(DependencyVisitor, I)}
      */
-    ExportFilterable addExportExclude(String path);
+    void visit(LocalDependency item) throws ModuleLoadException;
+
+    /**
+     * Process a module dependency.
+     *
+     * @param item the dependency item
+     * @return the return value to pass to the caller of {@link Dependency#accept(DependencyVisitor, I)}
+     */
+    void visit(ModuleDependency item) throws ModuleLoadException;
 }

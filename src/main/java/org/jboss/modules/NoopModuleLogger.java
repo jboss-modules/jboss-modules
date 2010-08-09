@@ -27,7 +27,7 @@ package org.jboss.modules;
  * @author thomas.diesler@jboss.com
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public class NoopModuleLogger implements ModuleLogger {
+public final class NoopModuleLogger implements ModuleLogger {
 
     private static ModuleLogger instance = new NoopModuleLogger();
 
@@ -73,5 +73,9 @@ public class NoopModuleLogger implements ModuleLogger {
 
     @Override
     public void trace(final Throwable t, final String format, final Object... args) {
+    }
+
+    @Override
+    public void greeting() {
     }
 }

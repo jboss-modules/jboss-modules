@@ -30,7 +30,7 @@ import java.io.PrintStream;
  * @author thomas.diesler@jboss.com
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public class StreamModuleLogger implements ModuleLogger {
+public final class StreamModuleLogger implements ModuleLogger {
 
     private PrintStream print;
 
@@ -137,5 +137,9 @@ public class StreamModuleLogger implements ModuleLogger {
         print.print(": ");
         t.printStackTrace(print);
         print.flush();
+    }
+
+    /** {@inheritDoc} */
+    public void greeting() {
     }
 }

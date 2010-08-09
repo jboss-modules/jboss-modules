@@ -22,47 +22,41 @@
 
 package org.jboss.modules;
 
+import java.util.List;
+
 /**
- * A dependency item.
+ * A loader which implements the local part of a module.
+ * <p>
+ * <b>Thread safety warning!</b>  The loader must <b>never</b> call into a class loader (or any other object) which may
+ * take locks and subsequently delegate to a module class loader.  This will cause deadlocks and other hard-to-debug
+ * concurrency problems.
  *
- * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-abstract class Dependency {
-
-    private final PathFilter exportFilter;
-    private final PathFilter importFilter;
-
-    protected Dependency(final PathFilter exportFilter, final PathFilter importFilter) {
-        this.exportFilter = exportFilter;
-        this.importFilter = importFilter;
-    }
+public interface LocalLoader {
 
     /**
-     * Accept a visitor.
+     * Load a class which is locally defined by this loader.
      *
-     * @param visitor the visitor
-     * @return the value returned by the visitor
+     * @param name the class name
+     * @param resolve {@code true} to initialize the class
+     * @return the class, or {@code null} if there is no local class with this name
      */
-    abstract void accept(DependencyVisitor visitor) throws ModuleLoadException;
+    Class<?> loadClassLocal(String name, boolean resolve);
 
     /**
-     * Get the export filter for this dependency.  This filter determines what imported paths are re-exported by this
-     * dependency.  All exported paths must also satisfy the import filter.
+     * Load a resource which is locally defined by this loader.
      *
-     * @return the export filter
+     * @param name the resource path
+     * @return the resource or resources, or an empty list if there is no local resource with this name
      */
-    final PathFilter getExportFilter() {
-        return exportFilter;
-    }
+    List<Resource> loadResourceLocal(String name);
 
     /**
-     * Get the import filter for this dependency.  This filter determines what exported paths are imported from the
-     * dependency to the dependent.
+     * Load a resource which is locally defined by a specific root on this loader.
      *
-     * @return the import filter
+     * @param name the resource path
+     * @return the resource, or {@code null} if there is no local resource with this name
      */
-    final PathFilter getImportFilter() {
-        return importFilter;
-    }
+    Resource loadResourceLocal(String root, String name);
 }

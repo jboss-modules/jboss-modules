@@ -28,6 +28,17 @@ package org.jboss.modules;
  * @author John Bailey
  */
 public interface PathFilter {
+
+    /**
+     * A path filter which accepts all paths.
+     */
+    PathFilter ACCEPT_ALL = BooleanPathFilter.TRUE;
+
+    /**
+     * A path filter which rejects all paths.
+     */
+    PathFilter REJECT_ALL = BooleanPathFilter.FALSE;
+
     /**
      * Determine whether a path should be accepted.
      *

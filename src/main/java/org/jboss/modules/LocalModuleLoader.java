@@ -27,7 +27,7 @@ import java.io.File;
 /**
  * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
  */
-public class LocalModuleLoader extends ModuleLoader {
+public final class LocalModuleLoader extends ModuleLoader {
 
     private final File[] repoRoots;
 

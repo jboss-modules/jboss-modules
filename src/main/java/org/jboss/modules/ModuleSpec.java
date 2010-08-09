@@ -22,78 +22,176 @@
 
 package org.jboss.modules;
 
-import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
- * Module Specification.
+ * A {@code Module} specification which is used by a {@code ModuleLoader} to define new modules.
  *
  * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class ModuleSpec {
-    private final DependencySpec[] dependencies;
-    private final Set<Module.Flag> moduleFlags;
 
     private final ModuleIdentifier moduleIdentifier;
     private final String mainClass;
-    private final ModuleContentLoader loader;
     private final AssertionSetting assertionSetting;
+    private final ResourceLoader[] resourceLoaders;
+    private final SpecifiedDependency[] dependencies;
 
-    public ModuleSpec(ModuleIdentifier moduleIdentifier, DependencySpec[] dependencies, ModuleContentLoader loader, Set<Module.Flag> moduleFlags, AssertionSetting assertionSetting, String mainClass) {
+    private ModuleSpec(final ModuleIdentifier moduleIdentifier, final String mainClass, final AssertionSetting assertionSetting, final ResourceLoader[] resourceLoaders, final SpecifiedDependency[] dependencies) {
         this.moduleIdentifier = moduleIdentifier;
-        this.dependencies = dependencies;
-        this.loader = loader;
-        this.moduleFlags = moduleFlags;
-        this.assertionSetting = assertionSetting;
         this.mainClass = mainClass;
+        this.assertionSetting = assertionSetting;
+        this.resourceLoaders = resourceLoaders;
+        this.dependencies = dependencies;
     }
 
-    public ModuleIdentifier getIdentifier() {
+    /**
+     * Get the module identifier for the module which is specified by this object.
+     *
+     * @return the module identifier
+     */
+    public ModuleIdentifier getModuleIdentifier() {
         return moduleIdentifier;
     }
 
-    public DependencySpec[] getDependencies() {
-        return dependencies.clone();
-    }
-
-    public String getMainClass() {
+    String getMainClass() {
         return mainClass;
     }
 
-    public ModuleContentLoader getContentLoader() {
-        return loader;
-    }
-
-    public Set<Module.Flag> getModuleFlags() {
-        return moduleFlags;
-    }
-
-    public AssertionSetting getAssertionSetting() {
+    AssertionSetting getAssertionSetting() {
         return assertionSetting;
     }
 
+    ResourceLoader[] getResourceLoaders() {
+        return resourceLoaders;
+    }
+
+    SpecifiedDependency[] getDependencies() {
+        return dependencies;
+    }
+
+    /**
+     * A builder for new module specifications.
+     */
     public interface Builder {
-        Builder setMainClass(final String mainClass);
+
+        /**
+         * Set the main class for this module, or {@code null} for none.
+         *
+         * @param mainClass the main class name
+         * @return this builder
+         */
+        Builder setMainClass(String mainClass);
+
+        /**
+         * Set the default assertion setting for this module.
+         *
+         * @param assertionSetting the assertion setting
+         * @return this builder
+         */
         Builder setAssertionSetting(AssertionSetting assertionSetting);
-        Builder addModuleFlag(Module.Flag flag);
-        DependencySpec.Builder addDependency(final ModuleIdentifier moduleIdentifier);
-        Builder addRoot(final String rootName, final ResourceLoader resourceLoader);
+
+        /**
+         * Add a non-module local dependency.  See the documentation for {@link LocalLoader} for more information
+         * about non-module dependencies.
+         * <p>
+         * It is recommended that rather than including non-module dependencies in one or more module definitions, a
+         * module should be defined to encapsulate the non-module dependency, so that other modules can depend on it as
+         * a module.
+         *
+         * @param spec the specification for the local dependency
+         * @return this builder
+         */
+        Builder addLocalDependency(final LocalDependencySpec spec);
+
+        /**
+         * Add a local dependency representing the module itself.  If not specified, the module is assumed to be the
+         * last dependency (child-last).  This dependency includes all of the resource roots defined by {@link #addResourceRoot(ResourceLoader)}.
+         * It is an error to add this dependency more than one time.
+         *
+         * @return this builder
+         */
+        Builder addLocalDependency();
+
+        /**
+         * Add a module dependency with the given specification.
+         *
+         * @param dependencySpec the dependency specification (see {@link ModuleDependencySpec#build(ModuleIdentifier)})
+         * @return this builder
+         */
+        Builder addModuleDependency(ModuleDependencySpec dependencySpec);
+
+        /**
+         * Add a local resource root, from which this module will load class definitions and resources.
+         *
+         * @param resourceLoader the resource loader for the root
+         * @return this builder
+         */
+        Builder addResourceRoot(ResourceLoader resourceLoader);
+
+        /**
+         * Create the module specification from this builder.
+         *
+         * @return the module specification
+         */
         ModuleSpec create();
+
+        /**
+         * Get the identifier of the module being defined by this builder.
+         *
+         * @return the module identifier
+         */
         ModuleIdentifier getIdentifier();
     }
 
+    /**
+     * Get a builder for a new module specification.
+     *
+     * @param moduleIdentifier the module identifier
+     * @return the builder
+     */
     public static Builder build(final ModuleIdentifier moduleIdentifier) {
         return new Builder() {
-            private final Set<Module.Flag> moduleFlags = EnumSet.noneOf(Module.Flag.class);
+            private boolean localAdded;
             private String mainClass;
             private AssertionSetting assertionSetting = AssertionSetting.INHERIT;
+            private final List<ResourceLoader> resourceLoaders = new ArrayList<ResourceLoader>(0);
+            private final List<SpecifiedDependency> dependencies = new ArrayList<SpecifiedDependency>(0);
 
-            private final ModuleContentLoader.Builder moduleContentLoaderBuilder = ModuleContentLoader.build();
-            private final Set<DependencySpec.Builder> dependencyBuilders = new HashSet<DependencySpec.Builder>();
+            public Builder addLocalDependency(final LocalDependencySpec spec) {
+                dependencies.add(new ImmediateSpecifiedDependency(
+                        new LocalDependency(spec.getExportFilter(), spec.getImportFilter(), spec.getLocalLoader(), spec.getLoaderPaths())));
+                return this;
+            }
 
+            public Builder addLocalDependency() {
+                if (localAdded) {
+                    throw new IllegalStateException("Local dependency already added");
+                }
+                localAdded = true;
+                dependencies.add(new SpecifiedDependency() {
+                    public Dependency getDependency(final Module module) {
+                        final ModuleClassLoader moduleClassLoader = module.getClassLoaderPrivate();
+                        return new LocalDependency(moduleClassLoader.getExportPathFilter(), PathFilter.ACCEPT_ALL, moduleClassLoader.getLocalLoader(), moduleClassLoader.getPaths());
+                    }
+                });
+                return this;
+            }
+
+            public Builder addModuleDependency(final ModuleDependencySpec dependencySpec) {
+                final ModuleIdentifier identifier = dependencySpec.getModuleIdentifier();
+                dependencies.add(new SpecifiedDependency() {
+                    public Dependency getDependency(final Module module) {
+                        return new ModuleDependency(dependencySpec.getExportFilter(), dependencySpec.getImportFilter(), identifier, dependencySpec.isOptional());
+                    }
+                });
+                return this;
+            }
+
+            @Override
             public Builder setMainClass(final String mainClass) {
                 this.mainClass = mainClass;
                 return this;
@@ -106,31 +204,14 @@ public final class ModuleSpec {
             }
 
             @Override
-            public Builder addModuleFlag(Module.Flag flag) {
-                moduleFlags.add(flag);
+            public Builder addResourceRoot(final ResourceLoader resourceLoader) {
+                resourceLoaders.add(resourceLoader);
                 return this;
             }
 
-            public DependencySpec.Builder addDependency(final ModuleIdentifier moduleIdentifier) {
-                final DependencySpec.Builder dependencySpecBuilder = DependencySpec.build(moduleIdentifier);
-                dependencyBuilders.add(dependencySpecBuilder);
-                return dependencySpecBuilder;
-            }
-
-            public Builder addRoot(final String rootName, final ResourceLoader resourceLoader) {
-                moduleContentLoaderBuilder.add(rootName, resourceLoader);
-                return this;
-            }
-
+            @Override
             public ModuleSpec create() {
-                final ModuleContentLoader.Builder moduleContentLoaderBuilder = this.moduleContentLoaderBuilder;
-                final Set<DependencySpec.Builder> dependencyBuilders = this.dependencyBuilders;
-                final DependencySpec[] dependencySpecs = new DependencySpec[dependencyBuilders.size()];
-                int i = 0;
-                for(DependencySpec.Builder dependencyBuilder : dependencyBuilders) {
-                    dependencySpecs[i++] = dependencyBuilder.create();
-                }
-                return new ModuleSpec(moduleIdentifier, dependencySpecs, moduleContentLoaderBuilder.create(), moduleFlags, assertionSetting, mainClass);
+                return new ModuleSpec(moduleIdentifier, mainClass, assertionSetting, resourceLoaders.toArray(new ResourceLoader[resourceLoaders.size()]), dependencies.toArray(new SpecifiedDependency[dependencies.size()]));
             }
 
             @Override
@@ -138,5 +219,21 @@ public final class ModuleSpec {
                 return moduleIdentifier;
             }
         };
+    }
+
+    interface SpecifiedDependency {
+        Dependency getDependency(Module module);
+    }
+
+    static final class ImmediateSpecifiedDependency implements SpecifiedDependency {
+        private final Dependency dependency;
+
+        ImmediateSpecifiedDependency(final Dependency dependency) {
+            this.dependency = dependency;
+        }
+
+        public Dependency getDependency(final Module module) {
+            return dependency;
+        }
     }
 }

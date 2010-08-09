@@ -23,46 +23,24 @@
 package org.jboss.modules;
 
 /**
- * A dependency item.
+ * A simple module loader selector which always returns the same module loader.
  *
- * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-abstract class Dependency {
+public final class SimpleModuleLoaderSelector implements ModuleLoaderSelector {
+    private final ModuleLoader currentLoader;
 
-    private final PathFilter exportFilter;
-    private final PathFilter importFilter;
-
-    protected Dependency(final PathFilter exportFilter, final PathFilter importFilter) {
-        this.exportFilter = exportFilter;
-        this.importFilter = importFilter;
+    /**
+     * Construct a new instance.
+     *
+     * @param currentLoader the loader to use
+     */
+    public SimpleModuleLoaderSelector(final ModuleLoader currentLoader) {
+        this.currentLoader = currentLoader;
     }
 
-    /**
-     * Accept a visitor.
-     *
-     * @param visitor the visitor
-     * @return the value returned by the visitor
-     */
-    abstract void accept(DependencyVisitor visitor) throws ModuleLoadException;
-
-    /**
-     * Get the export filter for this dependency.  This filter determines what imported paths are re-exported by this
-     * dependency.  All exported paths must also satisfy the import filter.
-     *
-     * @return the export filter
-     */
-    final PathFilter getExportFilter() {
-        return exportFilter;
-    }
-
-    /**
-     * Get the import filter for this dependency.  This filter determines what exported paths are imported from the
-     * dependency to the dependent.
-     *
-     * @return the import filter
-     */
-    final PathFilter getImportFilter() {
-        return importFilter;
+    /** {@inheritDoc} */
+    public ModuleLoader getCurrentLoader() {
+        return currentLoader;
     }
 }

@@ -48,10 +48,10 @@ public abstract class AbstractResourceLoaderTestCase extends AbstractModuleTestC
 
     @Before
     public void setupLoader() throws Exception {
-        loader = createLoader();
+        loader = createLoader(PathFilter.ACCEPT_ALL);
     }
 
-    protected abstract ResourceLoader createLoader() throws Exception;
+    protected abstract ResourceLoader createLoader(final PathFilter pathFilter) throws Exception;
     protected abstract void assertResource(final Resource resource, final String fileName);
 
     @Test
@@ -134,9 +134,10 @@ public abstract class AbstractResourceLoaderTestCase extends AbstractModuleTestC
      */
     @Test
     public void testExportFiltering() throws Exception {
-        loader = createLoader();
-        loader.addExportExclude("nested/**");
-        loader.addExportInclude("nested/other/**");
+        loader = createLoader(PathFilters.all(
+                PathFilters.include("nested/**"),
+                PathFilters.include("nested/other/**")
+        ));
         PathFilter exportFilter = loader.getExportFilter();
         assertFalse(exportFilter.accept("nested/test"));
         assertFalse(exportFilter.accept("nested/other"));

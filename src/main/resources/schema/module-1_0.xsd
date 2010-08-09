@@ -38,7 +38,6 @@
             <xsd:element name="resources" type="resourcesType" minOccurs="0"/>
             <xsd:element name="main-class" type="classNameType" minOccurs="0"/>
         </xsd:all>
-        <xsd:attribute name="flags" type="flagsType" use="optional"/>
         <xsd:attribute name="group" type="xsd:string" use="required"/>
         <xsd:attribute name="name" type="xsd:string" use="required"/>
         <xsd:attribute name="version" type="xsd:string" use="optional"/>
@@ -76,22 +75,11 @@
         <xsd:choice minOccurs="0" maxOccurs="unbounded">
             <xsd:element name="exports" type="filterType"/>
         </xsd:choice>
-        <!-- If unspec, name defaults to path -->
+        <!-- If unspecified, name defaults to path -->
         <xsd:attribute name="name" type="xsd:string" use="optional"/>
         <!-- Relative path of resource from module.xml file -->
         <xsd:attribute name="path" type="xsd:string" use="required"/>
     </xsd:complexType>
-
-    <xsd:simpleType name="flagsType">
-        <xsd:list itemType="flagType"/>
-    </xsd:simpleType>
-
-    <xsd:simpleType name="flagType">
-        <xsd:restriction base="xsd:string">
-            <xsd:enumeration value="child-first"/>
-            <xsd:enumeration value="no-blacklist"/>
-        </xsd:restriction>
-    </xsd:simpleType>
 
     <xsd:complexType name="filterType">
         <xsd:choice minOccurs="0" maxOccurs="unbounded">

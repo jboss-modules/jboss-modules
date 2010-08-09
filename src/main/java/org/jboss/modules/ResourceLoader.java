@@ -26,9 +26,18 @@ import java.io.IOException;
 import java.util.Collection;
 
 /**
+ * A loader for resources from a specific resource root within a module.
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public interface ResourceLoader extends ExportFilterable {
+public interface ResourceLoader {
+
+    /**
+     * Get the name of the root represented by this resource loader.
+     *
+     * @return the name of the root
+     */
+    String getRootName();
 
     /**
      * Get the class specification for the given class name.  If no matching class is found, {@code null} is returned.
@@ -73,17 +82,10 @@ public interface ResourceLoader extends ExportFilterable {
      */
     Collection<String> getPaths();
 
-
     /**
-     * Get an export filter for this resource
+     * Get the export filter for this resource loader.
      *
      * @return the export filter
      */
     PathFilter getExportFilter();
-
-    /** {@inheritDoc} */
-    ResourceLoader addExportInclude(String path);
-
-    /** {@inheritDoc} */
-    ResourceLoader addExportExclude(String path);
 }

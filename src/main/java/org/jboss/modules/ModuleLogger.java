@@ -48,4 +48,6 @@ public interface ModuleLogger {
     void trace(Throwable t, String format, Object arg1, Object arg2, Object arg3);
 
     void trace(Throwable t, String format, Object... args);
+
+    void greeting();
 }

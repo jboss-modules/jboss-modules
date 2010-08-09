@@ -22,10 +22,9 @@
 
 package org.jboss.modules;
 
-import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
@@ -50,58 +49,99 @@ public abstract class ModuleLoader {
             256, 0.5f, 32, STRONG, WEAK, EnumSet.noneOf(ConcurrentReferenceHashMap.Option.class)
     );
 
+    protected ModuleLoader() {
+        // todo permission check: subclass permission?
+    }
+
     /**
-     * Load a module based on an identifier.  By default, no delegation is done and this method simply invokes
-     * {@link #loadModuleLocal(ModuleIdentifier)}.  A delegating module loader may delegate to the appropriate module
-     * loader based on loader-specific criteria.
+     * Load a module based on an identifier.  This method delegates to {@link #preloadModule(ModuleIdentifier)} and then
+     * links the returned module if necessary.
      *
      * @param identifier The module identifier
      * @return The loaded Module
      * @throws ModuleLoadException if the Module can not be loaded
      */
-    public Module loadModule(ModuleIdentifier identifier) throws ModuleLoadException {
-        return loadModuleLocal(identifier);
+    public final Module loadModule(ModuleIdentifier identifier) throws ModuleLoadException {
+        final Module module = preloadModule(identifier);
+        module.linkInitial(new HashSet<Module>());
+        return module;
     }
 
     /**
-     * Load a module from this module loader.
+     * Preload a module based on an identifier.  By default, no delegation is done and this method simply invokes
+     * {@link #loadModuleLocal(ModuleIdentifier)}.  A delegating module loader may delegate to the appropriate module
+     * loader based on loader-specific criteria (via the {@link #preloadModule(ModuleIdentifier, ModuleLoader)} method).
+     *
+     * @param identifier the module identifier
+     * @return the load result
+     * @throws ModuleLoadException if an error occurs
+     */
+    protected Module preloadModule(ModuleIdentifier identifier) throws ModuleLoadException {
+        Module module = loadModuleLocal(identifier);
+        if (module == null) {
+            throw new ModuleNotFoundException(identifier.toString());
+        }
+        return module;
+    }
+
+    /**
+     * Utility method to delegate to another module loader, accessible from subclasses.
+     *
+     * @param identifier the module identifier
+     * @param moduleLoader the module loader to delegate to
+     * @return the delegation result
+     * @throws ModuleLoadException if an error occurs
+     */
+    protected static Module preloadModule(ModuleIdentifier identifier, ModuleLoader moduleLoader) throws ModuleLoadException {
+        return moduleLoader.preloadModule(identifier);
+    }
+
+    /**
+     * Try to load a module from this module loader.  Returns {@code null} if the module is not found.  The returned
+     * module may not yet be resolved.
      *
      * @param identifier the module identifier
      * @return the module
-     * @throws ModuleLoadException
+     * @throws ModuleLoadException if an error occurs while loading the module
      */
     protected final Module loadModuleLocal(ModuleIdentifier identifier) throws ModuleLoadException {
         if (identifier.equals(ModuleIdentifier.SYSTEM)) {
-            return Module.SYSTEM;
+            return Module.getSystemModule();
         }
 
         FutureModule futureModule = moduleMap.get(identifier);
-        if (futureModule == null) {
-            FutureModule newFuture = new FutureModule(identifier);
-            futureModule = moduleMap.putIfAbsent(identifier, newFuture);
-            if (futureModule == null) {
-                boolean ok = false;
-                try {
-                    final ModuleLogger log = Module.log;
-                    log.trace("Loading module %s", identifier);
-                    final ModuleSpec moduleSpec = findModule(identifier);
-                    if (moduleSpec == null) {
-                        final ModuleNotFoundException e = new ModuleNotFoundException(identifier.toString());
-                        log.trace(e, "Failed to load module %s", identifier);
-                        throw e;
-                    }
-                    ok = true;
-                    log.trace("Loaded module %s", identifier);
-                    return defineModule(moduleSpec);
-                } finally {
-                    if (! ok) {
-                        newFuture.setModule(null);
-                        moduleMap.remove(identifier, newFuture);
-                    }
-                }
+        if (futureModule != null) {
+            return futureModule.getModule();
+        }
+
+        FutureModule newFuture = new FutureModule(identifier);
+        futureModule = moduleMap.putIfAbsent(identifier, newFuture);
+        if (futureModule != null) {
+            return futureModule.getModule();
+        }
+
+        boolean ok = false;
+        try {
+            final ModuleLogger log = Module.log;
+            log.trace("Locally loading module %s from %s", identifier, this);
+            final ModuleSpec moduleSpec = findModule(identifier);
+            if (moduleSpec == null) {
+                log.trace("Module %s not found from %s", identifier, this);
+                return null;
+            }
+            if (! moduleSpec.getModuleIdentifier().equals(identifier)) {
+                throw new ModuleLoadException("Module loader found a module with the wrong name");
+            }
+            final Module module = defineModule(moduleSpec);
+            log.trace("Loaded module %s from %s", identifier, this);
+            ok = true;
+            return module;
+        } finally {
+            if (! ok) {
+                newFuture.setModule(null);
+                moduleMap.remove(identifier, newFuture);
             }
         }
-        return futureModule.getModule();
     }
 
     /**
@@ -119,7 +159,7 @@ public abstract class ModuleLoader {
     protected abstract ModuleSpec findModule(final ModuleIdentifier moduleIdentifier) throws ModuleLoadException;
 
     /**
-     * Defines a Module based on a specification. 
+     * Defines a Module based on a specification.  May only be called from {@link #loadModuleLocal(ModuleIdentifier)}.
      *
      * @param moduleSpec The module specification to create the Module from
      * @return The defined Module
@@ -127,73 +167,32 @@ public abstract class ModuleLoader {
      */
     private Module defineModule(ModuleSpec moduleSpec) throws ModuleLoadException {
 
-        final ModuleIdentifier moduleIdentifier = moduleSpec.getIdentifier();
+        final ModuleLogger log = Module.log;
+        final ModuleIdentifier moduleIdentifier = moduleSpec.getModuleIdentifier();
+
         FutureModule futureModule = moduleMap.get(moduleIdentifier);
         if (futureModule == null) {
-            FutureModule newFuture = new FutureModule(moduleIdentifier);
-            futureModule = moduleMap.putIfAbsent(moduleIdentifier, newFuture);
-            if (futureModule == null) futureModule = newFuture;
+            // should never happen
+            throw new IllegalStateException("Attempted to define a module from outside loadModuleLocal");
         }
-        // early detect
-        if (futureModule.module != null) {
-            throw new ModuleAlreadyExistsException(moduleIdentifier.toString());
-        }
-
-        final Module module = new Module(moduleSpec, moduleSpec.getModuleFlags(), this);
+        final Module module = new Module(moduleSpec, this);
         final Map<ModuleIdentifier, Module> visited = VISITED.get();
         visited.put(moduleIdentifier, module);
         try {
-            final List<Dependency> dependencies = new ArrayList<Dependency>(moduleSpec.getDependencies().length);
-            for (DependencySpec dependencySpec : moduleSpec.getDependencies()) {
-                final ModuleIdentifier dependencyIdentifier = dependencySpec.getModuleIdentifier();
-                Module dependencyModule;
-                try {
-                    dependencyModule = visited.get(dependencyIdentifier);
-                    if(dependencyModule == null)
-                        dependencyModule = loadModule(dependencySpec.getModuleIdentifier());
-                } catch (ModuleLoadException e) {
-                    if (dependencySpec.isOptional()) {
-                        continue;
-                    } else {
-                        throw e;
-                    }
-                }
-                final Dependency dependency = new Dependency(dependencyModule, dependencySpec.isExport(), dependencySpec.getExportFilter(), dependencySpec.getImportFilter());
-                dependencies.add(dependency);
-            }
-            module.setDependencies(dependencies);
-            synchronized (futureModule) {
-                futureModule.setModule(module);
-            }
+            futureModule.setModule(module);
             return module;
         } catch (ModuleLoadException e) {
-            Module.log.trace(e, "Failed to load module %s", moduleIdentifier);
+            log.trace(e, "Failed to load module %s", moduleIdentifier);
             throw e;
         } catch (RuntimeException e) {
-            Module.log.trace(e, "Failed to load module %s", moduleIdentifier);
+            log.trace(e, "Failed to load module %s", moduleIdentifier);
             throw e;
         } catch (Error e) {
-            Module.log.trace(e, "Failed to load module %s", moduleIdentifier);
+            log.trace(e, "Failed to load module %s", moduleIdentifier);
             throw e;
         } finally {
             visited.remove(moduleIdentifier);
         }
-    }
-
-    /**
-     * Create an aggregate module based on a module identifier and list of dependencies to import/export.
-     *
-     * @param moduleIdentifier The module identifier
-     * @param dependencies The module identifiers to aggregate
-     * @return The loaded Module
-     * @throws ModuleLoadException If any dependent module can not be loaded
-     */
-    public Module createAggregate(ModuleIdentifier moduleIdentifier, List<ModuleIdentifier> dependencies) throws ModuleLoadException {
-        final ModuleSpec.Builder moduleSpecBuilder = ModuleSpec.build(moduleIdentifier);
-        for(ModuleIdentifier identifier : dependencies) {
-            moduleSpecBuilder.addDependency(identifier).setExport(true);
-        }
-        return defineModule(moduleSpecBuilder.create());
     }
 
     private static final class FutureModule {

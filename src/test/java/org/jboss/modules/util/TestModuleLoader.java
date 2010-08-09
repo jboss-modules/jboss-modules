@@ -22,7 +22,6 @@
 
 package org.jboss.modules.util;
 
-import org.jboss.modules.Module;
 import org.jboss.modules.ModuleIdentifier;
 import org.jboss.modules.ModuleLoadException;
 import org.jboss.modules.ModuleLoader;
@@ -49,6 +48,6 @@ public class TestModuleLoader extends ModuleLoader {
     }
 
     public void addModuleSpec(final ModuleSpec moduleSpec) {
-        moduleSpecs.put(moduleSpec.getIdentifier(), moduleSpec); 
+        moduleSpecs.put(moduleSpec.getModuleIdentifier(), moduleSpec);
     }
 }

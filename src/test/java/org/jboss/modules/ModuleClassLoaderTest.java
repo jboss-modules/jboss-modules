@@ -66,18 +66,18 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
         moduleLoader = new TestModuleLoader();
 
         final ModuleSpec.Builder moduleWithContentBuilder = ModuleSpec.build(MODULE_WITH_CONTENT_ID);
-        moduleWithContentBuilder.addRoot("rootOne",
-            TestResourceLoader.build()
+        moduleWithContentBuilder.addResourceRoot(
+                TestResourceLoader.build()
                 .addClass(TestClass.class)
                 .addResources(getResource("test/modulecontentloader/rootOne"))
                 .create()
         );
-        moduleWithContentBuilder.addDependency(MODULE_TO_IMPORT_ID);
+        moduleWithContentBuilder.addModuleDependency(ModuleDependencySpec.build(MODULE_TO_IMPORT_ID).create());
         moduleLoader.addModuleSpec(moduleWithContentBuilder.create());
 
         final ModuleSpec.Builder moduleToImportBuilder = ModuleSpec.build(MODULE_TO_IMPORT_ID);
-        moduleToImportBuilder.addRoot("rootOne",
-            TestResourceLoader.build()
+        moduleToImportBuilder.addResourceRoot(
+                TestResourceLoader.build()
                 .addClass(ImportedClass.class)
                 .addResources(getResource("test/modulecontentloader/rootTwo"))
                 .create()
@@ -86,51 +86,69 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
 
         final ModuleSpec.Builder moduleWithExportBuilder = ModuleSpec.build(MODULE_WITH_EXPORT_ID);
         moduleWithExportBuilder
-            .addDependency(MODULE_TO_IMPORT_ID).setExport(true);
+            .addModuleDependency(ModuleDependencySpec.build(MODULE_TO_IMPORT_ID).setExportFilter(PathFilter.ACCEPT_ALL).create());
         moduleLoader.addModuleSpec(moduleWithExportBuilder.create());
 
         final ModuleSpec.Builder moduleWithExportFilterBuilder = ModuleSpec.build(MODULE_WITH_FILTERED_EXPORT_ID);
         moduleWithExportFilterBuilder
-            .addDependency(MODULE_TO_IMPORT_ID)
-                .setExport(true)
-                .addExportExclude("org/jboss/**")
-                .addExportExclude("nested");
+            .addModuleDependency(ModuleDependencySpec.build(MODULE_TO_IMPORT_ID).setExportFilter(PathFilters.all(
+                    PathFilters.exclude("org/jboss/**"),
+                    PathFilters.exclude("nested")
+            )).create());
 
         moduleLoader.addModuleSpec(moduleWithExportFilterBuilder.create());
 
         final ModuleSpec.Builder moduleWithImportFilterBuilder = ModuleSpec.build(MODULE_WITH_FILTERED_IMPORT_ID);
         moduleWithImportFilterBuilder
-            .addDependency(MODULE_TO_IMPORT_ID)
-                .addImportExclude("org/jboss/**")
-                .addImportExclude("nested");
+            .addModuleDependency(ModuleDependencySpec.build(MODULE_TO_IMPORT_ID).setImportFilter(PathFilters.all(
+                    PathFilters.exclude("org.jboss/**"),
+                    PathFilters.exclude("nested")
+            )).create());
         moduleLoader.addModuleSpec(moduleWithImportFilterBuilder.create());
 
         final ModuleSpec.Builder moduleWithCircularABuilder = ModuleSpec.build(MODULE_WITH_CIRCULAR_DEP_A);
-        moduleWithCircularABuilder.addDependency(MODULE_WITH_CIRCULAR_DEP_B).setExport(true);
-        moduleWithCircularABuilder.addRoot("rootOne",
-            TestResourceLoader.build()
+        moduleWithCircularABuilder.addModuleDependency(
+                ModuleDependencySpec.build(MODULE_WITH_CIRCULAR_DEP_B)
+                .setExportFilter(PathFilter.ACCEPT_ALL)
+                .create()
+        );
+        moduleWithCircularABuilder.addResourceRoot(
+                TestResourceLoader.build()
                 .addClass(TestClass.class)
                 .create()
         );
         moduleLoader.addModuleSpec(moduleWithCircularABuilder.create());
 
         final ModuleSpec.Builder moduleWithCircularBBuilder = ModuleSpec.build(MODULE_WITH_CIRCULAR_DEP_B);
-        moduleWithCircularBBuilder.addRoot("rootOne",
-            TestResourceLoader.build()
+        moduleWithCircularBBuilder.addResourceRoot(
+                TestResourceLoader.build()
                  .addClass(ImportedClass.class)
                  .create()
         );
-        moduleWithCircularBBuilder.addDependency(MODULE_WITH_CIRCULAR_DEP_C).setExport(true);
+        moduleWithCircularBBuilder.addModuleDependency(
+                ModuleDependencySpec.build(MODULE_WITH_CIRCULAR_DEP_C)
+                .setExportFilter(PathFilter.ACCEPT_ALL)
+                .create()
+        );
         moduleLoader.addModuleSpec(moduleWithCircularBBuilder.create());
 
 
         final ModuleSpec.Builder moduleWithCircularCBuilder = ModuleSpec.build(MODULE_WITH_CIRCULAR_DEP_C);
-        moduleWithCircularCBuilder.addDependency(MODULE_WITH_CIRCULAR_DEP_D).setExport(true);
-        moduleWithCircularCBuilder.addDependency(MODULE_WITH_CIRCULAR_DEP_A).setExport(true);
+        moduleWithCircularCBuilder.addModuleDependency(
+                ModuleDependencySpec.build(MODULE_WITH_CIRCULAR_DEP_D)
+                .setExportFilter(PathFilter.ACCEPT_ALL)
+                .create());
+        moduleWithCircularCBuilder.addModuleDependency(
+                ModuleDependencySpec.build(MODULE_WITH_CIRCULAR_DEP_A)
+                .setExportFilter(PathFilter.ACCEPT_ALL)
+                .create());
         moduleLoader.addModuleSpec(moduleWithCircularCBuilder.create());
 
         final ModuleSpec.Builder moduleWithCircularDBuilder = ModuleSpec.build(MODULE_WITH_CIRCULAR_DEP_D);
-        moduleWithCircularDBuilder.addDependency(MODULE_WITH_CIRCULAR_DEP_A).setExport(true);
+        moduleWithCircularCBuilder.addModuleDependency(
+                ModuleDependencySpec.build(MODULE_WITH_CIRCULAR_DEP_A)
+                .setExportFilter(PathFilter.ACCEPT_ALL)
+                .create());
         moduleLoader.addModuleSpec(moduleWithCircularDBuilder.create());
     }
 
@@ -153,7 +171,7 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
         final ModuleClassLoader classLoader = testModule.getClassLoader();
 
         try {
-            Class<?> testClass = classLoader.loadClass("org.jboss.modules.test.BogusClass");
+            classLoader.loadClass("org.jboss.modules.test.BogusClass");
             fail("Should have thrown ClassNotFoundException");
         } catch (ClassNotFoundException expected) {
         }
@@ -238,7 +256,7 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
         assertNotNull(testClass);
 
         final Module moduleD = moduleLoader.loadModule(MODULE_WITH_CIRCULAR_DEP_D);
-        final ModuleClassLoader classLoaderD = moduleC.getClassLoader();
+        final ModuleClassLoader classLoaderD = moduleD.getClassLoader();
         testClass = classLoaderD.loadExportedClass("org.jboss.modules.test.TestClass");
         assertNotNull(testClass);
         testClass = classLoaderD.loadExportedClass("org.jboss.modules.test.ImportedClass");
@@ -272,15 +290,13 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
     @Test
     public void testExportResourceRetrieval() throws Exception {
         final Module testModule = moduleLoader.loadModule(MODULE_WITH_CONTENT_ID);
-        final ModuleClassLoader classLoader = testModule.getClassLoader();
 
-        URL resUrl = classLoader.getExportedResource("testTwo.txt");
+        URL resUrl = testModule.getExportedResource("testTwo.txt");
         assertNull(resUrl);
 
         final Module exportingModule = moduleLoader.loadModule(MODULE_WITH_EXPORT_ID);
-        final ModuleClassLoader exportingClassLoader = exportingModule.getClassLoader();
 
-        resUrl = exportingClassLoader.getExportedResource("testTwo.txt");
+        resUrl = exportingModule.getExportedResource("testTwo.txt");
         assertNotNull(resUrl);
     }
 
@@ -292,7 +308,7 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
         URL resUrl = classLoader.getResource("nested/nested.txt");
         assertNotNull(resUrl);
 
-        resUrl = classLoader.getExportedResource("nested/nested.txt");
+        resUrl = testModule.getExportedResource("nested/nested.txt");
         assertNull(resUrl);
     }
 
@@ -360,16 +376,14 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
     @Test
     public void testExportResourcesRetrieval() throws Exception {
         final Module testModule = moduleLoader.loadModule(MODULE_WITH_CONTENT_ID);
-        final ModuleClassLoader classLoader = testModule.getClassLoader();
 
-        Enumeration<URL> resUrls = classLoader.getExportedResources("testTwo.txt");
+        Enumeration<URL> resUrls = testModule.getExportedResources("testTwo.txt");
         List<URL> resUrlList = toList(resUrls);
         assertTrue(resUrlList.isEmpty());
 
         final Module exportingModule = moduleLoader.loadModule(MODULE_WITH_EXPORT_ID);
-        final ModuleClassLoader exportingClassLoader = exportingModule.getClassLoader();
 
-        resUrls = exportingClassLoader.getExportedResources("testTwo.txt");
+        resUrls = exportingModule.getExportedResources("testTwo.txt");
         resUrlList = toList(resUrls);
         assertEquals(1, resUrlList.size());
         assertTrue(resUrlList.get(0).getPath().contains("rootTwo"));
@@ -384,7 +398,7 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
         List<URL> resUrlList = toList(resUrls);
         assertFalse(resUrlList.isEmpty());
 
-        resUrls = classLoader.getExportedResources("nested/nested.txt");
+        resUrls = testModule.getExportedResources("nested/nested.txt");
         resUrlList = toList(resUrls);
         assertTrue(resUrlList.isEmpty());
     }

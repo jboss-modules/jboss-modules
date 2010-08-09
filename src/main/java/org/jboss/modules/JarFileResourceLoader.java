@@ -48,19 +48,25 @@ import java.util.jar.Manifest;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-final class JarFileResourceLoader extends AbstractResourceLoader {
+final class JarFileResourceLoader implements ResourceLoader {
     private final ModuleIdentifier moduleIdentifier;
     private final JarFile jarFile;
     private final String rootName;
+    private final PathFilter exportFilter;
 
-    JarFileResourceLoader(final ModuleIdentifier moduleIdentifier, final JarFile jarFile, final String rootName) {
+    JarFileResourceLoader(final ModuleIdentifier moduleIdentifier, final JarFile jarFile, final String rootName, final PathFilter exportFilter) {
         this.jarFile = jarFile;
         this.rootName = rootName;
         this.moduleIdentifier = moduleIdentifier;
+        this.exportFilter = exportFilter;
+    }
+
+    public String getRootName() {
+        return rootName;
     }
 
     public ClassSpec getClassSpec(final String name) throws IOException {
-        final String fileName = name.replace('.', '/') + ".class";
+        final String fileName = Module.fileNameOfClass(name);
         final ClassSpec spec = new ClassSpec();
         final JarEntry entry = jarFile.getJarEntry(fileName);
         if (entry == null) {
@@ -112,6 +118,10 @@ final class JarFileResourceLoader extends AbstractResourceLoader {
         } catch (IOException e) {
             // ignore
         }
+    }
+
+    public PathFilter getExportFilter() {
+        return exportFilter;
     }
 
     public PackageSpec getPackageSpec(final String name) throws IOException {

@@ -38,22 +38,22 @@ public class PathFilterTest {
 
     @Test
     public void testExcludes() throws Exception {
-        PathFilter pathFilter = new PathFilterImpl(EMPTY, new String[] {"foo/**"});
+        PathFilter pathFilter = PathFilters.exclude("foo/**");
         assertTrue(pathFilter.accept("foo"));
         assertFalse(pathFilter.accept("foo/bar"));
         assertFalse(pathFilter.accept("foo/bar/baz"));
 
-        pathFilter = new PathFilterImpl(EMPTY, new String[] {"foo/*"});
+        pathFilter = PathFilters.exclude("foo/*");
         assertTrue(pathFilter.accept("foo"));
         assertFalse(pathFilter.accept("foo/bar"));
         assertFalse(pathFilter.accept("foo/bar/baz"));
 
-        pathFilter = new PathFilterImpl(EMPTY, new String[] {"foo"});
+        pathFilter = PathFilters.exclude("foo");
         assertFalse(pathFilter.accept("foo"));
         assertFalse(pathFilter.accept("foo/bar"));
         assertFalse(pathFilter.accept("foo/bar/baz"));
 
-        pathFilter = new PathFilterImpl(EMPTY, new String[] {"**/bar/**"});
+        pathFilter = PathFilters.exclude("**/bar/**");
         assertTrue(pathFilter.accept("foo"));
         assertTrue(pathFilter.accept("foo/bar"));
         assertFalse(pathFilter.accept("foo/bar/baz"));
@@ -62,22 +62,22 @@ public class PathFilterTest {
 
     @Test
     public void testIncludes() throws Exception {
-        PathFilter pathFilter = new PathFilterImpl(new String[] {"foo/**"}, new String[] {"**"});
+        PathFilter pathFilter = PathFilters.include("foo/**");
         assertFalse(pathFilter.accept("foo"));
         assertTrue(pathFilter.accept("foo/bar"));
         assertTrue(pathFilter.accept("foo/bar/baz"));
 
-        pathFilter = new PathFilterImpl(new String[] {"foo/*"}, new String[] {"**"});
+        pathFilter = PathFilters.include("foo/*");
         assertFalse(pathFilter.accept("foo"));
         assertTrue(pathFilter.accept("foo/bar"));
         assertTrue(pathFilter.accept("foo/bar/baz"));
 
-        pathFilter = new PathFilterImpl(new String[] {"foo"}, new String[] {"**"});
+        pathFilter = PathFilters.include("foo");
         assertTrue(pathFilter.accept("foo"));
         assertTrue(pathFilter.accept("foo/bar"));
         assertTrue(pathFilter.accept("foo/bar/baz"));
 
-        pathFilter = new PathFilterImpl(new String[] {"**/bar/**"}, new String[] {"**"});
+        pathFilter = PathFilters.include("**/bar/**");
         assertFalse(pathFilter.accept("foo"));
         assertFalse(pathFilter.accept("foo/bar"));
         assertTrue(pathFilter.accept("foo/bar/baz"));
@@ -86,10 +86,11 @@ public class PathFilterTest {
 
     @Test
     public void testDelegating() throws Exception {
-        PathFilter pathFilterOne = new PathFilterImpl(EMPTY, new String[] {"foo/*"});
-        PathFilter pathFilterTwo = new PathFilterImpl(EMPTY, new String[] {"**/bar/*"});
-        PathFilter pathFilterThree = new PathFilterImpl(EMPTY, new String[] {"baz/**"});
-        PathFilter pathFilter = new DelegatingPathFilter(pathFilterOne, pathFilterTwo, pathFilterThree);
+        PathFilter pathFilter = PathFilters.all(
+                PathFilters.exclude("foo/*"),
+                PathFilters.exclude("**/bar/**"),
+                PathFilters.exclude("baz/**")
+        );
         assertTrue(pathFilter.accept("foo"));
         assertFalse(pathFilter.accept("foo/bar"));
         assertFalse(pathFilter.accept("foo/bar/baz"));

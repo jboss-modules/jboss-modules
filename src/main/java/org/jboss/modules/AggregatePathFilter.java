@@ -23,46 +23,34 @@
 package org.jboss.modules;
 
 /**
- * A dependency item.
+ * PathFilter implementation that aggregates multiple other filters.
  *
- * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
+ * @author John E. Bailey
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-abstract class Dependency {
+final class AggregatePathFilter implements PathFilter {
+    private final PathFilter[] delegates;
+    private final boolean any;
 
-    private final PathFilter exportFilter;
-    private final PathFilter importFilter;
-
-    protected Dependency(final PathFilter exportFilter, final PathFilter importFilter) {
-        this.exportFilter = exportFilter;
-        this.importFilter = importFilter;
+    /**
+     * Construct a new instance.
+     *
+     * @param any {@code true} if this is an "any" filter, {@code false} if this an "all" filter
+     * @param delegates the delegate filter list
+     */
+    AggregatePathFilter(final boolean any, final PathFilter... delegates) {
+        this.any = any;
+        this.delegates = delegates;
     }
 
-    /**
-     * Accept a visitor.
-     *
-     * @param visitor the visitor
-     * @return the value returned by the visitor
-     */
-    abstract void accept(DependencyVisitor visitor) throws ModuleLoadException;
-
-    /**
-     * Get the export filter for this dependency.  This filter determines what imported paths are re-exported by this
-     * dependency.  All exported paths must also satisfy the import filter.
-     *
-     * @return the export filter
-     */
-    final PathFilter getExportFilter() {
-        return exportFilter;
-    }
-
-    /**
-     * Get the import filter for this dependency.  This filter determines what exported paths are imported from the
-     * dependency to the dependent.
-     *
-     * @return the import filter
-     */
-    final PathFilter getImportFilter() {
-        return importFilter;
+    /** {@inheritDoc} */
+    @Override
+    public boolean accept(String path) {
+        for (PathFilter filter : delegates) {
+            if (filter.accept(path) == any) {
+                return any;
+            }
+        }
+        return ! any;
     }
 }

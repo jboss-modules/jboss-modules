@@ -137,4 +137,9 @@ public final class JDKModuleLogger implements ModuleLogger {
             logger.log(TRACE, String.format(format, (Object[]) args), t);
         }
     }
+
+    /** {@inheritDoc} */
+    public void greeting() {
+        logger.log(Level.INFO, "JBoss Modules version " + Main.getVersionString());
+    }
 }

@@ -22,31 +22,21 @@
 
 package org.jboss.modules;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
- * Base resource loaded that managed the Export filter.
- *
- * @author John Bailey
+ * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public abstract class AbstractResourceLoader implements ResourceLoader {
-    private final List<String> exportIncludes = new ArrayList<String>();
-    private final List<String> exportExcludes = new ArrayList<String>();
+final class BooleanPathFilter implements PathFilter {
 
-    public ResourceLoader addExportExclude(String path) {
-        exportExcludes.add(path);
-        return this;
+    private final boolean result;
+
+    private BooleanPathFilter(final boolean result) {
+        this.result = result;
     }
 
-    public ResourceLoader addExportInclude(String path) {
-        exportIncludes.add(path);
-        return this;
+    public boolean accept(final String path) {
+        return result;
     }
 
-    public PathFilter getExportFilter() {
-        exportExcludes.add("META-INF");
-        exportExcludes.add("META-INF/**");
-        return new PathFilterImpl(exportIncludes.toArray(new String[exportIncludes.size()]), exportExcludes.toArray(new String[exportExcludes.size()]));
-    }
+    static final BooleanPathFilter TRUE = new BooleanPathFilter(true);
+    static final BooleanPathFilter FALSE = new BooleanPathFilter(false);
 }

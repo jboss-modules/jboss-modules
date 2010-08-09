@@ -100,7 +100,7 @@ public class ConcurrentClassLoaderTest {
         }
 
         @Override
-        protected Class<?> findClass(String className, boolean exportsOnly) throws ClassNotFoundException {
+        protected Class<?> findClass(String className, boolean exportsOnly, final boolean resolve) throws ClassNotFoundException {
             Class c = findLoadedClass(className);
             if(c == null && className.startsWith("java"))
                 c = findSystemClass(className);

@@ -39,9 +39,5 @@ public interface ModuleLoaderSelector {
     /**
      * The default module loader selector.
      */
-    ModuleLoaderSelector DEFAULT = new ModuleLoaderSelector() {
-        public ModuleLoader getCurrentLoader() {
-            return InitialModuleLoader.INSTANCE;
-        }
-    };
+    ModuleLoaderSelector DEFAULT = new SimpleModuleLoaderSelector(InitialModuleLoader.INSTANCE);
 }

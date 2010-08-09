@@ -53,12 +53,12 @@ public class Util {
         return os.toByteArray();
     }
 
-    public static URL getResource(final Class baseClass, final String path) throws Exception {
+    public static URL getResource(final Class<?> baseClass, final String path) throws Exception {
         final URL url = baseClass.getClassLoader().getResource(path);
         return url;
     }
 
-    public static File getResourceFile(final Class baseClass, final String path) throws Exception {
+    public static File getResourceFile(final Class<?> baseClass, final String path) throws Exception {
         return new File(getResource(baseClass, path).toURI());
     }
 
@@ -70,7 +70,7 @@ public class Util {
         return list;
     }
 
-    public static byte[] getClassBytes(final Class aClass) throws Exception {
+    public static byte[] getClassBytes(final Class<?> aClass) throws Exception {
         final String resourcePath = getResourceNameOfClass(aClass);
         final File classFile = Util.getResourceFile(aClass, resourcePath);
         byte[] classBytes = Util.readBytes(new FileInputStream(classFile));

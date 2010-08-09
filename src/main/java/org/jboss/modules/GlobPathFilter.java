@@ -29,24 +29,33 @@ import java.util.regex.Pattern;
  * Default implementation of PathFilter.  Uses glob based includes and excludes to determine whether to export.  
  *
  * @author John E. Bailey
+ * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public class PathFilterImpl implements PathFilter {
+final class GlobPathFilter implements PathFilter {
     private static final Pattern GLOB_PATTERN = Pattern.compile("(\\*\\*?)|(\\?)|(\\\\.)|(/+)|([^*?]+)");
 
-    private final Pattern[] includes;
-    private final Pattern[] excludes;
+    private final boolean include;
+    private final Pattern pattern;
 
-    public PathFilterImpl(final String[] includes, final String[] excludes) {
-        this.includes = new Pattern[includes.length];
-        int i = 0;
-        for(String includeGlob : includes) {
-            this.includes[i++] = getGlobPattern(includeGlob);
-        }
-        this.excludes = new Pattern[excludes.length];
-        i = 0;
-        for(String excludeGlob : excludes) {
-            this.excludes[i++] = getGlobPattern(excludeGlob);
-        }
+    /**
+     * Construct a new instance.
+     *
+     * @param include {@code true} if this is an "include" filter, {@code false} if this is an "exclude" filter
+     * @param pattern the regular expression to match
+     */
+    GlobPathFilter(final boolean include, final Pattern pattern) {
+        this.include = include;
+        this.pattern = pattern;
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param include {@code true} if this is an "include" filter, {@code false} if this is an "exclude" filter
+     * @param glob the glob expression to match
+     */
+    GlobPathFilter(final boolean include, final String glob) {
+        this(include, getGlobPattern(glob));
     }
 
     /**
@@ -56,22 +65,7 @@ public class PathFilterImpl implements PathFilter {
      * @return true if the path should be accepted, false if not
      */
     public boolean accept(final String path) {
-        for(Pattern includePattern : includes) {
-            if(matches(includePattern, path)) {
-                return true;
-            }
-        }
-        for(Pattern excludePatterns : excludes) {
-            if(matches(excludePatterns, path)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private boolean matches(final Pattern pattern, final String path) {
-        final Matcher matcher = pattern.matcher(path);
-        return matcher.matches();
+        return pattern.matcher(path).matches() == include;
     }
 
     /**
@@ -95,7 +89,6 @@ public class PathFilterImpl implements PathFilter {
      */
     private static Pattern getGlobPattern(final String glob) {
         StringBuilder patternBuilder = new StringBuilder();
-        patternBuilder.append("^");
         final Matcher m = GLOB_PATTERN.matcher(glob);
         boolean lastWasSlash = false;
         while (m.find()) {
@@ -131,7 +124,6 @@ public class PathFilterImpl implements PathFilter {
         } else {
             patternBuilder.append("(?:/.*)?");
         }
-        patternBuilder.append("$");
         return Pattern.compile(patternBuilder.toString());
     }
 }

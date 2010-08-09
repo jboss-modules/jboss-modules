@@ -45,7 +45,7 @@ import java.util.jar.Manifest;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-final class FileResourceLoader extends AbstractResourceLoader{
+final class FileResourceLoader implements ResourceLoader {
     private static final String ARCH_NAME;
 
     static {
@@ -118,11 +118,13 @@ final class FileResourceLoader extends AbstractResourceLoader{
     private final String rootName;
     private final File root;
     private final Manifest manifest;
+    private final PathFilter exportFilter;
 
-    FileResourceLoader(final ModuleIdentifier moduleIdentifier, final File root, final String rootName) {
+    FileResourceLoader(final ModuleIdentifier moduleIdentifier, final File root, final String rootName, final PathFilter exportFilter) {
         this.moduleIdentifier = moduleIdentifier;
         this.rootName = rootName;
         this.root = root;
+        this.exportFilter = exportFilter;
         final File manifestFile = new File(root, "META-INF" + File.separator + "MANIFEST.MF");
         manifest = readManifestFile(manifestFile);
     }
@@ -135,8 +137,16 @@ final class FileResourceLoader extends AbstractResourceLoader{
         }
     }
 
+    public PathFilter getExportFilter() {
+        return exportFilter;
+    }
+
+    public String getRootName() {
+        return rootName;
+    }
+
     public ClassSpec getClassSpec(final String name) throws IOException {
-        final String fileName = name.replace('.', '/') + ".class";
+        final String fileName = Module.fileNameOfClass(name);
         final File file = new File(root, fileName);
         if (! file.exists()) {
             return null;

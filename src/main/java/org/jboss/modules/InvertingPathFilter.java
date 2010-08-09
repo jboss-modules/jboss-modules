@@ -23,23 +23,24 @@
 package org.jboss.modules;
 
 /**
- * PathFilter implementation that delegates to other filters.
- * 
- * @author John E. Bailey
+ * A path filter which simply inverts the result of another path filter.
+ *
+ * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public class DelegatingPathFilter implements PathFilter {
-    private final PathFilter[] delegates;
+final class InvertingPathFilter implements PathFilter {
+    private final PathFilter delegate;
 
-    public DelegatingPathFilter(final PathFilter... delegates) {
-        this.delegates = delegates;
+    /**
+     * Construct a new instance.
+     *
+     * @param delegate the filter to delegate to
+     */
+    InvertingPathFilter(final PathFilter delegate) {
+        this.delegate = delegate;
     }
 
-    @Override
-    public boolean accept(String path) {
-        for(PathFilter filter : delegates) {
-            if(!filter.accept(path))
-                return false;
-        }
-        return true;
+    /** {@inheritDoc} */
+    public boolean accept(final String path) {
+        return ! delegate.accept(path);
     }
 }
