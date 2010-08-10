@@ -42,9 +42,10 @@ abstract class Dependency {
      * Accept a visitor.
      *
      * @param visitor the visitor
+     * @param param the parameter to pass to the visitor
      * @return the value returned by the visitor
      */
-    abstract void accept(DependencyVisitor visitor) throws ModuleLoadException;
+    abstract <T> void accept(DependencyVisitor<T> visitor, T param) throws ModuleLoadException;
 
     /**
      * Get the export filter for this dependency.  This filter determines what imported paths are re-exported by this

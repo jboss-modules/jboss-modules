@@ -29,21 +29,23 @@ package org.jboss.modules;
  */
 // this annotation is because IDEA doesn't understand generics in javadoc links
 @SuppressWarnings({ "JavadocReference" })
-interface DependencyVisitor {
+interface DependencyVisitor<T> {
 
     /**
      * Process a local dependency.
      *
      * @param item the dependency item
-     * @return the return value to pass to the caller of {@link Dependency#accept(DependencyVisitor, I)}
+     * @param param the parameter value
+     * @return the return value to pass to the caller of {@link Dependency#accept(DependencyVisitor <Void> , I)}
      */
-    void visit(LocalDependency item) throws ModuleLoadException;
+    void visit(LocalDependency item, T param) throws ModuleLoadException;
 
     /**
      * Process a module dependency.
      *
      * @param item the dependency item
-     * @return the return value to pass to the caller of {@link Dependency#accept(DependencyVisitor, I)}
+     * @param param the parameter value
+     * @return the return value to pass to the caller of {@link Dependency#accept(DependencyVisitor <Void> , I)}
      */
-    void visit(ModuleDependency item) throws ModuleLoadException;
+    void visit(ModuleDependency item, T param) throws ModuleLoadException;
 }

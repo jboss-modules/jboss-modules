@@ -44,8 +44,8 @@ final class ModuleDependency extends Dependency {
         return optional;
     }
 
-    void accept(final DependencyVisitor visitor) throws ModuleLoadException {
-        visitor.visit(this);
+    <T> void accept(final DependencyVisitor<T> visitor, final T param) throws ModuleLoadException {
+        visitor.visit(this, param);
     }
 
     Module getModule() {

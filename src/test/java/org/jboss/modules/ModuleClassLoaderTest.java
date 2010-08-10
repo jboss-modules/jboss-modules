@@ -86,7 +86,7 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
 
         final ModuleSpec.Builder moduleWithExportBuilder = ModuleSpec.build(MODULE_WITH_EXPORT_ID);
         moduleWithExportBuilder
-            .addModuleDependency(ModuleDependencySpec.build(MODULE_TO_IMPORT_ID).setExportFilter(PathFilter.ACCEPT_ALL).create());
+            .addModuleDependency(ModuleDependencySpec.build(MODULE_TO_IMPORT_ID).setExportFilter(PathFilters.acceptAll()).create());
         moduleLoader.addModuleSpec(moduleWithExportBuilder.create());
 
         final ModuleSpec.Builder moduleWithExportFilterBuilder = ModuleSpec.build(MODULE_WITH_FILTERED_EXPORT_ID);
@@ -101,7 +101,7 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
         final ModuleSpec.Builder moduleWithImportFilterBuilder = ModuleSpec.build(MODULE_WITH_FILTERED_IMPORT_ID);
         moduleWithImportFilterBuilder
             .addModuleDependency(ModuleDependencySpec.build(MODULE_TO_IMPORT_ID).setImportFilter(PathFilters.all(
-                    PathFilters.exclude("org.jboss/**"),
+                    PathFilters.exclude("org/jboss/**"),
                     PathFilters.exclude("nested")
             )).create());
         moduleLoader.addModuleSpec(moduleWithImportFilterBuilder.create());
@@ -109,7 +109,7 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
         final ModuleSpec.Builder moduleWithCircularABuilder = ModuleSpec.build(MODULE_WITH_CIRCULAR_DEP_A);
         moduleWithCircularABuilder.addModuleDependency(
                 ModuleDependencySpec.build(MODULE_WITH_CIRCULAR_DEP_B)
-                .setExportFilter(PathFilter.ACCEPT_ALL)
+                .setExportFilter(PathFilters.acceptAll())
                 .create()
         );
         moduleWithCircularABuilder.addResourceRoot(
@@ -127,7 +127,7 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
         );
         moduleWithCircularBBuilder.addModuleDependency(
                 ModuleDependencySpec.build(MODULE_WITH_CIRCULAR_DEP_C)
-                .setExportFilter(PathFilter.ACCEPT_ALL)
+                .setExportFilter(PathFilters.acceptAll())
                 .create()
         );
         moduleLoader.addModuleSpec(moduleWithCircularBBuilder.create());
@@ -136,18 +136,18 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
         final ModuleSpec.Builder moduleWithCircularCBuilder = ModuleSpec.build(MODULE_WITH_CIRCULAR_DEP_C);
         moduleWithCircularCBuilder.addModuleDependency(
                 ModuleDependencySpec.build(MODULE_WITH_CIRCULAR_DEP_D)
-                .setExportFilter(PathFilter.ACCEPT_ALL)
+                .setExportFilter(PathFilters.acceptAll())
                 .create());
         moduleWithCircularCBuilder.addModuleDependency(
                 ModuleDependencySpec.build(MODULE_WITH_CIRCULAR_DEP_A)
-                .setExportFilter(PathFilter.ACCEPT_ALL)
+                .setExportFilter(PathFilters.acceptAll())
                 .create());
         moduleLoader.addModuleSpec(moduleWithCircularCBuilder.create());
 
         final ModuleSpec.Builder moduleWithCircularDBuilder = ModuleSpec.build(MODULE_WITH_CIRCULAR_DEP_D);
-        moduleWithCircularCBuilder.addModuleDependency(
+        moduleWithCircularDBuilder.addModuleDependency(
                 ModuleDependencySpec.build(MODULE_WITH_CIRCULAR_DEP_A)
-                .setExportFilter(PathFilter.ACCEPT_ALL)
+                .setExportFilter(PathFilters.acceptAll())
                 .create());
         moduleLoader.addModuleSpec(moduleWithCircularDBuilder.create());
 

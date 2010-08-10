@@ -63,7 +63,7 @@ public final class LocalDependencySpec extends AbstractDependencySpec {
      */
     public interface Builder {
         /**
-         * Set the import filter for this dependency.  Defaults to {@link PathFilter#ACCEPT_ALL}.
+         * Set the import filter for this dependency.  Defaults to {@link PathFilters#acceptAll()}.
          *
          * @param importFilter the import filter
          * @return this builder
@@ -71,7 +71,7 @@ public final class LocalDependencySpec extends AbstractDependencySpec {
         Builder setImportFilter(PathFilter importFilter);
 
         /**
-         * Set the export filter for this dependency.  Defaults to {@link PathFilter#REJECT_ALL}.
+         * Set the export filter for this dependency.  Defaults to {@link PathFilters#rejectAll()}.
          *
          * @param exportFilter the export filter
          * @return this builder

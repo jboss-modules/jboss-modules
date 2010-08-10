@@ -46,8 +46,8 @@ final class LocalDependency extends Dependency {
     }
 
     /** {@inheritDoc} */
-    void accept(final DependencyVisitor visitor) throws ModuleLoadException {
-        visitor.visit(this);
+    <T> void accept(final DependencyVisitor<T> visitor, final T param) throws ModuleLoadException {
+        visitor.visit(this, param);
     }
 
     LocalLoader getLocalLoader() {

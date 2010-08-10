@@ -22,6 +22,7 @@
 
 package org.jboss.modules;
 
+import java.util.Collections;
 import java.util.HashSet;
 import org.jboss.modules.test.ImportedClass;
 import org.jboss.modules.util.TestModuleLoader;
@@ -52,18 +53,19 @@ public class ModuleExportTest extends AbstractModuleTestCase {
     @Test
     public void testExportDependencies() throws Exception {
         final TestModuleLoader moduleLoader = new TestModuleLoader();
+        Module.setModuleLoaderSelector(new SimpleModuleLoaderSelector(moduleLoader));
 
         ModuleSpec.Builder builder = ModuleSpec.build(MODULE_A);
-        builder.addModuleDependency(ModuleDependencySpec.build(MODULE_B).setExportFilter(PathFilter.ACCEPT_ALL).create());
+        builder.addModuleDependency(ModuleDependencySpec.build(MODULE_B).setExportFilter(PathFilters.acceptAll()).create());
         moduleLoader.addModuleSpec(builder.create());
 
         builder = ModuleSpec.build(MODULE_B);
-        builder.addModuleDependency(ModuleDependencySpec.build(MODULE_C).setExportFilter(PathFilter.ACCEPT_ALL).create());
+        builder.addModuleDependency(ModuleDependencySpec.build(MODULE_C).setExportFilter(PathFilters.acceptAll()).create());
         builder.addModuleDependency(ModuleDependencySpec.build(MODULE_D).create());
         moduleLoader.addModuleSpec(builder.create());
 
         builder = ModuleSpec.build(MODULE_C);
-        builder.addModuleDependency(ModuleDependencySpec.build(MODULE_A).setExportFilter(PathFilter.ACCEPT_ALL).create());
+        builder.addModuleDependency(ModuleDependencySpec.build(MODULE_A).setExportFilter(PathFilters.acceptAll()).create());
         moduleLoader.addModuleSpec(builder.create());
 
         builder = ModuleSpec.build(MODULE_D);
@@ -76,13 +78,14 @@ public class ModuleExportTest extends AbstractModuleTestCase {
         assertTrue(dependencyExports.contains(MODULE_B));
         assertTrue(dependencyExports.contains(MODULE_C));
 
-        module = moduleLoader.loadModule(MODULE_B);
         dependencyExports.clear();
+        module = moduleLoader.loadModule(MODULE_B);
         getExportedModuleDeps(module, dependencyExports);
         assertEquals(2, dependencyExports.size());
         assertTrue(dependencyExports.contains(MODULE_A));
         assertTrue(dependencyExports.contains(MODULE_C));
 
+        dependencyExports.clear();
         module = moduleLoader.loadModule(MODULE_C);
         getExportedModuleDeps(module, dependencyExports);
         assertEquals(2, dependencyExports.size());
@@ -91,25 +94,36 @@ public class ModuleExportTest extends AbstractModuleTestCase {
     }
 
     private static void getExportedModuleDeps(final Module module, final Set<ModuleIdentifier> dependencyExports) throws ModuleNotFoundException {
+        getExportedModuleDeps(module, new HashSet<Module>(Collections.singleton(module)), dependencyExports);
+    }
+
+    private static void getExportedModuleDeps(final Module module, final Set<Module> visited, final Set<ModuleIdentifier> dependencyExports) throws ModuleNotFoundException {
         for (Dependency dependency : module.getDependencies()) {
-            if (dependency instanceof ModuleDependency) {
+            if (dependency instanceof ModuleDependency && dependency.getExportFilter() != PathFilters.rejectAll()) {
                 final ModuleDependency moduleDependency = (ModuleDependency) dependency;
                 final Module md = moduleDependency.getModuleRequired();
-                if (md != null && moduleDependency.getExportFilter() != PathFilter.REJECT_ALL) dependencyExports.add(md.getIdentifier());
+                if (md != null && moduleDependency.getExportFilter() != PathFilters.rejectAll()) {
+                    if (visited.add(md)) {
+                        dependencyExports.add(md.getIdentifier());
+                        getExportedModuleDeps(md, visited, dependencyExports);
+                    }
+                }
             }
         }
     }
 
+    @SuppressWarnings({ "unchecked" })
     @Test
     public void testImportPaths() throws Exception {
         final TestModuleLoader moduleLoader = new TestModuleLoader();
+        Module.setModuleLoaderSelector(new SimpleModuleLoaderSelector(moduleLoader));
 
         ModuleSpec.Builder builder = ModuleSpec.build(MODULE_A);
-        builder.addModuleDependency(ModuleDependencySpec.build(MODULE_B).setExportFilter(PathFilter.ACCEPT_ALL).create());
+        builder.addModuleDependency(ModuleDependencySpec.build(MODULE_B).setExportFilter(PathFilters.acceptAll()).create());
         moduleLoader.addModuleSpec(builder.create());
 
         builder = ModuleSpec.build(MODULE_B);
-        builder.addModuleDependency(ModuleDependencySpec.build(MODULE_C).setExportFilter(PathFilter.ACCEPT_ALL).create());
+        builder.addModuleDependency(ModuleDependencySpec.build(MODULE_C).setExportFilter(PathFilters.acceptAll()).create());
         builder.addModuleDependency(ModuleDependencySpec.build(MODULE_D).create());
         moduleLoader.addModuleSpec(builder.create());
 
@@ -118,7 +132,7 @@ public class ModuleExportTest extends AbstractModuleTestCase {
             .addClass(ImportedClass.class)
             .create()
         );
-        builder.addModuleDependency(ModuleDependencySpec.build(MODULE_A).setExportFilter(PathFilter.ACCEPT_ALL).create());
+        builder.addModuleDependency(ModuleDependencySpec.build(MODULE_A).setExportFilter(PathFilters.acceptAll()).create());
         moduleLoader.addModuleSpec(builder.create());
 
         builder = ModuleSpec.build(MODULE_D);
@@ -127,15 +141,19 @@ public class ModuleExportTest extends AbstractModuleTestCase {
         Module module = moduleLoader.loadModule(MODULE_A);
         module.getClassLoader().loadClass(ImportedClass.class.getName());
 
-        Field importsField = Module.class.getDeclaredField("pathsToImports");
-        importsField.setAccessible(true);
+        final Field pathsField = Module.class.getDeclaredField("paths");
+        pathsField.setAccessible(true);
+        final Object paths = pathsField.get(module);
+        final Field allPathsField = paths.getClass().getDeclaredField("allPaths");
+        allPathsField.setAccessible(true);
+        final Map<String, List<LocalLoader>> allPaths = (Map<String, List<LocalLoader>>) allPathsField.get(paths);
 
-        Map<String, List<Module.DependencyImport>> pathsToImport = (Map<String, List<Module.DependencyImport>>)importsField.get(module);
+        Module moduleC = moduleLoader.loadModule(MODULE_C);
 
-        assertEquals(4, pathsToImport.size());
-        for(Map.Entry<String, List<Module.DependencyImport>> entry : pathsToImport.entrySet()) {
+        assertEquals(4, allPaths.size());
+        for(Map.Entry<String, List<LocalLoader>> entry : allPaths.entrySet()) {
             assertEquals(1, entry.getValue().size());
-            assertEquals(MODULE_C, entry.getValue().get(0).getModule().getIdentifier());
+            assertEquals(moduleC.getClassLoaderPrivate().getLocalLoader(), entry.getValue().get(0));
         }
     }
 }

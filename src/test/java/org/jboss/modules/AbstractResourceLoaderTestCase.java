@@ -48,7 +48,7 @@ public abstract class AbstractResourceLoaderTestCase extends AbstractModuleTestC
 
     @Before
     public void setupLoader() throws Exception {
-        loader = createLoader(PathFilter.ACCEPT_ALL);
+        loader = createLoader(PathFilters.acceptAll());
     }
 
     protected abstract ResourceLoader createLoader(final PathFilter exportFilter) throws Exception;

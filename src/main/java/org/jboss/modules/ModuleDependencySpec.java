@@ -62,7 +62,7 @@ public final class ModuleDependencySpec extends AbstractDependencySpec {
     public interface Builder {
 
         /**
-         * Set the import filter for this dependency.  Defaults to {@link PathFilter#ACCEPT_ALL}.
+         * Set the import filter for this dependency.  Defaults to {@link PathFilters#acceptAll()}.
          *
          * @param importFilter the import filter
          * @return this builder
@@ -70,7 +70,7 @@ public final class ModuleDependencySpec extends AbstractDependencySpec {
         Builder setImportFilter(PathFilter importFilter);
 
         /**
-         * Set the export filter for this dependency.  Defaults to {@link PathFilter#REJECT_ALL}.
+         * Set the export filter for this dependency.  Defaults to {@link PathFilters#rejectAll()}.
          *
          * @param exportFilter the export filter
          * @return this builder
@@ -102,8 +102,8 @@ public final class ModuleDependencySpec extends AbstractDependencySpec {
     public static Builder build(final ModuleIdentifier moduleIdentifier) {
         return new Builder() {
             private boolean optional = false;
-            private PathFilter importFilter = PathFilter.ACCEPT_ALL;
-            private PathFilter exportFilter = PathFilter.REJECT_ALL;
+            private PathFilter importFilter = PathFilters.acceptAll();
+            private PathFilter exportFilter = PathFilters.rejectAll();
 
             public Builder setOptional(final boolean optional) {
                 this.optional = optional;

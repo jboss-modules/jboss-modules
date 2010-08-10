@@ -175,7 +175,7 @@ public final class ModuleSpec {
                 dependencies.add(new SpecifiedDependency() {
                     public Dependency getDependency(final Module module) {
                         final ModuleClassLoader moduleClassLoader = module.getClassLoaderPrivate();
-                        return new LocalDependency(moduleClassLoader.getExportPathFilter(), PathFilter.ACCEPT_ALL, moduleClassLoader.getLocalLoader(), moduleClassLoader.getPaths());
+                        return new LocalDependency(moduleClassLoader.getExportPathFilter(), PathFilters.acceptAll(), moduleClassLoader.getLocalLoader(), moduleClassLoader.getPaths());
                     }
                 });
                 return this;

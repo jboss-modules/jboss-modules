@@ -177,8 +177,9 @@ public final class Module {
         final Deque<PathFilter> filterSeries = new ArrayDeque<PathFilter>();
         final Map<String, List<LocalLoader>> allPaths = new HashMap<String, List<LocalLoader>>();
         final Map<String, List<LocalLoader>> exportedPaths = new HashMap<String, List<LocalLoader>>();
-        final DependencyVisitor importingVisitor = new DependencyVisitor() {
-            public void visit(final LocalDependency item) throws ModuleLoadException {
+        
+        final DependencyVisitor<PathFilter> distantVisitor = new DependencyVisitor<PathFilter>() {
+            public void visit(final LocalDependency item, final PathFilter firstExportFilter) throws ModuleLoadException {
                 final Set<String> paths = item.getPaths();
                 final PathFilter importFilter = item.getImportFilter();
                 final PathFilter exportFilter = item.getExportFilter();
@@ -191,11 +192,14 @@ public final class Module {
                             }
                         }
                         addToMapList(allPaths, path, loader);
+                        if (firstExportFilter.accept(path)) {
+                            addToMapList(exportedPaths, path, loader);
+                        }
                     }
                 }
             }
 
-            public void visit(final ModuleDependency item) throws ModuleLoadException {
+            public void visit(final ModuleDependency item, final PathFilter firstExportFilter) throws ModuleLoadException {
                 final Module module = item.getModuleRequired();
                 if (module == null) {
                     return;
@@ -204,14 +208,14 @@ public final class Module {
                     return;
                 }
                 final PathFilter exportFilter = item.getExportFilter();
-                if (exportFilter == PathFilter.REJECT_ALL) {
+                if (exportFilter == PathFilters.rejectAll()) {
                     return;
                 } else {
                     filterSeries.addLast(item.getImportFilter());
                     filterSeries.addLast(exportFilter);
                     try {
                         for (Dependency dep : module.dependencies) {
-                            dep.accept(this);
+                            dep.accept(this, firstExportFilter);
                         }
                     } finally {
                         filterSeries.removeLast();
@@ -220,52 +224,8 @@ public final class Module {
                 }
             }
         };
-        final DependencyVisitor exportingVisitor = new DependencyVisitor() {
-            public void visit(final LocalDependency item) throws ModuleLoadException {
-                final Set<String> paths = item.getPaths();
-                final PathFilter importFilter = item.getImportFilter();
-                final PathFilter exportFilter = item.getExportFilter();
-                final LocalLoader loader = item.getLocalLoader();
-                OUTER: for (String path : paths) {
-                    if (importFilter.accept(path) && exportFilter.accept(path)) {
-                        for (PathFilter filter : filterSeries) {
-                            if (! filter.accept(path)) {
-                                continue OUTER;
-                            }
-                        }
-                        addToMapList(allPaths, path, loader);
-                        addToMapList(exportedPaths, path, loader);
-                    }
-                }
-            }
-
-            public void visit(final ModuleDependency item) throws ModuleLoadException {
-                final Module module = item.getModuleRequired();
-                if (module == null) {
-                    return;
-                }
-                if (!visited.add(module)) {
-                    return;
-                }
-                final PathFilter exportFilter = item.getExportFilter();
-                if (exportFilter == PathFilter.REJECT_ALL) {
-                    return;
-                } else {
-                    filterSeries.addLast(item.getImportFilter());
-                    filterSeries.addLast(exportFilter);
-                    try {
-                        for (Dependency dep : module.dependencies) {
-                            dep.accept(this);
-                        }
-                    } finally {
-                        filterSeries.removeLast();
-                        filterSeries.removeLast();
-                    }
-                }
-            }
-        };
-        final DependencyVisitor firstLevelVisitor = new DependencyVisitor() {
-            public void visit(final LocalDependency item) throws ModuleLoadException {
+        final DependencyVisitor<Void> nearVisitor = new DependencyVisitor<Void>() {
+            public void visit(final LocalDependency item, final Void param) throws ModuleLoadException {
                 final Set<String> paths = item.getPaths();
                 final PathFilter importFilter = item.getImportFilter();
                 final PathFilter exportFilter = item.getExportFilter();
@@ -280,7 +240,7 @@ public final class Module {
                 }
             }
 
-            public void visit(final ModuleDependency item) throws ModuleLoadException {
+            public void visit(final ModuleDependency item, final Void param) throws ModuleLoadException {
                 final Module module = item.getModuleRequired();
                 if (module == null) {
                     return;
@@ -290,30 +250,17 @@ public final class Module {
                 }
                 filterSeries.addLast(item.getImportFilter());
                 final PathFilter exportFilter = item.getExportFilter();
-                if (exportFilter == PathFilter.REJECT_ALL) {
-                    // Prune the dep graph.
-                    try {
-                        for (Dependency dep : module.dependencies) {
-                            dep.accept(importingVisitor);
-                        }
-                    } finally {
-                        filterSeries.removeLast();
+                try {
+                    for (Dependency dep : module.dependencies) {
+                        dep.accept(distantVisitor, exportFilter);
                     }
-                } else {
-                    filterSeries.addLast(exportFilter);
-                    try {
-                        for (Dependency dep : module.dependencies) {
-                            dep.accept(exportingVisitor);
-                        }
-                    } finally {
-                        filterSeries.removeLast();
-                        filterSeries.removeLast();
-                    }
+                } finally {
+                    filterSeries.removeLast();
                 }
             }
         };
         for (Dependency dependency : dependencies) {
-            dependency.accept(firstLevelVisitor);
+            dependency.accept(nearVisitor, null);
         }
         paths = new Paths(allPaths, exportedPaths);
         loadStateUpdater.compareAndSet(this, LoadState.LOADED, LoadState.RESOLVED);
@@ -330,21 +277,22 @@ public final class Module {
         resolveInitial(new HashSet<Module>());
         final Dependency[] dependencies = this.dependencies.clone();
         Collections.shuffle(Arrays.asList(dependencies));
+        if (! visited.add(this)) {
+            return;
+        }
         for (Dependency dependency : dependencies) {
-            dependency.accept(new DependencyVisitor() {
-                public void visit(final LocalDependency item) throws ModuleLoadException {
+            dependency.accept(new DependencyVisitor<Void>() {
+                public void visit(final LocalDependency item, final Void param) throws ModuleLoadException {
                     // none
                 }
 
-                public void visit(final ModuleDependency item) throws ModuleLoadException {
+                public void visit(final ModuleDependency item, final Void param) throws ModuleLoadException {
                     final Module module = item.getModuleRequired();
                     if (module != null) {
-                        if (visited.add(module)) {
-                            module.link(visited);
-                        }
+                        module.link(visited);
                     }
                 }
-            });
+            }, null);
         }
         for (Module module : visited) {
             module.loadState = LoadState.LINKED;
@@ -666,7 +614,7 @@ public final class Module {
         final Map<String, List<LocalLoader>> paths = exportsOnly ? this.paths.exportedPaths : this.paths.allPaths;
         final List<LocalLoader> loaders = paths.get(path);
         if (loaders == null) {
-            return null;
+            return ConcurrentClassLoader.EMPTY_ENUMERATION;
         }
         final List<URL> list = new ArrayList<URL>();
         for (LocalLoader loader : loaders) {
@@ -808,7 +756,7 @@ public final class Module {
 
         static {
             final SystemLocalLoader systemLocalLoader = SystemLocalLoader.getInstance();
-            final LocalDependency localDependency = new LocalDependency(PathFilter.ACCEPT_ALL, PathFilter.ACCEPT_ALL, systemLocalLoader, systemLocalLoader.getPathSet());
+            final LocalDependency localDependency = new LocalDependency(PathFilters.acceptAll(), PathFilters.acceptAll(), systemLocalLoader, systemLocalLoader.getPathSet());
             SYSTEM = new Module(ModuleIdentifier.SYSTEM, null, InitialModuleLoader.INSTANCE, AssertionSetting.INHERIT, Collections.<ResourceLoader>emptySet(), new Dependency[] { localDependency });
         }
 

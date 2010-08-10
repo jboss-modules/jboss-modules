@@ -25,6 +25,7 @@ package org.jboss.modules.util;
 import org.jboss.modules.ClassSpec;
 import org.jboss.modules.PackageSpec;
 import org.jboss.modules.PathFilter;
+import org.jboss.modules.PathFilters;
 import org.jboss.modules.Resource;
 
 import java.io.File;
@@ -139,7 +140,7 @@ public class TestResourceLoader implements ResourceLoader {
 
     @Override
     public PathFilter getExportFilter() {
-        return PathFilter.ACCEPT_ALL;
+        return PathFilters.acceptAll();
     }
 
     @Override
@@ -154,7 +155,7 @@ public class TestResourceLoader implements ResourceLoader {
 
     private String getPathFromResourceName(final String resourcePath) {
         int idx = resourcePath.lastIndexOf('/');
-        final String path = idx > -1 ? resourcePath.substring(0, idx) : resourcePath;
+        final String path = idx > -1 ? resourcePath.substring(0, idx) : "";
         return path;
     }
 
