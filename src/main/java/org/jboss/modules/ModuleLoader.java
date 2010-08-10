@@ -23,9 +23,7 @@
 package org.jboss.modules;
 
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
 import static org.jboss.modules.ConcurrentReferenceHashMap.ReferenceType.STRONG;
@@ -168,7 +166,7 @@ public abstract class ModuleLoader {
             // should never happen
             throw new IllegalStateException("Attempted to define a module from outside loadModuleLocal");
         }
-        final Module module = new Module(moduleSpec, this);
+        final Module module = new Module(moduleSpec, this, futureModule);
         try {
             futureModule.setModule(module);
             return module;

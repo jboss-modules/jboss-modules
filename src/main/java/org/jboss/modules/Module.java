@@ -100,6 +100,11 @@ public final class Module {
      * This module's dependencies.
      */
     private final Dependency[] dependencies;
+    /**
+     * This reference exists solely to prevent the {@code FutureModule} from getting GC'd prematurely.
+     */
+    @SuppressWarnings({ "UnusedDeclaration" })
+    private final Object myKey;
 
     // mutable properties
 
@@ -112,19 +117,23 @@ public final class Module {
      * Construct an unresolved instance from a module spec.
      *
      * @param moduleLoader the creating module loader
+     * @param myKey
      */
-    Module(final ModuleIdentifier identifier, final String mainClassName, final ModuleLoader moduleLoader, final AssertionSetting assertionSetting, final Collection<ResourceLoader> resourceLoaders, final Dependency[] dependencies) {
+    Module(final ModuleIdentifier identifier, final String mainClassName, final ModuleLoader moduleLoader, final AssertionSetting assertionSetting, final Collection<ResourceLoader> resourceLoaders, final Dependency[] dependencies, final Object myKey) {
         this.moduleLoader = moduleLoader;
         this.identifier = identifier;
         this.mainClassName = mainClassName;
+        this.myKey = myKey;
         // should be safe, so...
         //noinspection ThisEscapedInObjectConstruction
         moduleClassLoader = new ModuleClassLoader(this, assertionSetting, resourceLoaders);
         this.dependencies = dependencies;
     }
 
-    Module(final ModuleSpec spec, final ModuleLoader moduleLoader) {
+
+    Module(final ModuleSpec spec, final ModuleLoader moduleLoader, final Object myKey) {
         this.moduleLoader = moduleLoader;
+        this.myKey = myKey;
 
         // Initialize state from the spec.
         identifier = spec.getModuleIdentifier();
@@ -757,7 +766,7 @@ public final class Module {
         static {
             final SystemLocalLoader systemLocalLoader = SystemLocalLoader.getInstance();
             final LocalDependency localDependency = new LocalDependency(PathFilters.acceptAll(), PathFilters.acceptAll(), systemLocalLoader, systemLocalLoader.getPathSet());
-            SYSTEM = new Module(ModuleIdentifier.SYSTEM, null, InitialModuleLoader.INSTANCE, AssertionSetting.INHERIT, Collections.<ResourceLoader>emptySet(), new Dependency[] { localDependency });
+            SYSTEM = new Module(ModuleIdentifier.SYSTEM, null, InitialModuleLoader.INSTANCE, AssertionSetting.INHERIT, Collections.<ResourceLoader>emptySet(), new Dependency[] { localDependency }, null);
         }
 
         private SystemModuleHolder() {
