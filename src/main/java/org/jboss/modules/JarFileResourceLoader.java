@@ -55,6 +55,18 @@ final class JarFileResourceLoader implements ResourceLoader {
     private final PathFilter exportFilter;
 
     JarFileResourceLoader(final ModuleIdentifier moduleIdentifier, final JarFile jarFile, final String rootName, final PathFilter exportFilter) {
+        if (moduleIdentifier == null) {
+            throw new IllegalArgumentException("moduleIdentifier is null");
+        }
+        if (jarFile == null) {
+            throw new IllegalArgumentException("jarFile is null");
+        }
+        if (rootName == null) {
+            throw new IllegalArgumentException("rootName is null");
+        }
+        if (exportFilter == null) {
+            throw new IllegalArgumentException("exportFilter is null");
+        }
         this.jarFile = jarFile;
         this.rootName = rootName;
         this.moduleIdentifier = moduleIdentifier;

@@ -150,6 +150,8 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
                 .setExportFilter(PathFilter.ACCEPT_ALL)
                 .create());
         moduleLoader.addModuleSpec(moduleWithCircularDBuilder.create());
+
+        Module.setModuleLoaderSelector(new SimpleModuleLoaderSelector(moduleLoader));
     }
 
     @Test

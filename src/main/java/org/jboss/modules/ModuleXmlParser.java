@@ -317,6 +317,7 @@ final class ModuleXmlParser {
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {
+                    specBuilder.addLocalDependency();
                     return;
                 }
                 case XMLStreamConstants.START_ELEMENT: {
@@ -364,6 +365,9 @@ final class ModuleXmlParser {
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {
+                    dependencySpecBuilder.setExportFilter(export ? PathFilters.all(exportFilters) : PathFilter.REJECT_ALL);
+                    dependencySpecBuilder.setImportFilter(PathFilters.all(importFilters));
+                    specBuilder.addModuleDependency(dependencySpecBuilder.create());
                     return;
                 }
                 case XMLStreamConstants.START_ELEMENT: {
@@ -379,9 +383,6 @@ final class ModuleXmlParser {
                 }
             }
         }
-        dependencySpecBuilder.setExportFilter(export ? PathFilters.all(exportFilters) : PathFilter.REJECT_ALL);
-        dependencySpecBuilder.setImportFilter(PathFilters.all(importFilters));
-        specBuilder.addModuleDependency(dependencySpecBuilder.create());
     }
 
     private static void parseMainClass(final XMLStreamReader reader, final ModuleSpec.Builder specBuilder) throws XMLStreamException {

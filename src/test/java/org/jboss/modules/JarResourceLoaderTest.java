@@ -42,7 +42,7 @@ public class JarResourceLoaderTest extends AbstractResourceLoaderTestCase {
 
     private JarFile jarFile;
 
-    protected ResourceLoader createLoader(final PathFilter pathFilter) throws Exception {
+    protected ResourceLoader createLoader(final PathFilter exportFilter) throws Exception {
         File fileResourceRoot = getResource("test/fileresourceloader");
         // Copy the classfile over
         copyResource("org/jboss/modules/test/TestClass.class", "test/fileresourceloader", "org/jboss/modules/test");
@@ -53,7 +53,7 @@ public class JarResourceLoaderTest extends AbstractResourceLoaderTestCase {
         buildJar(fileResourceRoot, outputFile);
         // Create the jar file and resource loader
         jarFile = new JarFile(outputFile);
-        return new JarFileResourceLoader(MODULE_ID, jarFile, "test-root", pathFilter);
+        return new JarFileResourceLoader(MODULE_ID, jarFile, "test-root", exportFilter);
     }
 
     @Override

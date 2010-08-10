@@ -211,6 +211,9 @@ public final class ModuleSpec {
 
             @Override
             public ModuleSpec create() {
+                if (! localAdded) {
+                    addLocalDependency();
+                }
                 return new ModuleSpec(moduleIdentifier, mainClass, assertionSetting, resourceLoaders.toArray(new ResourceLoader[resourceLoaders.size()]), dependencies.toArray(new SpecifiedDependency[dependencies.size()]));
             }
 

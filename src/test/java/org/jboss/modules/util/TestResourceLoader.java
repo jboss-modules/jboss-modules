@@ -55,7 +55,6 @@ public class TestResourceLoader implements ResourceLoader {
     private final Map<String, ClassSpec> classSpecs = new HashMap<String, ClassSpec>();
     private final Map<String, Resource> resources = new HashMap<String, Resource>();
     private Set<String> paths = new HashSet<String>();
-    private PathFilter exportFilter;
     private Manifest manifest;
 
     public String getRootName() {
@@ -140,11 +139,7 @@ public class TestResourceLoader implements ResourceLoader {
 
     @Override
     public PathFilter getExportFilter() {
-        return exportFilter;
-    }
-
-    void setExportFilter(final PathFilter exportFilter) {
-        this.exportFilter = exportFilter;
+        return PathFilter.ACCEPT_ALL;
     }
 
     @Override

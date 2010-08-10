@@ -35,11 +35,11 @@ public class FileResourceLoaderTest extends AbstractResourceLoaderTestCase {
 
     private File resourceRoot;
 
-    protected ResourceLoader createLoader(final PathFilter pathFilter) throws Exception {
+    protected ResourceLoader createLoader(final PathFilter exportFilter) throws Exception {
         resourceRoot = getResource("test/fileresourceloader");
         // Copy the classfile over
         copyResource("org/jboss/modules/test/TestClass.class", "test/fileresourceloader", "org/jboss/modules/test");
-        return new FileResourceLoader(MODULE_ID, resourceRoot, "test-root", pathFilter);
+        return new FileResourceLoader(MODULE_ID, resourceRoot, "test-root", exportFilter);
     }
 
     @Override
@@ -47,6 +47,10 @@ public class FileResourceLoaderTest extends AbstractResourceLoaderTestCase {
         final File resourceFile = getExpectedFile(fileName);
 
         Assert.assertEquals(resourceFile.length(), resource.getSize());
+    }
+
+    public void testGetClassSpec() throws Exception {
+        super.testGetClassSpec();
     }
 
     protected File getExpectedFile(String fileName) {

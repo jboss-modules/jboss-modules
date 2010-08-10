@@ -44,7 +44,7 @@ public class AbstractModuleTestCase {
     @BeforeClass
     public static void initUrlHandler() {
         // this also kicks off Module's static init
-        Module.setModuleLogger(new StreamModuleLogger(System.out));
+        Module.setModuleLogger(new StreamModuleLogger(System.err));
     }
 
     protected File getResource(final String path) throws Exception {

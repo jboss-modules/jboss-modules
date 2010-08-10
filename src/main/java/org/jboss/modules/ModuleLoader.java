@@ -38,13 +38,6 @@ import static org.jboss.modules.ConcurrentReferenceHashMap.ReferenceType.WEAK;
  */
 public abstract class ModuleLoader {
 
-    private static final ThreadLocal<Map<ModuleIdentifier, Module>> VISITED = new ThreadLocal<Map<ModuleIdentifier, Module>>() {
-        @Override
-        protected Map<ModuleIdentifier, Module> initialValue() {
-            return new HashMap<ModuleIdentifier, Module>();
-        }
-    };
-
     private final ConcurrentMap<ModuleIdentifier, FutureModule> moduleMap = new ConcurrentReferenceHashMap<ModuleIdentifier, FutureModule>(
             256, 0.5f, 32, STRONG, WEAK, EnumSet.noneOf(ConcurrentReferenceHashMap.Option.class)
     );
@@ -176,8 +169,6 @@ public abstract class ModuleLoader {
             throw new IllegalStateException("Attempted to define a module from outside loadModuleLocal");
         }
         final Module module = new Module(moduleSpec, this);
-        final Map<ModuleIdentifier, Module> visited = VISITED.get();
-        visited.put(moduleIdentifier, module);
         try {
             futureModule.setModule(module);
             return module;
@@ -190,8 +181,6 @@ public abstract class ModuleLoader {
         } catch (Error e) {
             log.trace(e, "Failed to load module %s", moduleIdentifier);
             throw e;
-        } finally {
-            visited.remove(moduleIdentifier);
         }
     }
 

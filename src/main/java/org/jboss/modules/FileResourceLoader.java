@@ -121,6 +121,18 @@ final class FileResourceLoader implements ResourceLoader {
     private final PathFilter exportFilter;
 
     FileResourceLoader(final ModuleIdentifier moduleIdentifier, final File root, final String rootName, final PathFilter exportFilter) {
+        if (moduleIdentifier == null) {
+            throw new IllegalArgumentException("moduleIdentifier is null");
+        }
+        if (root == null) {
+            throw new IllegalArgumentException("root is null");
+        }
+        if (rootName == null) {
+            throw new IllegalArgumentException("rootName is null");
+        }
+        if (exportFilter == null) {
+            throw new IllegalArgumentException("exportFilter is null");
+        }
         this.moduleIdentifier = moduleIdentifier;
         this.rootName = rootName;
         this.root = root;

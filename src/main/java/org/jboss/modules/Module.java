@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 /**
 * A module is a unit of classes and other resources, along with the specification of what is imported and exported
@@ -159,6 +160,8 @@ public final class Module {
     }
 
     private volatile LoadState loadState = LoadState.LOADED;
+
+    private static final AtomicReferenceFieldUpdater<Module, LoadState> loadStateUpdater = AtomicReferenceFieldUpdater.newUpdater(Module.class, LoadState.class, "loadState");
 
     void resolveInitial(Set<Module> visited) throws ModuleLoadException {
         if (loadState.compareTo(LoadState.RESOLVED) >= 0) {
@@ -312,10 +315,12 @@ public final class Module {
         for (Dependency dependency : dependencies) {
             dependency.accept(firstLevelVisitor);
         }
+        paths = new Paths(allPaths, exportedPaths);
+        loadStateUpdater.compareAndSet(this, LoadState.LOADED, LoadState.RESOLVED);
     }
 
     void linkInitial(final HashSet<Module> visited) throws ModuleLoadException {
-        if (loadState.compareTo(LoadState.RESOLVED) >= 0) {
+        if (loadState.compareTo(LoadState.LINKED) >= 0) {
             return;
         }
         link(visited);
@@ -737,7 +742,7 @@ public final class Module {
      * @return the name of the corresponding class file
      */
     static String fileNameOfClass(final String className) {
-        return pathOfClass(className) + ".class";
+        return className.replace('.', '/') + ".class";
     }
 
     /**
