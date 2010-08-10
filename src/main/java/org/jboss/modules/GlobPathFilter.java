@@ -35,6 +35,7 @@ final class GlobPathFilter implements PathFilter {
     private static final Pattern GLOB_PATTERN = Pattern.compile("(\\*\\*?)|(\\?)|(\\\\.)|(/+)|([^*?]+)");
 
     private final boolean include;
+    private final String glob;
     private final Pattern pattern;
 
     /**
@@ -42,10 +43,12 @@ final class GlobPathFilter implements PathFilter {
      *
      * @param include {@code true} if this is an "include" filter, {@code false} if this is an "exclude" filter
      * @param pattern the regular expression to match
+     * @param glob the glob used to construct the instance, if any
      */
-    GlobPathFilter(final boolean include, final Pattern pattern) {
+    GlobPathFilter(final boolean include, final Pattern pattern, final String glob) {
         this.include = include;
         this.pattern = pattern;
+        this.glob = glob;
     }
 
     /**
@@ -55,7 +58,7 @@ final class GlobPathFilter implements PathFilter {
      * @param glob the glob expression to match
      */
     GlobPathFilter(final boolean include, final String glob) {
-        this(include, getGlobPattern(glob));
+        this(include, getGlobPattern(glob), glob);
     }
 
     /**
@@ -125,5 +128,28 @@ final class GlobPathFilter implements PathFilter {
             patternBuilder.append("(?:/.*)?");
         }
         return Pattern.compile(patternBuilder.toString());
+    }
+
+    public int hashCode() {
+        return Boolean.valueOf(include).hashCode() ^ pattern.hashCode();
+    }
+
+    public boolean equals(final Object obj) {
+        return obj instanceof GlobPathFilter && equals((GlobPathFilter) obj);
+    }
+
+    public boolean equals(final GlobPathFilter obj) {
+        return obj != null && obj.include == include && obj.pattern.equals(pattern);
+    }
+
+    public String toString() {
+        final StringBuilder b = new StringBuilder();
+        b.append(include ? "include " : "exclude ");
+        if (glob != null) {
+            b.append('"').append(glob).append('"');
+        } else {
+            b.append('/').append(pattern).append('/');
+        }
+        return b.toString();
     }
 }

@@ -23,6 +23,8 @@
 package org.jboss.modules;
 
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -100,7 +102,7 @@ public final class PathFilters {
      * @return the filter
      */
     public static PathFilter include(Pattern pattern) {
-        return new GlobPathFilter(true, pattern);
+        return new GlobPathFilter(true, pattern, null);
     }
 
     /**
@@ -120,7 +122,7 @@ public final class PathFilters {
      * @return the filter
      */
     public static PathFilter exclude(Pattern pattern) {
-        return new GlobPathFilter(false, pattern);
+        return new GlobPathFilter(false, pattern, null);
     }
 
     /**
@@ -139,5 +141,15 @@ public final class PathFilters {
      */
     public static PathFilter rejectAll() {
         return BooleanPathFilter.FALSE;
+    }
+
+    /**
+     * Get a filter which returns {@code true} if the tested path is contained within the given set.
+     *
+     * @param paths the path set
+     * @return the filter
+     */
+    public static PathFilter in(Set<String> paths) {
+        return new SetPathFilter(new HashSet<String>(paths));
     }
 }

@@ -113,11 +113,7 @@ public final class ModuleClassLoader extends ConcurrentClassLoader {
         }
         this.exportedPaths = exportedPaths;
         this.allPaths = allPaths;
-        exportPathFilter = new PathFilter() {
-            public boolean accept(final String path) {
-                return exportedPaths.containsKey(path);
-            }
-        };
+        exportPathFilter = PathFilters.in(exportedPaths.keySet());
     }
 
     LocalLoader getLocalLoader() {

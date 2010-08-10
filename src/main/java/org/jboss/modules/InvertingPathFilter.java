@@ -36,11 +36,30 @@ final class InvertingPathFilter implements PathFilter {
      * @param delegate the filter to delegate to
      */
     InvertingPathFilter(final PathFilter delegate) {
+        if (delegate == null) {
+            throw new IllegalArgumentException("delegate is null");
+        }
         this.delegate = delegate;
     }
 
     /** {@inheritDoc} */
     public boolean accept(final String path) {
         return ! delegate.accept(path);
+    }
+
+    public int hashCode() {
+        return 47 * delegate.hashCode();
+    }
+
+    public boolean equals(final Object obj) {
+        return obj instanceof InvertingPathFilter && equals((InvertingPathFilter) obj);
+    }
+
+    public boolean equals(final InvertingPathFilter obj) {
+        return obj != null && obj.delegate.equals(delegate);
+    }
+
+    public String toString() {
+        return "not " + delegate.toString();
     }
 }

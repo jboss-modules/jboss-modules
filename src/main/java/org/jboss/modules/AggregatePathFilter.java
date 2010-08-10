@@ -22,6 +22,8 @@
 
 package org.jboss.modules;
 
+import java.util.Arrays;
+
 /**
  * PathFilter implementation that aggregates multiple other filters.
  *
@@ -52,5 +54,31 @@ final class AggregatePathFilter implements PathFilter {
             }
         }
         return ! any;
+    }
+
+    public int hashCode() {
+        return Boolean.valueOf(any).hashCode() ^ Arrays.hashCode(delegates);
+    }
+
+    public boolean equals(final Object obj) {
+        return obj instanceof AggregatePathFilter && equals((AggregatePathFilter) obj);
+    }
+
+    public boolean equals(final AggregatePathFilter obj) {
+        return obj != null && obj.any == any && Arrays.equals(obj.delegates, delegates);
+    }
+
+    public String toString() {
+        final StringBuilder b = new StringBuilder();
+        b.append(any ? "Any " : "All ").append("of (");
+        for (int idx = 0; idx < delegates.length; idx++) {
+            final PathFilter delegate = delegates[idx];
+            b.append(delegate);
+            if (idx < delegates.length - 1) {
+                b.append(',');
+            }
+        }
+        b.append(')');
+        return b.toString();
     }
 }
