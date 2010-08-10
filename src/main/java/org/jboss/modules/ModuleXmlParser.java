@@ -460,11 +460,12 @@ final class ModuleXmlParser {
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {
+                    final PathFilter exportFilter = filterList.isEmpty() ? PathFilters.exclude("META-INF") : PathFilters.all(filterList);
                     if (file.isDirectory()) {
-                        resourceLoader = new FileResourceLoader(identifier, file, name, PathFilters.all(filterList));
+                        resourceLoader = new FileResourceLoader(identifier, file, name, exportFilter);
                     } else {
                         try {
-                            resourceLoader = new JarFileResourceLoader(identifier, new JarFile(file), name, PathFilters.all(filterList));
+                            resourceLoader = new JarFileResourceLoader(identifier, new JarFile(file), name, exportFilter);
                         } catch (IOException e) {
                             throw new XMLStreamException("Invalid JAR file specified", reader.getLocation(), e);
                         }
