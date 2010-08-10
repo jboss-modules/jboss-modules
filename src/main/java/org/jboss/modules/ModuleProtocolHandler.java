@@ -37,7 +37,7 @@ final class ModuleProtocolHandler extends URLStreamHandler {
     protected URLConnection openConnection(final URL u) throws IOException {
         final ResourceIdentifier identifier = ResourceIdentifier.fromURL(u);
         try {
-            final Resource resource = Module.getModule(identifier.getModuleIdentifier()).getExportedResource(identifier.getRoot(), identifier.getPath());
+            final Resource resource = Module.getModule(identifier.getModuleIdentifier()).getResource(identifier.getRoot(), identifier.getPath());
             if (resource == null) {
                 throw new IOException("No exported resource found for " + u);
             }

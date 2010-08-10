@@ -254,9 +254,6 @@ public final class Module {
                 if (module == null) {
                     return;
                 }
-                if (!visited.add(module)) {
-                    return;
-                }
                 filterSeries.addLast(item.getImportFilter());
                 final PathFilter exportFilter = item.getExportFilter();
                 try {
@@ -340,6 +337,17 @@ public final class Module {
      */
     public final Resource getExportedResource(final String rootPath, final String resourcePath) {
         return moduleClassLoader.loadResourceLocal(rootPath, resourcePath, true);
+    }
+
+    /**
+     * Get a resource from a specific root in this module.
+     *
+     * @param rootPath the module root to search
+     * @param resourcePath the path of the resource
+     * @return the resource
+     */
+    final Resource getResource(final String rootPath, final String resourcePath) {
+        return moduleClassLoader.loadResourceLocal(rootPath, resourcePath, false);
     }
 
     /**
