@@ -366,7 +366,9 @@ final class ModuleXmlParser {
             switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {
                     dependencySpecBuilder.setExportFilter(export ? PathFilters.all(exportFilters) : PathFilters.rejectAll());
-                    dependencySpecBuilder.setImportFilter(PathFilters.all(importFilters));
+                    if (! importFilters.isEmpty()) {
+                        dependencySpecBuilder.setImportFilter(PathFilters.all(importFilters));
+                    }
                     specBuilder.addModuleDependency(dependencySpecBuilder.create());
                     return;
                 }
