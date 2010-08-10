@@ -206,65 +206,7 @@ final class JarFileResourceLoader implements ResourceLoader {
                 index.clear();
             }
         }
-        // Next try INDEX.LIST...
-        final JarEntry indexListEntry = jarFile.getJarEntry("META-INF/INDEX.LIST");
-        if (indexListEntry != null) {
-            try {
-                final BufferedReader r = new BufferedReader(new InputStreamReader(jarFile.getInputStream(indexListEntry)));
-                try {
-                    String s;
-                    while ((s = r.readLine()) != null) {
-                        if (s.startsWith("JarIndex-Version: ")) {
-                            break;
-                        } else {
-                            // invalid
-                            throw new IOException();
-                        }
-                    }
-                    while ((s = r.readLine()) != null) {
-                        if (s.trim().length() == 0) {
-                            break;
-                        } else {
-                            // invalid
-                            throw new IOException();
-                        }
-                    }
-                    final int idx = Math.max(jarFileName.lastIndexOf('/'), jarFileName.lastIndexOf('\\'));
-                    final String ourJarName = jarFileName.substring(idx + 1);
-                    boolean ok = false;
-                    while ((s = r.readLine()) != null) {
-                        final String foundJarName = s.substring(s.lastIndexOf('/') + 1).trim();
-                        if (foundJarName.equals(ourJarName)) {
-                            // found!
-                            ok = true;
-                            break;
-                        }
-                        // nope, consume section.
-                        while ((s = r.readLine()) != null) {
-                            if (s.trim().length() == 0) {
-                                break;
-                            }
-                        }
-                    }
-                    if (! ok) {
-                        // no good, generate index instead
-                        throw new IOException();
-                    }
-                    while ((s = r.readLine()) != null) {
-                        if (s.trim().length() == 0) {
-                            break;
-                        }
-                        index.add(s.trim());
-                    }
-                    return index;
-                } finally {
-                    // if exception is thrown, undo index creation
-                    r.close();
-                }
-            } catch (IOException e) {
-                index.clear();
-            }
-        }
+        // Next just read the JAR
         final Enumeration<JarEntry> entries = jarFile.entries();
         while (entries.hasMoreElements()) {
             final JarEntry jarEntry = entries.nextElement();
