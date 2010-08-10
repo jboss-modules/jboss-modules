@@ -258,7 +258,8 @@ final class FileResourceLoader implements ResourceLoader {
                 index.clear();
             }
         }
-        // Manually build index
+        // Manually build index, starting with the root path
+        index.add("");
         buildIndex(index, root, "");
         // Now try to write it
         boolean ok = false;
