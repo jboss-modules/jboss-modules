@@ -31,7 +31,7 @@ import java.net.URL;
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class ResourceIdentifier implements Serializable {
+final class ResourceIdentifier implements Serializable {
     private static final long serialVersionUID = -2181205071871484104L;
 
     private final ModuleIdentifier moduleIdentifier;
