@@ -682,6 +682,9 @@ public final class Module {
      */
     static String pathOf(final String resourceName) {
         final String path;
+        if (resourceName.indexOf('/') == 0) {
+            return pathOf(resourceName.substring(1));
+        }
         final int idx = resourceName.lastIndexOf('/');
         if (idx > -1) {
             path = resourceName.substring(0, idx);
