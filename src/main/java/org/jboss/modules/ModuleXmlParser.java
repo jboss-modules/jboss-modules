@@ -372,8 +372,8 @@ final class ModuleXmlParser {
                 }
                 case XMLStreamConstants.START_ELEMENT: {
                     switch (Element.of(reader.getName())) {
-                        case EXPORTS: parseFilterList(reader, importFilters); break;
-                        case IMPORTS: parseFilterList(reader, exportFilters); break;
+                        case EXPORTS: parseFilterList(reader, exportFilters); break;
+                        case IMPORTS: parseFilterList(reader, importFilters); break;
                         default: throw unexpectedContent(reader);
                     }
                     break;
