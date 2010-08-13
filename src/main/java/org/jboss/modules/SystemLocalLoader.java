@@ -25,8 +25,6 @@ package org.jboss.modules;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -64,15 +62,10 @@ final class SystemLocalLoader implements LocalLoader {
 
     public List<Resource> loadResourceLocal(final String name) {
         final Enumeration<URL> urls;
-        final SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
-            urls = AccessController.doPrivileged(new GetResourcesAction(name));
-        } else {
-            try {
-                urls = SYSTEM_CL.getResources(name);
-            } catch (IOException e) {
-                return Collections.emptyList();
-            }
+        try {
+            urls = SYSTEM_CL.getResources(name);
+        } catch (IOException e) {
+            return Collections.emptyList();
         }
         final List<Resource> list = new ArrayList<Resource>();
         while (urls.hasMoreElements()) {
@@ -85,13 +78,7 @@ final class SystemLocalLoader implements LocalLoader {
         if (! "".equals(root)) {
             return null;
         }
-        final SecurityManager sm = System.getSecurityManager();
-        final URL url;
-        if (sm != null) {
-            url = AccessController.doPrivileged(new GetResourceAction(name));
-        } else {
-            url = ClassLoader.getSystemResource(name);
-        }
+        final URL url = SYSTEM_CL.getResource(name);
         return url == null ? null : new URLResource(url);
     }
 
@@ -105,45 +92,11 @@ final class SystemLocalLoader implements LocalLoader {
         return pathSet;
     }
 
-// Private members
+    // Private members
 
     private static final SystemLocalLoader INSTANCE = new SystemLocalLoader();
 
-    private static final ClassLoader SYSTEM_CL = AccessController.doPrivileged(new PrivilegedAction<ClassLoader>() {
-        public ClassLoader run() {
-            return ClassLoader.getSystemClassLoader();
-        }
-    });
-
-    private static final class GetResourceAction implements PrivilegedAction<URL> {
-
-        private final String name;
-
-        GetResourceAction(final String name) {
-            this.name = name;
-        }
-
-        public URL run() {
-            return ClassLoader.getSystemResource(name);
-        }
-    }
-
-    private static final class GetResourcesAction implements PrivilegedAction<Enumeration<URL>> {
-
-        private final String name;
-
-        GetResourcesAction(final String name) {
-            this.name = name;
-        }
-
-        public Enumeration<URL> run() {
-            try {
-                return ClassLoader.getSystemResources(name);
-            } catch (IOException e) {
-                return ConcurrentClassLoader.EMPTY_ENUMERATION;
-            }
-        }
-    }
+    private static final ClassLoader SYSTEM_CL = SystemLocalLoader.class.getClassLoader();
 
     private static void processClassPathItem(final String classPath, final Set<String> jarSet, final Set<String> pathSet) {
         if (classPath == null) return;
