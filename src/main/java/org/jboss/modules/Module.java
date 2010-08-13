@@ -744,9 +744,9 @@ public final class Module {
         if (logger == null) {
             throw new IllegalArgumentException("logger is null");
         }
+        logger.greeting();
         // todo: perm check
         log = logger;
-        logger.greeting();
     }
 
     static final class DependencyImport {
