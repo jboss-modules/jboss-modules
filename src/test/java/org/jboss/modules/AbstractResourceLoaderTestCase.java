@@ -75,6 +75,7 @@ public abstract class AbstractResourceLoaderTestCase extends AbstractModuleTestC
         final Collection<String> paths = loader.getPaths();
         assertFalse(paths.isEmpty());
 
+        assertTrue(paths.contains(""));
         assertTrue(paths.contains("META-INF"));
         assertTrue(paths.contains("nested"));
         assertTrue(paths.contains("org"));

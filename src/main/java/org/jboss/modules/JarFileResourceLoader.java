@@ -207,6 +207,7 @@ final class JarFileResourceLoader implements ResourceLoader {
             }
         }
         // Next just read the JAR
+        index.add("");
         final Enumeration<JarEntry> entries = jarFile.entries();
         while (entries.hasMoreElements()) {
             final JarEntry jarEntry = entries.nextElement();
