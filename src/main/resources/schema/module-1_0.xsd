@@ -38,7 +38,6 @@
             <xsd:element name="resources" type="resourcesType" minOccurs="0"/>
             <xsd:element name="main-class" type="classNameType" minOccurs="0"/>
         </xsd:all>
-        <xsd:attribute name="group" type="xsd:string" use="required"/>
         <xsd:attribute name="name" type="xsd:string" use="required"/>
         <xsd:attribute name="version" type="xsd:string" use="optional"/>
     </xsd:complexType>
@@ -54,7 +53,6 @@
             <xsd:element name="exports" type="filterType"/>
             <xsd:element name="imports" type="filterType"/>
         </xsd:choice>
-        <xsd:attribute name="group" type="xsd:string" use="required"/>
         <xsd:attribute name="name" type="xsd:string" use="required"/>
         <xsd:attribute name="version" type="xsd:string" use="optional"/>
         <xsd:attribute name="export" type="xsd:boolean" use="optional" default="false"/>

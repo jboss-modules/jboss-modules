@@ -22,16 +22,16 @@
 
 package org.jboss.modules;
 
+import org.jboss.modules.util.Util;
+import org.junit.BeforeClass;
+
 import java.io.Closeable;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import org.jboss.modules.util.Util;
-import org.junit.BeforeClass;
-
-import java.io.File;
 
 /**
  * Abstract Test Case used as a base for all module tests.
@@ -39,7 +39,7 @@ import java.io.File;
  * @author John Bailey
  */
 public class AbstractModuleTestCase {
-    protected static final ModuleIdentifier MODULE_ID = new ModuleIdentifier("test", "test", "1.0");
+    protected static final ModuleIdentifier MODULE_ID = new ModuleIdentifier("test.test", "1.0");
 
     @BeforeClass
     public static void initUrlHandler() {

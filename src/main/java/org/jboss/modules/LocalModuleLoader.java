@@ -56,8 +56,7 @@ public final class LocalModuleLoader extends ModuleLoader {
 
     private static String toPathString(ModuleIdentifier moduleIdentifier) {
         final StringBuilder builder = new StringBuilder();
-        builder.append(moduleIdentifier.getGroup().replace('.', File.separatorChar));
-        builder.append(File.separatorChar).append(moduleIdentifier.getArtifact());
+        builder.append(moduleIdentifier.getName().replace('.', File.separatorChar));
         final String version = moduleIdentifier.getVersion();
         builder.append(File.separatorChar).append(version == null ? "noversion" : version);
         builder.append(File.separatorChar);

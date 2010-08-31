@@ -36,33 +36,24 @@ public final class ModuleIdentifier implements Serializable {
 
     private static final long serialVersionUID = 118533026624827995L;
 
-    private final String group;
-    private final String artifact;
+    private final String name;
     private final String version;
 
     /**
      * The system module.
      */
-    public static final ModuleIdentifier SYSTEM = new ModuleIdentifier("system", "system", null);
+    public static final ModuleIdentifier SYSTEM = new ModuleIdentifier("system", null);
 
-    public ModuleIdentifier(final String group, final String artifact, final String version) {
-        if (group == null) {
-            throw new IllegalArgumentException("group is null");
+    public ModuleIdentifier(final String name, final String version) {
+        if (name == null) {
+            throw new IllegalArgumentException("name is null");
         }
-        if (artifact == null) {
-            throw new IllegalArgumentException("artifact is null");
-        }
-        this.group = group;
-        this.artifact = artifact;
+        this.name = name;
         this.version = version;
     }
 
-    public String getGroup() {
-        return group;
-    }
-
-    public String getArtifact() {
-        return artifact;
+    public String getName() {
+        return name;
     }
 
     public String getVersion() {
@@ -79,13 +70,12 @@ public final class ModuleIdentifier implements Serializable {
     }
 
     public boolean equals(final ModuleIdentifier o) {
-        return this == o || o != null && group.equals(o.group) && artifact.equals(o.artifact) && (version == null ? o.version == null : version.equals(o.version));
+        return this == o || o != null && name.equals(o.name) && (version == null ? o.version == null : version.equals(o.version));
     }
 
     @Override
     public int hashCode() {
-        int result = group.hashCode();
-        result = 31 * result + artifact.hashCode();
+        int result = name.hashCode();
         result = 31 * result + (version != null ? version.hashCode() : 0);
         return result;
     }
@@ -93,9 +83,9 @@ public final class ModuleIdentifier implements Serializable {
     @Override
     public String toString() {
         if (version == null) {
-            return String.format("module:%s:%s", group, artifact);
+            return String.format("module:%s", name);
         } else {
-            return String.format("module:%s:%s:%s", group, artifact, version);
+            return String.format("module:%s:%s", name, version);
         }
     }
 
@@ -114,16 +104,7 @@ public final class ModuleIdentifier implements Serializable {
         if (moduleSpec.length() == 0) {
             throw new MalformedURLException("Empty module URL");
         }
-        final int c1 = moduleSpec.indexOf(':');
-        if (c1 == -1) {
-            throw new MalformedURLException("Module URL requires a group ID");
-        }
-        final int c2 = moduleSpec.indexOf(':', c1 + 1);
-        if (c2 == -1) {
-            return new ModuleIdentifier(moduleSpec.substring(0, c1), moduleSpec.substring(c1 + 1), null);
-        }
-        final int c3 = moduleSpec.indexOf(':', c2 + 1);
-        return new ModuleIdentifier(moduleSpec.substring(0, c1), moduleSpec.substring(c1 + 1, c2), c3 == -1 ? moduleSpec.substring(c2 + 1) : moduleSpec.substring(c2 + 1, c3));
+        return fromString(moduleSpec);
     }
 
     public static ModuleIdentifier fromURI(URI uri) throws URISyntaxException {
@@ -147,16 +128,7 @@ public final class ModuleIdentifier implements Serializable {
         if (moduleSpec.length() == 0) {
             throw new URISyntaxException(uri.toString(), "Empty module URI");
         }
-        final int c1 = moduleSpec.indexOf(':');
-        if (c1 == -1) {
-            throw new URISyntaxException(uri.toString(), "Module URI requires a group ID");
-        }
-        final int c2 = moduleSpec.indexOf(':', c1 + 1);
-        if (c2 == -1) {
-            return new ModuleIdentifier(moduleSpec.substring(0, c1), moduleSpec.substring(c1 + 1), null);
-        }
-        final int c3 = moduleSpec.indexOf(':', c2 + 1);
-        return new ModuleIdentifier(moduleSpec.substring(0, c1), moduleSpec.substring(c1 + 1, c2), c3 == -1 ? moduleSpec.substring(c2 + 1) : moduleSpec.substring(c2 + 1, c3));
+        return fromString(moduleSpec);
     }
 
     public static ModuleIdentifier fromString(String moduleSpec) throws IllegalArgumentException {
@@ -165,21 +137,16 @@ public final class ModuleIdentifier implements Serializable {
         }
         final int c1 = moduleSpec.indexOf(':');
         if (c1 == -1) {
-            throw new IllegalArgumentException("Module specification requires a group ID");
+            return new ModuleIdentifier(moduleSpec, null);
         }
-        final int c2 = moduleSpec.indexOf(':', c1 + 1);
-        if (c2 == -1) {
-            return new ModuleIdentifier(moduleSpec.substring(0, c1), moduleSpec.substring(c1 + 1), null);
-        }
-        final int c3 = moduleSpec.indexOf(':', c2 + 1);
-        return new ModuleIdentifier(moduleSpec.substring(0, c1), moduleSpec.substring(c1 + 1, c2), c3 == -1 ? moduleSpec.substring(c2 + 1) : moduleSpec.substring(c2 + 1, c3));
+        return new ModuleIdentifier(moduleSpec.substring(0, c1), moduleSpec.substring(c1 + 1));
     }
 
     private String toSpecString() {
         if (version == null) {
-            return group + ":" + artifact;
+            return name;
         } else {
-            return group + ":" + artifact + ":" + version;
+            return name + ":" + version;
         }
     }
 

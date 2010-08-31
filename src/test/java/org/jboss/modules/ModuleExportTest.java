@@ -22,14 +22,14 @@
 
 package org.jboss.modules;
 
-import java.util.Collections;
-import java.util.HashSet;
 import org.jboss.modules.test.ImportedClass;
 import org.jboss.modules.util.TestModuleLoader;
 import org.jboss.modules.util.TestResourceLoader;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -45,10 +45,10 @@ import static org.junit.Assert.assertTrue;
  */
 public class ModuleExportTest extends AbstractModuleTestCase {
 
-    private static final ModuleIdentifier MODULE_A = new ModuleIdentifier("test", "a", "1.0");
-    private static final ModuleIdentifier MODULE_B = new ModuleIdentifier("test", "b", "1.0");
-    private static final ModuleIdentifier MODULE_C = new ModuleIdentifier("test", "c", "1.0");
-    private static final ModuleIdentifier MODULE_D = new ModuleIdentifier("test", "d", "1.0");
+    private static final ModuleIdentifier MODULE_A = new ModuleIdentifier("a", "1.0");
+    private static final ModuleIdentifier MODULE_B = new ModuleIdentifier("b", "1.0");
+    private static final ModuleIdentifier MODULE_C = new ModuleIdentifier("c", "1.0");
+    private static final ModuleIdentifier MODULE_D = new ModuleIdentifier("d", "1.0");
 
     @Test
     public void testExportDependencies() throws Exception {
