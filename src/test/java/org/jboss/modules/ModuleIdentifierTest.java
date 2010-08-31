@@ -29,6 +29,7 @@ import java.net.URI;
 import java.net.URL;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 /**
  * @author John E. Bailey
@@ -45,55 +46,69 @@ public class ModuleIdentifierTest {
     public void testFromString() throws Exception {
         ModuleIdentifier identifier = ModuleIdentifier.fromString("test.module");
         assertEquals("test.module", identifier.getName());
-        assertEquals(null, identifier.getVersion());
 
-        identifier = ModuleIdentifier.fromString("test.module:1.0");
-        assertEquals("test.module", identifier.getName());
-        assertEquals("1.0", identifier.getVersion());
+        identifier = ModuleIdentifier.fromString("test.module.1_0");
+        assertEquals("test.module.1_0", identifier.getName());
     }
 
     @Test
     public void testFromUrl() throws Exception {
         ModuleIdentifier identifier = ModuleIdentifier.fromURL(new URL("module:test.module"));
         assertEquals("test.module", identifier.getName());
-        assertEquals(null, identifier.getVersion());
 
-        identifier = ModuleIdentifier.fromURL(new URL("module:test.module:1.0"));
-        assertEquals("test.module", identifier.getName());
-        assertEquals("1.0", identifier.getVersion());
+        identifier = ModuleIdentifier.fromURL(new URL("module:test.module.1_0"));
+        assertEquals("test.module.1_0", identifier.getName());
     }
 
     @Test
     public void testFromUri() throws Exception {
         ModuleIdentifier identifier = ModuleIdentifier.fromURI(new URI("module:test.module"));
         assertEquals("test.module", identifier.getName());
-        assertEquals(null, identifier.getVersion());
 
-        identifier = ModuleIdentifier.fromURI(new URI("module:test.module:1.0"));
-        assertEquals("test.module", identifier.getName());
-        assertEquals("1.0", identifier.getVersion());
+        identifier = ModuleIdentifier.fromURI(new URI("module:test.module.1_0"));
+        assertEquals("test.module.1_0", identifier.getName());
     }
 
     @Test
     public void testToString() {
-        ModuleIdentifier identifier = new ModuleIdentifier("test.module", null);
+        ModuleIdentifier identifier = ModuleIdentifier.fromString("test.module");
         assertEquals("module:test.module", identifier.toString());
 
-        identifier = new ModuleIdentifier("test.module", "1.0");
-        assertEquals("module:test.module:1.0", identifier.toString());
+        identifier = ModuleIdentifier.fromString("test.module.1_0");
+        assertEquals("module:test.module.1_0", identifier.toString());
     }
-
 
     @Test
     public void testToUrl() throws Exception {
-        ModuleIdentifier identifier = new ModuleIdentifier("test.module", null);
+        ModuleIdentifier identifier = ModuleIdentifier.fromString("test.module");
         assertEquals(new URL("module", null, -1, "test.module"), identifier.toURL());
 
-        identifier = new ModuleIdentifier("test.module", "1.0");
-        assertEquals(new URL("module", null, -1, "test.module:1.0"), identifier.toURL());
+        identifier = ModuleIdentifier.fromString("test.module.1_0");
+        assertEquals(new URL("module", null, -1, "test.module.1_0"), identifier.toURL());
 
         // With resource roots
-        assertEquals(new URL("module", null, -1, "test.module:1.0/root"), identifier.toURL("root"));
-        assertEquals(new URL("module", null, -1, "test.module:1.0/root?/file"), identifier.toURL("root", "file"));
+        assertEquals(new URL("module", null, -1, "test.module.1_0/root"), identifier.toURL("root"));
+        assertEquals(new URL("module", null, -1, "test.module.1_0/root?/file"), identifier.toURL("root", "file"));
+    }
+
+    @Test
+    public void testInvalidCharacters() throws Exception {
+        try {
+            ModuleIdentifier.fromString("test.module\\test");
+            fail("Should have thrown IllegalArgumentException");
+        } catch (IllegalArgumentException expected) {
+        }
+        try {
+            ModuleIdentifier.fromString("test/module/test");
+            fail("Should have thrown IllegalArgumentException");
+        } catch (IllegalArgumentException expected) {
+        }
+
+        try {
+            ModuleIdentifier.fromString("test,module,test");
+            fail("Should have thrown IllegalArgumentException");
+        } catch (IllegalArgumentException expected) {
+        }
+
     }
 }

@@ -93,7 +93,6 @@ final class ModuleXmlParser {
 
     enum Attribute {
         NAME,
-        VERSION,
         EXPORT,
         PATH,
         OPTIONAL,
@@ -106,7 +105,6 @@ final class ModuleXmlParser {
         static {
             Map<QName, Attribute> attributesMap = new HashMap<QName, Attribute>();
             attributesMap.put(new QName("name"), NAME);
-            attributesMap.put(new QName("version"), VERSION);
             attributesMap.put(new QName("export"), EXPORT);
             attributesMap.put(new QName("path"), PATH);
             attributesMap.put(new QName("optional"), OPTIONAL);
@@ -262,21 +260,19 @@ final class ModuleXmlParser {
     private static void parseModuleContents(final File root, final XMLStreamReader reader, final ModuleSpec.Builder specBuilder) throws XMLStreamException {
         final int count = reader.getAttributeCount();
         String name = null;
-        String version = null;
         final Set<Attribute> required = EnumSet.of(Attribute.NAME);
         for (int i = 0; i < count; i ++) {
             final Attribute attribute = Attribute.of(reader.getAttributeName(i));
             required.remove(attribute);
             switch (attribute) {
                 case NAME:    name = reader.getAttributeValue(i); break;
-                case VERSION: version = reader.getAttributeValue(i); break;
                 default: throw unexpectedContent(reader);
             }
         }
         if (! required.isEmpty()) {
             throw missingAttributes(reader.getLocation(), required);
         }
-        if (! specBuilder.getIdentifier().equals(new ModuleIdentifier(name, version))) {
+        if (! specBuilder.getIdentifier().equals(ModuleIdentifier.fromString(name))) {
             throw invalidModuleName(reader.getLocation(), specBuilder.getIdentifier());
         }
         // xsd:all
@@ -333,7 +329,6 @@ final class ModuleXmlParser {
 
     private static void parseModuleDependency(final XMLStreamReader reader, final ModuleSpec.Builder specBuilder) throws XMLStreamException {
         String name = null;
-        String version = null;
         boolean export = false;
         boolean optional = false;
         final Set<Attribute> required = EnumSet.of(Attribute.NAME);
@@ -343,7 +338,6 @@ final class ModuleXmlParser {
             required.remove(attribute);
             switch (attribute) {
                 case NAME:    name = reader.getAttributeValue(i); break;
-                case VERSION: version = reader.getAttributeValue(i); break;
                 case EXPORT:  export = Boolean.parseBoolean(reader.getAttributeValue(i)); break;
                 case OPTIONAL:optional = Boolean.parseBoolean(reader.getAttributeValue(i)); break;
                 default: throw unexpectedContent(reader);
@@ -352,7 +346,7 @@ final class ModuleXmlParser {
         if (! required.isEmpty()) {
             throw missingAttributes(reader.getLocation(), required);
         }
-        final ModuleDependencySpec.Builder dependencySpecBuilder = ModuleDependencySpec.build(new ModuleIdentifier(name, version))
+        final ModuleDependencySpec.Builder dependencySpecBuilder = ModuleDependencySpec.build(ModuleIdentifier.fromString(name))
             .setOptional(optional);
         final List<PathFilter> importFilters = new ArrayList<PathFilter>();
         final List<PathFilter> exportFilters = new ArrayList<PathFilter>();

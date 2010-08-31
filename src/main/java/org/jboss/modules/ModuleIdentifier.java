@@ -27,6 +27,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.regex.Pattern;
 
 /**
  * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
@@ -36,32 +37,21 @@ public final class ModuleIdentifier implements Serializable {
 
     private static final long serialVersionUID = 118533026624827995L;
 
+    private static Pattern MODULE_NAME_PATTERN = Pattern.compile("[a-zA-Z_][-a-zA-Z0-9_]*(?:\\.[-a-zA-Z0-9_]*)*");
+    
     private final String name;
-    private final String version;
 
     /**
      * The system module.
      */
-    public static final ModuleIdentifier SYSTEM = new ModuleIdentifier("system", null);
+    public static final ModuleIdentifier SYSTEM = new ModuleIdentifier("system");
 
-    public ModuleIdentifier(final String name, final String version) {
-        if (name == null) {
-            throw new IllegalArgumentException("name is null");
-        }
+    private ModuleIdentifier(final String name) {
         this.name = name;
-        this.version = version;
     }
 
     public String getName() {
         return name;
-    }
-
-    public String getVersion() {
-        return version;
-    }
-
-    public boolean hasVersion() {
-        return version != null;
     }
 
     @Override
@@ -70,23 +60,17 @@ public final class ModuleIdentifier implements Serializable {
     }
 
     public boolean equals(final ModuleIdentifier o) {
-        return this == o || o != null && name.equals(o.name) && (version == null ? o.version == null : version.equals(o.version));
+        return this == o || o != null && name.equals(o.name);
     }
 
     @Override
     public int hashCode() {
-        int result = name.hashCode();
-        result = 31 * result + (version != null ? version.hashCode() : 0);
-        return result;
+        return name.hashCode();
     }
 
     @Override
     public String toString() {
-        if (version == null) {
-            return String.format("module:%s", name);
-        } else {
-            return String.format("module:%s:%s", name, version);
-        }
+        return String.format("module:%s", name);
     }
 
     public static ModuleIdentifier fromURL(URL url) throws MalformedURLException {
@@ -95,16 +79,16 @@ public final class ModuleIdentifier implements Serializable {
         }
         final String moduleRootSpec = url.getFile();
         final int si = moduleRootSpec.indexOf('/');
-        final String moduleSpec;
+        final String moduleName;
         if (si == -1) {
-            moduleSpec = moduleRootSpec;
+            moduleName = moduleRootSpec;
         } else {
-            moduleSpec = moduleRootSpec.substring(0, si);
+            moduleName = moduleRootSpec.substring(0, si);
         }
-        if (moduleSpec.length() == 0) {
+        if (moduleName.length() == 0) {
             throw new MalformedURLException("Empty module URL");
         }
-        return fromString(moduleSpec);
+        return fromString(moduleName);
     }
 
     public static ModuleIdentifier fromURI(URI uri) throws URISyntaxException {
@@ -119,46 +103,40 @@ public final class ModuleIdentifier implements Serializable {
         final int sli = moduleFullSpec.indexOf('/');
         final int qi = moduleFullSpec.indexOf('?');
         final int si = qi == -1 ? sli == -1 ? -1 : sli : sli == -1 ? qi : Math.min(sli, qi);
-        final String moduleSpec;
+        final String moduleName;
         if (si == -1) {
-            moduleSpec = moduleFullSpec;
+            moduleName = moduleFullSpec;
         } else {
-            moduleSpec = moduleFullSpec.substring(0, si);
+            moduleName = moduleFullSpec.substring(0, si);
         }
-        if (moduleSpec.length() == 0) {
+        if (moduleName.length() == 0) {
             throw new URISyntaxException(uri.toString(), "Empty module URI");
         }
-        return fromString(moduleSpec);
+        return fromString(moduleName);
     }
 
-    public static ModuleIdentifier fromString(String moduleSpec) throws IllegalArgumentException {
-        if (moduleSpec.length() == 0) {
-            throw new IllegalArgumentException("Empty module specification");
+    public static ModuleIdentifier fromString(String moduleName) throws IllegalArgumentException {
+        if (moduleName == null) {
+            throw new IllegalArgumentException("Module name is null");
         }
-        final int c1 = moduleSpec.indexOf(':');
-        if (c1 == -1) {
-            return new ModuleIdentifier(moduleSpec, null);
+        if (moduleName.length() == 0) {
+            throw new IllegalArgumentException("Empty module name");
         }
-        return new ModuleIdentifier(moduleSpec.substring(0, c1), moduleSpec.substring(c1 + 1));
-    }
-
-    private String toSpecString() {
-        if (version == null) {
-            return name;
-        } else {
-            return name + ":" + version;
+        if (!MODULE_NAME_PATTERN.matcher(moduleName).matches()) {
+            throw new IllegalArgumentException("Module name contains invalid characters");
         }
+        return new ModuleIdentifier(moduleName);
     }
 
     public URL toURL() throws MalformedURLException {
-        return new URL("module", null, -1, toSpecString());
+        return new URL("module", null, -1, name);
     }
 
     public URL toURL(String resourceRoot) throws MalformedURLException {
         if (resourceRoot == null) {
             return toURL();
         } else {
-            return new URL("module", null, -1, toSpecString() + "/" + resourceRoot);
+            return new URL("module", null, -1, name + "/" + resourceRoot);
         }
     }
 
@@ -166,9 +144,9 @@ public final class ModuleIdentifier implements Serializable {
         if (resourceName == null) {
             return toURL(resourceRoot);
         } else if (resourceRoot == null) {
-            return new URL("module", null, -1, toSpecString() + "?/" + resourceName);
+            return new URL("module", null, -1, name + "?/" + resourceName);
         } else {
-            return new URL("module", null, -1, toSpecString() + "/" + resourceRoot + "?/" + resourceName);
+            return new URL("module", null, -1, name + "/" + resourceRoot + "?/" + resourceName);
         }
     }
 

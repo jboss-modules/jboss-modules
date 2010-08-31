@@ -39,7 +39,7 @@ import java.io.OutputStream;
  * @author John Bailey
  */
 public class AbstractModuleTestCase {
-    protected static final ModuleIdentifier MODULE_ID = new ModuleIdentifier("test.test", "1.0");
+    protected static final ModuleIdentifier MODULE_ID = ModuleIdentifier.fromString("test.test");
 
     @BeforeClass
     public static void initUrlHandler() {

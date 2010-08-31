@@ -22,11 +22,12 @@
   ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
   -->
 
-<module xmlns="urn:jboss:module:1.0" name="test.test" version="1.0">
+<module xmlns="urn:jboss:module:1.0" name="test.circular-deps-D">
     <resources>
         <!-- Insert resources here -->
     </resources>
 
     <dependencies>
+        <module name="test.circular-deps-A"/>
     </dependencies>
 </module>

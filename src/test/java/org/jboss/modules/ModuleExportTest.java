@@ -45,10 +45,10 @@ import static org.junit.Assert.assertTrue;
  */
 public class ModuleExportTest extends AbstractModuleTestCase {
 
-    private static final ModuleIdentifier MODULE_A = new ModuleIdentifier("a", "1.0");
-    private static final ModuleIdentifier MODULE_B = new ModuleIdentifier("b", "1.0");
-    private static final ModuleIdentifier MODULE_C = new ModuleIdentifier("c", "1.0");
-    private static final ModuleIdentifier MODULE_D = new ModuleIdentifier("d", "1.0");
+    private static final ModuleIdentifier MODULE_A = ModuleIdentifier.fromString("a");
+    private static final ModuleIdentifier MODULE_B = ModuleIdentifier.fromString("b");
+    private static final ModuleIdentifier MODULE_C = ModuleIdentifier.fromString("c");
+    private static final ModuleIdentifier MODULE_D = ModuleIdentifier.fromString("d");
 
     @Test
     public void testExportDependencies() throws Exception {

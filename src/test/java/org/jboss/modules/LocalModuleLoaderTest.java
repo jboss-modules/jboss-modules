@@ -53,23 +53,23 @@ public class LocalModuleLoaderTest extends AbstractModuleTestCase {
 
     @Test
     public void testLoadWithDeps() throws Exception {
-        Module module = moduleLoader.loadModule(new ModuleIdentifier("test.with-deps", "1.0"));
+        Module module = moduleLoader.loadModule(ModuleIdentifier.fromString("test.with-deps"));
         assertNotNull(module);
     }
 
     @Test
     public void testLoadWithBadDeps() throws Exception {
         try {
-            moduleLoader.loadModule(new ModuleIdentifier("test.bad-deps", "1.0"));
+            moduleLoader.loadModule(ModuleIdentifier.fromString("test.bad-deps.1_0"));
             fail("Should have thrown a ModuleNotFoundException");
         } catch(ModuleNotFoundException expected) {}
     }
 
     @Test
     public void testLoadWithCircularDeps() throws Exception {
-        assertNotNull(moduleLoader.loadModule(new ModuleIdentifier("test.circular-deps-A", "1.0")));
-        assertNotNull(moduleLoader.loadModule(new ModuleIdentifier("test.circular-deps-B", "1.0")));
-        assertNotNull(moduleLoader.loadModule(new ModuleIdentifier("test.circular-deps-C", "1.0")));
-        assertNotNull(moduleLoader.loadModule(new ModuleIdentifier("test.circular-deps-D", "1.0")));
+        assertNotNull(moduleLoader.loadModule(ModuleIdentifier.fromString("test.circular-deps-A")));
+        assertNotNull(moduleLoader.loadModule(ModuleIdentifier.fromString("test.circular-deps-B")));
+        assertNotNull(moduleLoader.loadModule(ModuleIdentifier.fromString("test.circular-deps-C")));
+        assertNotNull(moduleLoader.loadModule(ModuleIdentifier.fromString("test.circular-deps-D")));
     }
 }

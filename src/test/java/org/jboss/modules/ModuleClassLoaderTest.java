@@ -48,16 +48,16 @@ import static org.junit.Assert.fail;
  */
 public class ModuleClassLoaderTest extends AbstractModuleTestCase {
 
-    private static final ModuleIdentifier MODULE_WITH_CONTENT_ID = new ModuleIdentifier("test-with-content", "1.0");
-    private static final ModuleIdentifier MODULE_TO_IMPORT_ID = new ModuleIdentifier("test-to-import", "1.0");
-    private static final ModuleIdentifier MODULE_WITH_EXPORT_ID = new ModuleIdentifier("test-with-export", "1.0");
-    private static final ModuleIdentifier MODULE_WITH_FILTERED_EXPORT_ID = new ModuleIdentifier("test-with-filtered-export", "1.0");
-    private static final ModuleIdentifier MODULE_WITH_FILTERED_IMPORT_ID = new ModuleIdentifier("test-with-filtered-import", "1.0");
+    private static final ModuleIdentifier MODULE_WITH_CONTENT_ID = ModuleIdentifier.fromString("test-with-content");
+    private static final ModuleIdentifier MODULE_TO_IMPORT_ID = ModuleIdentifier.fromString("test-to-import");
+    private static final ModuleIdentifier MODULE_WITH_EXPORT_ID = ModuleIdentifier.fromString("test-with-export");
+    private static final ModuleIdentifier MODULE_WITH_FILTERED_EXPORT_ID = ModuleIdentifier.fromString("test-with-filtered-export");
+    private static final ModuleIdentifier MODULE_WITH_FILTERED_IMPORT_ID = ModuleIdentifier.fromString("test-with-filtered-import");
 
-    private static final ModuleIdentifier MODULE_WITH_CIRCULAR_DEP_A = new ModuleIdentifier("test-with-circular-dep-a", "1.0");
-    private static final ModuleIdentifier MODULE_WITH_CIRCULAR_DEP_B = new ModuleIdentifier("test-with-circular-dep-b", "1.0");
-    private static final ModuleIdentifier MODULE_WITH_CIRCULAR_DEP_C = new ModuleIdentifier("test-with-circular-dep-c", "1.0");
-    private static final ModuleIdentifier MODULE_WITH_CIRCULAR_DEP_D = new ModuleIdentifier("test-with-circular-dep-d", "1.0");
+    private static final ModuleIdentifier MODULE_WITH_CIRCULAR_DEP_A = ModuleIdentifier.fromString("test-with-circular-dep-a");
+    private static final ModuleIdentifier MODULE_WITH_CIRCULAR_DEP_B = ModuleIdentifier.fromString("test-with-circular-dep-b");
+    private static final ModuleIdentifier MODULE_WITH_CIRCULAR_DEP_C = ModuleIdentifier.fromString("test-with-circular-dep-c");
+    private static final ModuleIdentifier MODULE_WITH_CIRCULAR_DEP_D = ModuleIdentifier.fromString("test-with-circular-dep-d");
 
     private TestModuleLoader moduleLoader;
 
