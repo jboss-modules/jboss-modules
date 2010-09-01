@@ -99,12 +99,14 @@ public final class Module {
     /**
      * This module's dependencies.
      */
-    private final Dependency[] dependencies;
+    private volatile Dependency[] dependencies;
     /**
      * This reference exists solely to prevent the {@code FutureModule} from getting GC'd prematurely.
      */
     @SuppressWarnings({ "UnusedDeclaration" })
     private final Object myKey;
+
+    private static final AtomicReferenceFieldUpdater<Module, Dependency[]> dependenciesUpdater = AtomicReferenceFieldUpdater.newUpdater(Module.class, Dependency[].class, "dependencies");
 
     // mutable properties
 
@@ -150,6 +152,17 @@ public final class Module {
 
     Dependency[] getDependencies() {
         return dependencies;
+    }
+
+    void addDependency(Dependency dependency) {
+        Dependency[] oldDeps, newDeps;
+        int len;
+        do {
+            oldDeps = dependencies;
+            len = oldDeps.length;
+            newDeps = Arrays.copyOf(oldDeps, len + 1);
+            newDeps[len] = dependency;
+        } while (! dependenciesUpdater.compareAndSet(this, oldDeps, newDeps));
     }
 
     enum LoadState {
