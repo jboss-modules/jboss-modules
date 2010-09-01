@@ -107,6 +107,15 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
         return findClass(className, false, false);
     }
 
+    /**
+     * Finds the resource with the given name.  The name of a resource is a {@code '/'}-separated path name that
+     * identifies the resource.  If the resource name starts with {@code "java/"} then the parent class loader is used.
+     * Otherwise, this method delegates to {@link #findResource(String, boolean)}.
+     *
+     * @param name the name of the resource
+     * @return the resource URL, or {@code null} if no such resource exists or the invoker does not have adequate
+     * permission to access it
+     */
     public final URL getResource(final String name) {
         if (name.startsWith("java/")) {
             return super.getResource(name);
@@ -114,6 +123,15 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
         return findResource(name, false);
     }
 
+    /**
+     * Finds all available resources with the given name.
+     *
+     * @see #getResource(String)
+     *
+     * @param name the resource name
+     * @return an enumeration over all the resource URLs; if no resources could be found, the enumeration will be empty
+     * @throws IOException if an I/O error occurs
+     */
     public final Enumeration<URL> getResources(final String name) throws IOException {
         if (name.startsWith("java/")) {
             return super.getResources(name);
@@ -121,23 +139,64 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
         return findResources(name, false);
     }
 
+    /**
+     * Find the resource with the given name and exported status.
+     *
+     * @see #getResource(String)
+     *
+     * @param name the resource name
+     * @param exportsOnly {@code true} to consider only exported resources or {@code false} to consider all resources
+     * @return the resource URL
+     */
     protected URL findResource(final String name, final boolean exportsOnly) {
         return null;
     }
 
+    /**
+     * Never used.  {@link ClassLoader#getResource(String)} and related methods can cause a loop condition
+     * when this method is implemented; use {@link #findResource(String, boolean)} instead.
+     *
+     * @param name ignored
+     * @return {@code null} always
+     */
     protected final URL findResource(final String name) {
         // Always return null so that we don't go into a loop from super.getResource*().
         return null;
     }
 
+    /**
+     * Finds the resources with the given name and exported status.
+     *
+     * @see #getResources(String)
+     *
+     * @param name the resource name
+     * @param exportsOnly {@code true} to consider only exported resources or {@code false} to consider all resources
+     * @return the resource enumeration
+     * @throws IOException if an I/O error occurs
+     */
     protected Enumeration<URL> findResources(final String name, final boolean exportsOnly) throws IOException {
         return EMPTY_ENUMERATION;
     }
 
-    protected final Enumeration<URL> findResources(final String name) throws IOException {
-        return findResources(name, false);
+    /**
+     * Never used.  {@link ClassLoader#getResources(String)} and related methods can cause a loop condition
+     * when this method is implemented; use {@link #findResources(String, boolean)} instead.  By default, returns
+     * an empty enumeration.
+     *
+     * @param name ignored
+     * @return an empty enumeration
+     */
+    protected final Enumeration<URL> findResources(final String name) {
+        return EMPTY_ENUMERATION;
     }
 
+    /**
+     * Finds the resource with the given name and exported status, returning the resource content as a stream.
+     *
+     * @param name the resource name
+     * @param exportsOnly {@code true} to consider only exported resources or {@code false} to consider all resources
+     * @return the resource stream, or {@code null} if the resource is not found
+     */
     protected InputStream findResourceAsStream(final String name, final boolean exportsOnly) {
         final URL url = findResource(name, exportsOnly);
         try {
@@ -147,6 +206,13 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
         }
     }
 
+    /**
+     * Returns an input stream for reading the specified resource.  If the resource starts with {@code "java/"}, then
+     * this method delegates to the parent class loader.  Otherwise, this method delegates to {@link #findResourceAsStream(String, boolean)}.
+     *
+     * @param name the resource name
+     * @return the resource stream, or {@code null} if the resource is not found
+     */
     public final InputStream getResourceAsStream(final String name) {
         if (name.startsWith("java/")) {
             return super.getResourceAsStream(name);
@@ -156,6 +222,18 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
 
     // Private members
 
+    /**
+     * Perform a class load operation.  If the class is in the {@code "java."} package or one of its subpackages,
+     * the parent class loader is used to load the class.  Otherwise, this method checks to see if the class loader
+     * object is locked; if so, it unlocks it and submits the request to the class loader thread.  Otherwise, it will
+     * load the class itself by delegating to {@link #findClass(String, boolean, boolean)}.
+     *
+     * @param className the class name
+     * @param exportsOnly {@code true} to consider only exported resources or {@code false} to consider all resources
+     * @param resolve {@code true} to resolve the loaded class
+     * @return the class returned by {@link #findClass(String, boolean, boolean)}
+     * @throws ClassNotFoundException if {@link #findClass(String, boolean, boolean)} throws this exception
+     */
     private Class<?> performLoadClass(String className, boolean exportsOnly, final boolean resolve) throws ClassNotFoundException {
 
         if (className == null) {

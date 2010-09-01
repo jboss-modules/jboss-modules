@@ -267,6 +267,14 @@ public final class ModuleClassLoader extends ConcurrentClassLoader {
         return list.isEmpty() ? Collections.<Resource>emptyList() : list;
     }
 
+    /**
+     * Define a class from a class name and class spec.  Also defines any enclosing {@link Package} instances,
+     * and performs any sealed-package checks.
+     *
+     * @param name the class name
+     * @param classSpec the class spec
+     * @return the new class
+     */
     private Class<?> defineClass(final String name, final ClassSpec classSpec) {
         final ModuleLogger log = Module.log;
         final Module module = this.module;
@@ -329,6 +337,13 @@ public final class ModuleClassLoader extends ConcurrentClassLoader {
         return newClass;
     }
 
+    /**
+     * Define a package from a package spec.
+     *
+     * @param name the package name
+     * @param spec the package specification
+     * @return the new package
+     */
     private Package definePackage(final String name, final PackageSpec spec) {
         final Module module = this.module;
         final ModuleLogger log = Module.log;
@@ -348,6 +363,12 @@ public final class ModuleClassLoader extends ConcurrentClassLoader {
         return pkg;
     }
 
+    /**
+     * Find a library from one of the resource loaders.
+     *
+     * @param libname the library name
+     * @return the full absolute path to the library
+     */
     @Override
     protected String findLibrary(final String libname) {
         final ModuleLogger log = Module.log;
@@ -362,16 +383,19 @@ public final class ModuleClassLoader extends ConcurrentClassLoader {
         return null;
     }
 
+    /** {@inheritDoc} */
     @Override
     public URL findResource(final String name, final boolean exportsOnly) {
         return module.getResource(name, exportsOnly);
     }
 
+    /** {@inheritDoc} */
     @Override
     public Enumeration<URL> findResources(final String name, final boolean exportsOnly) throws IOException {
         return module.getResources(name, exportsOnly);
     }
 
+    /** {@inheritDoc} */
     @Override
     public InputStream findResourceAsStream(final String name, boolean exportsOnly) {
         try {
