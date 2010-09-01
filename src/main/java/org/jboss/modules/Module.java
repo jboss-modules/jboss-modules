@@ -293,12 +293,12 @@ public final class Module {
     }
 
     void link(final Set<Module> visited) throws ModuleLoadException {
-        resolveInitial(new HashSet<Module>());
-        final Dependency[] dependencies = this.dependencies.clone();
-        Collections.shuffle(Arrays.asList(dependencies));
         if (! visited.add(this)) {
             return;
         }
+        resolveInitial(new HashSet<Module>());
+        final Dependency[] dependencies = this.dependencies.clone();
+        Collections.shuffle(Arrays.asList(dependencies));
         for (Dependency dependency : dependencies) {
             dependency.accept(new DependencyVisitor<Void>() {
                 public void visit(final LocalDependency item, final Void param) throws ModuleLoadException {
