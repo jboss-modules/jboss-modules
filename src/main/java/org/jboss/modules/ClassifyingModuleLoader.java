@@ -47,21 +47,27 @@ public final class ClassifyingModuleLoader extends ModuleLoader {
     }
 
     /** {@inheritDoc} */
-    protected ModuleSpec findModule(final ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
+    protected Module preloadModule(final ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
         String name = moduleIdentifier.getName();
         int idx;
         final Map<String, ModuleLoader> delegates = this.delegates;
         for (;;) {
             final ModuleLoader loader = delegates.get(name);
             if (loader != null) {
-                return loader.findModule(moduleIdentifier);
+                return loader.preloadModule(moduleIdentifier);
             }
             idx = name.lastIndexOf('.');
             if (idx == -1) {
-                return defaultLoader.findModule(moduleIdentifier);
+                return defaultLoader.preloadModule(moduleIdentifier);
             }
             name = name.substring(0, idx);
         }
+    }
+
+    /** {@inheritDoc} */
+    protected ModuleSpec findModule(final ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
+        // We have no modules of our own!
+        return null;
     }
 
     /**
