@@ -168,7 +168,7 @@ public final class ModuleSpec {
             private final List<SpecifiedDependency> dependencies = new ArrayList<SpecifiedDependency>(0);
             private LocalLoader fallbackLoader;
 
-            public Builder setFallbackDependency(final LocalLoader fallbackLoader) {
+            public Builder setFallbackLoader(final LocalLoader fallbackLoader) {
                 this.fallbackLoader = fallbackLoader;
                 return this;
             }
