@@ -32,7 +32,6 @@ import java.security.PrivilegedAction;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.Enumeration;
@@ -119,18 +118,16 @@ public final class Module {
 
     /**
      * Construct the system module.
-     *
-     * @param moduleLoader the creating module loader
      */
-    private Module(final ModuleIdentifier identifier, final String mainClassName, final ModuleLoader moduleLoader, final AssertionSetting assertionSetting, final Collection<ResourceLoader> resourceLoaders) {
-        this.moduleLoader = moduleLoader;
-        this.identifier = identifier;
-        this.mainClassName = mainClassName;
+    private Module() {
+        moduleLoader = InitialModuleLoader.INSTANCE;
+        identifier = ModuleIdentifier.SYSTEM;
+        mainClassName = null;
         myKey = null;
         fallbackLoader = null;
         // should be safe, so...
         //noinspection ThisEscapedInObjectConstruction
-        moduleClassLoader = new ModuleClassLoader(this, assertionSetting, resourceLoaders);
+        moduleClassLoader = new ModuleClassLoader(this, AssertionSetting.INHERIT, Collections.<ResourceLoader>emptySet());
     }
 
     /**
@@ -811,7 +808,7 @@ public final class Module {
         static {
             final SystemLocalLoader systemLocalLoader = SystemLocalLoader.getInstance();
             final LocalDependency localDependency = new LocalDependency(PathFilters.acceptAll(), PathFilters.acceptAll(), systemLocalLoader, systemLocalLoader.getPathSet());
-            final Module system = new Module(ModuleIdentifier.SYSTEM, null, InitialModuleLoader.INSTANCE, AssertionSetting.INHERIT, Collections.<ResourceLoader>emptySet());
+            final Module system = new Module();
             system.setDependencies(new ModuleSpec.SpecifiedDependency[] { new ModuleSpec.ImmediateSpecifiedDependency(localDependency) });
             system.getClassLoaderPrivate().recalculate();
             SYSTEM = system;
