@@ -93,6 +93,7 @@ final class ModuleXmlParser {
 
     enum Attribute {
         NAME,
+        SLOT,
         EXPORT,
         PATH,
         OPTIONAL,
@@ -260,19 +261,21 @@ final class ModuleXmlParser {
     private static void parseModuleContents(final File root, final XMLStreamReader reader, final ModuleSpec.Builder specBuilder) throws XMLStreamException {
         final int count = reader.getAttributeCount();
         String name = null;
+        String slot = null;
         final Set<Attribute> required = EnumSet.of(Attribute.NAME);
         for (int i = 0; i < count; i ++) {
             final Attribute attribute = Attribute.of(reader.getAttributeName(i));
             required.remove(attribute);
             switch (attribute) {
                 case NAME:    name = reader.getAttributeValue(i); break;
+                case SLOT:    slot = reader.getAttributeValue(i); break;
                 default: throw unexpectedContent(reader);
             }
         }
         if (! required.isEmpty()) {
             throw missingAttributes(reader.getLocation(), required);
         }
-        if (! specBuilder.getIdentifier().equals(ModuleIdentifier.fromString(name))) {
+        if (! specBuilder.getIdentifier().equals(ModuleIdentifier.create(name, slot))) {
             throw invalidModuleName(reader.getLocation(), specBuilder.getIdentifier());
         }
         // xsd:all
@@ -329,6 +332,7 @@ final class ModuleXmlParser {
 
     private static void parseModuleDependency(final XMLStreamReader reader, final ModuleSpec.Builder specBuilder) throws XMLStreamException {
         String name = null;
+        String slot = null;
         boolean export = false;
         boolean optional = false;
         final Set<Attribute> required = EnumSet.of(Attribute.NAME);
@@ -338,6 +342,7 @@ final class ModuleXmlParser {
             required.remove(attribute);
             switch (attribute) {
                 case NAME:    name = reader.getAttributeValue(i); break;
+                case SLOT:    slot = reader.getAttributeValue(i); break;
                 case EXPORT:  export = Boolean.parseBoolean(reader.getAttributeValue(i)); break;
                 case OPTIONAL:optional = Boolean.parseBoolean(reader.getAttributeValue(i)); break;
                 default: throw unexpectedContent(reader);
@@ -346,7 +351,7 @@ final class ModuleXmlParser {
         if (! required.isEmpty()) {
             throw missingAttributes(reader.getLocation(), required);
         }
-        final ModuleDependencySpec.Builder dependencySpecBuilder = ModuleDependencySpec.build(ModuleIdentifier.fromString(name))
+        final ModuleDependencySpec.Builder dependencySpecBuilder = ModuleDependencySpec.build(ModuleIdentifier.create(name, slot))
             .setOptional(optional);
         final List<PathFilter> importFilters = new ArrayList<PathFilter>();
         final List<PathFilter> exportFilters = new ArrayList<PathFilter>();

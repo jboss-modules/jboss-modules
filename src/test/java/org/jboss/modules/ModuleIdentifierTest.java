@@ -46,49 +46,55 @@ public class ModuleIdentifierTest {
     public void testFromString() throws Exception {
         ModuleIdentifier identifier = ModuleIdentifier.fromString("test.module");
         assertEquals("test.module", identifier.getName());
+        assertEquals("main", identifier.getSlot());
 
-        identifier = ModuleIdentifier.fromString("test.module.1_0");
-        assertEquals("test.module.1_0", identifier.getName());
+        identifier = ModuleIdentifier.fromString("test.module:old");
+        assertEquals("test.module", identifier.getName());
+        assertEquals("old", identifier.getSlot());
     }
 
     @Test
     public void testFromUrl() throws Exception {
         ModuleIdentifier identifier = ModuleIdentifier.fromURL(new URL("module:test.module"));
         assertEquals("test.module", identifier.getName());
-
-        identifier = ModuleIdentifier.fromURL(new URL("module:test.module.1_0"));
-        assertEquals("test.module.1_0", identifier.getName());
+        assertEquals("main", identifier.getSlot());
+        
+        identifier = ModuleIdentifier.fromURL(new URL("module:test.module:old"));
+        assertEquals("test.module", identifier.getName());
+        assertEquals("old", identifier.getSlot());
     }
 
     @Test
     public void testFromUri() throws Exception {
         ModuleIdentifier identifier = ModuleIdentifier.fromURI(new URI("module:test.module"));
         assertEquals("test.module", identifier.getName());
+        assertEquals("main", identifier.getSlot());
 
-        identifier = ModuleIdentifier.fromURI(new URI("module:test.module.1_0"));
-        assertEquals("test.module.1_0", identifier.getName());
+        identifier = ModuleIdentifier.fromURI(new URI("module:test.module:old"));
+        assertEquals("test.module", identifier.getName());
+        assertEquals("old", identifier.getSlot());
     }
 
     @Test
     public void testToString() {
         ModuleIdentifier identifier = ModuleIdentifier.fromString("test.module");
-        assertEquals("module:test.module", identifier.toString());
+        assertEquals("module:test.module:main", identifier.toString());
 
-        identifier = ModuleIdentifier.fromString("test.module.1_0");
-        assertEquals("module:test.module.1_0", identifier.toString());
+        identifier = ModuleIdentifier.fromString("test.module:old");
+        assertEquals("module:test.module:old", identifier.toString());
     }
 
     @Test
     public void testToUrl() throws Exception {
         ModuleIdentifier identifier = ModuleIdentifier.fromString("test.module");
-        assertEquals(new URL("module", null, -1, "test.module"), identifier.toURL());
+        assertEquals(new URL("module", null, -1, "test.module:main"), identifier.toURL());
 
-        identifier = ModuleIdentifier.fromString("test.module.1_0");
-        assertEquals(new URL("module", null, -1, "test.module.1_0"), identifier.toURL());
+        identifier = ModuleIdentifier.fromString("test.module:old");
+        assertEquals(new URL("module", null, -1, "test.module:old"), identifier.toURL());
 
         // With resource roots
-        assertEquals(new URL("module", null, -1, "test.module.1_0/root"), identifier.toURL("root"));
-        assertEquals(new URL("module", null, -1, "test.module.1_0/root?/file"), identifier.toURL("root", "file"));
+        assertEquals(new URL("module", null, -1, "test.module:old/root"), identifier.toURL("root"));
+        assertEquals(new URL("module", null, -1, "test.module:old/root?/file"), identifier.toURL("root", "file"));
     }
 
     @Test
