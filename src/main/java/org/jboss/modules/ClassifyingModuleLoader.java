@@ -54,7 +54,7 @@ public final class ClassifyingModuleLoader extends ModuleLoader {
         for (;;) {
             final ModuleLoader loader = delegates.get(name);
             if (loader != null) {
-                return loader.preloadModule(moduleIdentifier);
+                return preloadModule(moduleIdentifier, loader);
             }
             idx = name.lastIndexOf('.');
             if (idx == -1) {
