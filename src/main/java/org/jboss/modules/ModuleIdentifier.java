@@ -37,7 +37,8 @@ public final class ModuleIdentifier implements Serializable {
 
     private static final long serialVersionUID = 118533026624827995L;
 
-    private static Pattern MODULE_NAME_PATTERN = Pattern.compile("[a-zA-Z_][-a-zA-Z0-9_]*(?:\\.[-a-zA-Z0-9_]*)*");
+    private static Pattern MODULE_NAME_PATTERN = Pattern.compile("[a-zA-Z_][-a-zA-Z0-9_]*(?:\\.[a-zA-Z0-9_][-a-zA-Z0-9_]*)*");
+    private static Pattern SLOT_PATTERN = Pattern.compile("[-a-zA-Z0-9_+*.]+");
     private static String DEFAULT_SLOT = "main";
 
     private final String name;
@@ -146,13 +147,17 @@ public final class ModuleIdentifier implements Serializable {
         if (c1 != -1) {
             name = moduleSpec.substring(0, c1);
             slot = moduleSpec.substring(c1 + 1);
+
+            if (!SLOT_PATTERN.matcher(name).matches()) {
+                throw new IllegalArgumentException("Slot has invalid characters or is empty");
+            }
         } else {
             name = moduleSpec;
             slot = DEFAULT_SLOT;
         }
 
         if (!MODULE_NAME_PATTERN.matcher(name).matches()) {
-            throw new IllegalArgumentException("Module name contains invalid characters");
+            throw new IllegalArgumentException("Module name contains invalid characters, or empty segments");
         }
 
         return new ModuleIdentifier(name, slot);
