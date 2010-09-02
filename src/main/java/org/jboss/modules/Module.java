@@ -127,7 +127,7 @@ public final class Module {
         fallbackLoader = null;
         // should be safe, so...
         //noinspection ThisEscapedInObjectConstruction
-        moduleClassLoader = new ModuleClassLoader(this, AssertionSetting.INHERIT, Collections.<ResourceLoader>emptySet());
+        moduleClassLoader = new ModuleClassLoader(this, AssertionSetting.INHERIT, ModuleClassLoader.NO_RESOURCE_LOADERS);
     }
 
     /**
@@ -146,7 +146,7 @@ public final class Module {
         mainClassName = spec.getMainClass();
         fallbackLoader = spec.getFallbackLoader();
         //noinspection ThisEscapedInObjectConstruction
-        moduleClassLoader = new ModuleClassLoader(this, spec.getAssertionSetting(), Arrays.asList(spec.getResourceLoaders()));
+        moduleClassLoader = new ModuleClassLoader(this, spec.getAssertionSetting(), spec.getResourceLoaders());
     }
 
     Dependency[] getDependencies() {

@@ -27,7 +27,6 @@ import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -54,9 +53,11 @@ public final class ModuleClassLoader extends ConcurrentClassLoader {
         }
     }
 
+    static final ResourceLoader[] NO_RESOURCE_LOADERS = new ResourceLoader[0];
+
     private final Module module;
     private volatile Paths<ResourceLoader> paths = Paths.none();
-    private final Collection<ResourceLoader> resourceLoaders;
+    private volatile ResourceLoader[] resourceLoaders = NO_RESOURCE_LOADERS;
     private final LocalLoader localLoader = new LocalLoader() {
         public Class<?> loadClassLocal(final String name, final boolean resolve) {
             try {
@@ -87,7 +88,7 @@ public final class ModuleClassLoader extends ConcurrentClassLoader {
      * @param setting the assertion setting
      * @param resourceLoaders the collection of resource loaders
      */
-    ModuleClassLoader(final Module module, final AssertionSetting setting, final Collection<ResourceLoader> resourceLoaders) {
+    ModuleClassLoader(final Module module, final AssertionSetting setting, final ResourceLoader[] resourceLoaders) {
         this.module = module;
         this.resourceLoaders = resourceLoaders;
         if (setting != AssertionSetting.INHERIT) {
@@ -121,6 +122,10 @@ public final class ModuleClassLoader extends ConcurrentClassLoader {
             }
         }
         paths = new Paths<ResourceLoader>(allPaths, exportedPaths);
+    }
+
+    void setResourceLoaders(final ResourceLoader[] resourceLoaders) {
+        this.resourceLoaders = resourceLoaders;
     }
 
     LocalLoader getLocalLoader() {
