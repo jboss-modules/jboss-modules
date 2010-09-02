@@ -809,8 +809,8 @@ public final class Module {
             final SystemLocalLoader systemLocalLoader = SystemLocalLoader.getInstance();
             final LocalDependency localDependency = new LocalDependency(PathFilters.acceptAll(), PathFilters.acceptAll(), systemLocalLoader, systemLocalLoader.getPathSet());
             final Module system = new Module();
-            system.setDependencies(new ModuleSpec.SpecifiedDependency[] { new ModuleSpec.ImmediateSpecifiedDependency(localDependency) });
             system.getClassLoaderPrivate().recalculate();
+            system.setDependencies(new ModuleSpec.SpecifiedDependency[] { new ModuleSpec.ImmediateSpecifiedDependency(localDependency) });
             SYSTEM = system;
         }
 
