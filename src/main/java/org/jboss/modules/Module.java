@@ -117,7 +117,7 @@ public final class Module {
     /**
      * The complete collection of all paths.  Initially, the paths are uninitialized.
      */
-    private volatile Paths paths = Paths.NONE;
+    private volatile Paths<LocalLoader> paths = Paths.none();
 
     /**
      * Construct an unresolved instance from a module spec.
@@ -291,7 +291,7 @@ public final class Module {
         for (Dependency dependency : dependencies) {
             dependency.accept(nearVisitor, null);
         }
-        paths = new Paths(allPaths, exportedPaths);
+        paths = new Paths<LocalLoader>(allPaths, exportedPaths);
         loadStateUpdater.compareAndSet(this, LoadState.LOADED, LoadState.RESOLVED);
     }
 
@@ -481,7 +481,7 @@ public final class Module {
      * @return the paths that are exported by this module
      */
     public Set<String> getExportedPaths() {
-        return Collections.unmodifiableSet(paths.exportedPaths.keySet());
+        return Collections.unmodifiableSet(paths.getExportedPaths().keySet());
     }
 
     /**
@@ -592,7 +592,7 @@ public final class Module {
             }
         }
         final String path = pathOfClass(className);
-        final Map<String, List<LocalLoader>> paths = exportsOnly ? this.paths.exportedPaths : this.paths.allPaths;
+        final Map<String, List<LocalLoader>> paths = this.paths.getPaths(exportsOnly);
         final List<LocalLoader> loaders = paths.get(path);
         if (loaders == null) {
             return null;
@@ -624,7 +624,7 @@ public final class Module {
         }
         log.trace("Attempting to find resource %s in %s", name, this);
         final String path = pathOf(name);
-        final Map<String, List<LocalLoader>> paths = exportsOnly ? this.paths.exportedPaths : this.paths.allPaths;
+        final Map<String, List<LocalLoader>> paths = this.paths.getPaths(exportsOnly);
         final List<LocalLoader> loaders = paths.get(path);
         if (loaders == null) {
             return null;
@@ -662,7 +662,7 @@ public final class Module {
         }
         log.trace("Attempting to find all resources %s in %s", name, this);
         final String path = pathOf(name);
-        final Map<String, List<LocalLoader>> paths = exportsOnly ? this.paths.exportedPaths : this.paths.allPaths;
+        final Map<String, List<LocalLoader>> paths = this.paths.getPaths(exportsOnly);
         final List<LocalLoader> loaders = paths.get(path);
         if (loaders == null) {
             return ConcurrentClassLoader.EMPTY_ENUMERATION;
@@ -823,25 +823,5 @@ public final class Module {
 
         private SystemModuleHolder() {
         }
-    }
-
-    private static final class Paths {
-        private final Map<String, List<LocalLoader>> allPaths;
-        private final Map<String, List<LocalLoader>> exportedPaths;
-
-        private Paths(final Map<String, List<LocalLoader>> allPaths, final Map<String, List<LocalLoader>> exportedPaths) {
-            this.allPaths = allPaths;
-            this.exportedPaths = exportedPaths;
-        }
-
-        Map<String, List<LocalLoader>> getAllPaths() {
-            return allPaths;
-        }
-
-        Map<String, List<LocalLoader>> getExportedPaths() {
-            return exportedPaths;
-        }
-
-        static final Paths NONE = new Paths(Collections.<String, List<LocalLoader>>emptyMap(), Collections.<String, List<LocalLoader>>emptyMap());
     }
 }

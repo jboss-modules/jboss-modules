@@ -55,8 +55,7 @@ public final class ModuleClassLoader extends ConcurrentClassLoader {
     }
 
     private final Module module;
-    private final Map<String, List<ResourceLoader>> exportedPaths;
-    private final Map<String, List<ResourceLoader>> allPaths;
+    private volatile Paths<ResourceLoader> paths = Paths.none();
     private final Collection<ResourceLoader> resourceLoaders;
     private final LocalLoader localLoader = new LocalLoader() {
         public Class<?> loadClassLocal(final String name, final boolean resolve) {
@@ -111,8 +110,7 @@ public final class ModuleClassLoader extends ConcurrentClassLoader {
                 }
             }
         }
-        this.exportedPaths = exportedPaths;
-        this.allPaths = allPaths;
+        paths = new Paths<ResourceLoader>(allPaths, exportedPaths);
         exportPathFilter = PathFilters.in(exportedPaths.keySet());
     }
 
@@ -167,7 +165,7 @@ public final class ModuleClassLoader extends ConcurrentClassLoader {
             return loadedClass;
         }
 
-        final Map<String, List<ResourceLoader>> paths = exportOnly ? exportedPaths : allPaths;
+        final Map<String, List<ResourceLoader>> paths = this.paths.getPaths(exportOnly);
 
         log.trace("Loading class %s locally from %s", className, module);
 
@@ -220,7 +218,7 @@ public final class ModuleClassLoader extends ConcurrentClassLoader {
      */
     Resource loadResourceLocal(final String root, final String name, final boolean exportsOnly) {
 
-        final Map<String, List<ResourceLoader>> paths = exportsOnly ? exportedPaths : allPaths;
+        final Map<String, List<ResourceLoader>> paths = this.paths.getPaths(exportsOnly);
 
         final String path = Module.pathOf(name);
 
@@ -247,7 +245,7 @@ public final class ModuleClassLoader extends ConcurrentClassLoader {
      * @return the list of resources
      */
     List<Resource> loadResourceLocal(final String name, final boolean exportsOnly) {
-        final Map<String, List<ResourceLoader>> paths = exportsOnly ? exportedPaths : allPaths;
+        final Map<String, List<ResourceLoader>> paths = this.paths.getPaths(exportsOnly);
 
         final String path = Module.pathOf(name);
 
@@ -294,7 +292,7 @@ public final class ModuleClassLoader extends ConcurrentClassLoader {
                     throw new SecurityException("sealing violation: package " + packageName + " is sealed");
                 }
             } else {
-                final Map<String, List<ResourceLoader>> paths = allPaths;
+                final Map<String, List<ResourceLoader>> paths = this.paths.getAllPaths();
                 final String path = Module.pathOf(name);
                 final List<ResourceLoader> loaders = paths.get(path);
                 if (loaders != null) {
@@ -448,6 +446,6 @@ public final class ModuleClassLoader extends ConcurrentClassLoader {
     }
 
     Set<String> getPaths() {
-        return allPaths.keySet();
+        return paths.getAllPaths().keySet();
     }
 }
