@@ -39,13 +39,15 @@ public final class ModuleSpec {
     private final AssertionSetting assertionSetting;
     private final ResourceLoader[] resourceLoaders;
     private final SpecifiedDependency[] dependencies;
+    private final LocalLoader fallbackLoader;
 
-    private ModuleSpec(final ModuleIdentifier moduleIdentifier, final String mainClass, final AssertionSetting assertionSetting, final ResourceLoader[] resourceLoaders, final SpecifiedDependency[] dependencies) {
+    private ModuleSpec(final ModuleIdentifier moduleIdentifier, final String mainClass, final AssertionSetting assertionSetting, final ResourceLoader[] resourceLoaders, final SpecifiedDependency[] dependencies, final LocalLoader fallbackLoader) {
         this.moduleIdentifier = moduleIdentifier;
         this.mainClass = mainClass;
         this.assertionSetting = assertionSetting;
         this.resourceLoaders = resourceLoaders;
         this.dependencies = dependencies;
+        this.fallbackLoader = fallbackLoader;
     }
 
     /**
@@ -71,6 +73,10 @@ public final class ModuleSpec {
 
     SpecifiedDependency[] getDependencies() {
         return dependencies;
+    }
+
+    LocalLoader getFallbackLoader() {
+        return fallbackLoader;
     }
 
     /**
@@ -160,6 +166,12 @@ public final class ModuleSpec {
             private AssertionSetting assertionSetting = AssertionSetting.INHERIT;
             private final List<ResourceLoader> resourceLoaders = new ArrayList<ResourceLoader>(0);
             private final List<SpecifiedDependency> dependencies = new ArrayList<SpecifiedDependency>(0);
+            private LocalLoader fallbackLoader;
+
+            public Builder setFallbackDependency(final LocalLoader fallbackLoader) {
+                this.fallbackLoader = fallbackLoader;
+                return this;
+            }
 
             public Builder addLocalDependency(final LocalDependencySpec spec) {
                 dependencies.add(new ImmediateSpecifiedDependency(
@@ -214,7 +226,7 @@ public final class ModuleSpec {
                 if (! localAdded) {
                     addLocalDependency();
                 }
-                return new ModuleSpec(moduleIdentifier, mainClass, assertionSetting, resourceLoaders.toArray(new ResourceLoader[resourceLoaders.size()]), dependencies.toArray(new SpecifiedDependency[dependencies.size()]));
+                return new ModuleSpec(moduleIdentifier, mainClass, assertionSetting, resourceLoaders.toArray(new ResourceLoader[resourceLoaders.size()]), dependencies.toArray(new SpecifiedDependency[dependencies.size()]), fallbackLoader);
             }
 
             @Override

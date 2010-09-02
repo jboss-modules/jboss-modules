@@ -105,6 +105,10 @@ public final class Module {
      */
     @SuppressWarnings({ "UnusedDeclaration" })
     private final Object myKey;
+    /**
+     * The fallback local loader, if any is defined.
+     */
+    private final LocalLoader fallbackLoader;
 
     private static final AtomicReferenceFieldUpdater<Module, Dependency[]> dependenciesUpdater = AtomicReferenceFieldUpdater.newUpdater(Module.class, Dependency[].class, "dependencies");
 
@@ -130,6 +134,7 @@ public final class Module {
         //noinspection ThisEscapedInObjectConstruction
         moduleClassLoader = new ModuleClassLoader(this, assertionSetting, resourceLoaders);
         this.dependencies = dependencies;
+        fallbackLoader = null;
     }
 
 
@@ -140,6 +145,7 @@ public final class Module {
         // Initialize state from the spec.
         identifier = spec.getModuleIdentifier();
         mainClassName = spec.getMainClass();
+        fallbackLoader = spec.getFallbackLoader();
         //noinspection ThisEscapedInObjectConstruction
         moduleClassLoader = new ModuleClassLoader(this, spec.getAssertionSetting(), Arrays.asList(spec.getResourceLoaders()));
         final List<Dependency> dependencies = new ArrayList<Dependency>();
@@ -152,6 +158,10 @@ public final class Module {
 
     Dependency[] getDependencies() {
         return dependencies;
+    }
+
+    LocalLoader getFallbackLoader() {
+        return fallbackLoader;
     }
 
     void addDependency(Dependency dependency) {
@@ -594,6 +604,10 @@ public final class Module {
                 return clazz;
             }
         }
+        final LocalLoader fallbackLoader = this.fallbackLoader;
+        if (fallbackLoader != null) {
+            return fallbackLoader.loadClassLocal(className, resolve);
+        }
         return null;
     }
 
@@ -617,6 +631,13 @@ public final class Module {
         }
         for (LocalLoader loader : loaders) {
             final List<Resource> resourceList = loader.loadResourceLocal(name);
+            for (Resource resource : resourceList) {
+                return resource.getURL();
+            }
+        }
+        final LocalLoader fallbackLoader = this.fallbackLoader;
+        if (fallbackLoader != null) {
+            final List<Resource> resourceList = fallbackLoader.loadResourceLocal(name);
             for (Resource resource : resourceList) {
                 return resource.getURL();
             }
@@ -649,6 +670,13 @@ public final class Module {
         final List<URL> list = new ArrayList<URL>();
         for (LocalLoader loader : loaders) {
             final List<Resource> resourceList = loader.loadResourceLocal(name);
+            for (Resource resource : resourceList) {
+                list.add(resource.getURL());
+            }
+        }
+        final LocalLoader fallbackLoader = this.fallbackLoader;
+        if (fallbackLoader != null) {
+            final List<Resource> resourceList = fallbackLoader.loadResourceLocal(name);
             for (Resource resource : resourceList) {
                 list.add(resource.getURL());
             }
