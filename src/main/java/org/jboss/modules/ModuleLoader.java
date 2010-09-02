@@ -167,6 +167,8 @@ public abstract class ModuleLoader {
             throw new IllegalStateException("Attempted to define a module from outside loadModuleLocal");
         }
         final Module module = new Module(moduleSpec, this, futureModule);
+        module.setDependencies(moduleSpec.getDependencies());
+        module.getClassLoaderPrivate().recalculate();
         try {
             futureModule.setModule(module);
             return module;

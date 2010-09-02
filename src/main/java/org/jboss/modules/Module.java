@@ -110,8 +110,6 @@ public final class Module {
      */
     private final LocalLoader fallbackLoader;
 
-    private static final AtomicReferenceFieldUpdater<Module, Dependency[]> dependenciesUpdater = AtomicReferenceFieldUpdater.newUpdater(Module.class, Dependency[].class, "dependencies");
-
     // mutable properties
 
     /**
@@ -120,25 +118,28 @@ public final class Module {
     private volatile Paths<LocalLoader> paths = Paths.none();
 
     /**
-     * Construct an unresolved instance from a module spec.
+     * Construct the system module.
      *
      * @param moduleLoader the creating module loader
-     * @param myKey
      */
-    Module(final ModuleIdentifier identifier, final String mainClassName, final ModuleLoader moduleLoader, final AssertionSetting assertionSetting, final Collection<ResourceLoader> resourceLoaders, final Dependency[] dependencies, final Object myKey) {
+    private Module(final ModuleIdentifier identifier, final String mainClassName, final ModuleLoader moduleLoader, final AssertionSetting assertionSetting, final Collection<ResourceLoader> resourceLoaders) {
         this.moduleLoader = moduleLoader;
         this.identifier = identifier;
         this.mainClassName = mainClassName;
-        this.myKey = myKey;
+        myKey = null;
+        fallbackLoader = null;
         // should be safe, so...
         //noinspection ThisEscapedInObjectConstruction
         moduleClassLoader = new ModuleClassLoader(this, assertionSetting, resourceLoaders);
-        moduleClassLoader.recalculate();
-        this.dependencies = dependencies;
-        fallbackLoader = null;
     }
 
-
+    /**
+     * Construct a new instance from a module specification.
+     *
+     * @param spec the module specification
+     * @param moduleLoader the module loader
+     * @param myKey the key to keep a strong reference to
+     */
     Module(final ModuleSpec spec, final ModuleLoader moduleLoader, final Object myKey) {
         this.moduleLoader = moduleLoader;
         this.myKey = myKey;
@@ -149,13 +150,6 @@ public final class Module {
         fallbackLoader = spec.getFallbackLoader();
         //noinspection ThisEscapedInObjectConstruction
         moduleClassLoader = new ModuleClassLoader(this, spec.getAssertionSetting(), Arrays.asList(spec.getResourceLoaders()));
-        moduleClassLoader.recalculate();
-        final List<Dependency> dependencies = new ArrayList<Dependency>();
-        for (ModuleSpec.SpecifiedDependency specifiedDependency : spec.getDependencies()) {
-            //noinspection ThisEscapedInObjectConstruction
-            dependencies.add(specifiedDependency.getDependency(this));
-        }
-        this.dependencies = dependencies.toArray(new Dependency[dependencies.size()]);
     }
 
     Dependency[] getDependencies() {
@@ -166,15 +160,12 @@ public final class Module {
         return fallbackLoader;
     }
 
-    void addDependency(Dependency dependency) {
-        Dependency[] oldDeps, newDeps;
-        int len;
-        do {
-            oldDeps = dependencies;
-            len = oldDeps.length;
-            newDeps = Arrays.copyOf(oldDeps, len + 1);
-            newDeps[len] = dependency;
-        } while (! dependenciesUpdater.compareAndSet(this, oldDeps, newDeps));
+    void setDependencies(ModuleSpec.SpecifiedDependency[] specifiedDependencies) {
+        final List<Dependency> dependencies = new ArrayList<Dependency>();
+        for (ModuleSpec.SpecifiedDependency specifiedDependency : specifiedDependencies) {
+            dependencies.add(specifiedDependency.getDependency(this));
+        }
+        this.dependencies = dependencies.toArray(new Dependency[dependencies.size()]);
     }
 
     enum LoadState {
@@ -820,7 +811,10 @@ public final class Module {
         static {
             final SystemLocalLoader systemLocalLoader = SystemLocalLoader.getInstance();
             final LocalDependency localDependency = new LocalDependency(PathFilters.acceptAll(), PathFilters.acceptAll(), systemLocalLoader, systemLocalLoader.getPathSet());
-            SYSTEM = new Module(ModuleIdentifier.SYSTEM, null, InitialModuleLoader.INSTANCE, AssertionSetting.INHERIT, Collections.<ResourceLoader>emptySet(), new Dependency[] { localDependency }, null);
+            final Module system = new Module(ModuleIdentifier.SYSTEM, null, InitialModuleLoader.INSTANCE, AssertionSetting.INHERIT, Collections.<ResourceLoader>emptySet());
+            system.setDependencies(new ModuleSpec.SpecifiedDependency[] { new ModuleSpec.ImmediateSpecifiedDependency(localDependency) });
+            system.getClassLoaderPrivate().recalculate();
+            SYSTEM = system;
         }
 
         private SystemModuleHolder() {
