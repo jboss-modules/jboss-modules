@@ -133,6 +133,7 @@ public final class Module {
         // should be safe, so...
         //noinspection ThisEscapedInObjectConstruction
         moduleClassLoader = new ModuleClassLoader(this, assertionSetting, resourceLoaders);
+        moduleClassLoader.recalculate();
         this.dependencies = dependencies;
         fallbackLoader = null;
     }
@@ -148,6 +149,7 @@ public final class Module {
         fallbackLoader = spec.getFallbackLoader();
         //noinspection ThisEscapedInObjectConstruction
         moduleClassLoader = new ModuleClassLoader(this, spec.getAssertionSetting(), Arrays.asList(spec.getResourceLoaders()));
+        moduleClassLoader.recalculate();
         final List<Dependency> dependencies = new ArrayList<Dependency>();
         for (ModuleSpec.SpecifiedDependency specifiedDependency : spec.getDependencies()) {
             //noinspection ThisEscapedInObjectConstruction

@@ -74,7 +74,11 @@ public final class ModuleClassLoader extends ConcurrentClassLoader {
             return ModuleClassLoader.this.loadResourceLocal(root, name, false);
         }
     };
-    private final PathFilter exportPathFilter;
+    private final PathFilter exportPathFilter = new PathFilter() {
+        public boolean accept(final String path) {
+            return paths.getExportedPaths().containsKey(path);
+        }
+    };
 
     /**
      * Construct a new instance.  The collection objects passed in then belong to this class loader instance.
@@ -89,6 +93,12 @@ public final class ModuleClassLoader extends ConcurrentClassLoader {
         if (setting != AssertionSetting.INHERIT) {
             setDefaultAssertionStatus(setting == AssertionSetting.ENABLED);
         }
+    }
+
+    /**
+     * Recalculate the path maps for this module class loader.
+     */
+    void recalculate() {
         final Map<String, List<ResourceLoader>> exportedPaths = new HashMap<String, List<ResourceLoader>>();
         final Map<String, List<ResourceLoader>> allPaths = new HashMap<String, List<ResourceLoader>>();
         for (ResourceLoader loader : resourceLoaders) {
@@ -111,7 +121,6 @@ public final class ModuleClassLoader extends ConcurrentClassLoader {
             }
         }
         paths = new Paths<ResourceLoader>(allPaths, exportedPaths);
-        exportPathFilter = PathFilters.in(exportedPaths.keySet());
     }
 
     LocalLoader getLocalLoader() {
