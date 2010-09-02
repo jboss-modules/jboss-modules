@@ -58,7 +58,7 @@ public final class ClassifyingModuleLoader extends ModuleLoader {
             }
             idx = name.lastIndexOf('.');
             if (idx == -1) {
-                return defaultLoader.preloadModule(moduleIdentifier);
+                return preloadModule(moduleIdentifier, defaultLoader);
             }
             name = name.substring(0, idx);
         }
