@@ -148,7 +148,7 @@ public final class ModuleIdentifier implements Serializable {
             name = moduleSpec.substring(0, c1);
             slot = moduleSpec.substring(c1 + 1);
 
-            if (!SLOT_PATTERN.matcher(name).matches()) {
+            if (!SLOT_PATTERN.matcher(slot).matches()) {
                 throw new IllegalArgumentException("Slot has invalid characters or is empty");
             }
         } else {

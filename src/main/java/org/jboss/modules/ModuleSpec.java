@@ -151,6 +151,15 @@ public final class ModuleSpec {
          * @return the module identifier
          */
         ModuleIdentifier getIdentifier();
+
+        /**
+         * Sets a "fall-back" loader that will attempt to load a class if all other mechanisms
+         * are unsuccessful.
+         *
+         * @param fallbackLoader the fall-back loader
+         * @return this builder
+         */
+        Builder setFallbackLoader(final LocalLoader fallbackLoader);
     }
 
     /**
