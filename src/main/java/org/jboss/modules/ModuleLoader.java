@@ -136,6 +136,30 @@ public abstract class ModuleLoader {
     }
 
     /**
+     * Unload a module from this module loader.  Note that this has no effect on existing modules which refer to the
+     * module being unloaded.  Also, only modules from the current module loader can be unloaded.  Unloading the same
+     * module more than once has no additional effect.  This method only removes the mapping for the module; any running
+     * threads which are currently accessing or linked to the module will continue to function, however attempts to load
+     * this module will fail until a new module is loaded with the same name.  Once this happens, if all references to
+     * the previous module are not cleared, the same module may be loaded more than once, causing possible class duplication
+     * and class cast exceptions if proper care is not taken.
+     *
+     * @param module the module to unload
+     * @throws SecurityException if an attempt is made to unload a module which does not belong to this module loader
+     */
+    protected final void unloadModuleLocal(Module module) throws SecurityException {
+        final ModuleLoader moduleLoader = module.getModuleLoader();
+        if (moduleLoader != this) {
+            throw new SecurityException("Attempted to unload " + module + " from a different module loader");
+        }
+        final ModuleIdentifier id = module.getIdentifier();
+        final FutureModule futureModule = moduleMap.get(id);
+        if (futureModule.module == module) {
+            moduleMap.remove(id, futureModule);
+        }
+    }
+
+    /**
      * Find a Module's specification in this ModuleLoader by its identifier.  This should be overriden by sub-classes
      * to implement the Module loading strategy for this loader.
      * <p/>
