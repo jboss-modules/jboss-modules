@@ -29,13 +29,18 @@ import java.util.Map;
 /**
  * A pair of path maps.
  *
+ * @param <T> the type of object that each path refers to
+ * @param <A> the type of the source object used to calculate the path maps
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-final class Paths<T> {
+final class Paths<T, A> {
+    private final A[] sourceList;
     private final Map<String, List<T>> allPaths;
     private final Map<String, List<T>> exportedPaths;
 
-    Paths(final Map<String, List<T>> allPaths, final Map<String, List<T>> exportedPaths) {
+    Paths(final A[] sourceList, final Map<String, List<T>> allPaths, final Map<String, List<T>> exportedPaths) {
+        this.sourceList = sourceList;
         this.allPaths = allPaths;
         this.exportedPaths = exportedPaths;
     }
@@ -52,11 +57,16 @@ final class Paths<T> {
         return export ? exportedPaths : allPaths;
     }
 
-    @SuppressWarnings({ "unchecked" })
-    static final Paths NONE = new Paths(Collections.<String, List<Object>>emptyMap(), Collections.<String, List<Object>>emptyMap());
+    A[] getSourceList(A[] defVal) {
+        final A[] sourceList = this.sourceList;
+        return sourceList == null ? defVal : sourceList;
+    }
 
     @SuppressWarnings({ "unchecked" })
-    static <T> Paths<T> none() {
-        return (Paths<T>) NONE;
+    static final Paths NONE = new Paths(null, Collections.<String, List<Object>>emptyMap(), Collections.<String, List<Object>>emptyMap());
+
+    @SuppressWarnings({ "unchecked" })
+    static <T, A> Paths<T, A> none() {
+        return (Paths<T, A>) NONE;
     }
 }

@@ -96,10 +96,6 @@ public final class Module {
      */
     private final ModuleLoader moduleLoader;
     /**
-     * This module's dependencies.
-     */
-    private volatile Dependency[] dependencies;
-    /**
      * This reference exists solely to prevent the {@code FutureModule} from getting GC'd prematurely.
      */
     @SuppressWarnings({ "UnusedDeclaration" })
@@ -111,10 +107,20 @@ public final class Module {
 
     // mutable properties
 
+    private static final Dependency[] NO_DEPENDENCIES = new Dependency[0];
+
     /**
      * The complete collection of all paths.  Initially, the paths are uninitialized.
      */
-    private volatile Paths<LocalLoader> paths = Paths.none();
+    private volatile Paths<LocalLoader, Dependency> paths = Paths.none();
+
+    private static final AtomicReferenceFieldUpdater<Module, Paths<LocalLoader, Dependency>> pathsUpdater
+            = unsafeCast(AtomicReferenceFieldUpdater.newUpdater(Module.class, Paths.class, "paths"));
+
+    @SuppressWarnings({ "unchecked" })
+    private static <A, B> AtomicReferenceFieldUpdater<A, B> unsafeCast(AtomicReferenceFieldUpdater<?, ?> updater) {
+        return (AtomicReferenceFieldUpdater<A, B>) updater;
+    }
 
     /**
      * Construct the system module.
@@ -149,22 +155,6 @@ public final class Module {
         moduleClassLoader = new ModuleClassLoader(this, spec.getAssertionSetting(), spec.getResourceLoaders());
     }
 
-    Dependency[] getDependencies() {
-        return dependencies;
-    }
-
-    LocalLoader getFallbackLoader() {
-        return fallbackLoader;
-    }
-
-    void setDependencies(ModuleSpec.SpecifiedDependency[] specifiedDependencies) {
-        final List<Dependency> dependencies = new ArrayList<Dependency>();
-        for (ModuleSpec.SpecifiedDependency specifiedDependency : specifiedDependencies) {
-            dependencies.add(specifiedDependency.getDependency(this));
-        }
-        this.dependencies = dependencies.toArray(new Dependency[dependencies.size()]);
-    }
-
     enum LoadState {
 
         /**
@@ -185,14 +175,27 @@ public final class Module {
 
     private static final AtomicReferenceFieldUpdater<Module, LoadState> loadStateUpdater = AtomicReferenceFieldUpdater.newUpdater(Module.class, LoadState.class, "loadState");
 
-    void resolveInitial(Set<Module> visited) throws ModuleLoadException {
+    private void resolveInitial() throws ModuleLoadException {
         if (loadState.compareTo(LoadState.RESOLVED) >= 0) {
             return;
         }
-        resolve(visited);
+        resolve();
     }
 
-    void resolve(final Set<Module> visited) throws ModuleLoadException {
+    void resolve() throws ModuleLoadException {
+        resolve(new HashSet<Module>());
+    }
+
+    private void setDependencies(final Dependency[] dependencies) throws ModuleLoadException {
+        setDependencies(new HashSet<Module>(), paths, dependencies);
+    }
+
+    private void resolve(final Set<Module> visited) throws ModuleLoadException {
+        final Paths<LocalLoader, Dependency> paths = this.paths;
+        setDependencies(visited, paths, paths.getSourceList(NO_DEPENDENCIES));
+    }
+
+    private void setDependencies(final Set<Module> visited, final Paths<LocalLoader, Dependency> paths, final Dependency[] dependencies) throws ModuleLoadException {
         if (! visited.add(this)) {
             return;
         }
@@ -236,7 +239,7 @@ public final class Module {
                     filterSeries.addLast(item.getImportFilter());
                     filterSeries.addLast(exportFilter);
                     try {
-                        for (Dependency dep : module.dependencies) {
+                        for (Dependency dep : module.getDependencies()) {
                             dep.accept(this, firstExportFilter);
                         }
                     } finally {
@@ -270,7 +273,7 @@ public final class Module {
                 filterSeries.addLast(item.getImportFilter());
                 final PathFilter exportFilter = item.getExportFilter();
                 try {
-                    for (Dependency dep : module.dependencies) {
+                    for (Dependency dep : module.getDependencies()) {
                         dep.accept(distantVisitor, exportFilter);
                     }
                 } finally {
@@ -278,11 +281,36 @@ public final class Module {
                 }
             }
         };
+
         for (Dependency dependency : dependencies) {
             dependency.accept(nearVisitor, null);
         }
-        paths = new Paths<LocalLoader>(allPaths, exportedPaths);
+        pathsUpdater.compareAndSet(this, paths, new Paths<LocalLoader, Dependency>(dependencies, allPaths, exportedPaths));
         loadStateUpdater.compareAndSet(this, LoadState.LOADED, LoadState.RESOLVED);
+    }
+
+    Dependency[] getDependencies() {
+        return paths.getSourceList(NO_DEPENDENCIES);
+    }
+
+    LocalLoader getFallbackLoader() {
+        return fallbackLoader;
+    }
+
+    void setDependencies(ModuleSpec.SpecifiedDependency[] specifiedDependencies) throws ModuleLoadException {
+        final List<Dependency> dependencies = new ArrayList<Dependency>();
+        for (ModuleSpec.SpecifiedDependency specifiedDependency : specifiedDependencies) {
+            dependencies.add(specifiedDependency.getDependency(this));
+        }
+        setDependencies(dependencies.toArray(new Dependency[dependencies.size()]));
+    }
+
+    void setInitialDependencies(final ModuleSpec.SpecifiedDependency[] specifiedDependencies) {
+        final List<Dependency> dependencies = new ArrayList<Dependency>();
+        for (ModuleSpec.SpecifiedDependency specifiedDependency : specifiedDependencies) {
+            dependencies.add(specifiedDependency.getDependency(this));
+        }
+        paths = new Paths<LocalLoader, Dependency>(dependencies.toArray(new Dependency[dependencies.size()]), Collections.<String, List<LocalLoader>>emptyMap(), Collections.<String, List<LocalLoader>>emptyMap());
     }
 
     void linkInitial(final HashSet<Module> visited) throws ModuleLoadException {
@@ -296,8 +324,8 @@ public final class Module {
         if (! visited.add(this)) {
             return;
         }
-        resolveInitial(new HashSet<Module>());
-        final Dependency[] dependencies = this.dependencies.clone();
+        resolveInitial();
+        final Dependency[] dependencies = getDependencies().clone();
         Collections.shuffle(Arrays.asList(dependencies));
         for (Dependency dependency : dependencies) {
             dependency.accept(new DependencyVisitor<Void>() {
@@ -809,7 +837,11 @@ public final class Module {
             final LocalDependency localDependency = new LocalDependency(PathFilters.acceptAll(), PathFilters.acceptAll(), systemLocalLoader, systemLocalLoader.getPathSet());
             final Module system = new Module();
             system.getClassLoaderPrivate().recalculate();
-            system.setDependencies(new ModuleSpec.SpecifiedDependency[] { new ModuleSpec.ImmediateSpecifiedDependency(localDependency) });
+            try {
+                system.setDependencies(new ModuleSpec.SpecifiedDependency[] { new ModuleSpec.ImmediateSpecifiedDependency(localDependency) });
+            } catch (ModuleLoadException e) {
+                throw new Error("Failed to initialize system module", e);
+            }
             SYSTEM = system;
         }
 

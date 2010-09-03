@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 /**
  * A module classloader.  Instances of this class implement the complete view of classes and resources available in a
@@ -56,8 +57,9 @@ public final class ModuleClassLoader extends ConcurrentClassLoader {
     static final ResourceLoader[] NO_RESOURCE_LOADERS = new ResourceLoader[0];
 
     private final Module module;
-    private volatile Paths<ResourceLoader> paths = Paths.none();
-    private volatile ResourceLoader[] resourceLoaders = NO_RESOURCE_LOADERS;
+
+    private volatile Paths<ResourceLoader, ResourceLoader> paths;
+
     private final LocalLoader localLoader = new LocalLoader() {
         public Class<?> loadClassLocal(final String name, final boolean resolve) {
             try {
@@ -81,6 +83,14 @@ public final class ModuleClassLoader extends ConcurrentClassLoader {
         }
     };
 
+    private static final AtomicReferenceFieldUpdater<ModuleClassLoader, Paths<ResourceLoader, ResourceLoader>> pathsUpdater
+            = unsafeCast(AtomicReferenceFieldUpdater.newUpdater(ModuleClassLoader.class, Paths.class, "paths"));
+
+    @SuppressWarnings({ "unchecked" })
+    private static <A, B> AtomicReferenceFieldUpdater<A, B> unsafeCast(AtomicReferenceFieldUpdater<?, ?> updater) {
+        return (AtomicReferenceFieldUpdater<A, B>) updater;
+    }
+
     /**
      * Construct a new instance.  The collection objects passed in then belong to this class loader instance.
      *
@@ -90,7 +100,7 @@ public final class ModuleClassLoader extends ConcurrentClassLoader {
      */
     ModuleClassLoader(final Module module, final AssertionSetting setting, final ResourceLoader[] resourceLoaders) {
         this.module = module;
-        this.resourceLoaders = resourceLoaders;
+        paths = new Paths<ResourceLoader, ResourceLoader>(resourceLoaders, Collections.<String, List<ResourceLoader>>emptyMap(), Collections.<String, List<ResourceLoader>>emptyMap());
         if (setting != AssertionSetting.INHERIT) {
             setDefaultAssertionStatus(setting == AssertionSetting.ENABLED);
         }
@@ -98,8 +108,27 @@ public final class ModuleClassLoader extends ConcurrentClassLoader {
 
     /**
      * Recalculate the path maps for this module class loader.
+     *
+     * @return {@code true} if the paths were recalculated, or {@code false} if another thread finished recalculating
+     *  before the calling thread
      */
-    void recalculate() {
+    boolean recalculate() {
+        final Paths<ResourceLoader, ResourceLoader> paths = this.paths;
+        return setResourceLoaders(paths, paths.getSourceList(NO_RESOURCE_LOADERS));
+    }
+
+    /**
+     * Change the set of resource loaders for this module class loader, and recalculate the path maps.
+     *
+     * @param resourceLoaders the new resource loaders
+     * @return {@code true} if the paths were recalculated, or {@code false} if another thread finished recalculating
+     *  before the calling thread
+     */
+    boolean setResourceLoaders(final ResourceLoader[] resourceLoaders) {
+        return setResourceLoaders(paths, resourceLoaders);
+    }
+
+    private boolean setResourceLoaders(final Paths<ResourceLoader, ResourceLoader> paths, final ResourceLoader[] resourceLoaders) {
         final Map<String, List<ResourceLoader>> exportedPaths = new HashMap<String, List<ResourceLoader>>();
         final Map<String, List<ResourceLoader>> allPaths = new HashMap<String, List<ResourceLoader>>();
         for (ResourceLoader loader : resourceLoaders) {
@@ -121,17 +150,23 @@ public final class ModuleClassLoader extends ConcurrentClassLoader {
                 }
             }
         }
-        paths = new Paths<ResourceLoader>(allPaths, exportedPaths);
+        return pathsUpdater.compareAndSet(this, paths, new Paths<ResourceLoader, ResourceLoader>(resourceLoaders, allPaths, exportedPaths));
     }
 
-    void setResourceLoaders(final ResourceLoader[] resourceLoaders) {
-        this.resourceLoaders = resourceLoaders;
-    }
-
+    /**
+     * Get the local loader which refers to this module class loader.
+     *
+     * @return the local loader
+     */
     LocalLoader getLocalLoader() {
         return localLoader;
     }
 
+    /**
+     * Get the path filter which determines which local loader paths are exported.
+     *
+     * @return the path filter
+     */
     PathFilter getExportPathFilter() {
         return exportPathFilter;
     }
@@ -386,7 +421,7 @@ public final class ModuleClassLoader extends ConcurrentClassLoader {
         final ModuleLogger log = Module.log;
         log.trace("Attempting to load native library %s from %s", libname, module);
 
-        for (ResourceLoader loader : resourceLoaders) {
+        for (ResourceLoader loader : paths.getSourceList(NO_RESOURCE_LOADERS)) {
             final String library = loader.getLibrary(libname);
             if (library != null) {
                 return library;
