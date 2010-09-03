@@ -199,7 +199,7 @@ public final class Module {
         final Deque<PathFilter> filterSeries = new ArrayDeque<PathFilter>();
         final Map<String, List<LocalLoader>> allPaths = new HashMap<String, List<LocalLoader>>();
         final Map<String, List<LocalLoader>> exportedPaths = new HashMap<String, List<LocalLoader>>();
-        
+
         final DependencyVisitor<PathFilter> distantVisitor = new DependencyVisitor<PathFilter>() {
             public void visit(final LocalDependency item, final PathFilter firstExportFilter) throws ModuleLoadException {
                 final Set<String> paths = item.getPaths();
@@ -584,14 +584,13 @@ public final class Module {
         final String path = pathOfClass(className);
         final Map<String, List<LocalLoader>> paths = this.paths.getPaths(exportsOnly);
         final List<LocalLoader> loaders = paths.get(path);
-        if (loaders == null) {
-            return null;
-        }
-        Class<?> clazz = null;
-        for (LocalLoader loader : loaders) {
-            clazz = loader.loadClassLocal(className, resolve);
-            if (clazz != null) {
-                return clazz;
+        if (loaders != null) {
+            Class<?> clazz = null;
+            for (LocalLoader loader : loaders) {
+                clazz = loader.loadClassLocal(className, resolve);
+                if (clazz != null) {
+                    return clazz;
+                }
             }
         }
         final LocalLoader fallbackLoader = this.fallbackLoader;
@@ -616,13 +615,12 @@ public final class Module {
         final String path = pathOf(name);
         final Map<String, List<LocalLoader>> paths = this.paths.getPaths(exportsOnly);
         final List<LocalLoader> loaders = paths.get(path);
-        if (loaders == null) {
-            return null;
-        }
-        for (LocalLoader loader : loaders) {
-            final List<Resource> resourceList = loader.loadResourceLocal(name);
-            for (Resource resource : resourceList) {
-                return resource.getURL();
+        if (loaders != null) {
+            for (LocalLoader loader : loaders) {
+                final List<Resource> resourceList = loader.loadResourceLocal(name);
+                for (Resource resource : resourceList) {
+                    return resource.getURL();
+                }
             }
         }
         final LocalLoader fallbackLoader = this.fallbackLoader;
@@ -654,14 +652,14 @@ public final class Module {
         final String path = pathOf(name);
         final Map<String, List<LocalLoader>> paths = this.paths.getPaths(exportsOnly);
         final List<LocalLoader> loaders = paths.get(path);
-        if (loaders == null) {
-            return ConcurrentClassLoader.EMPTY_ENUMERATION;
-        }
+
         final List<URL> list = new ArrayList<URL>();
-        for (LocalLoader loader : loaders) {
-            final List<Resource> resourceList = loader.loadResourceLocal(name);
-            for (Resource resource : resourceList) {
-                list.add(resource.getURL());
+        if (loaders != null) {
+            for (LocalLoader loader : loaders) {
+                final List<Resource> resourceList = loader.loadResourceLocal(name);
+                for (Resource resource : resourceList) {
+                    list.add(resource.getURL());
+                }
             }
         }
         final LocalLoader fallbackLoader = this.fallbackLoader;
@@ -671,7 +669,8 @@ public final class Module {
                 list.add(resource.getURL());
             }
         }
-        return Collections.enumeration(list);
+
+        return list.size() == 0 ? ConcurrentClassLoader.EMPTY_ENUMERATION : Collections.enumeration(list);
     }
 
     /**
