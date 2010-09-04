@@ -297,17 +297,17 @@ public final class Module {
         return fallbackLoader;
     }
 
-    void setDependencies(ModuleSpec.SpecifiedDependency[] specifiedDependencies) throws ModuleLoadException {
+    void setDependencies(DependencySpec.SpecifiedDependency[] specifiedDependencies) throws ModuleLoadException {
         final List<Dependency> dependencies = new ArrayList<Dependency>();
-        for (ModuleSpec.SpecifiedDependency specifiedDependency : specifiedDependencies) {
+        for (DependencySpec.SpecifiedDependency specifiedDependency : specifiedDependencies) {
             dependencies.add(specifiedDependency.getDependency(this));
         }
         setDependencies(dependencies.toArray(new Dependency[dependencies.size()]));
     }
 
-    void setInitialDependencies(final ModuleSpec.SpecifiedDependency[] specifiedDependencies) {
+    void setInitialDependencies(final DependencySpec.SpecifiedDependency[] specifiedDependencies) {
         final List<Dependency> dependencies = new ArrayList<Dependency>();
-        for (ModuleSpec.SpecifiedDependency specifiedDependency : specifiedDependencies) {
+        for (DependencySpec.SpecifiedDependency specifiedDependency : specifiedDependencies) {
             dependencies.add(specifiedDependency.getDependency(this));
         }
         paths = new Paths<LocalLoader, Dependency>(dependencies.toArray(new Dependency[dependencies.size()]), Collections.<String, List<LocalLoader>>emptyMap(), Collections.<String, List<LocalLoader>>emptyMap());
@@ -838,7 +838,7 @@ public final class Module {
             final Module system = new Module();
             system.getClassLoaderPrivate().recalculate();
             try {
-                system.setDependencies(new ModuleSpec.SpecifiedDependency[] { new ModuleSpec.ImmediateSpecifiedDependency(localDependency) });
+                system.setDependencies(new DependencySpec.SpecifiedDependency[] { new DependencySpec.ImmediateSpecifiedDependency(localDependency) });
             } catch (ModuleLoadException e) {
                 throw new Error("Failed to initialize system module", e);
             }

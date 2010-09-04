@@ -42,6 +42,7 @@ public final class ClassifyingModuleLoader extends ModuleLoader {
      * @param defaultLoader the default loader to use if no delegate mapping exists
      */
     public ClassifyingModuleLoader(final Map<String, ModuleLoader> delegates, final ModuleLoader defaultLoader) {
+        super(0);
         this.defaultLoader = defaultLoader;
         this.delegates = new HashMap<String, ModuleLoader>(delegates);
     }

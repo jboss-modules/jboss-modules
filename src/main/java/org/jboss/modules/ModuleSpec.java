@@ -25,6 +25,9 @@ package org.jboss.modules;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jboss.modules.DependencySpec.DependencyBuilder;
+import org.jboss.modules.DependencySpec.DependencyBuilderBase;
+
 
 /**
  * A {@code Module} specification which is used by a {@code ModuleLoader} to define new modules.
@@ -38,10 +41,10 @@ public final class ModuleSpec {
     private final String mainClass;
     private final AssertionSetting assertionSetting;
     private final ResourceLoader[] resourceLoaders;
-    private final SpecifiedDependency[] dependencies;
+    private final DependencySpec.SpecifiedDependency[] dependencies;
     private final LocalLoader fallbackLoader;
 
-    private ModuleSpec(final ModuleIdentifier moduleIdentifier, final String mainClass, final AssertionSetting assertionSetting, final ResourceLoader[] resourceLoaders, final SpecifiedDependency[] dependencies, final LocalLoader fallbackLoader) {
+    private ModuleSpec(final ModuleIdentifier moduleIdentifier, final String mainClass, final AssertionSetting assertionSetting, final ResourceLoader[] resourceLoaders, final DependencySpec.SpecifiedDependency[] dependencies, final LocalLoader fallbackLoader) {
         this.moduleIdentifier = moduleIdentifier;
         this.mainClass = mainClass;
         this.assertionSetting = assertionSetting;
@@ -71,7 +74,7 @@ public final class ModuleSpec {
         return resourceLoaders;
     }
 
-    SpecifiedDependency[] getDependencies() {
+    DependencySpec.SpecifiedDependency[] getDependencies() {
         return dependencies;
     }
 
@@ -82,7 +85,7 @@ public final class ModuleSpec {
     /**
      * A builder for new module specifications.
      */
-    public interface Builder {
+    public interface Builder extends DependencyBuilderBase {
 
         /**
          * Set the main class for this module, or {@code null} for none.
@@ -100,34 +103,16 @@ public final class ModuleSpec {
          */
         Builder setAssertionSetting(AssertionSetting assertionSetting);
 
-        /**
-         * Add a non-module local dependency.  See the documentation for {@link LocalLoader} for more information
-         * about non-module dependencies.
-         * <p>
-         * It is recommended that rather than including non-module dependencies in one or more module definitions, a
-         * module should be defined to encapsulate the non-module dependency, so that other modules can depend on it as
-         * a module.
-         *
-         * @param spec the specification for the local dependency
-         * @return this builder
-         */
+        /** {@inheritDoc} */
+        @Override
         Builder addLocalDependency(final LocalDependencySpec spec);
 
-        /**
-         * Add a local dependency representing the module itself.  If not specified, the module is assumed to be the
-         * last dependency (child-last).  This dependency includes all of the resource roots defined by {@link #addResourceRoot(ResourceLoader)}.
-         * It is an error to add this dependency more than one time.
-         *
-         * @return this builder
-         */
+        /** {@inheritDoc} */
+        @Override
         Builder addLocalDependency();
 
-        /**
-         * Add a module dependency with the given specification.
-         *
-         * @param dependencySpec the dependency specification (see {@link ModuleDependencySpec#build(ModuleIdentifier)})
-         * @return this builder
-         */
+        /** {@inheritDoc} */
+        @Override
         Builder addModuleDependency(ModuleDependencySpec dependencySpec);
 
         /**
@@ -162,6 +147,7 @@ public final class ModuleSpec {
         Builder setFallbackLoader(final LocalLoader fallbackLoader);
     }
 
+
     /**
      * Get a builder for a new module specification.
      *
@@ -170,12 +156,11 @@ public final class ModuleSpec {
      */
     public static Builder build(final ModuleIdentifier moduleIdentifier) {
         return new Builder() {
-            private boolean localAdded;
             private String mainClass;
             private AssertionSetting assertionSetting = AssertionSetting.INHERIT;
             private final List<ResourceLoader> resourceLoaders = new ArrayList<ResourceLoader>(0);
-            private final List<SpecifiedDependency> dependencies = new ArrayList<SpecifiedDependency>(0);
             private LocalLoader fallbackLoader;
+            private DependencyBuilder depBuilder = new DependencySpec.DependencyBuilderImpl();
 
             public Builder setFallbackLoader(final LocalLoader fallbackLoader) {
                 this.fallbackLoader = fallbackLoader;
@@ -183,32 +168,17 @@ public final class ModuleSpec {
             }
 
             public Builder addLocalDependency(final LocalDependencySpec spec) {
-                dependencies.add(new ImmediateSpecifiedDependency(
-                        new LocalDependency(spec.getExportFilter(), spec.getImportFilter(), spec.getLocalLoader(), spec.getLoaderPaths())));
+                depBuilder.addLocalDependency(spec);
                 return this;
             }
 
             public Builder addLocalDependency() {
-                if (localAdded) {
-                    throw new IllegalStateException("Local dependency already added");
-                }
-                localAdded = true;
-                dependencies.add(new SpecifiedDependency() {
-                    public Dependency getDependency(final Module module) {
-                        final ModuleClassLoader moduleClassLoader = module.getClassLoaderPrivate();
-                        return new LocalDependency(moduleClassLoader.getExportPathFilter(), PathFilters.acceptAll(), moduleClassLoader.getLocalLoader(), moduleClassLoader.getPaths());
-                    }
-                });
+                depBuilder.addLocalDependency();
                 return this;
             }
 
             public Builder addModuleDependency(final ModuleDependencySpec dependencySpec) {
-                final ModuleIdentifier identifier = dependencySpec.getModuleIdentifier();
-                dependencies.add(new SpecifiedDependency() {
-                    public Dependency getDependency(final Module module) {
-                        return new ModuleDependency(dependencySpec.getExportFilter(), dependencySpec.getImportFilter(), identifier, dependencySpec.isOptional());
-                    }
-                });
+                depBuilder.addModuleDependency(dependencySpec);
                 return this;
             }
 
@@ -232,10 +202,8 @@ public final class ModuleSpec {
 
             @Override
             public ModuleSpec create() {
-                if (! localAdded) {
-                    addLocalDependency();
-                }
-                return new ModuleSpec(moduleIdentifier, mainClass, assertionSetting, resourceLoaders.toArray(new ResourceLoader[resourceLoaders.size()]), dependencies.toArray(new SpecifiedDependency[dependencies.size()]), fallbackLoader);
+                List<DependencySpec.SpecifiedDependency> dependencies = depBuilder.create().dependencies;
+                return new ModuleSpec(moduleIdentifier, mainClass, assertionSetting, resourceLoaders.toArray(new ResourceLoader[resourceLoaders.size()]), dependencies.toArray(new DependencySpec.SpecifiedDependency[dependencies.size()]), fallbackLoader);
             }
 
             @Override
@@ -245,19 +213,5 @@ public final class ModuleSpec {
         };
     }
 
-    interface SpecifiedDependency {
-        Dependency getDependency(Module module);
-    }
 
-    static final class ImmediateSpecifiedDependency implements SpecifiedDependency {
-        private final Dependency dependency;
-
-        ImmediateSpecifiedDependency(final Dependency dependency) {
-            this.dependency = dependency;
-        }
-
-        public Dependency getDependency(final Module module) {
-            return dependency;
-        }
-    }
 }

@@ -22,26 +22,57 @@
 
 package org.jboss.modules;
 
-import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.concurrent.ConcurrentMap;
-
 import static org.jboss.modules.ConcurrentReferenceHashMap.ReferenceType.STRONG;
 import static org.jboss.modules.ConcurrentReferenceHashMap.ReferenceType.WEAK;
 
+import java.util.AbstractCollection;
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.List;
+import java.util.concurrent.ConcurrentMap;
+
+import org.jboss.modules.DependencySpec.SpecifiedDependency;
+
 /**
- * 
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
  */
 public abstract class ModuleLoader {
 
+    private static final RuntimePermission ML_PERM = new RuntimePermission("canCreateModuleLoader");
+    private static final RuntimePermission MODULE_REDEFINE_PERM = new RuntimePermission("canRedefineModule");
+
     private final ConcurrentMap<ModuleIdentifier, FutureModule> moduleMap = new ConcurrentReferenceHashMap<ModuleIdentifier, FutureModule>(
             256, 0.5f, 32, STRONG, WEAK, EnumSet.noneOf(ConcurrentReferenceHashMap.Option.class)
     );
 
+    private final boolean canRedefine;
+
+    // Bypass security check for classes in this package
+    ModuleLoader(int dummy) {
+        canRedefine = true;
+    }
+
     protected ModuleLoader() {
-        // todo permission check: subclass permission?
+        SecurityManager manager = System.getSecurityManager();
+        if (manager == null) {
+            canRedefine = true;
+            return;
+        }
+
+        manager.checkPermission(ML_PERM);
+
+        boolean canRedefine;
+        try {
+            manager.checkPermission(MODULE_REDEFINE_PERM);
+            canRedefine = true;
+        } catch (SecurityException e) {
+            canRedefine = false;
+        }
+
+        this.canRedefine = canRedefine;
     }
 
     /**
@@ -206,6 +237,74 @@ public abstract class ModuleLoader {
             log.trace(e, "Failed to load module %s", moduleIdentifier);
             throw e;
         }
+    }
+
+    /**
+     * Refreshes the paths provided by resource loaders associated with the
+     * specified Module. This is an advanced method that is intended to be
+     * called on all modules that directly or indirectly import resources
+     * exported by a module that has had it's resource loaders updated via {
+     * {@link #refreshResourceLoaders(Module)}
+     *
+     * @param module the module to refresh
+     */
+    protected void refreshResourceLoaders(Module module) {
+        if (!canRedefine)
+            throw new SecurityException("Module redefinition requires canRedefineModule permission");
+
+        module.getClassLoaderPrivate().recalculate();
+    }
+
+    /**
+     * Replaces the resources loaders for the specified module and refreshes the
+     * internal path list that is derived from the loaders. This is an advanced
+     * method that should be used carefully, since it alters a live module.
+     * Modules that import resources from the specified module will not
+     * automatically be updated to reflect the change. For this to occur
+     * {@link #refreshResourceLoaders(Module)} must be called on all of them.
+     *
+     * @param module the module to update and refresh
+     * @param loaders the new collection of loaders the module should use
+     */
+    protected void setAndRefreshResourceLoaders(Module module, Collection<ResourceLoader> loaders) {
+        if (!canRedefine)
+            throw new SecurityException("Module redefinition requires canRedefineModule permission");
+
+        module.getClassLoaderPrivate().setResourceLoaders(loaders.toArray(new ResourceLoader[0]));
+    }
+
+    /**
+     * Relinks the dependencies associated with the specified Module. This is an
+     * advanced method that is intended to be called on all modules that
+     * directly or indirectly import dependencies that are re-exported by a module
+     * that has recently been updated and relinked via
+     * {@link #setAndRelinkDependencies(Module, DependencySpec)}
+     *
+     * @param module the module to relink
+     */
+    protected void relink(Module module) throws ModuleLoadException {
+        if (!canRedefine)
+            throw new SecurityException("Module redefinition requires canRedefineModule permission");
+
+        module.resolve();
+    }
+
+    /**
+     * Replaces the dependencies for the specified module and relinks against
+     * the new modules This is an advanced method that should be used carefully,
+     * since it alters a live module. Modules that import dependencies that are
+     * re-exported from the specified module will not automatically be updated
+     * to reflect the change. For this to occur {@link #relink(Module)} must be
+     * called on all of them.
+     *
+     * @param module the module to update and relink
+     * @param dependencySpec the new dependency specification
+     */
+    protected void setAndRelinkDependencies(Module module, DependencySpec dependencySpec) throws ModuleLoadException {
+        if (!canRedefine)
+            throw new SecurityException("Module redefinition requires canRedefineModule permission");
+
+        module.setDependencies(dependencySpec.dependencies.toArray(new DependencySpec.SpecifiedDependency[0]));
     }
 
     private static final class FutureModule {

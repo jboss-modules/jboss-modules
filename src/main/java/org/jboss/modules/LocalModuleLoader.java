@@ -32,6 +32,7 @@ public final class LocalModuleLoader extends ModuleLoader {
     private final File[] repoRoots;
 
     public LocalModuleLoader(final File[] repoRoots) {
+        super(0);
         this.repoRoots = repoRoots;
     }
 
