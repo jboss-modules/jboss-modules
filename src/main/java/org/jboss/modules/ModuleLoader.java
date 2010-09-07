@@ -41,6 +41,7 @@ import org.jboss.modules.DependencySpec.SpecifiedDependency;
  */
 public abstract class ModuleLoader {
 
+    private static final SpecifiedDependency[] DEP_ARRAY = new DependencySpec.SpecifiedDependency[0];
     private static final RuntimePermission ML_PERM = new RuntimePermission("canCreateModuleLoader");
     private static final RuntimePermission MODULE_REDEFINE_PERM = new RuntimePermission("canRedefineModule");
 
@@ -261,7 +262,7 @@ public abstract class ModuleLoader {
      * method that should be used carefully, since it alters a live module.
      * Modules that import resources from the specified module will not
      * automatically be updated to reflect the change. For this to occur
-     * {@link #refreshResourceLoaders(Module)} must be called on all of them.
+     * {@link #relink(Module)} must be called on all of them.
      *
      * @param module the module to update and refresh
      * @param loaders the new collection of loaders the module should use
@@ -304,7 +305,7 @@ public abstract class ModuleLoader {
         if (!canRedefine)
             throw new SecurityException("Module redefinition requires canRedefineModule permission");
 
-        module.setDependencies(dependencySpec.dependencies.toArray(new DependencySpec.SpecifiedDependency[0]));
+        module.setDependencies(dependencySpec.dependencies.toArray(DEP_ARRAY));
     }
 
     private static final class FutureModule {
