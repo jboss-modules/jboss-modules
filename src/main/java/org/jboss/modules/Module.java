@@ -304,12 +304,17 @@ public final class Module {
         return fallbackLoader;
     }
 
-    void setDependencies(DependencySpec.SpecifiedDependency[] specifiedDependencies) throws ModuleLoadException {
+    void setDependencies(DependencySpec.SpecifiedDependency[] specifiedDependencies, boolean linkChildren) throws ModuleLoadException {
         final List<Dependency> dependencies = new ArrayList<Dependency>();
         for (DependencySpec.SpecifiedDependency specifiedDependency : specifiedDependencies) {
             dependencies.add(specifiedDependency.getDependency(this));
         }
-        setDependencies(dependencies.toArray(new Dependency[dependencies.size()]));
+
+        Dependency[] deps = dependencies.toArray(new Dependency[dependencies.size()]);
+        if (linkChildren) {
+            linkDependencies(new HashSet<Module>(), deps);
+        }
+        setDependencies(deps);
     }
 
     void setInitialDependencies(final DependencySpec.SpecifiedDependency[] specifiedDependencies) {
@@ -333,6 +338,10 @@ public final class Module {
         }
         resolveInitial();
         final Dependency[] dependencies = getDependencies().clone();
+        linkDependencies(visited, dependencies);
+    }
+
+    private void linkDependencies(final Set<Module> visited, final Dependency[] dependencies) throws ModuleLoadException {
         Collections.shuffle(Arrays.asList(dependencies));
         for (Dependency dependency : dependencies) {
             dependency.accept(new DependencyVisitor<Void>() {
@@ -845,7 +854,7 @@ public final class Module {
             final Module system = new Module();
             system.getClassLoaderPrivate().recalculate();
             try {
-                system.setDependencies(new DependencySpec.SpecifiedDependency[] { new DependencySpec.ImmediateSpecifiedDependency(localDependency) });
+                system.setDependencies(new DependencySpec.SpecifiedDependency[] { new DependencySpec.ImmediateSpecifiedDependency(localDependency) }, false);
             } catch (ModuleLoadException e) {
                 throw new Error("Failed to initialize system module", e);
             }

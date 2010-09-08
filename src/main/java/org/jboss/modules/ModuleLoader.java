@@ -305,7 +305,7 @@ public abstract class ModuleLoader {
         if (!canRedefine)
             throw new SecurityException("Module redefinition requires canRedefineModule permission");
 
-        module.setDependencies(dependencySpec.dependencies.toArray(DEP_ARRAY));
+        module.setDependencies(dependencySpec.dependencies.toArray(DEP_ARRAY), true);
         module.linkInitial(new HashSet<Module>());
     }
 
