@@ -306,6 +306,7 @@ public abstract class ModuleLoader {
             throw new SecurityException("Module redefinition requires canRedefineModule permission");
 
         module.setDependencies(dependencySpec.dependencies.toArray(DEP_ARRAY));
+        module.linkInitial(new HashSet<Module>());
     }
 
     private static final class FutureModule {
