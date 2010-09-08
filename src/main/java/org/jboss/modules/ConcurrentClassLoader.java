@@ -239,7 +239,7 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
         if (className == null) {
             throw new IllegalArgumentException("name is null");
         }
-        if (className.startsWith("java.")) {
+        if (className.startsWith("java.") || className.startsWith("sun.reflect.")) {
             // always delegate to system
             return findSystemClass(className);
         }
