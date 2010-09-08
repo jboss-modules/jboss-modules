@@ -133,7 +133,7 @@ public final class Module {
         fallbackLoader = null;
         // should be safe, so...
         //noinspection ThisEscapedInObjectConstruction
-        moduleClassLoader = new ModuleClassLoader(this, AssertionSetting.INHERIT, ModuleClassLoader.NO_RESOURCE_LOADERS);
+        moduleClassLoader = new ModuleClassLoader(new ModuleClassLoader.Configuration(this, AssertionSetting.INHERIT, ModuleClassLoader.NO_RESOURCE_LOADERS));
     }
 
     /**
@@ -152,8 +152,15 @@ public final class Module {
         mainClassName = spec.getMainClass();
         fallbackLoader = spec.getFallbackLoader();
         //noinspection ThisEscapedInObjectConstruction
-        moduleClassLoader = new ModuleClassLoader(this, spec.getAssertionSetting(), spec.getResourceLoaders());
+        final ModuleClassLoader.Configuration configuration = new ModuleClassLoader.Configuration(this, spec.getAssertionSetting(), spec.getResourceLoaders());
+        final ModuleClassLoaderFactory factory = spec.getModuleClassLoaderFactory();
+        ModuleClassLoader moduleClassLoader = null;
+        if (factory != null) moduleClassLoader = factory.create(configuration);
+        if (moduleClassLoader == null) moduleClassLoader = new ModuleClassLoader(configuration);
+        this.moduleClassLoader = moduleClassLoader;
     }
+
+
 
     enum LoadState {
 

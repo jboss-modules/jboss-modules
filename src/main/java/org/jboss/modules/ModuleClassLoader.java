@@ -26,6 +26,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.security.CodeSource;
+import java.security.PermissionCollection;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -43,7 +45,7 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  * @author thomas.diesler@jboss.com
  */
-public final class ModuleClassLoader extends ConcurrentClassLoader {
+public class ModuleClassLoader extends ConcurrentClassLoader {
 
     static {
         try {
@@ -92,15 +94,14 @@ public final class ModuleClassLoader extends ConcurrentClassLoader {
     }
 
     /**
-     * Construct a new instance.  The collection objects passed in then belong to this class loader instance.
+     * Construct a new instance.
      *
-     * @param module the module
-     * @param setting the assertion setting
-     * @param resourceLoaders the collection of resource loaders
+     * @param configuration the module class loader configuration to use
      */
-    ModuleClassLoader(final Module module, final AssertionSetting setting, final ResourceLoader[] resourceLoaders) {
-        this.module = module;
-        paths = new Paths<ResourceLoader, ResourceLoader>(resourceLoaders, Collections.<String, List<ResourceLoader>>emptyMap(), Collections.<String, List<ResourceLoader>>emptyMap());
+    protected ModuleClassLoader(final Configuration configuration) {
+        module = configuration.getModule();
+        paths = new Paths<ResourceLoader, ResourceLoader>(configuration.getResourceLoaders(), Collections.<String, List<ResourceLoader>>emptyMap(), Collections.<String, List<ResourceLoader>>emptyMap());
+        final AssertionSetting setting = configuration.getAssertionSetting();
         if (setting != AssertionSetting.INHERIT) {
             setDefaultAssertionStatus(setting == AssertionSetting.ENABLED);
         }
@@ -172,7 +173,7 @@ public final class ModuleClassLoader extends ConcurrentClassLoader {
     }
 
     /** {@inheritDoc} */
-    protected Class<?> findClass(String className, boolean exportsOnly, final boolean resolve) throws ClassNotFoundException {
+    protected final Class<?> findClass(String className, boolean exportsOnly, final boolean resolve) throws ClassNotFoundException {
         // Check if we have already loaded it..
         Class<?> loadedClass = findLoadedClass(className);
         if (loadedClass != null) {
@@ -417,7 +418,7 @@ public final class ModuleClassLoader extends ConcurrentClassLoader {
      * @return the full absolute path to the library
      */
     @Override
-    protected String findLibrary(final String libname) {
+    protected final String findLibrary(final String libname) {
         final ModuleLogger log = Module.log;
         log.trace("Attempting to load native library %s from %s", libname, module);
 
@@ -432,19 +433,19 @@ public final class ModuleClassLoader extends ConcurrentClassLoader {
 
     /** {@inheritDoc} */
     @Override
-    public URL findResource(final String name, final boolean exportsOnly) {
+    public final URL findResource(final String name, final boolean exportsOnly) {
         return module.getResource(name, exportsOnly);
     }
 
     /** {@inheritDoc} */
     @Override
-    public Enumeration<URL> findResources(final String name, final boolean exportsOnly) throws IOException {
+    public final Enumeration<URL> findResources(final String name, final boolean exportsOnly) throws IOException {
         return module.getResources(name, exportsOnly);
     }
 
     /** {@inheritDoc} */
     @Override
-    public InputStream findResourceAsStream(final String name, boolean exportsOnly) {
+    public final InputStream findResourceAsStream(final String name, boolean exportsOnly) {
         try {
             final URL resource = findResource(name, exportsOnly);
             return resource == null ? null : resource.openStream();
@@ -458,7 +459,7 @@ public final class ModuleClassLoader extends ConcurrentClassLoader {
      *
      * @return the module
      */
-    public Module getModule() {
+    public final Module getModule() {
         return module;
     }
 
@@ -467,7 +468,7 @@ public final class ModuleClassLoader extends ConcurrentClassLoader {
      *
      * @return the string
      */
-    public String toString() {
+    public final String toString() {
         return "ClassLoader for " + module;
     }
 
@@ -496,5 +497,92 @@ public final class ModuleClassLoader extends ConcurrentClassLoader {
 
     Set<String> getPaths() {
         return paths.getAllPaths().keySet();
+    }
+
+    /** {@inheritDoc} */
+    protected final PermissionCollection getPermissions(final CodeSource codesource) {
+        return super.getPermissions(codesource);
+    }
+
+    /** {@inheritDoc} */
+    protected final Package definePackage(final String name, final String specTitle, final String specVersion, final String specVendor, final String implTitle, final String implVersion, final String implVendor, final URL sealBase) throws IllegalArgumentException {
+        return super.definePackage(name, specTitle, specVersion, specVendor, implTitle, implVersion, implVendor, sealBase);
+    }
+
+    /** {@inheritDoc} */
+    protected final Package getPackage(final String name) {
+        return super.getPackage(name);
+    }
+
+    /** {@inheritDoc} */
+    protected final Package[] getPackages() {
+        return super.getPackages();
+    }
+
+    /** {@inheritDoc} */
+    public final void setDefaultAssertionStatus(final boolean enabled) {
+        super.setDefaultAssertionStatus(enabled);
+    }
+
+    /** {@inheritDoc} */
+    public final void setPackageAssertionStatus(final String packageName, final boolean enabled) {
+        super.setPackageAssertionStatus(packageName, enabled);
+    }
+
+    /** {@inheritDoc} */
+    public final void setClassAssertionStatus(final String className, final boolean enabled) {
+        super.setClassAssertionStatus(className, enabled);
+    }
+
+    /** {@inheritDoc} */
+    public final void clearAssertionStatus() {
+        super.clearAssertionStatus();
+    }
+
+    /** {@inheritDoc} */
+    public final int hashCode() {
+        return super.hashCode();
+    }
+
+    /** {@inheritDoc} */
+    public final boolean equals(final Object obj) {
+        return super.equals(obj);
+    }
+
+    /** {@inheritDoc} */
+    protected final Object clone() throws CloneNotSupportedException {
+        return super.clone();
+    }
+
+    /** {@inheritDoc} */
+    protected final void finalize() throws Throwable {
+        super.finalize();
+    }
+
+    /**
+     * An opaque configuration used internally to create a module class loader.
+     */
+    protected static final class Configuration {
+        private final Module module;
+        private final AssertionSetting assertionSetting;
+        private final ResourceLoader[] resourceLoaders;
+
+        Configuration(final Module module, final AssertionSetting assertionSetting, final ResourceLoader[] resourceLoaders) {
+            this.module = module;
+            this.assertionSetting = assertionSetting;
+            this.resourceLoaders = resourceLoaders;
+        }
+
+        Module getModule() {
+            return module;
+        }
+
+        AssertionSetting getAssertionSetting() {
+            return assertionSetting;
+        }
+
+        ResourceLoader[] getResourceLoaders() {
+            return resourceLoaders;
+        }
     }
 }

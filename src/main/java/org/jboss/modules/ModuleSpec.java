@@ -43,14 +43,16 @@ public final class ModuleSpec {
     private final ResourceLoader[] resourceLoaders;
     private final DependencySpec.SpecifiedDependency[] dependencies;
     private final LocalLoader fallbackLoader;
+    private final ModuleClassLoaderFactory moduleClassLoaderFactory;
 
-    private ModuleSpec(final ModuleIdentifier moduleIdentifier, final String mainClass, final AssertionSetting assertionSetting, final ResourceLoader[] resourceLoaders, final DependencySpec.SpecifiedDependency[] dependencies, final LocalLoader fallbackLoader) {
+    private ModuleSpec(final ModuleIdentifier moduleIdentifier, final String mainClass, final AssertionSetting assertionSetting, final ResourceLoader[] resourceLoaders, final DependencySpec.SpecifiedDependency[] dependencies, final LocalLoader fallbackLoader, final ModuleClassLoaderFactory moduleClassLoaderFactory) {
         this.moduleIdentifier = moduleIdentifier;
         this.mainClass = mainClass;
         this.assertionSetting = assertionSetting;
         this.resourceLoaders = resourceLoaders;
         this.dependencies = dependencies;
         this.fallbackLoader = fallbackLoader;
+        this.moduleClassLoaderFactory = moduleClassLoaderFactory;
     }
 
     /**
@@ -80,6 +82,10 @@ public final class ModuleSpec {
 
     LocalLoader getFallbackLoader() {
         return fallbackLoader;
+    }
+
+    ModuleClassLoaderFactory getModuleClassLoaderFactory() {
+        return moduleClassLoaderFactory;
     }
 
     /**
@@ -145,6 +151,14 @@ public final class ModuleSpec {
          * @return this builder
          */
         Builder setFallbackLoader(final LocalLoader fallbackLoader);
+
+        /**
+         * Set the module class loader factory to use to create the module class loader for this module.
+         *
+         * @param moduleClassLoaderFactory the factory
+         * @return this builder
+         */
+        Builder setModuleClassLoaderFactory(ModuleClassLoaderFactory moduleClassLoaderFactory);
     }
 
 
@@ -161,6 +175,7 @@ public final class ModuleSpec {
             private final List<ResourceLoader> resourceLoaders = new ArrayList<ResourceLoader>(0);
             private LocalLoader fallbackLoader;
             private DependencyBuilder depBuilder = new DependencySpec.DependencyBuilderImpl();
+            private ModuleClassLoaderFactory moduleClassLoaderFactory;
 
             public Builder setFallbackLoader(final LocalLoader fallbackLoader) {
                 this.fallbackLoader = fallbackLoader;
@@ -200,10 +215,15 @@ public final class ModuleSpec {
                 return this;
             }
 
+            public Builder setModuleClassLoaderFactory(final ModuleClassLoaderFactory moduleClassLoaderFactory) {
+                this.moduleClassLoaderFactory = moduleClassLoaderFactory;
+                return this;
+            }
+
             @Override
             public ModuleSpec create() {
                 List<DependencySpec.SpecifiedDependency> dependencies = depBuilder.create().dependencies;
-                return new ModuleSpec(moduleIdentifier, mainClass, assertionSetting, resourceLoaders.toArray(new ResourceLoader[resourceLoaders.size()]), dependencies.toArray(new DependencySpec.SpecifiedDependency[dependencies.size()]), fallbackLoader);
+                return new ModuleSpec(moduleIdentifier, mainClass, assertionSetting, resourceLoaders.toArray(new ResourceLoader[resourceLoaders.size()]), dependencies.toArray(new DependencySpec.SpecifiedDependency[dependencies.size()]), fallbackLoader, moduleClassLoaderFactory);
             }
 
             @Override
