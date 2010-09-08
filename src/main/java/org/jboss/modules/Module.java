@@ -609,7 +609,7 @@ public final class Module {
      * @return the class
      */
     Class<?> loadModuleClass(final String className, final boolean exportsOnly, final boolean resolve) {
-        if (className.startsWith("java.")) {
+        if (className.startsWith("java.") || className.startsWith("sun.reflect.")) {
             try {
                 return moduleClassLoader.loadClass(className, resolve);
             } catch (ClassNotFoundException e) {
