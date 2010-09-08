@@ -243,9 +243,8 @@ public abstract class ModuleLoader {
     /**
      * Refreshes the paths provided by resource loaders associated with the
      * specified Module. This is an advanced method that is intended to be
-     * called on all modules that directly or indirectly import resources
-     * exported by a module that has had it's resource loaders updated via {
-     * {@link #refreshResourceLoaders(Module)}
+     * called on modules that have a resource loader implementation that has
+     * changed and is returning different paths.
      *
      * @param module the module to refresh
      */
@@ -288,6 +287,7 @@ public abstract class ModuleLoader {
             throw new SecurityException("Module redefinition requires canRedefineModule permission");
 
         module.resolve();
+        module.linkInitial(new HashSet<Module>());
     }
 
     /**
