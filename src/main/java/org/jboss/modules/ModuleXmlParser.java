@@ -353,22 +353,32 @@ final class ModuleXmlParser {
         }
         final ModuleDependencySpec.Builder dependencySpecBuilder = ModuleDependencySpec.build(ModuleIdentifier.create(name, slot))
             .setOptional(optional);
-        final List<PathFilter> importFilters = new ArrayList<PathFilter>();
-        final List<PathFilter> exportFilters = new ArrayList<PathFilter>();
+        final List<PathFilter> importIncludeFilters = new ArrayList<PathFilter>();
+        final List<PathFilter> importExcludeFilters = new ArrayList<PathFilter>();
+        final List<PathFilter> exportIncludeFilters = new ArrayList<PathFilter>();
+        final List<PathFilter> exportExcludeFilters = new ArrayList<PathFilter>();
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {
-                    dependencySpecBuilder.setExportFilter(export ? PathFilters.all(exportFilters) : PathFilters.rejectAll());
-                    if (! importFilters.isEmpty()) {
-                        dependencySpecBuilder.setImportFilter(PathFilters.all(importFilters));
+                    if (export) {
+                        if (! exportIncludeFilters.isEmpty()) {
+                            exportExcludeFilters.add(PathFilters.any(exportIncludeFilters));
+                        }
+                        dependencySpecBuilder.setExportFilter(PathFilters.all(exportExcludeFilters));
+                    }
+                    if (! importIncludeFilters.isEmpty()) {
+                        importExcludeFilters.add(PathFilters.any(importIncludeFilters));
+                    }
+                    if (! importExcludeFilters.isEmpty()) {
+                        dependencySpecBuilder.setImportFilter(PathFilters.all(importExcludeFilters));
                     }
                     specBuilder.addModuleDependency(dependencySpecBuilder.create());
                     return;
                 }
                 case XMLStreamConstants.START_ELEMENT: {
                     switch (Element.of(reader.getName())) {
-                        case EXPORTS: parseFilterList(reader, exportFilters); break;
-                        case IMPORTS: parseFilterList(reader, importFilters); break;
+                        case EXPORTS: parseFilterList(reader, exportExcludeFilters, exportIncludeFilters); break;
+                        case IMPORTS: parseFilterList(reader, importExcludeFilters, importIncludeFilters); break;
                         default: throw unexpectedContent(reader);
                     }
                     break;
@@ -448,12 +458,16 @@ final class ModuleXmlParser {
         final File file = new File(root, path);
 
         final ResourceLoader resourceLoader;
-        final List<PathFilter> filterList = new ArrayList<PathFilter>();
+        final List<PathFilter> excludeFilterList = new ArrayList<PathFilter>();
+        final List<PathFilter> includeFilterList = new ArrayList<PathFilter>();
 
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {
-                    final PathFilter exportFilter = filterList.isEmpty() ? PathFilters.exclude("META-INF") : PathFilters.all(filterList);
+                    if (! includeFilterList.isEmpty()) {
+                        excludeFilterList.add(PathFilters.any(includeFilterList));
+                    }
+                    final PathFilter exportFilter = excludeFilterList.isEmpty() ? PathFilters.exclude("META-INF") : PathFilters.all(excludeFilterList);
                     if (file.isDirectory()) {
                         resourceLoader = new FileResourceLoader(identifier, file, name, exportFilter);
                     } else {
@@ -468,7 +482,7 @@ final class ModuleXmlParser {
                 }
                 case XMLStreamConstants.START_ELEMENT: {
                     switch (Element.of(reader.getName())) {
-                        case EXPORTS: parseFilterList(reader, filterList); break;
+                        case EXPORTS: parseFilterList(reader, excludeFilterList, includeFilterList); break;
                         default: throw unexpectedContent(reader);
                     }
                     break;
@@ -480,7 +494,7 @@ final class ModuleXmlParser {
         }
     }
 
-    private static void parseFilterList(final XMLStreamReader reader, final List<PathFilter> list) throws XMLStreamException {
+    private static void parseFilterList(final XMLStreamReader reader, final List<PathFilter> excludesList, final List<PathFilter> includesList) throws XMLStreamException {
         // xsd:choice
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
@@ -489,8 +503,8 @@ final class ModuleXmlParser {
                 }
                 case XMLStreamConstants.START_ELEMENT: {
                     switch (Element.of(reader.getName())) {
-                        case INCLUDE: parsePath(reader, true, list); break;
-                        case EXCLUDE: parsePath(reader, false, list);  break;
+                        case INCLUDE: parsePath(reader, true, includesList); break;
+                        case EXCLUDE: parsePath(reader, false, excludesList);  break;
                         default: throw unexpectedContent(reader);
                     }
                     break;
