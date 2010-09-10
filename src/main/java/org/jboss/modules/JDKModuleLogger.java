@@ -72,74 +72,88 @@ public final class JDKModuleLogger implements ModuleLogger {
         this("org.jboss.modules");
     }
 
+    private void doLog(final Level level, final String str) {
+        doLog(level, str, null);
+    }
+
+    private void doLog(final Level level, final String str, final Throwable t) {
+        try {
+            final ModuleLogRecord rec = new ModuleLogRecord(level, str);
+            rec.setLoggerName(logger.getName());
+            if (t != null) rec.setThrown(t);
+            logger.log(rec);
+        } catch (Throwable ignored) {
+        }
+    }
+
     /** {@inheritDoc} */
     public void trace(final String message) {
-        logger.log(TRACE, message);
+        doLog(TRACE, message, null);
     }
 
     /** {@inheritDoc} */
     public void trace(final String format, final Object arg1) {
         if (logger.isLoggable(TRACE)) {
-            logger.log(TRACE, String.format(format, arg1));
+            doLog(TRACE, String.format(format, arg1), null);
         }
     }
 
     /** {@inheritDoc} */
     public void trace(final String format, final Object arg1, final Object arg2) {
         if (logger.isLoggable(TRACE)) {
-            logger.log(TRACE, String.format(format, arg1, arg2));
+            doLog(TRACE, String.format(format, arg1, arg2));
         }
     }
 
     /** {@inheritDoc} */
     public void trace(final String format, final Object arg1, final Object arg2, final Object arg3) {
         if (logger.isLoggable(TRACE)) {
-            logger.log(TRACE, String.format(format, arg1, arg2, arg3));
+            doLog(TRACE, String.format(format, arg1, arg2, arg3));
         }
     }
 
     /** {@inheritDoc} */
     public void trace(final String format, final Object... args) {
         if (logger.isLoggable(TRACE)) {
-            logger.log(TRACE, String.format(format, (Object[]) args));
+            doLog(TRACE, String.format(format, (Object[]) args));
         }
     }
 
     /** {@inheritDoc} */
     public void trace(final Throwable t, final String message) {
-        logger.log(TRACE, message, t);
+        doLog(TRACE, message, t);
     }
 
     /** {@inheritDoc} */
     public void trace(final Throwable t, final String format, final Object arg1) {
         if (logger.isLoggable(TRACE)) {
-            logger.log(TRACE, String.format(format, arg1), t);
+            doLog(TRACE, String.format(format, arg1), t);
         }
     }
 
     /** {@inheritDoc} */
     public void trace(final Throwable t, final String format, final Object arg1, final Object arg2) {
         if (logger.isLoggable(TRACE)) {
-            logger.log(TRACE, String.format(format, arg1, arg2), t);
+            doLog(TRACE, String.format(format, arg1, arg2), t);
         }
     }
 
     /** {@inheritDoc} */
     public void trace(final Throwable t, final String format, final Object arg1, final Object arg2, final Object arg3) {
         if (logger.isLoggable(TRACE)) {
-            logger.log(TRACE, String.format(format, arg1, arg2, arg3), t);
+            doLog(TRACE, String.format(format, arg1, arg2, arg3), t);
         }
     }
 
     /** {@inheritDoc} */
     public void trace(final Throwable t, final String format, final Object... args) {
         if (logger.isLoggable(TRACE)) {
-            logger.log(TRACE, String.format(format, (Object[]) args), t);
+            doLog(TRACE, String.format(format, (Object[]) args), t);
         }
     }
 
     /** {@inheritDoc} */
     public void greeting() {
-        logger.log(Level.INFO, "JBoss Modules version " + Main.getVersionString());
+        doLog(Level.INFO, "JBoss Modules version " + Main.getVersionString());
     }
 }
