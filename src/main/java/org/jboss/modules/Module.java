@@ -526,7 +526,27 @@ public final class Module {
      */
     public static Module forClass(Class<?> clazz) {
         final ClassLoader cl = clazz.getClassLoader();
-        return cl instanceof ModuleClassLoader ? ((ModuleClassLoader) cl).getModule() : cl == null || cl == ClassLoader.getSystemClassLoader() ? getSystemModule() : null;
+        return forClassLoader(cl, false);
+    }
+
+    /**
+     * Get the module for a class loader, or {@code null} if the class loader is not associated with any module.  If
+     * the class loader is unknown, it is possible to check the parent class loader up the chain, and so on until a module is found.
+     *
+     * @param cl the class loader
+     * @param search {@code true} to search up the delegation chain
+     * @return the associated module
+     */
+    public static Module forClassLoader(ClassLoader cl, boolean search) {
+        if (cl instanceof ModuleClassLoader) {
+            return ((ModuleClassLoader) cl).getModule();
+        } else if (cl == null || cl == ClassLoader.getSystemClassLoader()) {
+            return getSystemModule();
+        } else if (search) {
+            return forClassLoader(cl.getParent(), true);
+        } else {
+            return null;
+        }
     }
 
     /**
