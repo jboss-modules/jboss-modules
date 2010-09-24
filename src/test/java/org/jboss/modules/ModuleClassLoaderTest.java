@@ -22,17 +22,6 @@
 
 package org.jboss.modules;
 
-import org.jboss.modules.test.ImportedClass;
-import org.jboss.modules.test.TestClass;
-import org.jboss.modules.util.TestModuleLoader;
-import org.jboss.modules.util.TestResourceLoader;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.net.URL;
-import java.util.Enumeration;
-import java.util.List;
-
 import static org.jboss.modules.util.Util.toList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -41,18 +30,34 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.net.URL;
+import java.util.Enumeration;
+import java.util.List;
+
+import org.jboss.modules.test.ImportedClass;
+import org.jboss.modules.test.ImportedInterface;
+import org.jboss.modules.test.TestClass;
+import org.jboss.modules.util.TestModuleLoader;
+import org.jboss.modules.util.TestResourceLoader;
+import org.junit.Before;
+import org.junit.Test;
+
 /**
  * Test to verify module functionality.
  *
  * @author John Bailey
+ * @author <a href="mailto:flavia.rainone@jboss.com">Flavia Rainone</a>
  */
 public class ModuleClassLoaderTest extends AbstractModuleTestCase {
 
     private static final ModuleIdentifier MODULE_WITH_CONTENT_ID = ModuleIdentifier.fromString("test-with-content");
     private static final ModuleIdentifier MODULE_TO_IMPORT_ID = ModuleIdentifier.fromString("test-to-import");
     private static final ModuleIdentifier MODULE_WITH_EXPORT_ID = ModuleIdentifier.fromString("test-with-export");
+    private static final ModuleIdentifier MODULE_WITH_DOUBLE_EXPORT_ID = ModuleIdentifier.fromString("test-with-double-export");
+    private static final ModuleIdentifier MODULE_WITH_INVERTED_DOUBLE_EXPORT_ID = ModuleIdentifier.fromString("test-with-inverted-double-export");
     private static final ModuleIdentifier MODULE_WITH_FILTERED_EXPORT_ID = ModuleIdentifier.fromString("test-with-filtered-export");
     private static final ModuleIdentifier MODULE_WITH_FILTERED_IMPORT_ID = ModuleIdentifier.fromString("test-with-filtered-import");
+    private static final ModuleIdentifier MODULE_WITH_FILTERED_DOUBLE_EXPORT_ID = ModuleIdentifier.fromString("test-with-filtered-double-export");
 
     private static final ModuleIdentifier MODULE_WITH_CIRCULAR_DEP_A = ModuleIdentifier.fromString("test-with-circular-dep-a");
     private static final ModuleIdentifier MODULE_WITH_CIRCULAR_DEP_B = ModuleIdentifier.fromString("test-with-circular-dep-b");
@@ -79,6 +84,7 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
         moduleToImportBuilder.addResourceRoot(
                 TestResourceLoader.build()
                 .addClass(ImportedClass.class)
+                .addClass(ImportedInterface.class)
                 .addResources(getResource("test/modulecontentloader/rootTwo"))
                 .create()
         );
@@ -105,6 +111,25 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
                     PathFilters.exclude("nested")
             )).create());
         moduleLoader.addModuleSpec(moduleWithImportFilterBuilder.create());
+
+        final ModuleSpec.Builder moduleWithDoubleExportBuilder = ModuleSpec.build(MODULE_WITH_DOUBLE_EXPORT_ID);
+        moduleWithDoubleExportBuilder
+            .addModuleDependency(ModuleDependencySpec.build(MODULE_TO_IMPORT_ID).setExportFilter(PathFilters.acceptAll()).create())
+            .addModuleDependency(ModuleDependencySpec.build(MODULE_WITH_CONTENT_ID).setExportFilter(PathFilters.acceptAll()).create());
+        moduleLoader.addModuleSpec(moduleWithDoubleExportBuilder.create());
+
+        final ModuleSpec.Builder moduleWithInvertedDoubleExportBuilder = ModuleSpec.build(MODULE_WITH_INVERTED_DOUBLE_EXPORT_ID);
+        moduleWithInvertedDoubleExportBuilder
+            .addModuleDependency(ModuleDependencySpec.build(MODULE_WITH_CONTENT_ID).setExportFilter(PathFilters.acceptAll()).create())
+            .addModuleDependency(ModuleDependencySpec.build(MODULE_TO_IMPORT_ID).setExportFilter(PathFilters.acceptAll()).create());
+        moduleLoader.addModuleSpec(moduleWithInvertedDoubleExportBuilder.create());
+
+        final ModuleSpec.Builder moduleWithFilteredDoubleExportBuilder = ModuleSpec.build(MODULE_WITH_FILTERED_DOUBLE_EXPORT_ID);
+        moduleWithFilteredDoubleExportBuilder
+            .addModuleDependency(ModuleDependencySpec.build(MODULE_TO_IMPORT_ID).setImportFilter(PathFilters.all(
+                PathFilters.exclude("nested"))).setExportFilter(PathFilters.acceptAll()).create())
+                .addModuleDependency(ModuleDependencySpec.build(MODULE_WITH_EXPORT_ID).setExportFilter(PathFilters.acceptAll()).create());
+        moduleLoader.addModuleSpec(moduleWithFilteredDoubleExportBuilder.create());
 
         final ModuleSpec.Builder moduleWithCircularABuilder = ModuleSpec.build(MODULE_WITH_CIRCULAR_DEP_A);
         moduleWithCircularABuilder.addModuleDependency(
@@ -236,6 +261,36 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
             fail("Should have thrown ClassNotFoundException");
         } catch (ClassNotFoundException expected) {
         }
+    }
+
+    @Test
+    public void testDoubleExportCLassLoad() throws Exception {
+        final Module testModule = moduleLoader.loadModule(MODULE_WITH_DOUBLE_EXPORT_ID);
+        final ModuleClassLoader classLoader = testModule.getClassLoader();
+        Class<?> testClass = classLoader.loadExportedClass("org.jboss.modules.test.ImportedClass");
+        assertNotNull(testClass);
+
+        testClass = classLoader.loadExportedClass("org.jboss.modules.test.TestClass");
+        assertNotNull(testClass);
+    }
+
+    @Test
+    public void testInvertedDoubleExportCLassLoad() throws Exception {
+        final Module testModule = moduleLoader.loadModule(MODULE_WITH_INVERTED_DOUBLE_EXPORT_ID);
+        final ModuleClassLoader classLoader = testModule.getClassLoader();
+        Class<?> testClass = classLoader.loadExportedClass("org.jboss.modules.test.ImportedClass");
+        assertNotNull(testClass);
+
+        testClass = classLoader.loadExportedClass("org.jboss.modules.test.TestClass");
+        assertNotNull(testClass);
+    }
+
+    @Test
+    public void testFilteredDoubleExportCLassLoad() throws Exception {
+        final Module testModule = moduleLoader.loadModule(MODULE_WITH_FILTERED_DOUBLE_EXPORT_ID);
+        final ModuleClassLoader classLoader = testModule.getClassLoader();
+        Class<?> testClass = classLoader.loadExportedClass("org.jboss.modules.test.ImportedClass");
+        assertNotNull(testClass);
     }
 
     @Test

@@ -32,11 +32,14 @@ import java.security.PrivilegedAction;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
@@ -50,6 +53,7 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 *
 * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
 * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
+* @author <a href="mailto:flavia.rainone@jboss.com">Flavia Rainone</a>
 */
 public final class Module {
     static {
@@ -177,9 +181,12 @@ public final class Module {
          */
         LINKED,
     }
+    
 
     private volatile LoadState loadState = LoadState.LOADED;
 
+    enum PathVisitAction {IMPORT_EXPORT, EXPORT_ONLY, SKIP}
+    
     private static final AtomicReferenceFieldUpdater<Module, LoadState> loadStateUpdater = AtomicReferenceFieldUpdater.newUpdater(Module.class, LoadState.class, "loadState");
 
     private void resolveInitial() throws ModuleLoadException {
@@ -190,28 +197,30 @@ public final class Module {
     }
 
     void resolve() throws ModuleLoadException {
-        resolve(new HashSet<Module>());
+        resolve(new DependencyVisitTracker());
     }
 
     private void setDependencies(final Dependency[] dependencies) throws ModuleLoadException {
-        setDependencies(new HashSet<Module>(), paths, dependencies);
+        setDependencies(new DependencyVisitTracker(), paths, dependencies);
     }
 
-    private void resolve(final Set<Module> visited) throws ModuleLoadException {
+    private void resolve(final DependencyVisitTracker dependencyVisitTracker) throws ModuleLoadException {
         final Paths<LocalLoader, Dependency> paths = this.paths;
-        setDependencies(visited, paths, paths.getSourceList(NO_DEPENDENCIES));
+        setDependencies(dependencyVisitTracker, paths, paths.getSourceList(NO_DEPENDENCIES));
     }
 
-    private void setDependencies(final Set<Module> visited, final Paths<LocalLoader, Dependency> paths, final Dependency[] dependencies) throws ModuleLoadException {
-        if (! visited.add(this)) {
-            return;
-        }
+    private void setDependencies(final DependencyVisitTracker visitTracker, final Paths<LocalLoader, Dependency> paths, final Dependency[] dependencies) throws ModuleLoadException {
         final Deque<PathFilter> filterSeries = new ArrayDeque<PathFilter>();
         final Map<String, List<LocalLoader>> allPaths = new HashMap<String, List<LocalLoader>>();
         final Map<String, List<LocalLoader>> exportedPaths = new HashMap<String, List<LocalLoader>>();
 
         final DependencyVisitor<PathFilter> distantVisitor = new DependencyVisitor<PathFilter>() {
+
             public void visit(final LocalDependency item, final PathFilter firstExportFilter) throws ModuleLoadException {
+                PathVisitAction visitAction = visitTracker.startPathVisit();
+                if (visitAction == PathVisitAction.SKIP) {
+                    return;
+                }
                 final Set<String> paths = item.getPaths();
                 final PathFilter importFilter = item.getImportFilter();
                 final PathFilter exportFilter = item.getExportFilter();
@@ -220,15 +229,22 @@ public final class Module {
                     if (importFilter.accept(path) && exportFilter.accept(path)) {
                         for (PathFilter filter : filterSeries) {
                             if (! filter.accept(path)) {
+                                visitTracker.notifyPathNotIncluded();
                                 continue OUTER;
                             }
                         }
-                        addToMapList(allPaths, path, loader);
+
+                        if (visitAction != PathVisitAction.EXPORT_ONLY) {
+                            addToMapList(allPaths, path, loader);
+                        }
                         if (firstExportFilter.accept(path)) {
                             addToMapList(exportedPaths, path, loader);
+                        } else {
+                            visitTracker.notifyPathNotExported();
                         }
                     }
                 }
+                visitTracker.finishPathVisit();
             }
 
             public void visit(final ModuleDependency item, final PathFilter firstExportFilter) throws ModuleLoadException {
@@ -236,13 +252,14 @@ public final class Module {
                 if (module == null) {
                     return;
                 }
-                if (!visited.add(module)) {
-                    return;
-                }
                 final PathFilter exportFilter = item.getExportFilter();
                 if (exportFilter == PathFilters.rejectAll()) {
                     return;
-                } else {
+                }
+                if (!visitTracker.startVisit(item, module)) {
+                    return;
+                }
+                else {
                     filterSeries.addLast(item.getImportFilter());
                     filterSeries.addLast(exportFilter);
                     try {
@@ -252,12 +269,17 @@ public final class Module {
                     } finally {
                         filterSeries.removeLast();
                         filterSeries.removeLast();
+                        visitTracker.finishVisit(module);
                     }
                 }
             }
         };
         final DependencyVisitor<Void> nearVisitor = new DependencyVisitor<Void>() {
             public void visit(final LocalDependency item, final Void param) throws ModuleLoadException {
+                PathVisitAction visitAction = visitTracker.startPathVisit();
+                if (visitAction == PathVisitAction.SKIP) {
+                    return;
+                }
                 final Set<String> paths = item.getPaths();
                 final PathFilter importFilter = item.getImportFilter();
                 final PathFilter exportFilter = item.getExportFilter();
@@ -267,16 +289,22 @@ public final class Module {
                         addToMapList(allPaths, path, loader);
                         if (exportFilter.accept(path)) {
                             addToMapList(exportedPaths, path, loader);
+                        } else {
+                            visitTracker.notifyPathNotExported();
                         }
+                    } else {
+                        visitTracker.notifyPathNotIncluded();
                     }
                 }
+                visitTracker.finishPathVisit();
             }
 
             public void visit(final ModuleDependency item, final Void param) throws ModuleLoadException {
                 final Module module = item.getModuleRequired();
-                if (module == null) {
+                if (module == null || !visitTracker.startVisit(item, module)) {
                     return;
                 }
+
                 filterSeries.addLast(item.getImportFilter());
                 final PathFilter exportFilter = item.getExportFilter();
                 try {
@@ -285,6 +313,7 @@ public final class Module {
                     }
                 } finally {
                     filterSeries.removeLast();
+                    visitTracker.finishVisit(module);
                 }
             }
         };
@@ -292,6 +321,9 @@ public final class Module {
         for (Dependency dependency : dependencies) {
             dependency.accept(nearVisitor, null);
         }
+
+        removeDuplicatesFromLists(allPaths.values());
+        removeDuplicatesFromLists(exportedPaths.values());
         pathsUpdater.compareAndSet(this, paths, new Paths<LocalLoader, Dependency>(dependencies, allPaths, exportedPaths));
         loadStateUpdater.compareAndSet(this, LoadState.LOADED, LoadState.RESOLVED);
     }
@@ -373,6 +405,21 @@ public final class Module {
             map.put(key, list);
         }
         list.add(item);
+    }
+    
+    private static <E> void removeDuplicatesFromLists(Collection<List<E>> lists) {
+        Set<E> set = Collections.newSetFromMap(new IdentityHashMap<E, Boolean>());
+        for (List<E> list: lists) {
+            if (list.size() <= 1) {
+                continue;
+            }
+            for (Iterator<E> iterator = list.iterator(); iterator.hasNext();) {
+                if (!set.add(iterator.next())) {
+                    iterator.remove();
+                }
+            }
+            set.clear();
+        }
     }
 
     /**
@@ -882,6 +929,81 @@ public final class Module {
         }
 
         private SystemModuleHolder() {
+        }
+    }
+
+    private static final class DependencyVisitTracker {
+        private final Set<Dependency> visited;
+        private final Map<Module, PathVisitAction> pathActionsPerModule;
+        private final Deque<PathVisitAction> pathActionStack;
+        private PathVisitAction newPathAction;
+
+        public DependencyVisitTracker()
+        {
+            visited = new HashSet<Dependency>();
+            pathActionsPerModule = new HashMap<Module, PathVisitAction>();
+            pathActionStack = new ArrayDeque<PathVisitAction>();
+            pathActionStack.addLast(PathVisitAction.IMPORT_EXPORT);
+        }
+
+        /**
+         * Returns {@code true} if {@code moduleDependency} should be visited.
+         */
+        public boolean startVisit(ModuleDependency moduleDependency, Module module)
+        {
+            if (!visited.add(moduleDependency)) {
+                return false;
+            }
+            PathVisitAction currentPathState = pathActionsPerModule.containsKey(module)?
+                    pathActionsPerModule.get(module): PathVisitAction.IMPORT_EXPORT;
+                    pathActionStack.addLast(currentPathState);
+                    return true;
+        }
+
+        /**
+         * Notifies this tracker that the visit to {@code module} is finished.
+         */
+        public void finishVisit(Module module) {
+            pathActionsPerModule.put(module, pathActionStack.removeLast());
+        }
+
+        /**
+         * Returns an action indicating how should proceed the path visit.
+         */
+        public PathVisitAction startPathVisit() {
+            if (pathActionStack.getLast() == PathVisitAction.SKIP) {
+                return PathVisitAction.SKIP;
+            }
+            // on a optimistic approach, mark that the current module's path won't require revisiting in the future
+            newPathAction = PathVisitAction.SKIP;
+            return pathActionStack.removeLast();
+        }
+
+        /**
+         * Notifies this tracker that the path visit being performed didn't succeed in adding a path to the allPaths
+         * collection.
+         */
+        public void notifyPathNotIncluded() {
+            // mark that the current module's paths will require full revisiting in the future
+            newPathAction = PathVisitAction.IMPORT_EXPORT;
+        }
+
+        /**
+         * Notifies this tracker that the path visit being performed didn't succeed in adding a path to the exportPaths
+         * collection.
+         */
+        public void notifyPathNotExported() {
+            if (newPathAction == PathVisitAction.SKIP) {
+                // mark that the current module's paths will require revisiting only for export in the future
+                newPathAction = PathVisitAction.EXPORT_ONLY;
+            }
+        }
+
+        /**
+         * Notifies this tracker that the path visit being performed is finished.
+         */
+        public void finishPathVisit() {
+            pathActionStack.addLast(newPathAction);
         }
     }
 }
