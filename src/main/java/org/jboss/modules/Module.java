@@ -1276,7 +1276,7 @@ public final class Module {
                     break;
                 }
                 modulePathResolution.setStatus(ResolutionStatus.ABORTED);
-            } while (iterator.hasNext());
+            };
             return;
         }
     }
