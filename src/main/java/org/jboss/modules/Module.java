@@ -769,8 +769,29 @@ public final class Module {
         Module.moduleLoaderSelector = moduleLoaderSelector;
     }
 
+    private static final RuntimePermission ACCESS_MODULE_LOGGER = new RuntimePermission("accessModuleLogger");
+
+    /**
+     * Get the logger used by the module system.
+     *
+     * If a security manager is present, then this method invokes the security manager's {@code checkPermission} method
+     * with a {@code RuntimePermission("accessModuleLogger")} permission to verify access to the module logger. If
+     * access is not granted, a {@code SecurityException} will be thrown.
+     */
+    public static ModuleLogger getModuleLogger() {
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(ACCESS_MODULE_LOGGER);
+        }
+        return log;
+    }
+
     /**
      * Change the logger used by the module system.
+     * 
+     * If a security manager is present, then this method invokes the security manager's {@code checkPermission} method
+     * with a {@code RuntimePermission("accessModuleLogger")} permission to verify access to the module logger. If
+     * access is not granted, a {@code SecurityException} will be thrown.
      *
      * @param logger the new logger, must not be {@code null}
      */
@@ -778,8 +799,11 @@ public final class Module {
         if (logger == null) {
             throw new IllegalArgumentException("logger is null");
         }
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(ACCESS_MODULE_LOGGER);
+        }
         logger.greeting();
-        // todo: perm check
         log = logger;
     }
 
