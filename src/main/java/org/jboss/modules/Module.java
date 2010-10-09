@@ -185,7 +185,7 @@ public final class Module {
     private volatile LoadState loadState = LoadState.LOADED;
 
     enum PathVisitAction {IMPORT_EXPORT, EXPORT_ONLY, SKIP}
-    
+
     private static final AtomicReferenceFieldUpdater<Module, LoadState> loadStateUpdater = AtomicReferenceFieldUpdater.newUpdater(Module.class, LoadState.class, "loadState");
 
     private void resolveInitial() throws ModuleLoadException {
@@ -299,7 +299,7 @@ public final class Module {
         }
         list.addAll(items);
     }
-    
+
     private static <E> void removeDuplicatesFromLists(Collection<List<E>> lists) {
         Set<E> set = Collections.newSetFromMap(new IdentityHashMap<E, Boolean>());
         for (List<E> list: lists) {
@@ -788,7 +788,7 @@ public final class Module {
 
     /**
      * Change the logger used by the module system.
-     * 
+     *
      * If a security manager is present, then this method invokes the security manager's {@code checkPermission} method
      * with a {@code RuntimePermission("accessModuleLogger")} permission to verify access to the module logger. If
      * access is not granted, a {@code SecurityException} will be thrown.
@@ -837,8 +837,9 @@ public final class Module {
             final LocalDependency localDependency = new LocalDependency(PathFilters.acceptAll(), PathFilters.acceptAll(), systemLocalLoader, systemLocalLoader.getPathSet());
             final Module system = new Module();
             system.getClassLoaderPrivate().recalculate();
+            system.setInitialDependencies(new DependencySpec.SpecifiedDependency[] { new DependencySpec.ImmediateSpecifiedDependency(localDependency) });
             try {
-                system.setDependencies(new DependencySpec.SpecifiedDependency[] { new DependencySpec.ImmediateSpecifiedDependency(localDependency) }, false);
+                system.linkInitial(new HashSet());
             } catch (ModuleLoadException e) {
                 throw new Error("Failed to initialize system module", e);
             }
@@ -853,7 +854,7 @@ public final class Module {
      * Resolves the allPaths and exportedPaths collections of a specific Module.
      * This class also tries, on a best effort basis, to use the results of dependencies being visited for resolving those
      * dependencies paths collections as well.
-     * 
+     *
      * @author <a href="mailto:flavia.rainone@jboss.com">Flavia Rainone</a>
      *
      */
@@ -912,7 +913,7 @@ public final class Module {
             if (module == null) {
                 return;
             }
-            if (module.loadState == LoadState.RESOLVED) {
+            if (module.loadState.compareTo(LoadState.RESOLVED) >= 0) {
                 // no need to revisit the deps of a resolved module
                 visitResolved(module, item.getImportFilter(), item.getExportFilter());
                 return;
@@ -951,7 +952,7 @@ public final class Module {
          * Returns the result of the visit performed by PathResolver, containing the resolved allPaths and exportedPaths
          * belonging to the queried Module (i.e., module passed in constructor), plus the paths collection of other visited
          * modules.
-         * 
+         *
          * @return the resolved allPaths and exportedPaths collections
          */
         Collection<ModulePathResolution> getResolvedModulePaths() {
@@ -963,7 +964,7 @@ public final class Module {
             visitExportedPaths(module.paths.getExportedPaths(), importFilter, exportFilter);
         }
 
-        private void visitResolved(ModulePathResolution modulePaths, PathFilter importFilter, PathFilter exportFilter) 
+        private void visitResolved(ModulePathResolution modulePaths, PathFilter importFilter, PathFilter exportFilter)
         throws ModuleLoadException {
             visitExportedPaths(modulePaths.getExportedPaths(), importFilter, exportFilter);
         }
@@ -1060,7 +1061,7 @@ public final class Module {
      * - the module itself
      * - information about cycles found during visit
      * - a resolution status. If status is RESOLVED, it means the allPaths and exportPaths contents are final
-     * 
+     *
      * @author <a href="mailto:flavia.rainone@jboss.com">Flavia Rainone</a>
      */
     private static final class ModulePathResolution {
@@ -1101,20 +1102,20 @@ public final class Module {
         void setStatus(ResolutionStatus resolution) {
             this.status = resolution;
         }
-        
+
         /**
          * Adds {@code path} to this modulePathResolution collections according to acceptance by {@code importFilter}
          * and {@code exportFilter}.
-         *  
+         *
          * @param path         the path to be accepted
          * @param loader       capable of loading {@code path}
-         * @param importFilter accepted paths should be added to allPaths collection 
+         * @param importFilter accepted paths should be added to allPaths collection
          * @param exportFilter accepted paths should be added to exportedPaths collection
          * @return             {@code true} only if {@code path} is accepted by both {@code importFilter} and
          *                     {@code exportFilter}.
          */
         boolean acceptPath(String path, LocalLoader loader, PathFilter importFilter, PathFilter exportFilter) {
-            // is path resolution aborted? if so, we don't care adding loader to the paths/exportedPaths collections 
+            // is path resolution aborted? if so, we don't care adding loader to the paths/exportedPaths collections
             if (status == ResolutionStatus.ABORTED) {
                 return importFilter.accept(path) && exportFilter.accept(path);
             }
@@ -1132,10 +1133,10 @@ public final class Module {
         /**
          * Adds {@code path} to this modulePathResolution collections according to acceptance by {@code importFilter}
          * and {@code exportFilter}.
-         *  
+         *
          * @param path         the path to be accepted
          * @param loaders      loaders capable of loading {@code path}
-         * @param importFilter accepted paths should be added to allPaths collection 
+         * @param importFilter accepted paths should be added to allPaths collection
          * @param exportFilter accepted paths should be added to exportedPaths collection
          * @return             {@code true} only if {@code path} is accepted by both {@code importFilter} and
          *                     {@code exportFilter}.
@@ -1192,7 +1193,7 @@ public final class Module {
 
     /**
      * A cycle found by PathResolver during dependencies visit.
-     *  
+     *
      * @author <a href="mailto:flavia.rainone@jboss.com">Flavia Rainone</a>
      */
     private static class DependencyCycle {
@@ -1203,7 +1204,7 @@ public final class Module {
         // the beginning and end of a cycle in the dependency chain
         // this ModulePathResolutoin needs to be resolved so the cycle can be resolved as well
         private final ModulePathResolution cycleHead;
-        // the state of visit being currently performed by PathResolver 
+        // the state of visit being currently performed by PathResolver
         private final Deque<PathFilter> filterSeries;
         // the state of visit being currently performed by PathResolver
         private final Deque<ModulePathResolution> modulePathResolutionStack;
@@ -1286,8 +1287,8 @@ public final class Module {
         /**
          * When a cycle is found overlapping with a cycle that has previously been found, the elements of the
          * new found cycle are aborted.
-         *  
-         * @param innerCycleHead            marks the beginning and finish of the newly found cycle. This is the only 
+         *
+         * @param innerCycleHead            marks the beginning and finish of the newly found cycle. This is the only
          *                                  ModulePathResolution that won't be aborted.
          * @param modulePathResolutionStack the stack of all modules being visted by PathResolver
          */

@@ -55,6 +55,8 @@
                 <configuration>
                     <redirectTestOutputToFile>true</redirectTestOutputToFile>
                     <trimStackTrace>false</trimStackTrace>
+                     <!-- Modules ignores Class-Path -->
+                    <useManifestOnlyJar>false</useManifestOnlyJar>
                     <printSummary>true</printSummary>
                     <includes>
                         <include>**/*Test.java</include>
