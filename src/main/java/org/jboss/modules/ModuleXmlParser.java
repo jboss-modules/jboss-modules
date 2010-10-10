@@ -48,6 +48,15 @@ import java.util.jar.JarFile;
  */
 final class ModuleXmlParser {
 
+    private static final PathFilter defaultExportFilter;
+
+    static {
+        final MultiplePathFilterBuilder builder = PathFilters.multiplePathFilterBuilder(true);
+        builder.addFilter(PathFilters.match("META-INF/services/*"), true);
+        builder.addFilter(PathFilters.match("META-INF/**"), false);
+        defaultExportFilter = builder.create();
+    }
+
     private ModuleXmlParser() {
     }
 
@@ -451,11 +460,12 @@ final class ModuleXmlParser {
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {
+                    final PathFilter exportFilter;
                     if (builder.isEmpty()) {
-                        builder.addFilter(PathFilters.match("META-INF/services/*"), true);
-                        builder.addFilter(PathFilters.match("META-INF/**"), false);
+                        exportFilter = defaultExportFilter;
+                    } else {
+                        exportFilter = builder.create();
                     }
-                    final PathFilter exportFilter = builder.create();
                     if (file.isDirectory()) {
                         resourceLoader = new FileResourceLoader(identifier, file, name, exportFilter);
                     } else {
