@@ -34,31 +34,17 @@ import java.util.regex.Pattern;
 final class GlobPathFilter implements PathFilter {
     private static final Pattern GLOB_PATTERN = Pattern.compile("(\\*\\*?)|(\\?)|(\\\\.)|(/+)|([^*?]+)");
 
-    private final boolean include;
     private final String glob;
     private final Pattern pattern;
 
     /**
      * Construct a new instance.
      *
-     * @param include {@code true} if this is an "include" filter, {@code false} if this is an "exclude" filter
-     * @param pattern the regular expression to match
-     * @param glob the glob used to construct the instance, if any
+     * @param glob the path glob to match
      */
-    GlobPathFilter(final boolean include, final Pattern pattern, final String glob) {
-        this.include = include;
-        this.pattern = pattern;
+    GlobPathFilter(final String glob) {
+        pattern = getGlobPattern(glob);
         this.glob = glob;
-    }
-
-    /**
-     * Construct a new instance.
-     *
-     * @param include {@code true} if this is an "include" filter, {@code false} if this is an "exclude" filter
-     * @param glob the glob expression to match
-     */
-    GlobPathFilter(final boolean include, final String glob) {
-        this(include, getGlobPattern(glob), glob);
     }
 
     /**
@@ -68,7 +54,7 @@ final class GlobPathFilter implements PathFilter {
      * @return true if the path should be accepted, false if not
      */
     public boolean accept(final String path) {
-        return pattern.matcher(path).matches() == include;
+        return pattern.matcher(path).matches();
     }
 
     /**
@@ -131,7 +117,7 @@ final class GlobPathFilter implements PathFilter {
     }
 
     public int hashCode() {
-        return Boolean.valueOf(include).hashCode() ^ pattern.hashCode();
+        return glob.hashCode();
     }
 
     public boolean equals(final Object obj) {
@@ -139,12 +125,12 @@ final class GlobPathFilter implements PathFilter {
     }
 
     public boolean equals(final GlobPathFilter obj) {
-        return obj != null && obj.include == include && obj.pattern.equals(pattern);
+        return obj != null && obj.pattern.equals(pattern);
     }
 
     public String toString() {
         final StringBuilder b = new StringBuilder();
-        b.append(include ? "include " : "exclude ");
+        b.append("match ");
         if (glob != null) {
             b.append('"').append(glob).append('"');
         } else {

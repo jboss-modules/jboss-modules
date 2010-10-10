@@ -135,10 +135,10 @@ public abstract class AbstractResourceLoaderTestCase extends AbstractModuleTestC
      */
     @Test
     public void testExportFiltering() throws Exception {
-        loader = createLoader(PathFilters.all(
-                PathFilters.include("nested/**"),
-                PathFilters.include("nested/other/**")
-        ));
+        final MultiplePathFilterBuilder builder = PathFilters.multiplePathFilterBuilder(false);
+        builder.addFilter(PathFilters.match("nested/other/**"), true);
+        builder.addFilter(PathFilters.match("nested/**"), false);
+        loader = createLoader(builder.create());
         PathFilter exportFilter = loader.getExportFilter();
         assertFalse(exportFilter.accept("nested/test"));
         assertFalse(exportFilter.accept("nested/other"));

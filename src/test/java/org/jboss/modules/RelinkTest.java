@@ -58,7 +58,7 @@ public class RelinkTest extends AbstractModuleTestCase {
         }
 
         ModuleDependencySpec.Builder sysDep = ModuleDependencySpec.build(ModuleIdentifier.SYSTEM);
-        sysDep.setImportFilter(PathFilters.include("org/jboss/modules/**"));
+        sysDep.setImportFilter(PathFilters.match("org/jboss/modules/**"));
         ModuleDependencySpec spec = sysDep.create();
 
         DependencyBuilder dep = DependencySpec.build().addModuleDependency(spec);
@@ -94,8 +94,8 @@ public class RelinkTest extends AbstractModuleTestCase {
             }
 
             Builder sysDep = ModuleDependencySpec.build(ModuleIdentifier.SYSTEM);
-            sysDep.setImportFilter(PathFilters.include("org/jboss/modules/**"));
-            sysDep.setExportFilter(PathFilters.include("org/jboss/modules/**"));
+            sysDep.setImportFilter(PathFilters.match("org/jboss/modules/**"));
+            sysDep.setExportFilter(PathFilters.match("org/jboss/modules/**"));
 
             Module moduleA = moduleLoader.loadModule(MODULE_A);
             DependencyBuilder dep = DependencySpec.build().addModuleDependency(sysDep.create());

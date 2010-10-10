@@ -25,7 +25,6 @@ package org.jboss.modules;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 /**
  * Static factory methods for path filter types.
@@ -86,43 +85,24 @@ public final class PathFilters {
     }
 
     /**
-     * Get a path filter which only includes file names which match the given glob.
+     * Get a path filter which matches a glob.
      *
      * @param glob the glob
-     * @return the filter
+     * @return a filter which returns {@code true} if the glob matches
      */
-    public static PathFilter include(String glob) {
-        return new GlobPathFilter(true, glob);
+    public static PathFilter match(String glob) {
+        return new GlobPathFilter(glob);
     }
 
     /**
-     * Get a path filter which only includes file names which match the given pattern.
+     * Get a builder for a multiple-path filter.  Such a filter contains multiple filters, each associated
+     * with a flag which indicates that matching paths should be included or excluded.
      *
-     * @param pattern the pattern
-     * @return the filter
+     * @param defaultValue the value to return if none of the nested filters match
+     * @return the builder
      */
-    public static PathFilter include(Pattern pattern) {
-        return new GlobPathFilter(true, pattern, null);
-    }
-
-    /**
-     * Get a path filter which only includes file names which do not match the given glob.
-     *
-     * @param glob the glob
-     * @return the filter
-     */
-    public static PathFilter exclude(String glob) {
-        return new GlobPathFilter(false, glob);
-    }
-
-    /**
-     * Get a path filter which only includes file names which do not match the given pattern.
-     *
-     * @param pattern the pattern
-     * @return the filter
-     */
-    public static PathFilter exclude(Pattern pattern) {
-        return new GlobPathFilter(false, pattern, null);
+    public static MultiplePathFilterBuilder multiplePathFilterBuilder(boolean defaultValue) {
+        return new MultiplePathFilterBuilder(defaultValue);
     }
 
     /**

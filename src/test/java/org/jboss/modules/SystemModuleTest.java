@@ -44,7 +44,7 @@ public class SystemModuleTest extends AbstractModuleTestCase {
 
         ModuleSpec.Builder builder = ModuleSpec.build(MODULE_A);
         ModuleDependencySpec.Builder sysDep = ModuleDependencySpec.build(ModuleIdentifier.SYSTEM);
-        sysDep.setImportFilter(PathFilters.include("org/jboss/modules/**"));
+        sysDep.setImportFilter(PathFilters.match("org/jboss/modules/**"));
         builder.addModuleDependency(sysDep.create());
 
         moduleLoader.addModuleSpec(builder.create());
@@ -63,14 +63,14 @@ public class SystemModuleTest extends AbstractModuleTestCase {
         ModuleDependencySpec.Builder depA = ModuleDependencySpec.build(MODULE_A);
         builder.addModuleDependency(depA.create());
         ModuleDependencySpec.Builder sysDep = ModuleDependencySpec.build(ModuleIdentifier.SYSTEM);
-        sysDep.setImportFilter(PathFilters.include("org/jboss/modules/**"));
+        sysDep.setImportFilter(PathFilters.match("org/jboss/modules/**"));
         builder.addModuleDependency(sysDep.create());
 
         moduleLoader.addModuleSpec(builder.create());
 
         builder = ModuleSpec.build(MODULE_A);
         sysDep = ModuleDependencySpec.build(ModuleIdentifier.SYSTEM);
-        sysDep.setImportFilter(PathFilters.include("org/jboss/modules/**"));
+        sysDep.setImportFilter(PathFilters.match("org/jboss/modules/**"));
         builder.addModuleDependency(sysDep.create());
 
         moduleLoader.addModuleSpec(builder.create());

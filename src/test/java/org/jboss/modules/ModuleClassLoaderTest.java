@@ -95,21 +95,19 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
             .addModuleDependency(ModuleDependencySpec.build(MODULE_TO_IMPORT_ID).setExportFilter(PathFilters.acceptAll()).create());
         moduleLoader.addModuleSpec(moduleWithExportBuilder.create());
 
+        final MultiplePathFilterBuilder nestedAndOrgJBossExcludingBuilder = PathFilters.multiplePathFilterBuilder(true);
+        nestedAndOrgJBossExcludingBuilder.addFilter(PathFilters.match("org/jboss/**"), false);
+        nestedAndOrgJBossExcludingBuilder.addFilter(PathFilters.match("nested"), false);
+
         final ModuleSpec.Builder moduleWithExportFilterBuilder = ModuleSpec.build(MODULE_WITH_FILTERED_EXPORT_ID);
         moduleWithExportFilterBuilder
-            .addModuleDependency(ModuleDependencySpec.build(MODULE_TO_IMPORT_ID).setExportFilter(PathFilters.all(
-                    PathFilters.exclude("org/jboss/**"),
-                    PathFilters.exclude("nested")
-            )).create());
+            .addModuleDependency(ModuleDependencySpec.build(MODULE_TO_IMPORT_ID).setExportFilter(nestedAndOrgJBossExcludingBuilder.create()).create());
 
         moduleLoader.addModuleSpec(moduleWithExportFilterBuilder.create());
 
         final ModuleSpec.Builder moduleWithImportFilterBuilder = ModuleSpec.build(MODULE_WITH_FILTERED_IMPORT_ID);
         moduleWithImportFilterBuilder
-            .addModuleDependency(ModuleDependencySpec.build(MODULE_TO_IMPORT_ID).setImportFilter(PathFilters.all(
-                    PathFilters.exclude("org/jboss/**"),
-                    PathFilters.exclude("nested")
-            )).create());
+            .addModuleDependency(ModuleDependencySpec.build(MODULE_TO_IMPORT_ID).setImportFilter(nestedAndOrgJBossExcludingBuilder.create()).create());
         moduleLoader.addModuleSpec(moduleWithImportFilterBuilder.create());
 
         final ModuleSpec.Builder moduleWithDoubleExportBuilder = ModuleSpec.build(MODULE_WITH_DOUBLE_EXPORT_ID);
@@ -126,8 +124,8 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
 
         final ModuleSpec.Builder moduleWithFilteredDoubleExportBuilder = ModuleSpec.build(MODULE_WITH_FILTERED_DOUBLE_EXPORT_ID);
         moduleWithFilteredDoubleExportBuilder
-            .addModuleDependency(ModuleDependencySpec.build(MODULE_TO_IMPORT_ID).setImportFilter(PathFilters.all(
-                PathFilters.exclude("nested"))).setExportFilter(PathFilters.acceptAll()).create())
+            .addModuleDependency(ModuleDependencySpec.build(MODULE_TO_IMPORT_ID).setImportFilter(PathFilters.not(PathFilters.match("nested")))
+                .setExportFilter(PathFilters.acceptAll()).create())
                 .addModuleDependency(ModuleDependencySpec.build(MODULE_WITH_EXPORT_ID).setExportFilter(PathFilters.acceptAll()).create());
         moduleLoader.addModuleSpec(moduleWithFilteredDoubleExportBuilder.create());
 

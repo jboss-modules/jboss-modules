@@ -34,50 +34,24 @@ import static org.junit.Assert.assertTrue;
  */
 public class PathFilterTest {
 
-    private static final String[] EMPTY = new String[0];
-
     @Test
-    public void testExcludes() throws Exception {
-        PathFilter pathFilter = PathFilters.exclude("foo/**");
-        assertTrue(pathFilter.accept("foo"));
-        assertFalse(pathFilter.accept("foo/bar"));
-        assertFalse(pathFilter.accept("foo/bar/baz"));
-
-        pathFilter = PathFilters.exclude("foo/*");
-        assertTrue(pathFilter.accept("foo"));
-        assertFalse(pathFilter.accept("foo/bar"));
-        assertFalse(pathFilter.accept("foo/bar/baz"));
-
-        pathFilter = PathFilters.exclude("foo");
-        assertFalse(pathFilter.accept("foo"));
-        assertFalse(pathFilter.accept("foo/bar"));
-        assertFalse(pathFilter.accept("foo/bar/baz"));
-
-        pathFilter = PathFilters.exclude("**/bar/**");
-        assertTrue(pathFilter.accept("foo"));
-        assertTrue(pathFilter.accept("foo/bar"));
-        assertFalse(pathFilter.accept("foo/bar/baz"));
-        assertFalse(pathFilter.accept("foo/baz/bar/biff"));
-    }
-
-    @Test
-    public void testIncludes() throws Exception {
-        PathFilter pathFilter = PathFilters.include("foo/**");
+    public void testMatch() throws Exception {
+        PathFilter pathFilter = PathFilters.match("foo/**");
         assertFalse(pathFilter.accept("foo"));
         assertTrue(pathFilter.accept("foo/bar"));
         assertTrue(pathFilter.accept("foo/bar/baz"));
 
-        pathFilter = PathFilters.include("foo/*");
+        pathFilter = PathFilters.match("foo/*");
         assertFalse(pathFilter.accept("foo"));
         assertTrue(pathFilter.accept("foo/bar"));
         assertTrue(pathFilter.accept("foo/bar/baz"));
 
-        pathFilter = PathFilters.include("foo");
+        pathFilter = PathFilters.match("foo");
         assertTrue(pathFilter.accept("foo"));
         assertTrue(pathFilter.accept("foo/bar"));
         assertTrue(pathFilter.accept("foo/bar/baz"));
 
-        pathFilter = PathFilters.include("**/bar/**");
+        pathFilter = PathFilters.match("**/bar/**");
         assertFalse(pathFilter.accept("foo"));
         assertFalse(pathFilter.accept("foo/bar"));
         assertTrue(pathFilter.accept("foo/bar/baz"));
@@ -86,11 +60,11 @@ public class PathFilterTest {
 
     @Test
     public void testDelegating() throws Exception {
-        PathFilter pathFilter = PathFilters.all(
-                PathFilters.exclude("foo/*"),
-                PathFilters.exclude("**/bar/**"),
-                PathFilters.exclude("baz/**")
-        );
+        final MultiplePathFilterBuilder builder = PathFilters.multiplePathFilterBuilder(true);
+        builder.addFilter(PathFilters.match("foo/*"), false);
+        builder.addFilter(PathFilters.match("**/bar/**"), false);
+        builder.addFilter(PathFilters.match("baz/**"), false);
+        PathFilter pathFilter = builder.create();
         assertTrue(pathFilter.accept("foo"));
         assertFalse(pathFilter.accept("foo/bar"));
         assertFalse(pathFilter.accept("foo/bar/baz"));
