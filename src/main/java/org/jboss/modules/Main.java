@@ -35,6 +35,11 @@ import java.util.logging.LogManager;
 
 public final class Main {
 
+    static {
+        // Force initialization at the earliest possible point
+        Module.getStartTime();
+    }
+
     private Main() {
     }
 

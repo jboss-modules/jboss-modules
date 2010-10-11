@@ -56,6 +56,9 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 * @author <a href="mailto:flavia.rainone@jboss.com">Flavia Rainone</a>
 */
 public final class Module {
+
+    private static final long startTime = System.currentTimeMillis();
+
     static {
         AccessController.doPrivileged(new PrivilegedAction<Void>() {
             public Void run() {
@@ -805,6 +808,15 @@ public final class Module {
         }
         logger.greeting();
         log = logger;
+    }
+
+    /**
+     * Return the start time in millis when Module.class was loaded.
+     *
+     * @return start time of Module.class load
+     */
+    public static long getStartTime() {
+        return startTime;
     }
 
     static final class DependencyImport {
