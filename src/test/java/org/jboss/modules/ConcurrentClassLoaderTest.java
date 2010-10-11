@@ -39,12 +39,10 @@ import static org.junit.Assert.fail;
 
 /**
  * Test case to verify the concurrent classloader base correctly handles common concurrency issues with classloading..
- *  
+ *
  * @author John E. Bailey
  */
 public class ConcurrentClassLoaderTest {
-
-    private final CountDownLatch latch = new CountDownLatch(1);
 
     @Test
     public void testClassLoadingDeadlockAvoidance() throws Exception {
@@ -101,7 +99,7 @@ public class ConcurrentClassLoaderTest {
 
         @Override
         protected Class<?> findClass(String className, boolean exportsOnly, final boolean resolve) throws ClassNotFoundException {
-            Class c = findLoadedClass(className);
+            Class<?> c = findLoadedClass(className);
             if(c == null && className.startsWith("java"))
                 c = findSystemClass(className);
             if(c == null && allowedClasses.contains(className)) {
@@ -115,45 +113,6 @@ public class ConcurrentClassLoaderTest {
             if(c == null)
                 c =  delegate.loadClass(className);
             return c;
-        }
-    };
-
-    private static final class DeadLockingLoader extends ClassLoader {
-        private final ClassLoader realLoader;
-        private final Set<String> allowedClasses = new HashSet<String>();
-        private ClassLoader delegate;
-
-        private DeadLockingLoader(final ClassLoader realLoader, final Collection<String> allowedClasses) {
-            super(null);
-            this.realLoader = realLoader;
-            this.allowedClasses.addAll(allowedClasses);
-        }
-
-        @Override
-        protected synchronized Class<?> loadClass(final String name, final boolean resolve) throws ClassNotFoundException {
-            Class c = findLoadedClass(name);
-            if(c == null && name.startsWith("java"))
-                c = findSystemClass(name);
-            if(c == null) {
-                c = findClass(name);
-            }
-            if(resolve) {
-                resolveClass(c);
-            }
-            return c;
-        }
-
-        @Override
-        protected Class<?> findClass(String className) throws ClassNotFoundException {
-            try {
-                if(allowedClasses.contains(className)) {
-                    final byte[] classBytes = Util.getClassBytes(realLoader.loadClass(className));
-                    return defineClass(className, classBytes, 0, classBytes.length);
-                }
-                return delegate.loadClass(className);
-            } catch(Throwable t) {
-                throw new ClassNotFoundException("Failed to load class " + className, t);
-            }
         }
     };
 }

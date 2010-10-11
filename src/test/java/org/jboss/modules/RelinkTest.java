@@ -32,9 +32,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
- * Test System module usage.
- *
- * @author Ales Justin
+ * Test Relinking
  */
 public class RelinkTest extends AbstractModuleTestCase {
 

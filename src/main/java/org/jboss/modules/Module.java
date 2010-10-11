@@ -102,7 +102,7 @@ public final class Module {
     /**
      * This reference exists solely to prevent the {@code FutureModule} from getting GC'd prematurely.
      */
-    @SuppressWarnings({ "UnusedDeclaration" })
+    @SuppressWarnings({ "UnusedDeclaration", "unused" })
     private final Object myKey;
     /**
      * The fallback local loader, if any is defined.
@@ -839,7 +839,7 @@ public final class Module {
             system.getClassLoaderPrivate().recalculate();
             system.setInitialDependencies(new DependencySpec.SpecifiedDependency[] { new DependencySpec.ImmediateSpecifiedDependency(localDependency) });
             try {
-                system.linkInitial(new HashSet());
+                system.linkInitial(new HashSet<Module>());
             } catch (ModuleLoadException e) {
                 throw new Error("Failed to initialize system module", e);
             }

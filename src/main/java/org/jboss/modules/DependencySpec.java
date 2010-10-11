@@ -25,8 +25,6 @@ package org.jboss.modules;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jboss.modules.ModuleSpec.Builder;
-
 /**
  * A dependency specification that represents dependencies on a module.
  *

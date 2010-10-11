@@ -25,11 +25,9 @@ package org.jboss.modules;
 import static org.jboss.modules.ConcurrentReferenceHashMap.ReferenceType.STRONG;
 import static org.jboss.modules.ConcurrentReferenceHashMap.ReferenceType.WEAK;
 
-import java.util.AbstractCollection;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
-import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
 import org.jboss.modules.DependencySpec.SpecifiedDependency;
