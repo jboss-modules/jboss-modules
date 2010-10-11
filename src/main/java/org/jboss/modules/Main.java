@@ -37,7 +37,8 @@ public final class Main {
 
     static {
         // Force initialization at the earliest possible point
-        Module.getStartTime();
+        @SuppressWarnings("unused")
+        long start = StartTimeHolder.START_TIME;
     }
 
     private Main() {
