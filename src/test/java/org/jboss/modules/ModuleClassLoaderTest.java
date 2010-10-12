@@ -59,11 +59,6 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
     private static final ModuleIdentifier MODULE_WITH_FILTERED_IMPORT_ID = ModuleIdentifier.fromString("test-with-filtered-import");
     private static final ModuleIdentifier MODULE_WITH_FILTERED_DOUBLE_EXPORT_ID = ModuleIdentifier.fromString("test-with-filtered-double-export");
 
-    private static final ModuleIdentifier MODULE_WITH_CIRCULAR_DEP_A = ModuleIdentifier.fromString("test-with-circular-dep-a");
-    private static final ModuleIdentifier MODULE_WITH_CIRCULAR_DEP_B = ModuleIdentifier.fromString("test-with-circular-dep-b");
-    private static final ModuleIdentifier MODULE_WITH_CIRCULAR_DEP_C = ModuleIdentifier.fromString("test-with-circular-dep-c");
-    private static final ModuleIdentifier MODULE_WITH_CIRCULAR_DEP_D = ModuleIdentifier.fromString("test-with-circular-dep-d");
-
     private TestModuleLoader moduleLoader;
 
     @Before
@@ -128,38 +123,6 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
         moduleWithFilteredDoubleExportBuilder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_WITH_EXPORT_ID, true));
         moduleWithFilteredDoubleExportBuilder.addDependency(DependencySpec.createLocalDependencySpec());
         moduleLoader.addModuleSpec(moduleWithFilteredDoubleExportBuilder.create());
-
-        final ModuleSpec.Builder moduleWithCircularABuilder = ModuleSpec.build(MODULE_WITH_CIRCULAR_DEP_A);
-        moduleWithCircularABuilder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_WITH_CIRCULAR_DEP_B, true));
-        moduleWithCircularABuilder.addResourceRoot(
-                TestResourceLoader.build()
-                .addClass(TestClass.class)
-                .create()
-        );
-        moduleWithCircularABuilder.addDependency(DependencySpec.createLocalDependencySpec());
-        moduleLoader.addModuleSpec(moduleWithCircularABuilder.create());
-
-        final ModuleSpec.Builder moduleWithCircularBBuilder = ModuleSpec.build(MODULE_WITH_CIRCULAR_DEP_B);
-        moduleWithCircularBBuilder.addResourceRoot(
-                TestResourceLoader.build()
-                 .addClass(ImportedClass.class)
-                 .create()
-        );
-        moduleWithCircularBBuilder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_WITH_CIRCULAR_DEP_C, true));
-        moduleWithCircularBBuilder.addDependency(DependencySpec.createLocalDependencySpec());
-        moduleLoader.addModuleSpec(moduleWithCircularBBuilder.create());
-
-
-        final ModuleSpec.Builder moduleWithCircularCBuilder = ModuleSpec.build(MODULE_WITH_CIRCULAR_DEP_C);
-        moduleWithCircularCBuilder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_WITH_CIRCULAR_DEP_D, true));
-        moduleWithCircularCBuilder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_WITH_CIRCULAR_DEP_A, true));
-        moduleWithCircularCBuilder.addDependency(DependencySpec.createLocalDependencySpec());
-        moduleLoader.addModuleSpec(moduleWithCircularCBuilder.create());
-
-        final ModuleSpec.Builder moduleWithCircularDBuilder = ModuleSpec.build(MODULE_WITH_CIRCULAR_DEP_D);
-        moduleWithCircularDBuilder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_WITH_CIRCULAR_DEP_A, true));
-        moduleWithCircularDBuilder.addDependency(DependencySpec.createLocalDependencySpec());
-        moduleLoader.addModuleSpec(moduleWithCircularDBuilder.create());
 
         Module.setModuleLoaderSelector(new SimpleModuleLoaderSelector(moduleLoader));
     }
@@ -275,33 +238,6 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
         final Module testModule = moduleLoader.loadModule(MODULE_WITH_FILTERED_DOUBLE_EXPORT_ID);
         final ModuleClassLoader classLoader = testModule.getClassLoader();
         Class<?> testClass = classLoader.loadExportedClass("org.jboss.modules.test.ImportedClass");
-        assertNotNull(testClass);
-    }
-
-    @Test
-    public void testCircularClassLoad() throws Exception {
-        final Module moduleA = moduleLoader.loadModule(MODULE_WITH_CIRCULAR_DEP_A);
-        final ModuleClassLoader classLoaderA = moduleA.getClassLoader();
-        Class<?> testClass = classLoaderA.loadExportedClass("org.jboss.modules.test.ImportedClass");
-        assertNotNull(testClass);
-
-        final Module moduleB = moduleLoader.loadModule(MODULE_WITH_CIRCULAR_DEP_B);
-        final ModuleClassLoader classLoaderB = moduleB.getClassLoader();
-        testClass = classLoaderB.loadExportedClass("org.jboss.modules.test.TestClass");
-        assertNotNull(testClass);
-
-        final Module moduleC = moduleLoader.loadModule(MODULE_WITH_CIRCULAR_DEP_C);
-        final ModuleClassLoader classLoaderC = moduleC.getClassLoader();
-        testClass = classLoaderC.loadExportedClass("org.jboss.modules.test.TestClass");
-        assertNotNull(testClass);
-        testClass = classLoaderC.loadExportedClass("org.jboss.modules.test.ImportedClass");
-        assertNotNull(testClass);
-
-        final Module moduleD = moduleLoader.loadModule(MODULE_WITH_CIRCULAR_DEP_D);
-        final ModuleClassLoader classLoaderD = moduleD.getClassLoader();
-        testClass = classLoaderD.loadExportedClass("org.jboss.modules.test.TestClass");
-        assertNotNull(testClass);
-        testClass = classLoaderD.loadExportedClass("org.jboss.modules.test.ImportedClass");
         assertNotNull(testClass);
     }
 

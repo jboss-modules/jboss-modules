@@ -65,7 +65,6 @@ public class ModuleExportTest extends AbstractModuleTestCase {
         moduleLoader.addModuleSpec(builder.create());
 
         builder = ModuleSpec.build(MODULE_C);
-        builder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_A, true, false));
         moduleLoader.addModuleSpec(builder.create());
 
         builder = ModuleSpec.build(MODULE_D);
@@ -81,16 +80,18 @@ public class ModuleExportTest extends AbstractModuleTestCase {
         dependencyExports.clear();
         module = moduleLoader.loadModule(MODULE_B);
         getExportedModuleDeps(module, dependencyExports);
-        assertEquals(2, dependencyExports.size());
-        assertTrue(dependencyExports.contains(MODULE_A));
+        assertEquals(1, dependencyExports.size());
         assertTrue(dependencyExports.contains(MODULE_C));
 
         dependencyExports.clear();
         module = moduleLoader.loadModule(MODULE_C);
         getExportedModuleDeps(module, dependencyExports);
-        assertEquals(2, dependencyExports.size());
-        assertTrue(dependencyExports.contains(MODULE_A));
-        assertTrue(dependencyExports.contains(MODULE_B));
+        assertEquals(0, dependencyExports.size());
+
+        dependencyExports.clear();
+        module = moduleLoader.loadModule(MODULE_D);
+        getExportedModuleDeps(module, dependencyExports);
+        assertEquals(0, dependencyExports.size());
     }
 
     private static void getExportedModuleDeps(final Module module, final Set<ModuleIdentifier> dependencyExports) throws ModuleLoadException {
@@ -119,7 +120,7 @@ public class ModuleExportTest extends AbstractModuleTestCase {
         Module.setModuleLoaderSelector(new SimpleModuleLoaderSelector(moduleLoader));
 
         ModuleSpec.Builder builder = ModuleSpec.build(MODULE_A);
-        builder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_B, true, false));
+        builder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_B, true));
         moduleLoader.addModuleSpec(builder.create());
 
         builder = ModuleSpec.build(MODULE_B);
@@ -132,7 +133,7 @@ public class ModuleExportTest extends AbstractModuleTestCase {
             .addClass(ImportedClass.class)
             .create()
         );
-        builder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_A, true));
+        builder.addDependency(DependencySpec.createLocalDependencySpec());
         moduleLoader.addModuleSpec(builder.create());
 
         builder = ModuleSpec.build(MODULE_D);
