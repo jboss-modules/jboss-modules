@@ -25,6 +25,7 @@ package org.jboss.modules;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.security.AccessController;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -44,8 +45,10 @@ final class SystemLocalLoader implements LocalLoader {
     private SystemLocalLoader() {
         final Set<String> pathSet = new HashSet<String>(128);
         final Set<String> jarSet = new HashSet<String>(128);
-        processClassPathItem(System.getProperty("sun.boot.class.path"), jarSet, pathSet);
-        processClassPathItem(System.getProperty("java.class.path"), jarSet, pathSet);
+        final String sunBootClassPath = AccessController.doPrivileged(new PropertyReadAction("sun.boot.class.path"));
+        final String javaClassPath = AccessController.doPrivileged(new PropertyReadAction("java.class.path"));
+        processClassPathItem(sunBootClassPath, jarSet, pathSet);
+        processClassPathItem(javaClassPath, jarSet, pathSet);
         this.pathSet = pathSet;
     }
 

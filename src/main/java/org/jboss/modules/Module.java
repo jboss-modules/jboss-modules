@@ -65,9 +65,33 @@ public final class Module {
                 return null;
             }
         });
+        final String pkgsString = AccessController.doPrivileged(new PropertyReadAction("jboss.modules.system.pkgs"));
+        final List<String> list = new ArrayList<String>();
+        list.add("java.");
+        list.add("sun.reflect.");
+        if (pkgsString != null) {
+            int i;
+            int nc = -1;
+            do {
+                i = nc + 1;
+                nc = pkgsString.indexOf(',', i);
+                String part;
+                if (nc == -1) {
+                    part = pkgsString.substring(i).trim();
+                } else {
+                    part = pkgsString.substring(i, nc).trim();
+                }
+                if (part.length() > 0) {
+                    list.add((part + ".").intern());
+                }
+            } while (nc != -1);
+        }
+        systemPackages = list.toArray(list.toArray(new String[list.size()]));
     }
 
     // static properties
+
+    static final String[] systemPackages;
 
     /**
      * The system-wide module logger, which may be changed via {@link #setModuleLogger(ModuleLogger)}.
@@ -423,11 +447,13 @@ public final class Module {
      * @return the class
      */
     Class<?> loadModuleClass(final String className, final boolean exportsOnly, final boolean resolve) {
-        if (className.startsWith("java.") || className.startsWith("sun.reflect.")) {
-            try {
-                return moduleClassLoader.loadClass(className, resolve);
-            } catch (ClassNotFoundException e) {
-                return null;
+        for (String s : systemPackages) {
+            if (className.startsWith(s)) {
+                try {
+                    return moduleClassLoader.loadClass(className, resolve);
+                } catch (ClassNotFoundException e) {
+                    return null;
+                }
             }
         }
         final String path = pathOfClass(className);

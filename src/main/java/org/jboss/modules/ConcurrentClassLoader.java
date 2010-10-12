@@ -239,9 +239,11 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
         if (className == null) {
             throw new IllegalArgumentException("name is null");
         }
-        if (className.startsWith("java.") || className.startsWith("sun.reflect.")) {
-            // always delegate to system
-            return findSystemClass(className);
+        for (String s : Module.systemPackages) {
+            if (className.startsWith(s)) {
+                // always delegate to system
+                return findSystemClass(className);
+            }
         }
         if (Thread.holdsLock(this) && Thread.currentThread() != LoaderThreadHolder.LOADER_THREAD) {
             // Only the classloader thread may take this lock; use a condition to relinquish it
