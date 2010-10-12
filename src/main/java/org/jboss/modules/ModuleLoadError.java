@@ -23,11 +23,11 @@
 package org.jboss.modules;
 
 /**
- * Module load exception, thrown when there is some problem loading a module.
+ * Module load error, thrown when there is some problem loading a module during runtime.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public class ModuleLoadException extends Exception {
+public class ModuleLoadError extends Error {
 
     private static final long serialVersionUID = 3286005346300416890L;
 
@@ -35,7 +35,7 @@ public class ModuleLoadException extends Exception {
      * Constructs a {@code ModuleLoadException} with no detail message. The cause is not initialized, and may subsequently
      * be initialized by a call to {@link #initCause(Throwable) initCause}.
      */
-    public ModuleLoadException() {
+    public ModuleLoadError() {
     }
 
     /**
@@ -44,7 +44,7 @@ public class ModuleLoadException extends Exception {
      *
      * @param msg the detail message
      */
-    public ModuleLoadException(final String msg) {
+    public ModuleLoadError(final String msg) {
         super(msg);
     }
 
@@ -55,7 +55,7 @@ public class ModuleLoadException extends Exception {
      *
      * @param cause the cause (which is saved for later retrieval by the {@link #getCause()} method)
      */
-    public ModuleLoadException(final Throwable cause) {
+    public ModuleLoadError(final Throwable cause) {
         super(cause);
     }
 
@@ -65,16 +65,16 @@ public class ModuleLoadException extends Exception {
      * @param msg the detail message
      * @param cause the cause (which is saved for later retrieval by the {@link #getCause()} method)
      */
-    public ModuleLoadException(final String msg, final Throwable cause) {
+    public ModuleLoadError(final String msg, final Throwable cause) {
         super(msg, cause);
     }
 
     /**
-     * Convert to an unchecked error type.
+     * Convert to a checked exception type.
      *
-     * @return the unchecked error
+     * @return the checked exception
      */
-    public ModuleLoadError toError() {
-        return new ModuleLoadError(getMessage(), getCause());
+    public ModuleLoadException toException() {
+        return new ModuleLoadException(getMessage(), getCause());
     }
 }

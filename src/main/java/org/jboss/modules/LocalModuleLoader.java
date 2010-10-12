@@ -25,17 +25,35 @@ package org.jboss.modules;
 import java.io.File;
 
 /**
+ * A local filesystem-backed module loader.
+ *
  * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
+ * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class LocalModuleLoader extends ModuleLoader {
 
     private final File[] repoRoots;
 
+    /**
+     * Construct a new instance.
+     *
+     * @param repoRoots the array of repository roots to look for modules
+     */
     public LocalModuleLoader(final File[] repoRoots) {
         super(0);
         this.repoRoots = repoRoots;
     }
 
+    /** {@inheritDoc} */
+    @Override
+    protected Module preloadModule(final ModuleIdentifier identifier) throws ModuleLoadException {
+        if (identifier.equals(ModuleIdentifier.SYSTEM)) {
+            return preloadModule(ModuleIdentifier.SYSTEM, SystemModuleLoader.getInstance());
+        }
+        return super.preloadModule(identifier);
+    }
+
+    /** {@inheritDoc} */
     @Override
     protected ModuleSpec findModule(final ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
         final File moduleRoot = getModuleRoot(moduleIdentifier);

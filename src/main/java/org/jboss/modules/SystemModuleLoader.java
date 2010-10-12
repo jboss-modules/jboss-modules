@@ -23,41 +23,36 @@
 package org.jboss.modules;
 
 /**
- * A dependency specification.
+ * The module loader for the system module.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public abstract class AbstractDependencySpec {
+public final class SystemModuleLoader extends ModuleLoader {
 
-    protected final PathFilter importFilter;
-    protected final PathFilter exportFilter;
+    static final SystemModuleLoader INSTANCE = new SystemModuleLoader();
 
-    /**
-     * Construct a new instance.
-     *
-     * @param importFilter the import filter
-     * @param exportFilter the export filter
-     */
-    AbstractDependencySpec(final PathFilter importFilter, final PathFilter exportFilter) {
-        this.exportFilter = exportFilter;
-        this.importFilter = importFilter;
+    private SystemModuleLoader() {
+        super(0);
     }
 
     /**
-     * Get the import filter.
+     * Get the system module loader.
      *
-     * @return the import filter
+     * @return the system module loader
      */
-    public final PathFilter getImportFilter() {
-        return importFilter;
+    public static SystemModuleLoader getInstance() {
+        return INSTANCE;
     }
 
-    /**
-     * Get the export filter.
-     *
-     * @return the export filter
-     */
-    public final PathFilter getExportFilter() {
-        return exportFilter;
+    /** {@inheritDoc} */
+    protected ModuleSpec findModule(final ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
+        if (! moduleIdentifier.equals(ModuleIdentifier.SYSTEM)) {
+            return null;
+        }
+
+        final SystemLocalLoader systemLocalLoader = SystemLocalLoader.getInstance();
+        final ModuleSpec.Builder builder = ModuleSpec.build(ModuleIdentifier.SYSTEM);
+        builder.addDependency(DependencySpec.createLocalDependencySpec(systemLocalLoader, systemLocalLoader.getPathSet(), true));
+        return builder.create();
     }
 }

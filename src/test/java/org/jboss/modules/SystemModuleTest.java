@@ -43,10 +43,7 @@ public class SystemModuleTest extends AbstractModuleTestCase {
         Module.setModuleLoaderSelector(new SimpleModuleLoaderSelector(moduleLoader));
 
         ModuleSpec.Builder builder = ModuleSpec.build(MODULE_A);
-        ModuleDependencySpec.Builder sysDep = ModuleDependencySpec.build(ModuleIdentifier.SYSTEM);
-        sysDep.setImportFilter(PathFilters.match("org/jboss/modules/**"));
-        builder.addModuleDependency(sysDep.create());
-
+        builder.addDependency(DependencySpec.createModuleDependencySpec(PathFilters.match("org/jboss/modules/**"), PathFilters.rejectAll(), null, ModuleIdentifier.SYSTEM, false));
         moduleLoader.addModuleSpec(builder.create());
 
         Module module = moduleLoader.loadModule(MODULE_A);
@@ -60,30 +57,23 @@ public class SystemModuleTest extends AbstractModuleTestCase {
         Module.setModuleLoaderSelector(new SimpleModuleLoaderSelector(moduleLoader));
 
         ModuleSpec.Builder builder = ModuleSpec.build(MODULE_B);
-        ModuleDependencySpec.Builder depA = ModuleDependencySpec.build(MODULE_A);
-        builder.addModuleDependency(depA.create());
-        ModuleDependencySpec.Builder sysDep = ModuleDependencySpec.build(ModuleIdentifier.SYSTEM);
-        sysDep.setImportFilter(PathFilters.match("org/jboss/modules/**"));
-        builder.addModuleDependency(sysDep.create());
+
+        builder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_A));
+        builder.addDependency(DependencySpec.createModuleDependencySpec(PathFilters.match("org/jboss/modules/**"), PathFilters.rejectAll(), null, ModuleIdentifier.SYSTEM, false));
 
         moduleLoader.addModuleSpec(builder.create());
 
         builder = ModuleSpec.build(MODULE_A);
-        sysDep = ModuleDependencySpec.build(ModuleIdentifier.SYSTEM);
-        sysDep.setImportFilter(PathFilters.match("org/jboss/modules/**"));
-        builder.addModuleDependency(sysDep.create());
+        builder.addDependency(DependencySpec.createModuleDependencySpec(PathFilters.match("org/jboss/modules/**"), PathFilters.rejectAll(), null, ModuleIdentifier.SYSTEM, false));
 
         moduleLoader.addModuleSpec(builder.create());
 
         Module.setModuleLoaderSelector(new SimpleModuleLoaderSelector(moduleLoader));
-        try
-        {
+        try {
             Module module = moduleLoader.loadModule(MODULE_B);
             ClassLoader cl = module.getClassLoader();
             Assert.assertNotNull(cl.loadClass("org.jboss.modules.util.Util"));
-        }
-        finally
-        {
+        } finally {
             Module.setModuleLoaderSelector(ModuleLoaderSelector.DEFAULT);
         }
     }

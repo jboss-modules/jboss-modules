@@ -29,12 +29,9 @@ import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Deque;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -103,7 +100,7 @@ public final class Module {
     /**
      * This reference exists solely to prevent the {@code FutureModule} from getting GC'd prematurely.
      */
-    @SuppressWarnings({ "UnusedDeclaration", "unused" })
+    @SuppressWarnings({ "unused" })
     private final Object myKey;
     /**
      * The fallback local loader, if any is defined.
@@ -125,20 +122,6 @@ public final class Module {
     @SuppressWarnings({ "unchecked" })
     private static <A, B> AtomicReferenceFieldUpdater<A, B> unsafeCast(AtomicReferenceFieldUpdater<?, ?> updater) {
         return (AtomicReferenceFieldUpdater<A, B>) updater;
-    }
-
-    /**
-     * Construct the system module.
-     */
-    private Module() {
-        moduleLoader = InitialModuleLoader.INSTANCE;
-        identifier = ModuleIdentifier.SYSTEM;
-        mainClassName = null;
-        myKey = null;
-        fallbackLoader = null;
-        // should be safe, so...
-        //noinspection ThisEscapedInObjectConstruction
-        moduleClassLoader = new ModuleClassLoader(new ModuleClassLoader.Configuration(this, AssertionSetting.INHERIT, ModuleClassLoader.NO_RESOURCE_LOADERS));
     }
 
     /**
@@ -165,155 +148,16 @@ public final class Module {
         this.moduleClassLoader = moduleClassLoader;
     }
 
-
-
-    enum LoadState {
-
-        /**
-         * This module's content and dependency information have successfully been loaded.
-         */
-        LOADED,
-        /**
-         * This module's linkage information is complete, with a populated path->loader mapping.
-         */
-        RESOLVED,
-        /**
-         * All of this module's dependencies (and their transitives) are linked and in the READY state.
-         */
-        LINKED,
-    }
-
-    private volatile LoadState loadState = LoadState.LOADED;
-
-    enum PathVisitAction {IMPORT_EXPORT, EXPORT_ONLY, SKIP}
-
-    private static final AtomicReferenceFieldUpdater<Module, LoadState> loadStateUpdater = AtomicReferenceFieldUpdater.newUpdater(Module.class, LoadState.class, "loadState");
-
-    private void resolveInitial() throws ModuleLoadException {
-        if (loadState.compareTo(LoadState.RESOLVED) >= 0) {
-            return;
-        }
-        resolve();
-    }
-
-    void resolve() throws ModuleLoadException {
-        setDependencies(paths.getSourceList(NO_DEPENDENCIES));
-    }
-
-    private void setDependencies(final Dependency[] dependencies) throws ModuleLoadException {
-        PathResolver pathResolver = new PathResolver(this);
-        for (Dependency dependency : dependencies) {
-            dependency.accept(pathResolver, null);
-        }
-        for (ModulePathResolution pathResolution: pathResolver.getResolvedModulePaths()) {
-            Module module = pathResolution.getModule();
-            pathsUpdater.compareAndSet(module, module.paths, new Paths<LocalLoader, Dependency>(module.getDependencies(),
-                    pathResolution.getAllPaths(), pathResolution.getExportedPaths()));
-            loadStateUpdater.compareAndSet(module, LoadState.LOADED, LoadState.RESOLVED);
-        }
+    LocalLoader getFallbackLoader() {
+        return fallbackLoader;
     }
 
     Dependency[] getDependencies() {
         return paths.getSourceList(NO_DEPENDENCIES);
     }
 
-    LocalLoader getFallbackLoader() {
-        return fallbackLoader;
-    }
-
-    void setDependencies(DependencySpec.SpecifiedDependency[] specifiedDependencies, boolean linkChildren) throws ModuleLoadException {
-        final List<Dependency> dependencies = new ArrayList<Dependency>();
-        for (DependencySpec.SpecifiedDependency specifiedDependency : specifiedDependencies) {
-            dependencies.add(specifiedDependency.getDependency(this));
-        }
-
-        Dependency[] deps = dependencies.toArray(new Dependency[dependencies.size()]);
-        if (linkChildren) {
-            linkDependencies(new HashSet<Module>(), deps);
-        }
-        setDependencies(deps);
-    }
-
-    void setInitialDependencies(final DependencySpec.SpecifiedDependency[] specifiedDependencies) {
-        final List<Dependency> dependencies = new ArrayList<Dependency>();
-        for (DependencySpec.SpecifiedDependency specifiedDependency : specifiedDependencies) {
-            dependencies.add(specifiedDependency.getDependency(this));
-        }
-        paths = new Paths<LocalLoader, Dependency>(dependencies.toArray(new Dependency[dependencies.size()]), Collections.<String, List<LocalLoader>>emptyMap(), Collections.<String, List<LocalLoader>>emptyMap());
-    }
-
-    void linkInitial(final HashSet<Module> visited) throws ModuleLoadException {
-        if (loadState.compareTo(LoadState.LINKED) >= 0) {
-            return;
-        }
-        link(visited);
-    }
-
-    void link(final Set<Module> visited) throws ModuleLoadException {
-        if (! visited.add(this)) {
-            return;
-        }
-        resolveInitial();
-        final Dependency[] dependencies = getDependencies().clone();
-        linkDependencies(visited, dependencies);
-    }
-
-    private void linkDependencies(final Set<Module> visited, final Dependency[] dependencies) throws ModuleLoadException {
-        Collections.shuffle(Arrays.asList(dependencies));
-        for (Dependency dependency : dependencies) {
-            dependency.accept(new DependencyVisitor<Void>() {
-                public void visit(final LocalDependency item, final Void param) throws ModuleLoadException {
-                    // none
-                }
-
-                public void visit(final ModuleDependency item, final Void param) throws ModuleLoadException {
-                    final Module module = item.getModuleRequired();
-                    if (module != null) {
-                        module.link(visited);
-                    }
-                }
-            }, null);
-        }
-        for (Module module : visited) {
-            module.loadState = LoadState.LINKED;
-        }
-    }
-
     ModuleClassLoader getClassLoaderPrivate() {
         return moduleClassLoader;
-    }
-
-    private static <K, V> void addToMapList(Map<K, List<V>> map, K key, V item) {
-        List<V> list = map.get(key);
-        if (list == null) {
-            list = new ArrayList<V>();
-            map.put(key, list);
-        }
-        list.add(item);
-    }
-
-    private static <K, V> void addToMapList(Map<K, List<V>> map, K key, List<V> items) {
-        List<V> list = map.get(key);
-        if (list == null) {
-            list = new ArrayList<V>();
-            map.put(key, list);
-        }
-        list.addAll(items);
-    }
-
-    private static <E> void removeDuplicatesFromLists(Collection<List<E>> lists) {
-        Set<E> set = Collections.newSetFromMap(new IdentityHashMap<E, Boolean>());
-        for (List<E> list: lists) {
-            if (list.size() <= 1) {
-                continue;
-            }
-            for (Iterator<E> iterator = list.iterator(); iterator.hasNext();) {
-                if (!set.add(iterator.next())) {
-                    iterator.remove();
-                }
-            }
-            set.clear();
-        }
     }
 
     /**
@@ -333,7 +177,7 @@ public final class Module {
      * @param resourcePath the path of the resource
      * @return the resource
      */
-    public final Resource getExportedResource(final String rootPath, final String resourcePath) {
+    public Resource getExportedResource(final String rootPath, final String resourcePath) {
         return moduleClassLoader.loadResourceLocal(rootPath, resourcePath, true);
     }
 
@@ -344,7 +188,7 @@ public final class Module {
      * @param resourcePath the path of the resource
      * @return the resource
      */
-    final Resource getResource(final String rootPath, final String resourcePath) {
+    Resource getResource(final String rootPath, final String resourcePath) {
         return moduleClassLoader.loadResourceLocal(rootPath, resourcePath, false);
     }
 
@@ -356,7 +200,7 @@ public final class Module {
      * @throws InvocationTargetException if the main method failed
      * @throws ClassNotFoundException if the main class is not found
      */
-    public final void run(final String[] args) throws NoSuchMethodException, InvocationTargetException, ClassNotFoundException {
+    public void run(final String[] args) throws NoSuchMethodException, InvocationTargetException, ClassNotFoundException {
         try {
             if (mainClassName == null) {
                 throw new NoSuchMethodException("No main class defined for " + this);
@@ -456,7 +300,7 @@ public final class Module {
      * @return the paths that are exported by this module
      */
     public Set<String> getExportedPaths() {
-        return Collections.unmodifiableSet(paths.getExportedPaths().keySet());
+        return Collections.unmodifiableSet(getPaths(true).keySet());
     }
 
     /**
@@ -587,7 +431,7 @@ public final class Module {
             }
         }
         final String path = pathOfClass(className);
-        final Map<String, List<LocalLoader>> paths = this.paths.getPaths(exportsOnly);
+        final Map<String, List<LocalLoader>> paths = getPaths(exportsOnly);
         final List<LocalLoader> loaders = paths.get(path);
         if (loaders != null) {
             Class<?> clazz = null;
@@ -618,7 +462,7 @@ public final class Module {
         }
         log.trace("Attempting to find resource %s in %s", name, this);
         final String path = pathOf(name);
-        final Map<String, List<LocalLoader>> paths = this.paths.getPaths(exportsOnly);
+        final Map<String, List<LocalLoader>> paths = getPaths(exportsOnly);
         final List<LocalLoader> loaders = paths.get(path);
         if (loaders != null) {
             for (LocalLoader loader : loaders) {
@@ -655,7 +499,7 @@ public final class Module {
         }
         log.trace("Attempting to find all resources %s in %s", name, this);
         final String path = pathOf(name);
-        final Map<String, List<LocalLoader>> paths = this.paths.getPaths(exportsOnly);
+        final Map<String, List<LocalLoader>> paths = getPaths(exportsOnly);
         final List<LocalLoader> loaders = paths.get(path);
 
         final List<URL> list = new ArrayList<URL>();
@@ -684,7 +528,7 @@ public final class Module {
      * @param name the resource name
      * @return the resource, or {@code null} if it was not found
      */
-    public final URL getExportedResource(final String name) {
+    public URL getExportedResource(final String name) {
         return getResource(name, true);
     }
 
@@ -817,502 +661,228 @@ public final class Module {
         return StartTimeHolder.START_TIME;
     }
 
-    static final class DependencyImport {
-        private final Module module;
-        private final boolean export;
+    // Linking and resolution
 
-        DependencyImport(Module module, boolean export) {
-            this.module = module;
-            this.export = export;
+    /**
+     * (Re)calculate the exports paths.
+     */
+    Paths<LocalLoader, Dependency> linkExports(final Paths<LocalLoader, Dependency> paths) throws ModuleLoadException {
+        return linkExports(paths, new HashSet<Module>());
+    }
+
+
+    Paths<LocalLoader, Dependency> linkExports(final Paths<LocalLoader, Dependency> paths, Set<Module> visited) throws ModuleLoadException {
+        return linkExports(paths, paths.getSourceList(NO_DEPENDENCIES), visited);
+    }
+
+    Paths<LocalLoader, Dependency> linkExports(final Paths<LocalLoader, Dependency> paths, final Dependency[] dependencies, final Set<Module> visited) throws ModuleLoadException {
+
+        if (! visited.add(this)) {
+            throw new ModuleLoadException("Circular export path in " + identifier);
         }
 
-        Module getModule() {
-            return module;
+        final Map<String, List<LocalLoader>> newMap = new HashMap<String, List<LocalLoader>>();
+
+        // Iterate dependencies and get their export paths.
+        for (Dependency dependency : dependencies) {
+            final PathFilter exportFilter = dependency.getExportFilter();
+            final PathFilter importFilter = dependency.getImportFilter();
+            if (importFilter == PathFilters.rejectAll() || exportFilter == PathFilters.rejectAll()) {
+                // we do not export anything from this dependency
+                continue;
+            }
+
+            if (dependency instanceof LocalDependency) {
+                final LocalDependency localDependency = (LocalDependency) dependency;
+                final LocalLoader localLoader = localDependency.getLocalLoader();
+                for (String path : localDependency.getPaths()) {
+                    if (importFilter.accept(path) && exportFilter.accept(path)) {
+                        addToMapList(newMap, path, localLoader);
+                    }
+                }
+            } else if (dependency instanceof ModuleDependency) {
+                final ModuleDependency moduleDependency = (ModuleDependency) dependency;
+                final Module module;
+                final ModuleLoader moduleLoader = moduleDependency.getModuleLoader();
+                final ModuleIdentifier id = moduleDependency.getIdentifier();
+
+                module = moduleLoader.loadModule(id, visited);
+
+                // Get the set that they export
+                final Map<String, List<LocalLoader>> pathsMap = module.getPaths(true);
+                for (String path : pathsMap.keySet()) {
+                    // Check it against what we import and export
+                    if (importFilter.accept(path) && exportFilter.accept(path)) {
+                        addToMapList(newMap, path, pathsMap.get(path));
+                    }
+                }
+            } else {
+                throw new IllegalArgumentException("Invalid dependency " + dependency + " encountered");
+            }
         }
 
-        ModuleClassLoader getClassLoader() {
-            return module.getClassLoader();
+        // Final optimizing step
+        removeDuplicatesFromLists(newMap.values());
+
+        final Paths<LocalLoader, Dependency> newPaths = new Paths<LocalLoader, Dependency>(dependencies, null, newMap);
+        pathsUpdater.compareAndSet(this, paths, newPaths);
+        visited.remove(this);
+        return newPaths;
+    }
+
+    private void linkImports(final Paths<LocalLoader, Dependency> paths) throws ModuleLoadException {
+        final Set<Module> visited = new HashSet<Module>();
+        visited.add(this);
+        final Map<String, List<LocalLoader>> newMap = new HashMap<String, List<LocalLoader>>();
+
+        final Dependency[] dependencies = paths.getSourceList(NO_DEPENDENCIES);
+
+        // Iterate dependencies and get their export paths.
+        for (Dependency dependency : dependencies) {
+            final PathFilter importFilter = dependency.getImportFilter();
+            if (importFilter == PathFilters.rejectAll()) {
+                // we do not import anything from this dependency
+                // kind of a silly dependency, isn't it?
+                continue;
+            }
+
+            if (dependency instanceof LocalDependency) {
+                final LocalDependency localDependency = (LocalDependency) dependency;
+                final LocalLoader localLoader = localDependency.getLocalLoader();
+                for (String path : localDependency.getPaths()) {
+                    if (importFilter.accept(path)) {
+                        addToMapList(newMap, path, localLoader);
+                    }
+                }
+            } else if (dependency instanceof ModuleDependency) {
+                final ModuleDependency moduleDependency = (ModuleDependency) dependency;
+                final Module module;
+                final ModuleLoader moduleLoader = moduleDependency.getModuleLoader();
+                final ModuleIdentifier id = moduleDependency.getIdentifier();
+
+                module = moduleLoader.loadModule(id, visited);
+
+                // Get the set that they export
+                final Map<String, List<LocalLoader>> pathsMap = module.getPaths(true);
+                for (String path : pathsMap.keySet()) {
+                    // Check it against what we import
+                    if (importFilter.accept(path)) {
+                        addToMapList(newMap, path, pathsMap.get(path));
+                    }
+                }
+            } else {
+                throw new IllegalArgumentException("Invalid dependency " + dependency + " encountered");
+            }
         }
 
-        boolean isExport() {
-            return export;
+        // Final optimizing step
+        removeDuplicatesFromLists(newMap.values());
+
+        final Paths<LocalLoader, Dependency> newPaths = new Paths<LocalLoader, Dependency>(dependencies, newMap, paths.getExportedPaths());
+        pathsUpdater.compareAndSet(this, paths, newPaths);
+    }
+
+    private Map<String, List<LocalLoader>> getPaths(final boolean exportsOnly) {
+        final Paths<LocalLoader, Dependency> paths = this.paths;
+        Map<String, List<LocalLoader>> map = paths.getPaths(exportsOnly);
+        if (map != null) {
+            return map;
         }
+        if (exportsOnly) {
+            try {
+                linkExports(paths);
+            } catch (ModuleLoadException e) {
+                throw e.toError();
+            }
+        } else {
+            try {
+                linkImports(paths);
+            } catch (ModuleLoadException e) {
+                throw e.toError();
+            }
+        }
+        return getPaths(exportsOnly);
+    }
+
+    private static <K, V> void addToMapList(Map<K, List<V>> map, K key, V item) {
+        List<V> list = map.get(key);
+        if (list == null) {
+            list = new ArrayList<V>();
+            map.put(key, list);
+        }
+        list.add(item);
+    }
+
+    private static <K, V> void addToMapList(Map<K, List<V>> map, K key, List<V> items) {
+        List<V> list = map.get(key);
+        if (list == null) {
+            list = new ArrayList<V>();
+            map.put(key, list);
+        }
+        list.addAll(items);
+    }
+
+    private static <E> void removeDuplicatesFromLists(Collection<List<E>> lists) {
+        Set<E> set = Collections.newSetFromMap(new IdentityHashMap<E, Boolean>());
+        for (List<E> list: lists) {
+            if (list.size() <= 1) {
+                continue;
+            }
+            for (Iterator<E> iterator = list.iterator(); iterator.hasNext();) {
+                if (!set.add(iterator.next())) {
+                    iterator.remove();
+                }
+            }
+            set.clear();
+        }
+    }
+
+    void linkExports(final Set<Module> visited) throws ModuleLoadException {
+        linkExports(paths, visited);
+    }
+
+    void linkExportsIfNeeded(final Set<Module> visited) throws ModuleLoadException {
+        final Paths<LocalLoader, Dependency> paths = this.paths;
+        if (paths.getExportedPaths() == null) {
+            linkExports(paths, visited);
+        }
+    }
+
+    void relink() throws ModuleLoadException {
+        linkImports(linkExports(paths));
+    }
+
+    void initializeDependencies(final List<DependencySpec> dependencySpecs) throws ModuleLoadException {
+        paths = new Paths<LocalLoader, Dependency>(calculateDependencies(dependencySpecs), null, null);
+    }
+
+    void setDependencies(final List<DependencySpec> dependencySpecs) throws ModuleLoadException {
+        linkExports(paths, calculateDependencies(dependencySpecs), new HashSet<Module>());
+    }
+
+    private Dependency[] calculateDependencies(final List<DependencySpec> dependencySpecs) {
+        final Dependency[] dependencies = new Dependency[dependencySpecs.size()];
+        int i = 0;
+        for (DependencySpec spec : dependencySpecs) {
+            final Dependency dependency = spec.getDependency(this);
+            dependencies[i++] = dependency;
+        }
+        return dependencies;
     }
 
     private static final class SystemModuleHolder {
+
         private static final Module SYSTEM;
 
         static {
-            final SystemLocalLoader systemLocalLoader = SystemLocalLoader.getInstance();
-            final LocalDependency localDependency = new LocalDependency(PathFilters.acceptAll(), PathFilters.acceptAll(), systemLocalLoader, systemLocalLoader.getPathSet());
-            final Module system = new Module();
-            system.getClassLoaderPrivate().recalculate();
-            system.setInitialDependencies(new DependencySpec.SpecifiedDependency[] { new DependencySpec.ImmediateSpecifiedDependency(localDependency) });
             try {
-                system.linkInitial(new HashSet<Module>());
+                SYSTEM = SystemModuleLoader.getInstance().loadModule(ModuleIdentifier.SYSTEM);
             } catch (ModuleLoadException e) {
-                throw new Error("Failed to initialize system module", e);
+                throw e.toError();
             }
-            SYSTEM = system;
         }
 
         private SystemModuleHolder() {
-        }
-    }
-
-    /**
-     * Resolves the allPaths and exportedPaths collections of a specific Module.
-     * This class also tries, on a best effort basis, to use the results of dependencies being visited for resolving those
-     * dependencies paths collections as well.
-     *
-     * @author <a href="mailto:flavia.rainone@jboss.com">Flavia Rainone</a>
-     *
-     */
-    private static final class PathResolver implements DependencyVisitor<Void> {
-
-        // a stack of filters; for every module in modulePathResolutionStack, it will contain two filters, one for the import, and
-        // another one for export
-        private final Deque<PathFilter> filterSeries;
-        // contains ModulePathResolutions, elements that represent every visited module and contains info regarding the
-        // module paths resolution
-        private final Deque<ModulePathResolution> modulePathResolutionStack;
-        // a map of modulePathResolutions per module
-        private final Map<Module, ModulePathResolution> modulePathResolutions;
-
-        /**
-         * Constructor. Creates a path resolver instance that will resolve the paths belonging to {@code module}, and will
-         * attempt to resolve the module's dependencies paths.
-         * @param module the module whose paths must be resolved
-         */
-        PathResolver(Module module) {
-            filterSeries = new ArrayDeque<PathFilter>();
-            modulePathResolutionStack = new ArrayDeque<ModulePathResolution>();
-            modulePathResolutions = new HashMap<Module, ModulePathResolution>();
-            ModulePathResolution visitUnit = new ModulePathResolution(module);
-            modulePathResolutions.put(module, visitUnit);
-            modulePathResolutionStack.addLast(visitUnit);
-        }
-
-        @Override
-        public void visit(LocalDependency item, Void param) throws ModuleLoadException {
-            final Set<String> paths = item.getPaths();
-            if (paths.isEmpty()) {
-                return;
-            }
-            final PathFilter exportFilter = item.getExportFilter();
-            final PathFilter importFilter = item.getImportFilter();
-            final LocalLoader loader = item.getLocalLoader();
-            for (String path : paths) {
-                Iterator<ModulePathResolution> modulePaths = modulePathResolutionStack.descendingIterator();
-                ModulePathResolution modulePathResolution = modulePaths.next();
-                if (modulePathResolution.acceptPath(path, loader, importFilter, exportFilter)) {
-                    Iterator<PathFilter> filters = filterSeries.descendingIterator();
-                    while (modulePaths.hasNext()) {
-                        modulePathResolution = modulePaths.next();
-                        if (!modulePathResolution.acceptPath(path, loader, filters.next(), filters.next())) {
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        @Override
-        public void visit(final ModuleDependency item, final Void param) throws ModuleLoadException {
-            final Module module = item.getModuleRequired();
-            if (module == null) {
-                return;
-            }
-            if (module.loadState.compareTo(LoadState.RESOLVED) >= 0) {
-                // no need to revisit the deps of a resolved module
-                visitResolved(module, item.getImportFilter(), item.getExportFilter());
-                return;
-            }
-            ModulePathResolution modulePathResolution = modulePathResolutions.get(module);
-            if (modulePathResolution != null) {
-                if (modulePathResolution.getStatus() == ResolutionStatus.RESOLVED) {
-                    // again, module is resolved; no need to revisit its deps
-                    visitResolved(modulePathResolution, item.getImportFilter(), item.getExportFilter());
-                } else {
-                    // unresolved module is already visited but unresolved -> we found a dependency cycle
-                    modulePathResolution.snapshotCycle(modulePathResolutionStack, filterSeries);
-                }
-                return;
-            }
-            // it is assumed that this is the first visit to module.
-            // create a new ModulePathResolution for this module
-            ModulePathResolution visitUnit = startModulePathResolution(module);
-            // add filters to filterSeries
-            filterSeries.addLast(item.getExportFilter());
-            filterSeries.addLast(item.getImportFilter());
-            // visit the dependencies
-            Dependency[] dependencies = module.getDependencies();
-            for (int i = 0; i < dependencies.length; i++) {
-                dependencies[i].accept(this, null);
-            }
-            // remove filters from filterSeries
-            filterSeries.removeLast();
-            filterSeries.removeLast();
-            // mark the resolution as resolved unless condemned, handle cycles, etc
-            finishModulePathResolution(visitUnit);
-        }
-
-        /**
-         * Should be called only after all dependencies of {@code Module} have been visited.
-         * Returns the result of the visit performed by PathResolver, containing the resolved allPaths and exportedPaths
-         * belonging to the queried Module (i.e., module passed in constructor), plus the paths collection of other visited
-         * modules.
-         *
-         * @return the resolved allPaths and exportedPaths collections
-         */
-        Collection<ModulePathResolution> getResolvedModulePaths() {
-            finishModulePathResolution(modulePathResolutionStack.getLast());
-            return modulePathResolutions.values();
-        }
-
-        private void visitResolved(Module module, PathFilter importFilter, PathFilter exportFilter) throws ModuleLoadException {
-            visitExportedPaths(module.paths.getExportedPaths(), importFilter, exportFilter);
-        }
-
-        private void visitResolved(ModulePathResolution modulePaths, PathFilter importFilter, PathFilter exportFilter)
-        throws ModuleLoadException {
-            visitExportedPaths(modulePaths.getExportedPaths(), importFilter, exportFilter);
-        }
-
-        private void visitExportedPaths(Map<String, List<LocalLoader>> exportedPaths, PathFilter importFilter,
-                PathFilter exportFilter) throws ModuleLoadException {
-            // same algorithm as visit (LocalDependency..), with the difference that now we will visit exportedPaths
-            // and, for every exported path that is accepted by a filter, we will add all corresponding loaders to the
-            // appropriate paths collection
-            for (Map.Entry<String, List<LocalLoader>> exportedPath: exportedPaths.entrySet()) {
-                String path = exportedPath.getKey();
-                List<LocalLoader> loaders = exportedPath.getValue();
-                Iterator<ModulePathResolution> modulePaths = modulePathResolutionStack.descendingIterator();
-                ModulePathResolution modulePathResolution = modulePaths.next();
-                if (modulePathResolution.acceptPath(path, importFilter, exportFilter, loaders)) {
-                    Iterator<PathFilter> filters = filterSeries.descendingIterator();
-                    while (modulePaths.hasNext()) {
-                        modulePathResolution = modulePaths.next();
-                        if (!modulePathResolution.acceptPath(path, filters.next(), filters.next(), loaders)) {
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        private ModulePathResolution startModulePathResolution(Module module) {
-            ModulePathResolution modulePathResolution = new ModulePathResolution(module);
-            modulePathResolutions.put(module, modulePathResolution);
-            modulePathResolutionStack.addLast(modulePathResolution);
-            return modulePathResolution;
-        }
-
-        private void finishModulePathResolution(ModulePathResolution modulePathResolution) {
-           // take action according to the resolution status
-           switch(modulePathResolution.getStatus()) {
-                case ABORTED:
-                    // remove aborted resolutions from modulePathResolutions
-                    modulePathResolutions.remove(modulePathResolution.getModule());
-                    break;
-                case IN_CYCLE:
-                    // skip resolving modules that are in cycles, unless they are the head of a cycle (i.e., have a cycleSnapshot)
-                    // as the only element of a cycle that can be marked as resolved prior to the resolution of the cycle
-                    // is the so-called cycle head
-                    if (!modulePathResolution.hasCycleSnapshot()) {
-                        break;
-                    }
-                case RESOLVING:
-                    removeDuplicatesFromLists(modulePathResolution.getAllPaths().values());
-                    removeDuplicatesFromLists(modulePathResolution.getExportedPaths().values());
-                    modulePathResolution.setStatus(ResolutionStatus.RESOLVED);
-                    break;
-                default:
-                    throw new IllegalStateException ("Unexpected status");
-            }
-           // if current modulePathResolution is a cycle head, the cycle snapshot it contains can now be resolved
-            if (modulePathResolution.hasCycleSnapshot()) {
-                modulePathResolution.resolveCycleSnapshot();
-            }
-            // remove from stack
-            modulePathResolutionStack.removeLast();
-        }
-    }
-
-    /**
-     * The resolution status of a module's path.
-     * @see ModulePathResolution#getStatus()
-     * */
-    private static enum ResolutionStatus{
-        /**
-         * The paths are currently being resolved
-         */
-        RESOLVING,
-        /**
-         * The module visit entered a cycle.
-         */
-        IN_CYCLE,
-        /**
-         * The module's paths are resolved.
-         */
-        RESOLVED,
-        /**
-         * The module's paths resolution is aborted. The cycle formation will require a new visit in the future
-         * to determine the module's allPaths and exportedPaths.
-         */
-        ABORTED};
-
-    /**
-     * Represents a visited module.
-     * This object contains all info necessary for resolution of the paths belonging to the Module during the visit
-     * process, including:
-     * - the partial allPaths result
-     * - the partial exportedPaths result
-     * - the module itself
-     * - information about cycles found during visit
-     * - a resolution status. If status is RESOLVED, it means the allPaths and exportPaths contents are final
-     *
-     * @author <a href="mailto:flavia.rainone@jboss.com">Flavia Rainone</a>
-     */
-    private static final class ModulePathResolution {
-        // current status
-        private ResolutionStatus status;
-        // cycle
-        DependencyCycle cycleSnapshot;
-        // module
-        private final Module module;
-        // list of allPaths being resolved
-        private final Map<String, List<LocalLoader>> allPaths;
-        // list of exportedPaths being resolved
-        private final Map<String, List<LocalLoader>> exportedPaths;
-
-        ModulePathResolution(Module module) {
-            this.module = module;
-            this.status = ResolutionStatus.RESOLVING;
-            this.allPaths = new HashMap<String, List<LocalLoader>>();
-            this.exportedPaths = new HashMap<String, List<LocalLoader>>();
-        }
-
-        Module getModule() {
-            return module;
-        }
-
-        Map<String, List<LocalLoader>> getAllPaths() {
-            return allPaths;
-        }
-
-        Map<String, List<LocalLoader>> getExportedPaths() {
-            return exportedPaths;
-        }
-
-        ResolutionStatus getStatus() {
-            return status;
-        }
-
-        void setStatus(ResolutionStatus resolution) {
-            this.status = resolution;
-        }
-
-        /**
-         * Adds {@code path} to this modulePathResolution collections according to acceptance by {@code importFilter}
-         * and {@code exportFilter}.
-         *
-         * @param path         the path to be accepted
-         * @param loader       capable of loading {@code path}
-         * @param importFilter accepted paths should be added to allPaths collection
-         * @param exportFilter accepted paths should be added to exportedPaths collection
-         * @return             {@code true} only if {@code path} is accepted by both {@code importFilter} and
-         *                     {@code exportFilter}.
-         */
-        boolean acceptPath(String path, LocalLoader loader, PathFilter importFilter, PathFilter exportFilter) {
-            // is path resolution aborted? if so, we don't care adding loader to the paths/exportedPaths collections
-            if (status == ResolutionStatus.ABORTED) {
-                return importFilter.accept(path) && exportFilter.accept(path);
-            }
-            if (!importFilter.accept(path)) {
-                return false;
-            }
-            addToMapList(allPaths, path, loader);
-            if (!exportFilter.accept(path)) {
-                 return false;
-            }
-            addToMapList(exportedPaths, path, loader);
-            return true;
-        }
-
-        /**
-         * Adds {@code path} to this modulePathResolution collections according to acceptance by {@code importFilter}
-         * and {@code exportFilter}.
-         *
-         * @param path         the path to be accepted
-         * @param loaders      loaders capable of loading {@code path}
-         * @param importFilter accepted paths should be added to allPaths collection
-         * @param exportFilter accepted paths should be added to exportedPaths collection
-         * @return             {@code true} only if {@code path} is accepted by both {@code importFilter} and
-         *                     {@code exportFilter}.
-         */
-        boolean acceptPath(String path, PathFilter importFilter, PathFilter exportFilter, List<LocalLoader> loaders) {
-            // is path resolution aborted? if so, we don't care adding loader to the paths/exportedPaths collections
-            if (status == ResolutionStatus.ABORTED) {
-                return importFilter.accept(path) && exportFilter.accept(path);
-            }
-            if (!importFilter.accept(path)) {
-                return false;
-            }
-            addToMapList(allPaths, path, loaders);
-            if (!exportFilter.accept(path)) {
-                 return false;
-            }
-            addToMapList(exportedPaths, path, loaders);
-            return true;
-        }
-
-        /**
-         * Take a snapshot of the cycle found.
-         * @param modulePathResolutionStack represents the modules currently being visited by PathResolver.
-         *                                  This stack contains the cycle will be snapshot.
-         * @param filterSeries              contains the import/export PathFilters corresponding to the elements
-         *                                  of modulePathResolutionStack
-         */
-        void snapshotCycle(Deque<ModulePathResolution> modulePathResolutionStack, Deque<PathFilter> filterSeries) {
-            // cycle inside of a cycle; abort affected ModulePathResolutions
-            if (status == ResolutionStatus.IN_CYCLE || status == ResolutionStatus.ABORTED) {
-                DependencyCycle.abortInnerCycle(this, modulePathResolutionStack);
-            }
-            else {
-                cycleSnapshot = new DependencyCycle(this, modulePathResolutionStack, filterSeries);
-            }
-        }
-
-        /**
-         * Indicates whether this element contains a cycle snapshot. If it has, it means that this module is involved
-         * in a dependency cycle and is the cycle head. The cycle head is the only ModulePathResolution that can be
-         * marked as resolved prior to the cycle resolution itself.
-         */
-        boolean hasCycleSnapshot() {
-            return cycleSnapshot != null;
-        }
-
-        /**
-         * Resolves the cycleSnapshot (call only if hasCycleSnapshot returns true)
-         */
-        void resolveCycleSnapshot() {
-            cycleSnapshot.resolve();
-        }
-    }
-
-    /**
-     * A cycle found by PathResolver during dependencies visit.
-     *
-     * @author <a href="mailto:flavia.rainone@jboss.com">Flavia Rainone</a>
-     */
-    private static class DependencyCycle {
-        // cycle stack
-        private final Deque<ModulePathResolution> cycle;
-        // path filters corresponding the ModulePathResolutions in the cycle
-        private final Deque<PathFilter> cycleFilterSeries;
-        // the beginning and end of a cycle in the dependency chain
-        // this ModulePathResolutoin needs to be resolved so the cycle can be resolved as well
-        private final ModulePathResolution cycleHead;
-        // the state of visit being currently performed by PathResolver
-        private final Deque<PathFilter> filterSeries;
-        // the state of visit being currently performed by PathResolver
-        private final Deque<ModulePathResolution> modulePathResolutionStack;
-
-        /**
-         * Constructor.
-         * @param cycleHead                  the element that marks the beginning and end of the cycle in
-         *                                   {@code modulePathResolutionStack}
-         * @param modulePathResolutionStack  contains all modulePaths currently being visited/resolved by PathResolver
-         * @param filterSeries               contains the pathFilters corresponding to the previous stack (import and
-         *                                   export filter of every visited module dependency)
-         */
-        DependencyCycle(ModulePathResolution cycleHead, Deque<ModulePathResolution> modulePathResolutionStack,
-                Deque<PathFilter> filterSeries) {
-            this.cycleHead = cycleHead;
-            this.filterSeries = filterSeries;
-            this.modulePathResolutionStack = modulePathResolutionStack;
-            cycle = new ArrayDeque<ModulePathResolution>();
-            cycleFilterSeries = new ArrayDeque<PathFilter>();
-            // detect the cycle in modulePathResolutionStack
-            Iterator<PathFilter> filterIterator = filterSeries.descendingIterator();
-            Iterator<ModulePathResolution> iterator = modulePathResolutionStack.descendingIterator();
-            while (iterator.hasNext()) {
-                ModulePathResolution modulePathResolution = iterator.next();
-                modulePathResolution.setStatus(ResolutionStatus.IN_CYCLE);
-                if (modulePathResolution == cycleHead) {
-                    // end of cycle
-                    break;
-                }
-                // two filters, one export, and one import, per module
-                cycle.add(modulePathResolution);
-                cycleFilterSeries.add(filterIterator.next());
-                cycleFilterSeries.add(filterIterator.next());
-            }
-        }
-
-        void resolve() {
-            // push cycle into modulePathResolutionStack, and push corresponding filters to filterSeries
-            int cycle = pushCycleStack();
-            Map<String, List<LocalLoader>> exportedPaths = cycleHead.getExportedPaths();
-            for (Map.Entry<String, List<LocalLoader>> exportedPath: exportedPaths.entrySet()) {
-                String path = exportedPath.getKey();
-                List<LocalLoader> loaders = exportedPath.getValue();
-                Iterator<ModulePathResolution> modulePaths = modulePathResolutionStack.descendingIterator();
-                Iterator<PathFilter> filters = filterSeries.descendingIterator();
-                for (int i = 0; i < cycle; i++) {
-                    ModulePathResolution modulePathResolution = modulePaths.next();
-                    if (!modulePathResolution.acceptPath(path, filters.next(), filters.next(), loaders))
-                            break;
-                }
-            }
-            // remove cycle from stacks and mark non-aborted modulePathResolution as solved
-            popCycleStack();
-        }
-
-        private int pushCycleStack() {
-            for (Iterator<ModulePathResolution> iterator = cycle.descendingIterator(); iterator.hasNext(); ) {
-                modulePathResolutionStack.addLast(iterator.next());
-            }
-            int cycleLength = cycle.size();
-            for (Iterator<PathFilter> iterator = cycleFilterSeries.descendingIterator(); iterator.hasNext(); ) {
-                filterSeries.addLast(iterator.next());
-            }
-            return cycleLength;
-        }
-
-        private void popCycleStack() {
-            for (int i = 0; i < cycle.size(); i++) {
-                ModulePathResolution modulePathResolution = modulePathResolutionStack.removeLast();
-                if (modulePathResolution.getStatus() != ResolutionStatus.ABORTED) {
-                    removeDuplicatesFromLists(modulePathResolution.getAllPaths().values());
-                    removeDuplicatesFromLists(modulePathResolution.getExportedPaths().values());
-                    modulePathResolution.setStatus(ResolutionStatus.RESOLVED);
-                }
-                filterSeries.removeLast();
-                filterSeries.removeLast();
-            }
-        }
-
-        /**
-         * When a cycle is found overlapping with a cycle that has previously been found, the elements of the
-         * new found cycle are aborted.
-         *
-         * @param innerCycleHead            marks the beginning and finish of the newly found cycle. This is the only
-         *                                  ModulePathResolution that won't be aborted.
-         * @param modulePathResolutionStack the stack of all modules being visted by PathResolver
-         */
-        static void abortInnerCycle(ModulePathResolution innerCycleHead,
-                Deque<ModulePathResolution> modulePathResolutionStack) {
-            Iterator<ModulePathResolution> iterator = modulePathResolutionStack.descendingIterator();
-            while (iterator.hasNext()) {
-                ModulePathResolution modulePathResolution = iterator.next();
-                if (modulePathResolution == innerCycleHead) {
-                    break;
-                }
-                modulePathResolution.setStatus(ResolutionStatus.ABORTED);
-            };
-            return;
         }
     }
 }

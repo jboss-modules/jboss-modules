@@ -22,137 +22,232 @@
 
 package org.jboss.modules;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Set;
 
 /**
- * A dependency specification that represents dependencies on a module.
+ * A dependency specification that represents a single dependency for a module.  The dependency can be on a local loader
+ * or another module, or on the target module's local loader.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
  * @author Jason T. Greene
  */
-public final class DependencySpec {
-    List<DependencySpec.SpecifiedDependency> dependencies;
+public abstract class DependencySpec {
 
-    DependencySpec(List<DependencySpec.SpecifiedDependency> dependencies) {
-        this.dependencies = dependencies;
+    final PathFilter importFilter;
+    final PathFilter exportFilter;
+
+    DependencySpec(final PathFilter importFilter, final PathFilter exportFilter) {
+        this.importFilter = importFilter;
+        this.exportFilter = exportFilter;
     }
 
-    public static DependencyBuilder build() {
-        return new DependencyBuilderImpl();
+    abstract Dependency getDependency(final Module module);
+
+    /**
+     * Create a dependency on the current module's local resources.  You should have at least one such dependency
+     * on any module which has its own resources.
+     *
+     * @return the dependency spec
+     */
+    public static DependencySpec createLocalDependencySpec() {
+        return createLocalDependencySpec(PathFilters.acceptAll(), PathFilters.getDefaultExportFilter());
     }
 
-    public interface DependencyBuilderBase {
-        /**
-         * Add a non-module local dependency.  See the documentation for {@link LocalLoader} for more information
-         * about non-module dependencies.
-         * <p>
-         * It is recommended that rather than including non-module dependencies in one or more module definitions, a
-         * module should be defined to encapsulate the non-module dependency, so that other modules can depend on it as
-         * a module.
-         *
-         * @param spec the specification for the local dependency
-         * @return this builder
-         */
-        DependencyBuilderBase addLocalDependency(final LocalDependencySpec spec);
-
-        /**
-         * Add a local dependency representing the module itself.  If not specified, the module is assumed to be the
-         * last dependency (child-last).  This dependency includes all of the resource roots defined by {@link #addResourceRoot(ResourceLoader)}.
-         * It is an error to add this dependency more than one time.
-         *
-         * @return this builder
-         */
-        DependencyBuilderBase addLocalDependency();
-
-        /**
-         * Add a module dependency with the given specification.
-         *
-         * @param dependencySpec the dependency specification (see {@link ModuleDependencySpec#build(ModuleIdentifier)})
-         * @return this builder
-         */
-        DependencyBuilderBase addModuleDependency(ModuleDependencySpec dependencySpec);
-
-    }
-
-    public interface DependencyBuilder extends DependencyBuilderBase {
-        /** {@inheritDoc} */
-        @Override
-        DependencyBuilder addLocalDependency(final LocalDependencySpec spec);
-
-        /** {@inheritDoc} */
-        @Override
-        DependencyBuilder addLocalDependency();
-
-        /** {@inheritDoc} */
-        @Override
-        DependencyBuilder addModuleDependency(ModuleDependencySpec dependencySpec);
-
-        /**
-         * Creates the dependency specification from this builder
-         *
-         * @return the dependecy spec
-         */
-        DependencySpec create();
-    }
-
-    static class DependencyBuilderImpl implements DependencyBuilder {
-        private final List<DependencySpec.SpecifiedDependency> dependencies = new ArrayList<DependencySpec.SpecifiedDependency>(0);
-        boolean localAdded;
-
-        public DependencyBuilder addLocalDependency() {
-            if (localAdded) {
-                throw new IllegalStateException("Local dependency already added");
-            }
-            localAdded = true;
-            dependencies.add(new DependencySpec.SpecifiedDependency() {
-                public Dependency getDependency(final Module module) {
-                    final ModuleClassLoader moduleClassLoader = module.getClassLoaderPrivate();
-                    return new LocalDependency(moduleClassLoader.getExportPathFilter(), PathFilters.acceptAll(), moduleClassLoader.getLocalLoader(), moduleClassLoader.getPaths());
-                }
-            });
-            return this;
+    /**
+     * Create a dependency on the current module's local resources.  You should have at least one such dependency
+     * on any module which has its own resources.
+     *
+     * @param importFilter the import filter to apply
+     * @param exportFilter the export filter to apply
+     * @return the dependency spec
+     */
+    public static DependencySpec createLocalDependencySpec(final PathFilter importFilter, final PathFilter exportFilter) {
+        if (importFilter == null) {
+            throw new IllegalArgumentException("importFilter is null");
         }
-
-        public DependencyBuilder addLocalDependency(final LocalDependencySpec spec) {
-            dependencies.add(new ImmediateSpecifiedDependency(
-                    new LocalDependency(spec.getExportFilter(), spec.getImportFilter(), spec.getLocalLoader(), spec.getLoaderPaths())));
-            return this;
+        if (exportFilter == null) {
+            throw new IllegalArgumentException("exportFilter is null");
         }
-
-        public DependencyBuilder addModuleDependency(final ModuleDependencySpec dependencySpec) {
-            final ModuleIdentifier identifier = dependencySpec.getModuleIdentifier();
-            dependencies.add(new DependencySpec.SpecifiedDependency() {
-                public Dependency getDependency(final Module module) {
-                    return new ModuleDependency(dependencySpec.getExportFilter(), dependencySpec.getImportFilter(), identifier, dependencySpec.isOptional());
-                }
-            });
-            return this;
-        }
-
-        public DependencySpec create() {
-            if (! localAdded) {
-                addLocalDependency();
+        return new DependencySpec(importFilter, exportFilter) {
+            Dependency getDependency(final Module module) {
+                final ModuleClassLoader classLoader = module.getClassLoaderPrivate();
+                return new LocalDependency(exportFilter, importFilter, classLoader.getLocalLoader(), classLoader.getPaths());
             }
 
-            return new DependencySpec(dependencies);
-        }
+            public String toString() {
+                return "dependency on local resources";
+            }
+        };
     }
 
-    interface SpecifiedDependency {
-        Dependency getDependency(Module module);
+    /**
+     * Create a dependency on the given local loader.
+     *
+     * @param localLoader the local loader
+     * @param loaderPaths the set of paths that is exposed by the local loader
+     * @return the dependency spec
+     */
+    public static DependencySpec createLocalDependencySpec(final LocalLoader localLoader, final Set<String> loaderPaths) {
+        return createLocalDependencySpec(PathFilters.acceptAll(), PathFilters.rejectAll(), localLoader, loaderPaths);
     }
 
-    static final class ImmediateSpecifiedDependency implements DependencySpec.SpecifiedDependency {
-        private final Dependency dependency;
+    /**
+     * Create a dependency on the given local loader.
+     *
+     * @param localLoader the local loader
+     * @param loaderPaths the set of paths that is exposed by the local loader
+     * @param export {@code true} if this is a fully re-exported dependency, {@code false} if it should not be exported
+     * @return the dependency spec
+     */
+    public static DependencySpec createLocalDependencySpec(final LocalLoader localLoader, final Set<String> loaderPaths, boolean export) {
+        return createLocalDependencySpec(PathFilters.acceptAll(), export ? PathFilters.getDefaultExportFilter() : PathFilters.rejectAll(), localLoader, loaderPaths);
+    }
 
-        ImmediateSpecifiedDependency(final Dependency dependency) {
-            this.dependency = dependency;
+    /**
+     * Create a dependency on the given local loader.
+     *
+     * @param importFilter the import filter to apply
+     * @param exportFilter the export filter to apply
+     * @param localLoader the local loader
+     * @param loaderPaths the set of paths that is exposed by the local loader
+     * @return the dependency spec
+     */
+    public static DependencySpec createLocalDependencySpec(final PathFilter importFilter, final PathFilter exportFilter, final LocalLoader localLoader, final Set<String> loaderPaths) {
+        if (importFilter == null) {
+            throw new IllegalArgumentException("importFilter is null");
         }
+        if (exportFilter == null) {
+            throw new IllegalArgumentException("exportFilter is null");
+        }
+        if (localLoader == null) {
+            throw new IllegalArgumentException("localLoader is null");
+        }
+        if (loaderPaths == null) {
+            throw new IllegalArgumentException("loaderPaths is null");
+        }
+        return new DependencySpec(importFilter, exportFilter) {
+            Dependency getDependency(final Module module) {
+                return new LocalDependency(exportFilter, importFilter, localLoader, loaderPaths);
+            }
 
-        public Dependency getDependency(final Module module) {
-            return dependency;
+            public String toString() {
+                return "dependency on local loader " + localLoader;
+            }
+        };
+    }
+
+    /**
+     * Create a dependency on the given module.
+     *
+     * @param identifier the module identifier
+     * @return the dependency spec
+     */
+    public static DependencySpec createModuleDependencySpec(final ModuleIdentifier identifier) {
+        return createModuleDependencySpec(identifier, false);
+    }
+
+    /**
+     * Create a dependency on the given module.
+     *
+     * @param identifier the module identifier
+     * @return the dependency spec
+     */
+    public static DependencySpec createModuleDependencySpec(final ModuleIdentifier identifier, final boolean export) {
+        return createModuleDependencySpec(identifier, export, false);
+    }
+
+    /**
+     * Create a dependency on the given module.
+     *
+     * @param identifier the module identifier
+     * @param export {@code true} if this is a fully re-exported dependency, {@code false} if it should not be exported
+     * @param optional {@code true} if the dependency is optional, {@code false} if it is mandatory
+     * @return the dependency spec
+     */
+    public static DependencySpec createModuleDependencySpec(final ModuleIdentifier identifier, final boolean export, final boolean optional) {
+        return createModuleDependencySpec(PathFilters.acceptAll(), export ? PathFilters.acceptAll() : PathFilters.rejectAll(), null, identifier, optional);
+    }
+
+    /**
+     * Create a dependency on the given module.
+     *
+     * @param moduleLoader the specific module loader from which the module should be acquired
+     * @param identifier the module identifier
+     * @param export {@code true} if this is a fully re-exported dependency, {@code false} if it should not be exported
+     * @return the dependency spec
+     */
+    public static DependencySpec createModuleDependencySpec(final ModuleLoader moduleLoader, final ModuleIdentifier identifier, final boolean export) {
+        return createModuleDependencySpec(PathFilters.acceptAll(), export ? PathFilters.acceptAll() : PathFilters.rejectAll(), moduleLoader, identifier, false);
+    }
+
+    /**
+     * Create a dependency on the given module.
+     *
+     * @param moduleLoader the specific module loader from which the module should be acquired
+     * @param identifier the module identifier
+     * @param export {@code true} if this is a fully re-exported dependency, {@code false} if it should not be exported
+     * @param optional {@code true} if the dependency is optional, {@code false} if it is mandatory
+     * @return the dependency spec
+     */
+    public static DependencySpec createModuleDependencySpec(final ModuleLoader moduleLoader, final ModuleIdentifier identifier, final boolean export, final boolean optional) {
+        return createModuleDependencySpec(PathFilters.acceptAll(), export ? PathFilters.acceptAll() : PathFilters.rejectAll(), moduleLoader, identifier, optional);
+    }
+
+    /**
+     * Create a dependency on the given module.
+     *
+     * @param exportFilter the export filter to apply
+     * @param identifier the module identifier
+     * @param optional {@code true} if the dependency is optional, {@code false} if it is mandatory
+     * @return the dependency spec
+     */
+    public static DependencySpec createModuleDependencySpec(final PathFilter exportFilter, final ModuleIdentifier identifier, final boolean optional) {
+        return createModuleDependencySpec(PathFilters.acceptAll(), exportFilter, null, identifier, optional);
+    }
+
+    /**
+     * Create a dependency on the given module.
+     *
+     * @param exportFilter the export filter to apply
+     * @param moduleLoader the specific module loader from which the module should be acquired
+     * @param identifier the module identifier
+     * @param optional {@code true} if the dependency is optional, {@code false} if it is mandatory
+     * @return the dependency spec
+     */
+    public static DependencySpec createModuleDependencySpec(final PathFilter exportFilter, final ModuleLoader moduleLoader, final ModuleIdentifier identifier, final boolean optional) {
+        return createModuleDependencySpec(PathFilters.acceptAll(), exportFilter, moduleLoader, identifier, optional);
+    }
+
+    /**
+     * Create a dependency on the given module.
+     *
+     * @param importFilter the import filter to apply
+     * @param exportFilter the export filter to apply
+     * @param moduleLoader the specific module loader from which the module should be acquired
+     * @param identifier the module identifier
+     * @param optional {@code true} if the dependency is optional, {@code false} if it is mandatory
+     * @return the dependency spec
+     */
+    public static DependencySpec createModuleDependencySpec(final PathFilter importFilter, final PathFilter exportFilter, final ModuleLoader moduleLoader, final ModuleIdentifier identifier, final boolean optional) {
+        if (importFilter == null) {
+            throw new IllegalArgumentException("importFilter is null");
         }
+        if (exportFilter == null) {
+            throw new IllegalArgumentException("exportFilter is null");
+        }
+        if (identifier == null) {
+            throw new IllegalArgumentException("identifier is null");
+        }
+        return new DependencySpec(importFilter, exportFilter) {
+            Dependency getDependency(final Module module) {
+                final ModuleLoader loader = moduleLoader;
+                return new ModuleDependency(exportFilter, importFilter, loader == null ? module.getModuleLoader() : loader, identifier, optional);
+            }
+
+            public String toString() {
+                return "dependency on " + identifier;
+            }
+        };
     }
 }

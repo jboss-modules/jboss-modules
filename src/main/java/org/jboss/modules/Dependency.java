@@ -33,19 +33,10 @@ abstract class Dependency {
     private final PathFilter exportFilter;
     private final PathFilter importFilter;
 
-    protected Dependency(final PathFilter exportFilter, final PathFilter importFilter) {
+    Dependency(final PathFilter exportFilter, final PathFilter importFilter) {
         this.exportFilter = exportFilter;
         this.importFilter = importFilter;
     }
-
-    /**
-     * Accept a visitor.
-     *
-     * @param visitor the visitor
-     * @param param the parameter to pass to the visitor
-     * @return the value returned by the visitor
-     */
-    abstract <T> void accept(DependencyVisitor<T> visitor, T param) throws ModuleLoadException;
 
     /**
      * Get the export filter for this dependency.  This filter determines what imported paths are re-exported by this

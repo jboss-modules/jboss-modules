@@ -56,6 +56,7 @@ final class AggregatePathFilter implements PathFilter {
         return ! any;
     }
 
+
     public int hashCode() {
         return Boolean.valueOf(any).hashCode() ^ Arrays.hashCode(delegates);
     }

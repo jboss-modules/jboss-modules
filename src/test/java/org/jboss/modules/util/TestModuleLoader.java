@@ -22,6 +22,7 @@
 
 package org.jboss.modules.util;
 
+import org.jboss.modules.Module;
 import org.jboss.modules.ModuleIdentifier;
 import org.jboss.modules.ModuleLoadException;
 import org.jboss.modules.ModuleLoader;
@@ -29,6 +30,7 @@ import org.jboss.modules.ModuleSpec;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.jboss.modules.SystemModuleLoader;
 
 /**
  * Test module loader that allows for modules specs to be added at runtime and it will only load modules from the
@@ -39,6 +41,13 @@ import java.util.Map;
 public class TestModuleLoader extends ModuleLoader {
 
     private final Map<ModuleIdentifier, ModuleSpec> moduleSpecs = new HashMap<ModuleIdentifier, ModuleSpec>();
+
+    protected Module preloadModule(final ModuleIdentifier identifier) throws ModuleLoadException {
+        if (ModuleIdentifier.SYSTEM.equals(identifier)) {
+            return preloadModule(identifier, SystemModuleLoader.getInstance());
+        }
+        return super.preloadModule(identifier);
+    }
 
     @Override
     protected ModuleSpec findModule(ModuleIdentifier moduleIdentifier) throws ModuleLoadException {

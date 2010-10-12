@@ -22,7 +22,6 @@
 
 package org.jboss.modules;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -62,7 +61,7 @@ final class Paths<T, A> {
         return sourceList == null ? defVal : sourceList;
     }
 
-    static final Paths<?, ?> NONE = new Paths<Object, Object>(null, Collections.<String, List<Object>>emptyMap(), Collections.<String, List<Object>>emptyMap());
+    static final Paths<?, ?> NONE = new Paths<Object, Object>(null, null, null);
 
     @SuppressWarnings({ "unchecked" })
     static <T, A> Paths<T, A> none() {

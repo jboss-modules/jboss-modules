@@ -45,16 +45,15 @@ final class LocalDependency extends Dependency {
         this.paths = paths;
     }
 
-    /** {@inheritDoc} */
-    <T> void accept(final DependencyVisitor<T> visitor, final T param) throws ModuleLoadException {
-        visitor.visit(this, param);
-    }
-
     LocalLoader getLocalLoader() {
         return localLoader;
     }
 
     Set<String> getPaths() {
         return paths;
+    }
+
+    public String toString() {
+        return "dependency on " + localLoader;
     }
 }

@@ -25,12 +25,13 @@ package org.jboss.modules;
 import static org.jboss.modules.ConcurrentReferenceHashMap.ReferenceType.STRONG;
 import static org.jboss.modules.ConcurrentReferenceHashMap.ReferenceType.WEAK;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
-
-import org.jboss.modules.DependencySpec.SpecifiedDependency;
 
 /**
  *
@@ -39,7 +40,6 @@ import org.jboss.modules.DependencySpec.SpecifiedDependency;
  */
 public abstract class ModuleLoader {
 
-    private static final SpecifiedDependency[] DEP_ARRAY = new DependencySpec.SpecifiedDependency[0];
     private static final RuntimePermission ML_PERM = new RuntimePermission("canCreateModuleLoader");
     private static final RuntimePermission MODULE_REDEFINE_PERM = new RuntimePermission("canRedefineModule");
 
@@ -50,6 +50,7 @@ public abstract class ModuleLoader {
     private final boolean canRedefine;
 
     // Bypass security check for classes in this package
+    @SuppressWarnings({ "unused" })
     ModuleLoader(int dummy) {
         canRedefine = true;
     }
@@ -83,8 +84,12 @@ public abstract class ModuleLoader {
      * @throws ModuleLoadException if the Module can not be loaded
      */
     public final Module loadModule(ModuleIdentifier identifier) throws ModuleLoadException {
+        return loadModule(identifier, new HashSet<Module>());
+    }
+
+    final Module loadModule(ModuleIdentifier identifier, Set<Module> visited) throws ModuleLoadException {
         final Module module = preloadModule(identifier);
-        module.linkInitial(new HashSet<Module>());
+        module.linkExportsIfNeeded(visited);
         return module;
     }
 
@@ -126,10 +131,6 @@ public abstract class ModuleLoader {
      * @throws ModuleLoadException if an error occurs while loading the module
      */
     protected final Module loadModuleLocal(ModuleIdentifier identifier) throws ModuleLoadException {
-        if (identifier.equals(ModuleIdentifier.SYSTEM)) {
-            return Module.getSystemModule();
-        }
-
         FutureModule futureModule = moduleMap.get(identifier);
         if (futureModule != null) {
             return futureModule.getModule();
@@ -222,7 +223,7 @@ public abstract class ModuleLoader {
         }
         final Module module = new Module(moduleSpec, this, futureModule);
         module.getClassLoaderPrivate().recalculate();
-        module.setInitialDependencies(moduleSpec.getDependencies());
+        module.initializeDependencies(Arrays.asList(moduleSpec.getDependencies()));
         try {
             futureModule.setModule(module);
             return module;
@@ -268,7 +269,7 @@ public abstract class ModuleLoader {
         if (!canRedefine)
             throw new SecurityException("Module redefinition requires canRedefineModule permission");
 
-        module.getClassLoaderPrivate().setResourceLoaders(loaders.toArray(new ResourceLoader[0]));
+        module.getClassLoaderPrivate().setResourceLoaders(loaders.toArray(new ResourceLoader[loaders.size()]));
     }
 
     /**
@@ -276,7 +277,7 @@ public abstract class ModuleLoader {
      * advanced method that is intended to be called on all modules that
      * directly or indirectly import dependencies that are re-exported by a module
      * that has recently been updated and relinked via
-     * {@link #setAndRelinkDependencies(Module, DependencySpec)}
+     * {@link #setAndRelinkDependencies(Module, java.util.List)}.
      *
      * @param module the module to relink
      */
@@ -284,8 +285,7 @@ public abstract class ModuleLoader {
         if (!canRedefine)
             throw new SecurityException("Module redefinition requires canRedefineModule permission");
 
-        module.resolve();
-        module.linkInitial(new HashSet<Module>());
+        module.relink();
     }
 
     /**
@@ -297,14 +297,13 @@ public abstract class ModuleLoader {
      * called on all of them.
      *
      * @param module the module to update and relink
-     * @param dependencySpec the new dependency specification
+     * @param dependencies the new dependency list
      */
-    protected void setAndRelinkDependencies(Module module, DependencySpec dependencySpec) throws ModuleLoadException {
+    protected void setAndRelinkDependencies(Module module, List<DependencySpec> dependencies) throws ModuleLoadException {
         if (!canRedefine)
             throw new SecurityException("Module redefinition requires canRedefineModule permission");
 
-        module.setDependencies(dependencySpec.dependencies.toArray(DEP_ARRAY), true);
-        module.linkInitial(new HashSet<Module>());
+        module.setDependencies(dependencies);
     }
 
     private static final class FutureModule {

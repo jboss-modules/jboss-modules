@@ -56,16 +56,16 @@ public class ModuleExportTest extends AbstractModuleTestCase {
         Module.setModuleLoaderSelector(new SimpleModuleLoaderSelector(moduleLoader));
 
         ModuleSpec.Builder builder = ModuleSpec.build(MODULE_A);
-        builder.addModuleDependency(ModuleDependencySpec.build(MODULE_B).setExportFilter(PathFilters.acceptAll()).create());
+        builder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_B, true, false));
         moduleLoader.addModuleSpec(builder.create());
 
         builder = ModuleSpec.build(MODULE_B);
-        builder.addModuleDependency(ModuleDependencySpec.build(MODULE_C).setExportFilter(PathFilters.acceptAll()).create());
-        builder.addModuleDependency(ModuleDependencySpec.build(MODULE_D).create());
+        builder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_C, true, false));
+        builder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_D));
         moduleLoader.addModuleSpec(builder.create());
 
         builder = ModuleSpec.build(MODULE_C);
-        builder.addModuleDependency(ModuleDependencySpec.build(MODULE_A).setExportFilter(PathFilters.acceptAll()).create());
+        builder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_A, true, false));
         moduleLoader.addModuleSpec(builder.create());
 
         builder = ModuleSpec.build(MODULE_D);
@@ -93,15 +93,15 @@ public class ModuleExportTest extends AbstractModuleTestCase {
         assertTrue(dependencyExports.contains(MODULE_B));
     }
 
-    private static void getExportedModuleDeps(final Module module, final Set<ModuleIdentifier> dependencyExports) throws ModuleNotFoundException {
+    private static void getExportedModuleDeps(final Module module, final Set<ModuleIdentifier> dependencyExports) throws ModuleLoadException {
         getExportedModuleDeps(module, new HashSet<Module>(Collections.singleton(module)), dependencyExports);
     }
 
-    private static void getExportedModuleDeps(final Module module, final Set<Module> visited, final Set<ModuleIdentifier> dependencyExports) throws ModuleNotFoundException {
+    private static void getExportedModuleDeps(final Module module, final Set<Module> visited, final Set<ModuleIdentifier> dependencyExports) throws ModuleLoadException {
         for (Dependency dependency : module.getDependencies()) {
             if (dependency instanceof ModuleDependency && dependency.getExportFilter() != PathFilters.rejectAll()) {
                 final ModuleDependency moduleDependency = (ModuleDependency) dependency;
-                final Module md = moduleDependency.getModuleRequired();
+                final Module md = moduleDependency.getModuleLoader().loadModule(moduleDependency.getIdentifier());
                 if (md != null && moduleDependency.getExportFilter() != PathFilters.rejectAll()) {
                     if (visited.add(md)) {
                         dependencyExports.add(md.getIdentifier());
@@ -119,12 +119,12 @@ public class ModuleExportTest extends AbstractModuleTestCase {
         Module.setModuleLoaderSelector(new SimpleModuleLoaderSelector(moduleLoader));
 
         ModuleSpec.Builder builder = ModuleSpec.build(MODULE_A);
-        builder.addModuleDependency(ModuleDependencySpec.build(MODULE_B).setExportFilter(PathFilters.acceptAll()).create());
+        builder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_B, true, false));
         moduleLoader.addModuleSpec(builder.create());
 
         builder = ModuleSpec.build(MODULE_B);
-        builder.addModuleDependency(ModuleDependencySpec.build(MODULE_C).setExportFilter(PathFilters.acceptAll()).create());
-        builder.addModuleDependency(ModuleDependencySpec.build(MODULE_D).create());
+        builder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_C, true));
+        builder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_D));
         moduleLoader.addModuleSpec(builder.create());
 
         builder = ModuleSpec.build(MODULE_C);
@@ -132,7 +132,7 @@ public class ModuleExportTest extends AbstractModuleTestCase {
             .addClass(ImportedClass.class)
             .create()
         );
-        builder.addModuleDependency(ModuleDependencySpec.build(MODULE_A).setExportFilter(PathFilters.acceptAll()).create());
+        builder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_A, true));
         moduleLoader.addModuleSpec(builder.create());
 
         builder = ModuleSpec.build(MODULE_D);

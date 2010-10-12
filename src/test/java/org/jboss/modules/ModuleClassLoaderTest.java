@@ -77,7 +77,8 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
                 .addResources(getResource("test/modulecontentloader/rootOne"))
                 .create()
         );
-        moduleWithContentBuilder.addModuleDependency(ModuleDependencySpec.build(MODULE_TO_IMPORT_ID).create());
+        moduleWithContentBuilder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_TO_IMPORT_ID));
+        moduleWithContentBuilder.addDependency(DependencySpec.createLocalDependencySpec());
         moduleLoader.addModuleSpec(moduleWithContentBuilder.create());
 
         final ModuleSpec.Builder moduleToImportBuilder = ModuleSpec.build(MODULE_TO_IMPORT_ID);
@@ -88,11 +89,12 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
                 .addResources(getResource("test/modulecontentloader/rootTwo"))
                 .create()
         );
+        moduleToImportBuilder.addDependency(DependencySpec.createLocalDependencySpec());
         moduleLoader.addModuleSpec(moduleToImportBuilder.create());
 
         final ModuleSpec.Builder moduleWithExportBuilder = ModuleSpec.build(MODULE_WITH_EXPORT_ID);
-        moduleWithExportBuilder
-            .addModuleDependency(ModuleDependencySpec.build(MODULE_TO_IMPORT_ID).setExportFilter(PathFilters.acceptAll()).create());
+        moduleWithExportBuilder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_TO_IMPORT_ID, true, false));
+        moduleWithExportBuilder.addDependency(DependencySpec.createLocalDependencySpec());
         moduleLoader.addModuleSpec(moduleWithExportBuilder.create());
 
         final MultiplePathFilterBuilder nestedAndOrgJBossExcludingBuilder = PathFilters.multiplePathFilterBuilder(true);
@@ -100,46 +102,41 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
         nestedAndOrgJBossExcludingBuilder.addFilter(PathFilters.match("nested"), false);
 
         final ModuleSpec.Builder moduleWithExportFilterBuilder = ModuleSpec.build(MODULE_WITH_FILTERED_EXPORT_ID);
-        moduleWithExportFilterBuilder
-            .addModuleDependency(ModuleDependencySpec.build(MODULE_TO_IMPORT_ID).setExportFilter(nestedAndOrgJBossExcludingBuilder.create()).create());
-
+        moduleWithExportFilterBuilder.addDependency(DependencySpec.createModuleDependencySpec(nestedAndOrgJBossExcludingBuilder.create(), null, MODULE_TO_IMPORT_ID, false));
+        moduleWithExportFilterBuilder.addDependency(DependencySpec.createLocalDependencySpec());
         moduleLoader.addModuleSpec(moduleWithExportFilterBuilder.create());
 
         final ModuleSpec.Builder moduleWithImportFilterBuilder = ModuleSpec.build(MODULE_WITH_FILTERED_IMPORT_ID);
-        moduleWithImportFilterBuilder
-            .addModuleDependency(ModuleDependencySpec.build(MODULE_TO_IMPORT_ID).setImportFilter(nestedAndOrgJBossExcludingBuilder.create()).create());
+        moduleWithImportFilterBuilder.addDependency(DependencySpec.createModuleDependencySpec(nestedAndOrgJBossExcludingBuilder.create(), PathFilters.rejectAll(), null, MODULE_TO_IMPORT_ID, false));
+        moduleWithImportFilterBuilder.addDependency(DependencySpec.createLocalDependencySpec());
         moduleLoader.addModuleSpec(moduleWithImportFilterBuilder.create());
 
         final ModuleSpec.Builder moduleWithDoubleExportBuilder = ModuleSpec.build(MODULE_WITH_DOUBLE_EXPORT_ID);
-        moduleWithDoubleExportBuilder
-            .addModuleDependency(ModuleDependencySpec.build(MODULE_TO_IMPORT_ID).setExportFilter(PathFilters.acceptAll()).create())
-            .addModuleDependency(ModuleDependencySpec.build(MODULE_WITH_CONTENT_ID).setExportFilter(PathFilters.acceptAll()).create());
+        moduleWithDoubleExportBuilder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_TO_IMPORT_ID, true));
+        moduleWithDoubleExportBuilder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_WITH_CONTENT_ID, true));
+        moduleWithDoubleExportBuilder.addDependency(DependencySpec.createLocalDependencySpec());
         moduleLoader.addModuleSpec(moduleWithDoubleExportBuilder.create());
 
         final ModuleSpec.Builder moduleWithInvertedDoubleExportBuilder = ModuleSpec.build(MODULE_WITH_INVERTED_DOUBLE_EXPORT_ID);
-        moduleWithInvertedDoubleExportBuilder
-            .addModuleDependency(ModuleDependencySpec.build(MODULE_WITH_CONTENT_ID).setExportFilter(PathFilters.acceptAll()).create())
-            .addModuleDependency(ModuleDependencySpec.build(MODULE_TO_IMPORT_ID).setExportFilter(PathFilters.acceptAll()).create());
+        moduleWithInvertedDoubleExportBuilder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_WITH_CONTENT_ID, true));
+        moduleWithInvertedDoubleExportBuilder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_TO_IMPORT_ID, true));
+        moduleWithInvertedDoubleExportBuilder.addDependency(DependencySpec.createLocalDependencySpec());
         moduleLoader.addModuleSpec(moduleWithInvertedDoubleExportBuilder.create());
 
         final ModuleSpec.Builder moduleWithFilteredDoubleExportBuilder = ModuleSpec.build(MODULE_WITH_FILTERED_DOUBLE_EXPORT_ID);
-        moduleWithFilteredDoubleExportBuilder
-            .addModuleDependency(ModuleDependencySpec.build(MODULE_TO_IMPORT_ID).setImportFilter(PathFilters.not(PathFilters.match("nested")))
-                .setExportFilter(PathFilters.acceptAll()).create())
-                .addModuleDependency(ModuleDependencySpec.build(MODULE_WITH_EXPORT_ID).setExportFilter(PathFilters.acceptAll()).create());
+        moduleWithFilteredDoubleExportBuilder.addDependency(DependencySpec.createModuleDependencySpec(PathFilters.not(PathFilters.match("nested")), PathFilters.acceptAll(), null, MODULE_TO_IMPORT_ID, false));
+        moduleWithFilteredDoubleExportBuilder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_WITH_EXPORT_ID, true));
+        moduleWithFilteredDoubleExportBuilder.addDependency(DependencySpec.createLocalDependencySpec());
         moduleLoader.addModuleSpec(moduleWithFilteredDoubleExportBuilder.create());
 
         final ModuleSpec.Builder moduleWithCircularABuilder = ModuleSpec.build(MODULE_WITH_CIRCULAR_DEP_A);
-        moduleWithCircularABuilder.addModuleDependency(
-                ModuleDependencySpec.build(MODULE_WITH_CIRCULAR_DEP_B)
-                .setExportFilter(PathFilters.acceptAll())
-                .create()
-        );
+        moduleWithCircularABuilder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_WITH_CIRCULAR_DEP_B, true));
         moduleWithCircularABuilder.addResourceRoot(
                 TestResourceLoader.build()
                 .addClass(TestClass.class)
                 .create()
         );
+        moduleWithCircularABuilder.addDependency(DependencySpec.createLocalDependencySpec());
         moduleLoader.addModuleSpec(moduleWithCircularABuilder.create());
 
         final ModuleSpec.Builder moduleWithCircularBBuilder = ModuleSpec.build(MODULE_WITH_CIRCULAR_DEP_B);
@@ -148,30 +145,20 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
                  .addClass(ImportedClass.class)
                  .create()
         );
-        moduleWithCircularBBuilder.addModuleDependency(
-                ModuleDependencySpec.build(MODULE_WITH_CIRCULAR_DEP_C)
-                .setExportFilter(PathFilters.acceptAll())
-                .create()
-        );
+        moduleWithCircularBBuilder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_WITH_CIRCULAR_DEP_C, true));
+        moduleWithCircularBBuilder.addDependency(DependencySpec.createLocalDependencySpec());
         moduleLoader.addModuleSpec(moduleWithCircularBBuilder.create());
 
 
         final ModuleSpec.Builder moduleWithCircularCBuilder = ModuleSpec.build(MODULE_WITH_CIRCULAR_DEP_C);
-        moduleWithCircularCBuilder.addModuleDependency(
-                ModuleDependencySpec.build(MODULE_WITH_CIRCULAR_DEP_D)
-                .setExportFilter(PathFilters.acceptAll())
-                .create());
-        moduleWithCircularCBuilder.addModuleDependency(
-                ModuleDependencySpec.build(MODULE_WITH_CIRCULAR_DEP_A)
-                .setExportFilter(PathFilters.acceptAll())
-                .create());
+        moduleWithCircularCBuilder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_WITH_CIRCULAR_DEP_D, true));
+        moduleWithCircularCBuilder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_WITH_CIRCULAR_DEP_A, true));
+        moduleWithCircularCBuilder.addDependency(DependencySpec.createLocalDependencySpec());
         moduleLoader.addModuleSpec(moduleWithCircularCBuilder.create());
 
         final ModuleSpec.Builder moduleWithCircularDBuilder = ModuleSpec.build(MODULE_WITH_CIRCULAR_DEP_D);
-        moduleWithCircularDBuilder.addModuleDependency(
-                ModuleDependencySpec.build(MODULE_WITH_CIRCULAR_DEP_A)
-                .setExportFilter(PathFilters.acceptAll())
-                .create());
+        moduleWithCircularDBuilder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_WITH_CIRCULAR_DEP_A, true));
+        moduleWithCircularDBuilder.addDependency(DependencySpec.createLocalDependencySpec());
         moduleLoader.addModuleSpec(moduleWithCircularDBuilder.create());
 
         Module.setModuleLoaderSelector(new SimpleModuleLoaderSelector(moduleLoader));

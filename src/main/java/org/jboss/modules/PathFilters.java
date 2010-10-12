@@ -132,4 +132,22 @@ public final class PathFilters {
     public static PathFilter in(Set<String> paths) {
         return new SetPathFilter(new HashSet<String>(paths));
     }
+
+    private static final PathFilter defaultExportFilter;
+
+    static {
+        final MultiplePathFilterBuilder builder = PathFilters.multiplePathFilterBuilder(true);
+        builder.addFilter(PathFilters.match("META-INF/**"), false);
+        builder.addFilter(PathFilters.match("META-INF"), false);
+        defaultExportFilter = builder.create();
+    }
+
+    /**
+     * Get the default export path filter, which excludes all of {@code META-INF} except for the {@code services} path.
+     *
+     * @return the default export path filter
+     */
+    public static PathFilter getDefaultExportFilter() {
+        return defaultExportFilter;
+    }
 }

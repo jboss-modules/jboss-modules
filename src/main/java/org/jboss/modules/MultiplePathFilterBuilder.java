@@ -64,7 +64,11 @@ public class MultiplePathFilterBuilder {
         for (int i = 0, includeFlagsSize = this.includeFlags.size(); i < includeFlagsSize; i++) {
             includeFlags[i] = this.includeFlags.get(i).booleanValue();
         }
-        return new MultiplePathFilter(filters, includeFlags, defaultVal);
+        if (filters.length == 0) {
+            return defaultVal ? PathFilters.acceptAll() : PathFilters.rejectAll();
+        } else {
+            return new MultiplePathFilter(filters, includeFlags, defaultVal);
+        }
     }
 
     /**

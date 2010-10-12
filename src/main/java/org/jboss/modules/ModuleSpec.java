@@ -25,9 +25,6 @@ package org.jboss.modules;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jboss.modules.DependencySpec.DependencyBuilder;
-import org.jboss.modules.DependencySpec.DependencyBuilderBase;
-
 
 /**
  * A {@code Module} specification which is used by a {@code ModuleLoader} to define new modules.
@@ -41,11 +38,11 @@ public final class ModuleSpec {
     private final String mainClass;
     private final AssertionSetting assertionSetting;
     private final ResourceLoader[] resourceLoaders;
-    private final DependencySpec.SpecifiedDependency[] dependencies;
+    private final DependencySpec[] dependencies;
     private final LocalLoader fallbackLoader;
     private final ModuleClassLoaderFactory moduleClassLoaderFactory;
 
-    private ModuleSpec(final ModuleIdentifier moduleIdentifier, final String mainClass, final AssertionSetting assertionSetting, final ResourceLoader[] resourceLoaders, final DependencySpec.SpecifiedDependency[] dependencies, final LocalLoader fallbackLoader, final ModuleClassLoaderFactory moduleClassLoaderFactory) {
+    private ModuleSpec(final ModuleIdentifier moduleIdentifier, final String mainClass, final AssertionSetting assertionSetting, final ResourceLoader[] resourceLoaders, final DependencySpec[] dependencies, final LocalLoader fallbackLoader, final ModuleClassLoaderFactory moduleClassLoaderFactory) {
         this.moduleIdentifier = moduleIdentifier;
         this.mainClass = mainClass;
         this.assertionSetting = assertionSetting;
@@ -76,7 +73,7 @@ public final class ModuleSpec {
         return resourceLoaders;
     }
 
-    DependencySpec.SpecifiedDependency[] getDependencies() {
+    DependencySpec[] getDependencies() {
         return dependencies;
     }
 
@@ -91,7 +88,7 @@ public final class ModuleSpec {
     /**
      * A builder for new module specifications.
      */
-    public interface Builder extends DependencyBuilderBase {
+    public interface Builder {
 
         /**
          * Set the main class for this module, or {@code null} for none.
@@ -109,17 +106,13 @@ public final class ModuleSpec {
          */
         Builder setAssertionSetting(AssertionSetting assertionSetting);
 
-        /** {@inheritDoc} */
-        @Override
-        Builder addLocalDependency(final LocalDependencySpec spec);
-
-        /** {@inheritDoc} */
-        @Override
-        Builder addLocalDependency();
-
-        /** {@inheritDoc} */
-        @Override
-        Builder addModuleDependency(ModuleDependencySpec dependencySpec);
+        /**
+         * Add a dependency specification.
+         *
+         * @param dependencySpec the dependency specification
+         * @return this builder
+         */
+        Builder addDependency(DependencySpec dependencySpec);
 
         /**
          * Add a local resource root, from which this module will load class definitions and resources.
@@ -173,27 +166,13 @@ public final class ModuleSpec {
             private String mainClass;
             private AssertionSetting assertionSetting = AssertionSetting.INHERIT;
             private final List<ResourceLoader> resourceLoaders = new ArrayList<ResourceLoader>(0);
+            private final List<DependencySpec> dependencies = new ArrayList<DependencySpec>();
             private LocalLoader fallbackLoader;
-            private DependencyBuilder depBuilder = new DependencySpec.DependencyBuilderImpl();
             private ModuleClassLoaderFactory moduleClassLoaderFactory;
 
+            @Override
             public Builder setFallbackLoader(final LocalLoader fallbackLoader) {
                 this.fallbackLoader = fallbackLoader;
-                return this;
-            }
-
-            public Builder addLocalDependency(final LocalDependencySpec spec) {
-                depBuilder.addLocalDependency(spec);
-                return this;
-            }
-
-            public Builder addLocalDependency() {
-                depBuilder.addLocalDependency();
-                return this;
-            }
-
-            public Builder addModuleDependency(final ModuleDependencySpec dependencySpec) {
-                depBuilder.addModuleDependency(dependencySpec);
                 return this;
             }
 
@@ -204,9 +183,15 @@ public final class ModuleSpec {
             }
 
             @Override
-            public Builder setAssertionSetting(AssertionSetting assertionSetting) {
+            public Builder setAssertionSetting(final AssertionSetting assertionSetting) {
                 this.assertionSetting = assertionSetting;
                 return this;
+            }
+
+            @Override
+            public Builder addDependency(final DependencySpec dependencySpec) {
+                dependencies.add(dependencySpec);
+                return null;
             }
 
             @Override
@@ -215,6 +200,7 @@ public final class ModuleSpec {
                 return this;
             }
 
+            @Override
             public Builder setModuleClassLoaderFactory(final ModuleClassLoaderFactory moduleClassLoaderFactory) {
                 this.moduleClassLoaderFactory = moduleClassLoaderFactory;
                 return this;
@@ -222,8 +208,7 @@ public final class ModuleSpec {
 
             @Override
             public ModuleSpec create() {
-                List<DependencySpec.SpecifiedDependency> dependencies = depBuilder.create().dependencies;
-                return new ModuleSpec(moduleIdentifier, mainClass, assertionSetting, resourceLoaders.toArray(new ResourceLoader[resourceLoaders.size()]), dependencies.toArray(new DependencySpec.SpecifiedDependency[dependencies.size()]), fallbackLoader, moduleClassLoaderFactory);
+                return new ModuleSpec(moduleIdentifier, mainClass, assertionSetting, resourceLoaders.toArray(new ResourceLoader[resourceLoaders.size()]), dependencies.toArray(new DependencySpec[dependencies.size()]), fallbackLoader, moduleClassLoaderFactory);
             }
 
             @Override

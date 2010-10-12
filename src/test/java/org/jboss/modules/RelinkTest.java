@@ -22,17 +22,18 @@
 
 package org.jboss.modules;
 
+import java.util.Arrays;
 import junit.framework.AssertionFailedError;
 
-import org.jboss.modules.DependencySpec.DependencyBuilder;
-import org.jboss.modules.ModuleDependencySpec.Builder;
 import org.jboss.modules.util.TestModuleLoader;
 
 import org.junit.Assert;
 import org.junit.Test;
 
 /**
- * Test Relinking
+ * Test System module usage.
+ *
+ * @author Ales Justin
  */
 public class RelinkTest extends AbstractModuleTestCase {
 
@@ -55,12 +56,9 @@ public class RelinkTest extends AbstractModuleTestCase {
         } catch (Exception e) {
         }
 
-        ModuleDependencySpec.Builder sysDep = ModuleDependencySpec.build(ModuleIdentifier.SYSTEM);
-        sysDep.setImportFilter(PathFilters.match("org/jboss/modules/**"));
-        ModuleDependencySpec spec = sysDep.create();
-
-        DependencyBuilder dep = DependencySpec.build().addModuleDependency(spec);
-        moduleLoader.setAndRelinkDependencies(module, dep.create());
+        moduleLoader.setAndRelinkDependencies(module, Arrays.<DependencySpec>asList(
+                DependencySpec.createModuleDependencySpec(PathFilters.match("org/jboss/modules/**"), PathFilters.rejectAll(), null, ModuleIdentifier.SYSTEM, false)
+        ));
 
         Assert.assertNotNull(cl.loadClass("org.jboss.modules.util.Util"));
     }
@@ -71,10 +69,7 @@ public class RelinkTest extends AbstractModuleTestCase {
         Module.setModuleLoaderSelector(new SimpleModuleLoaderSelector(moduleLoader));
 
         ModuleSpec.Builder builder = ModuleSpec.build(MODULE_B);
-        ModuleDependencySpec.Builder depA = ModuleDependencySpec.build(MODULE_A);
-        depA.setExportFilter(PathFilters.acceptAll());
-        builder.addModuleDependency(depA.create());
-
+        builder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_A, true));
         moduleLoader.addModuleSpec(builder.create());
 
         builder = ModuleSpec.build(MODULE_A);
@@ -91,13 +86,11 @@ public class RelinkTest extends AbstractModuleTestCase {
             } catch (ClassNotFoundException e) {
             }
 
-            Builder sysDep = ModuleDependencySpec.build(ModuleIdentifier.SYSTEM);
-            sysDep.setImportFilter(PathFilters.match("org/jboss/modules/**"));
-            sysDep.setExportFilter(PathFilters.match("org/jboss/modules/**"));
-
             Module moduleA = moduleLoader.loadModule(MODULE_A);
-            DependencyBuilder dep = DependencySpec.build().addModuleDependency(sysDep.create());
-            moduleLoader.setAndRelinkDependencies(moduleA, dep.create());
+
+            moduleLoader.setAndRelinkDependencies(moduleA, Arrays.asList(
+                    DependencySpec.createModuleDependencySpec(PathFilters.match("org/jboss/modules/**"), PathFilters.acceptAll(), null, ModuleIdentifier.SYSTEM, false)
+            ));
             moduleLoader.relink(moduleB);
 
             Assert.assertNotNull(cl.loadClass("org.jboss.modules.util.Util"));

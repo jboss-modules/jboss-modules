@@ -48,15 +48,6 @@ import java.util.jar.JarFile;
  */
 final class ModuleXmlParser {
 
-    private static final PathFilter defaultExportFilter;
-
-    static {
-        final MultiplePathFilterBuilder builder = PathFilters.multiplePathFilterBuilder(true);
-        builder.addFilter(PathFilters.match("META-INF/services/*"), true);
-        builder.addFilter(PathFilters.match("META-INF/**"), false);
-        defaultExportFilter = builder.create();
-    }
-
     private ModuleXmlParser() {
     }
 
@@ -290,6 +281,7 @@ final class ModuleXmlParser {
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {
+                    specBuilder.addDependency(DependencySpec.createLocalDependencySpec());
                     return;
                 }
                 case XMLStreamConstants.START_ELEMENT: {
@@ -319,7 +311,6 @@ final class ModuleXmlParser {
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {
-                    specBuilder.addLocalDependency();
                     return;
                 }
                 case XMLStreamConstants.START_ELEMENT: {
@@ -358,18 +349,14 @@ final class ModuleXmlParser {
         if (! required.isEmpty()) {
             throw missingAttributes(reader.getLocation(), required);
         }
-        final ModuleDependencySpec.Builder dependencySpecBuilder = ModuleDependencySpec.build(ModuleIdentifier.create(name, slot))
-            .setOptional(optional);
         final MultiplePathFilterBuilder importBuilder = PathFilters.multiplePathFilterBuilder(true);
         final MultiplePathFilterBuilder exportBuilder = PathFilters.multiplePathFilterBuilder(true);
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {
-                    if (export) {
-                        dependencySpecBuilder.setExportFilter(exportBuilder.create());
-                    }
-                    dependencySpecBuilder.setImportFilter(importBuilder.create());
-                    specBuilder.addModuleDependency(dependencySpecBuilder.create());
+                    final PathFilter exportFilter = export ? exportBuilder.create() : PathFilters.rejectAll();
+                    final PathFilter importFilter = importBuilder.create();
+                    specBuilder.addDependency(DependencySpec.createModuleDependencySpec(importFilter, exportFilter, null, ModuleIdentifier.create(name, slot), optional));
                     return;
                 }
                 case XMLStreamConstants.START_ELEMENT: {
@@ -460,12 +447,7 @@ final class ModuleXmlParser {
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {
-                    final PathFilter exportFilter;
-                    if (builder.isEmpty()) {
-                        exportFilter = defaultExportFilter;
-                    } else {
-                        exportFilter = builder.create();
-                    }
+                    final PathFilter exportFilter = builder.create();
                     if (file.isDirectory()) {
                         resourceLoader = new FileResourceLoader(identifier, file, name, exportFilter);
                     } else {

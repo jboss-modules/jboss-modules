@@ -26,12 +26,13 @@ package org.jboss.modules;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 final class ModuleDependency extends Dependency {
+    private final ModuleLoader moduleLoader;
     private final ModuleIdentifier identifier;
     private final boolean optional;
-    private volatile Module cachedModule;
 
-    ModuleDependency(final PathFilter exportFilter, final PathFilter importFilter, final ModuleIdentifier identifier, final boolean optional) {
+    ModuleDependency(final PathFilter exportFilter, final PathFilter importFilter, final ModuleLoader moduleLoader, final ModuleIdentifier identifier, final boolean optional) {
         super(exportFilter, importFilter);
+        this.moduleLoader = moduleLoader;
         this.identifier = identifier;
         this.optional = optional;
     }
@@ -44,30 +45,11 @@ final class ModuleDependency extends Dependency {
         return optional;
     }
 
-    <T> void accept(final DependencyVisitor<T> visitor, final T param) throws ModuleLoadException {
-        visitor.visit(this, param);
+    ModuleLoader getModuleLoader() {
+        return moduleLoader;
     }
 
-    Module getModule() {
-        final Module cachedModule = this.cachedModule;
-        if (cachedModule == null) {
-            try {
-                return (this.cachedModule = Module.getCurrentLoaderPrivate().preloadModule(identifier));
-            } catch (ModuleLoadException e) {
-                return null;
-            }
-        } else {
-            return cachedModule;
-        }
-    }
-
-    Module getModuleRequired() throws ModuleNotFoundException {
-        final Module module = getModule();
-        if (module == null) {
-            if (! isOptional()) {
-                throw new ModuleNotFoundException("Module " + identifier + " not found");
-            }
-        }
-        return module;
+    public String toString() {
+        return (optional ? "optional " : "" ) + "dependency on " + identifier + " (" + moduleLoader + ")";
     }
 }
