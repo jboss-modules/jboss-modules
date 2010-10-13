@@ -32,7 +32,7 @@ public final class SystemModuleLoader extends ModuleLoader {
     static final SystemModuleLoader INSTANCE = new SystemModuleLoader();
 
     private SystemModuleLoader() {
-        super(0);
+        super("system", 0);
     }
 
     /**

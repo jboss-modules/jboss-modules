@@ -26,11 +26,11 @@ import java.io.File;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
-final class InitialModuleLoader  {
+final class DefaultModuleLoader  {
 
     static final ModuleLoader INSTANCE;
 
-    private InitialModuleLoader() {
+    private DefaultModuleLoader() {
     }
 
     static {
@@ -44,7 +44,7 @@ final class InitialModuleLoader  {
                 } else {
                     roots = getFiles(modulePath, 0, 0);
                 }
-                return new LocalModuleLoader(roots);
+                return new LocalModuleLoader("default", roots);
             }
         });
     }

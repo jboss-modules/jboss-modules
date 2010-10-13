@@ -23,15 +23,12 @@
 package org.jboss.modules;
 
 import java.io.Serializable;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.regex.Pattern;
 
 /**
  * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author Jason T. Greene
  */
 public final class ModuleIdentifier implements Serializable {
 
@@ -89,48 +86,6 @@ public final class ModuleIdentifier implements Serializable {
     @Override
     public String toString() {
         return "module:" + toSpecString();
-    }
-
-    public static ModuleIdentifier fromURL(URL url) throws MalformedURLException {
-        if (url.getAuthority() != null) {
-            throw new MalformedURLException("Modules cannot have an authority part");
-        }
-        final String moduleRootSpec = url.getFile();
-        final int si = moduleRootSpec.indexOf('/');
-        final String moduleName;
-        if (si == -1) {
-            moduleName = moduleRootSpec;
-        } else {
-            moduleName = moduleRootSpec.substring(0, si);
-        }
-        if (moduleName.length() == 0) {
-            throw new MalformedURLException("Empty module URL");
-        }
-        return fromString(moduleName);
-    }
-
-    public static ModuleIdentifier fromURI(URI uri) throws URISyntaxException {
-        final String scheme = uri.getScheme();
-        if (scheme == null || ! scheme.equals("module")) {
-            throw new URISyntaxException(uri.toString(), "Module URIs must start with \"module:\"");
-        }
-        if (uri.getAuthority() != null) {
-            throw new URISyntaxException(uri.toString(), "Modules cannot have an authority part");
-        }
-        final String moduleFullSpec = uri.getSchemeSpecificPart();
-        final int sli = moduleFullSpec.indexOf('/');
-        final int qi = moduleFullSpec.indexOf('?');
-        final int si = qi == -1 ? sli == -1 ? -1 : sli : sli == -1 ? qi : Math.min(sli, qi);
-        final String moduleName;
-        if (si == -1) {
-            moduleName = moduleFullSpec;
-        } else {
-            moduleName = moduleFullSpec.substring(0, si);
-        }
-        if (moduleName.length() == 0) {
-            throw new URISyntaxException(uri.toString(), "Empty module URI");
-        }
-        return fromString(moduleName);
     }
 
     public static ModuleIdentifier fromString(String moduleSpec) throws IllegalArgumentException {
@@ -202,27 +157,5 @@ public final class ModuleIdentifier implements Serializable {
      */
     public static ModuleIdentifier create(String name) {
         return create(name, null);
-    }
-
-    public URL toURL() throws MalformedURLException {
-        return new URL("module", null, -1, toSpecString());
-    }
-
-    public URL toURL(String resourceRoot) throws MalformedURLException {
-        if (resourceRoot == null) {
-            return toURL();
-        } else {
-            return new URL("module", null, -1, toSpecString() + "/" + resourceRoot);
-        }
-    }
-
-    public URL toURL(String resourceRoot, String resourceName) throws MalformedURLException {
-        if (resourceName == null) {
-            return toURL(resourceRoot);
-        } else if (resourceRoot == null) {
-            return new URL("module", null, -1, toSpecString() + "?/" + resourceName);
-        } else {
-            return new URL("module", null, -1, toSpecString() + "/" + resourceRoot + "?/" + resourceName);
-        }
     }
 }

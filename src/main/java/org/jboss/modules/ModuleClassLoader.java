@@ -472,29 +472,6 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         return "ClassLoader for " + module;
     }
 
-    /**
-     * Get the class loader for a given module.
-     *
-     * @param identifier the module identifier
-     * @return the class loader
-     * @throws ModuleLoadException if the module could not be loaded
-     */
-    public static ModuleClassLoader forModule(final ModuleIdentifier identifier) throws ModuleLoadException {
-        return Module.getModule(identifier).getClassLoader();
-    }
-
-    /**
-     * Get the class loader for a given module.
-     *
-     * @param identifier the module identifier
-     * @return the class loader
-     * @throws ModuleLoadException if the module could not be loaded
-     * @throws IllegalArgumentException if the given identifier is invalid
-     */
-    public static ModuleClassLoader forModuleName(final String identifier) throws ModuleLoadException {
-        return forModule(ModuleIdentifier.fromString(identifier));
-    }
-
     Set<String> getPaths() {
         return paths.getAllPaths().keySet();
     }

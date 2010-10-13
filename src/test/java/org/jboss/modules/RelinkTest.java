@@ -43,7 +43,6 @@ public class RelinkTest extends AbstractModuleTestCase {
     @Test
     public void testSmoke() throws Exception {
         final TestModuleLoader moduleLoader = new TestModuleLoader();
-        Module.setModuleLoaderSelector(new SimpleModuleLoaderSelector(moduleLoader));
 
         ModuleSpec.Builder builder = ModuleSpec.build(MODULE_A);
         moduleLoader.addModuleSpec(builder.create());
@@ -66,7 +65,6 @@ public class RelinkTest extends AbstractModuleTestCase {
     @Test
     public void testTransitive() throws Exception {
         TestModuleLoader moduleLoader = new TestModuleLoader();
-        Module.setModuleLoaderSelector(new SimpleModuleLoaderSelector(moduleLoader));
 
         ModuleSpec.Builder builder = ModuleSpec.build(MODULE_B);
         builder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_A, true));
@@ -75,32 +73,21 @@ public class RelinkTest extends AbstractModuleTestCase {
         builder = ModuleSpec.build(MODULE_A);
         moduleLoader.addModuleSpec(builder.create());
 
-        Module.setModuleLoaderSelector(new SimpleModuleLoaderSelector(moduleLoader));
-        try
-        {
-            Module moduleB = moduleLoader.loadModule(MODULE_B);
-            ClassLoader cl = moduleB.getClassLoader();
-            try {
-                cl.loadClass("org.jboss.modules.util.Util");
-                throw new AssertionFailedError();
-            } catch (ClassNotFoundException e) {
-            }
-
-            Module moduleA = moduleLoader.loadModule(MODULE_A);
-
-            moduleLoader.setAndRelinkDependencies(moduleA, Arrays.asList(
-                    DependencySpec.createModuleDependencySpec(PathFilters.match("org/jboss/modules/**"), PathFilters.acceptAll(), null, ModuleIdentifier.SYSTEM, false)
-            ));
-            moduleLoader.relink(moduleB);
-
-            Assert.assertNotNull(cl.loadClass("org.jboss.modules.util.Util"));
-
+        Module moduleB = moduleLoader.loadModule(MODULE_B);
+        ClassLoader cl = moduleB.getClassLoader();
+        try {
+            cl.loadClass("org.jboss.modules.util.Util");
+            throw new AssertionFailedError();
+        } catch (ClassNotFoundException e) {
         }
-        finally
-        {
-            Module.setModuleLoaderSelector(ModuleLoaderSelector.DEFAULT);
-        }
+
+        Module moduleA = moduleLoader.loadModule(MODULE_A);
+
+        moduleLoader.setAndRelinkDependencies(moduleA, Arrays.asList(
+                DependencySpec.createModuleDependencySpec(PathFilters.match("org/jboss/modules/**"), PathFilters.acceptAll(), null, ModuleIdentifier.SYSTEM, false)
+        ));
+        moduleLoader.relink(moduleB);
+
+        Assert.assertNotNull(cl.loadClass("org.jboss.modules.util.Util"));
     }
-
-
 }

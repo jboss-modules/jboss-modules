@@ -90,7 +90,7 @@ public final class PackageSpec {
         return sealBase;
     }
 
-    public void setSealBase(final URL sealBase) {
+    public void setSealBase(URL sealBase) {
         this.sealBase = sealBase;
     }
 

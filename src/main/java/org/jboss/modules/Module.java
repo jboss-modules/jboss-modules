@@ -1,5 +1,5 @@
 /*
- * JBoss, Home of Professional Open Source.
+ * JBoss, Hoe of Professional Open Source.
  * Copyright 2010, Red Hat, Inc., and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
@@ -35,7 +35,6 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -51,6 +50,7 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
 * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
 * @author <a href="mailto:flavia.rainone@jboss.com">Flavia Rainone</a>
+* @author Jason T. Greene
 */
 public final class Module {
 
@@ -65,6 +65,7 @@ public final class Module {
                 return null;
             }
         });
+
         final String pkgsString = AccessController.doPrivileged(new PropertyReadAction("jboss.modules.system.pkgs"));
         final List<String> list = new ArrayList<String>();
         list.add("java.");
@@ -97,11 +98,6 @@ public final class Module {
      * The system-wide module logger, which may be changed via {@link #setModuleLogger(ModuleLogger)}.
      */
     static volatile ModuleLogger log = NoopModuleLogger.getInstance();
-
-    /**
-     * The selector to choose the module loader to use for locating modules.
-     */
-    private static volatile ModuleLoaderSelector moduleLoaderSelector = ModuleLoaderSelector.DEFAULT;
 
     // immutable properties
 
@@ -262,7 +258,7 @@ public final class Module {
     }
 
     /**
-     * Load a service from this module.
+     * Load a service loader from this module.
      *
      * @param serviceType the service type class
      * @param <S> the service type
@@ -273,29 +269,19 @@ public final class Module {
     }
 
     /**
-     * Load a service from the named module.
+     * Load a service loader from a module in the current module loader. The current
+     * module loader refers to the loader of the module of the class that calls this method.
+     * Note that {@link #loadService(Class)} is more efficient since it does not need to crawl
+     * the stack.
      *
-     * @param moduleIdentifier the module identifier
+     * @param <S> the the service type
+     * @param identifier the module identifier containing the service loader
      * @param serviceType the service type class
-     * @param <S> the service type
-     * @return the service loader
-     * @throws ModuleLoadException if the given module could not be loaded
+     * @return the
+     * @throws ModuleLoadException
      */
-    public static <S> ServiceLoader<S> loadService(ModuleIdentifier moduleIdentifier, Class<S> serviceType) throws ModuleLoadException {
-        return Module.getModule(moduleIdentifier).loadService(serviceType);
-    }
-
-    /**
-     * Load a service from the named module.
-     *
-     * @param moduleIdentifier the module identifier
-     * @param serviceType the service type class
-     * @param <S> the service type
-     * @return the service loader
-     * @throws ModuleLoadException if the given module could not be loaded
-     */
-    public static <S> ServiceLoader<S> loadService(String moduleIdentifier, Class<S> serviceType) throws ModuleLoadException {
-        return loadService(ModuleIdentifier.fromString(moduleIdentifier), serviceType);
+    public static <S> ServiceLoader<S> loadServiceFromCurrent(ModuleIdentifier identifier, Class<S> serviceType) throws ModuleLoadException {
+        return getCurrentModule().getModule(identifier).loadService(serviceType);
     }
 
     private static final RuntimePermission GET_CLASS_LOADER = new RuntimePermission("getClassLoader");
@@ -359,83 +345,107 @@ public final class Module {
     }
 
     /**
-     * Load a class from a module.
+     * Gets the default module loader. The default module loader is the
+     * initial loader that is established by the module framework. It typically
+     * is based off of the environmental module path.
      *
-     * @param moduleIdentifier the identifier of the module from which the class should be loaded
-     * @param className the class name to load
-     * @param initialize {@code true} to initialize the class
-     * @return the class
-     * @throws ModuleLoadException if the module could not be loaded
-     * @throws ClassNotFoundException if the class could not be loaded
+     * @return the default module loader
      */
-    public static Class<?> loadClass(final ModuleIdentifier moduleIdentifier, final String className, final boolean initialize) throws ModuleLoadException, ClassNotFoundException {
-        return Class.forName(className, initialize, ModuleClassLoader.forModule(moduleIdentifier));
+    public static ModuleLoader getDefaultModuleLoader() {
+        return DefaultModuleLoader.INSTANCE;
     }
 
     /**
-     * Load a class from a module.  The class will be initialized.
+     * Gets the current module loader. The current module loader is the
+     * loader of the module from the calling class. Note that this method
+     * must crawl the stack to determine this, so other mechanisms are more
+     * efficient
      *
-     * @param moduleIdentifier the identifier of the module from which the class should be loaded
-     * @param className the class name to load
-     * @return the class
-     * @throws ModuleLoadException if the module could not be loaded
-     * @throws ClassNotFoundException if the class could not be loaded
+     * @return the current module loader
      */
-    public static Class<?> loadClass(final ModuleIdentifier moduleIdentifier, final String className) throws ModuleLoadException, ClassNotFoundException {
-        return Class.forName(className, true, ModuleClassLoader.forModule(moduleIdentifier));
+    public static ModuleLoader getCurrentModuleLoader() {
+        return getCurrentModule().getModuleLoader();
     }
 
     /**
-     * Load a class from a module.
+     * Get a module from the default module loader.
+     * @see #getDefaultModuleLoader()
      *
-     * @param moduleIdentifierString the identifier of the module from which the class should be loaded
-     * @param className the class name to load
-     * @param initialize {@code true} to initialize the class
-     * @return the class
+     * @param identifier the module identifier
+     * @return the module
      * @throws ModuleLoadException if the module could not be loaded
-     * @throws ClassNotFoundException if the class could not be loaded
      */
-    public static Class<?> loadClass(final String moduleIdentifierString, final String className, final boolean initialize) throws ModuleLoadException, ClassNotFoundException {
-        return Class.forName(className, initialize, ModuleClassLoader.forModule(ModuleIdentifier.fromString(moduleIdentifierString)));
+    public static Module getModuleFromDefaultLoader(final ModuleIdentifier identifier) throws ModuleLoadException {
+        return getDefaultModuleLoader().loadModule(identifier);
     }
 
     /**
-     * Load a class from a module.  The class will be initialized.
+     * Get a module from the current module loader. Note that this must crawl the
+     * stack to determine this, so other mechanisms are more efficient.
+     * @see #getCurrentModuleLoader()
      *
-     * @param moduleIdentifierString the identifier of the module from which the class should be loaded
-     * @param className the class name to load
-     * @return the class
+     * @param identifier the module identifier
+     * @return the module
      * @throws ModuleLoadException if the module could not be loaded
-     * @throws ClassNotFoundException if the class could not be loaded
      */
-    public static Class<?> loadClass(final String moduleIdentifierString, final String className) throws ModuleLoadException, ClassNotFoundException {
-        return Class.forName(className, true, ModuleClassLoader.forModule(ModuleIdentifier.fromString(moduleIdentifierString)));
+    public static Module getModuleFromCurrentLoader(final ModuleIdentifier identifier) throws ModuleLoadException {
+        return getCurrentModuleLoader().loadModule(identifier);
     }
 
     /**
-     * Get the module with the given identifier from the current module loader as returned by {@link ModuleLoaderSelector#getCurrentLoader()}
-     * on the current module loader selector.
+     * Get the current module. The current module is the module that calls this
+     * method. Note that this method crawls the stack so other ways of obtaining the
+     * module are more efficient.
+     *
+     * @return the current module
+     */
+    public static Module getCurrentModule() {
+        return forClass(CallerContext.getCallingClass());
+    }
+
+    /**
+     * Get the module with the given identifier from the module loader used by this module.
      *
      * @param identifier the module identifier
      * @return the module
      * @throws ModuleLoadException if an error occurs
      */
-    public static Module getModule(final ModuleIdentifier identifier) throws ModuleLoadException {
-        return moduleLoaderSelector.getCurrentLoader().loadModule(identifier);
+    public Module getModule(final ModuleIdentifier identifier) throws ModuleLoadException {
+        return moduleLoader.loadModule(identifier);
     }
 
     /**
-     * Get the current module loader.
+     * Load a class from a module in the default module loader.
      *
-     * @return the current module loader
+     * @see #getDefaultModuleLoader()
+     *
+     * @param moduleIdentifier the identifier of the module from which the class
+     *        should be loaded
+     * @param className the class name to load
+     * @return the class
+     * @throws ModuleLoadException if the module could not be loaded
+     * @throws ClassNotFoundException if the class could not be loaded
      */
-    public static ModuleLoader getCurrentLoader() {
-        // todo perm check
-        return getCurrentLoaderPrivate();
+    public static Class<?> loadClassFromDefaultLoader(final ModuleIdentifier moduleIdentifier, final String className)
+            throws ModuleLoadException, ClassNotFoundException {
+        return Class.forName(className, true, getModuleFromDefaultLoader(moduleIdentifier).getClassLoader());
     }
 
-    static ModuleLoader getCurrentLoaderPrivate() {
-        return moduleLoaderSelector.getCurrentLoader();
+    /**
+     * Load a class from a module in the current module loader.
+     *
+     * @see #getDefaultModuleLoader()
+     *
+     * @param moduleIdentifier the identifier of the module from which the class
+     *        should be loaded
+     * @param className the class name to load
+     * @return the class
+     * @throws ModuleLoadException if the module could not be loaded
+     * @throws ClassNotFoundException if the class could not be loaded
+     */
+    public static Class<?> loadClassFromCurrentLoader(final ModuleIdentifier moduleIdentifier, final String className)
+            throws ModuleLoadException, ClassNotFoundException {
+        return Class.forName(className, true, getModuleFromCurrentLoader(moduleIdentifier).getClassLoader());
     }
 
     /**
@@ -624,20 +634,7 @@ public final class Module {
      * @return the string representation
      */
     public String toString() {
-        return "Module \"" + identifier + "\"";
-    }
-
-    /**
-     * Set the current module loader selector.
-     *
-     * @param moduleLoaderSelector the new selector, must not be {@code null}
-     */
-    public static void setModuleLoaderSelector(final ModuleLoaderSelector moduleLoaderSelector) {
-        if (moduleLoaderSelector == null) {
-            throw new IllegalArgumentException("moduleLoaderSelector is null");
-        }
-        // todo: perm check
-        Module.moduleLoaderSelector = moduleLoaderSelector;
+        return "Module \"" + identifier + "\"" + " from " + moduleLoader.toString();
     }
 
     private static final RuntimePermission ACCESS_MODULE_LOGGER = new RuntimePermission("accessModuleLogger");

@@ -40,9 +40,6 @@ final class ModularURLStreamHandlerFactory implements URLStreamHandlerFactory {
     }
 
     public URLStreamHandler createURLStreamHandler(final String protocol) {
-        if (protocol.equals("module")) {
-            return new ModuleProtocolHandler();
-        }
         final SecurityManager sm = System.getSecurityManager();
         final String urlModulesList;
         if (sm != null) {
@@ -61,7 +58,7 @@ final class ModularURLStreamHandlerFactory implements URLStreamHandlerFactory {
             if (moduleId.length() > 0) {
                 try {
                     final ModuleIdentifier identifier = ModuleIdentifier.fromString(moduleId);
-                    final ServiceLoader<URLStreamHandlerFactory> loader = Module.loadService(identifier, URLStreamHandlerFactory.class);
+                    final ServiceLoader<URLStreamHandlerFactory> loader = Module.getModuleFromDefaultLoader(identifier).loadService(URLStreamHandlerFactory.class);
                     for (URLStreamHandlerFactory factory : loader) {
                         final URLStreamHandler handler = factory.createURLStreamHandler(protocol);
                         if (handler != null) {

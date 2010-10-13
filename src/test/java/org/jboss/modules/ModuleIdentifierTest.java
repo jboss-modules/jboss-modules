@@ -22,25 +22,15 @@
 
 package org.jboss.modules;
 
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import java.net.URI;
-import java.net.URL;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+
+import org.junit.Test;
 
 /**
  * @author John E. Bailey
  */
 public class ModuleIdentifierTest {
-
-    @BeforeClass
-    public static void setup() {
-        // Hack to get the URL handler set
-        Module.getCurrentLoader();
-    }
 
     @Test
     public void testFromString() throws Exception {
@@ -54,47 +44,12 @@ public class ModuleIdentifierTest {
     }
 
     @Test
-    public void testFromUrl() throws Exception {
-        ModuleIdentifier identifier = ModuleIdentifier.fromURL(new URL("module:test.module"));
-        assertEquals("test.module", identifier.getName());
-        assertEquals("main", identifier.getSlot());
-        
-        identifier = ModuleIdentifier.fromURL(new URL("module:test.module:old"));
-        assertEquals("test.module", identifier.getName());
-        assertEquals("old", identifier.getSlot());
-    }
-
-    @Test
-    public void testFromUri() throws Exception {
-        ModuleIdentifier identifier = ModuleIdentifier.fromURI(new URI("module:test.module"));
-        assertEquals("test.module", identifier.getName());
-        assertEquals("main", identifier.getSlot());
-
-        identifier = ModuleIdentifier.fromURI(new URI("module:test.module:old"));
-        assertEquals("test.module", identifier.getName());
-        assertEquals("old", identifier.getSlot());
-    }
-
-    @Test
     public void testToString() {
         ModuleIdentifier identifier = ModuleIdentifier.fromString("test.module");
         assertEquals("module:test.module:main", identifier.toString());
 
         identifier = ModuleIdentifier.fromString("test.module:old");
         assertEquals("module:test.module:old", identifier.toString());
-    }
-
-    @Test
-    public void testToUrl() throws Exception {
-        ModuleIdentifier identifier = ModuleIdentifier.fromString("test.module");
-        assertEquals(new URL("module", null, -1, "test.module:main"), identifier.toURL());
-
-        identifier = ModuleIdentifier.fromString("test.module:old");
-        assertEquals(new URL("module", null, -1, "test.module:old"), identifier.toURL());
-
-        // With resource roots
-        assertEquals(new URL("module", null, -1, "test.module:old/root"), identifier.toURL("root"));
-        assertEquals(new URL("module", null, -1, "test.module:old/root?/file"), identifier.toURL("root", "file"));
     }
 
     @Test

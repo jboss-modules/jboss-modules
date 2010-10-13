@@ -34,6 +34,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.security.CodeSigner;
 import java.security.CodeSource;
 import java.util.Collection;
@@ -49,7 +50,6 @@ import java.util.jar.Manifest;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 final class JarFileResourceLoader implements ResourceLoader {
-    private final ModuleIdentifier moduleIdentifier;
     private final JarFile jarFile;
     private final String rootName;
     private final PathFilter exportFilter;
@@ -69,7 +69,6 @@ final class JarFileResourceLoader implements ResourceLoader {
         }
         this.jarFile = jarFile;
         this.rootName = rootName;
-        this.moduleIdentifier = moduleIdentifier;
         this.exportFilter = exportFilter;
     }
 
@@ -87,7 +86,7 @@ final class JarFileResourceLoader implements ResourceLoader {
         }
         final CodeSigner[] codeSigners = entry.getCodeSigners();
         if (codeSigners != null) {
-            spec.setCodeSource(new CodeSource(moduleIdentifier.toURL(rootName), codeSigners));
+            spec.setCodeSource(new CodeSource(new URL("jar", null, -1, jarFile.getName()), codeSigners));
         }
         final long size = entry.getSize();
         final InputStream is = jarFile.getInputStream(entry);
@@ -151,7 +150,7 @@ final class JarFileResourceLoader implements ResourceLoader {
         spec.setImplVersion(getDefinedAttribute(Attributes.Name.IMPLEMENTATION_VERSION, entryAttribute, mainAttribute));
         spec.setImplVendor(getDefinedAttribute(Attributes.Name.IMPLEMENTATION_VENDOR, entryAttribute, mainAttribute));
         if (Boolean.parseBoolean(getDefinedAttribute(Attributes.Name.SEALED, entryAttribute, mainAttribute))) {
-            spec.setSealBase(moduleIdentifier.toURL(rootName));
+            spec.setSealBase(new URL("jar", null, -1, jarFile.getName()));
         }
         return spec;
     }
@@ -176,7 +175,7 @@ final class JarFileResourceLoader implements ResourceLoader {
             if (entry == null) {
                 return null;
             }
-            return new JarEntryResource(jarFile, entry, moduleIdentifier.toURL(rootName, name));
+            return new JarEntryResource(jarFile, entry, new URL("jar", null, -1, "file:" + jarFile.getName() + "!/" + entryName));
         } catch (MalformedURLException e) {
             // must be invalid...?  (todo: check this out)
             return null;

@@ -38,12 +38,12 @@ import java.util.Set;
  * little more than a single object array, and it can be copied quickly. If the
  * copy-ctor is passed another IdentityHashSet, or clone is called on this set,
  * the shallow copy can be performed using little more than a single array copy.
- * 
+ *
  * Note: It is very important to use a smaller load factor than you normally
  * would for HashSet, since the implementation is open-addressed with linear
  * probing. With a 50% load-factor a get is expected to return in only 2 probes.
  * However, a 90% load-factor is expected to return in around 50 probes.
- * 
+ *
  * @author Jason T. Greene
  */
 class IdentityHashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable, Serializable {
@@ -264,7 +264,7 @@ class IdentityHashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable, Se
         boolean state = false;
 
         if (collection instanceof IdentityHashSet) {
-            for (E e : ((E[]) (((IdentityHashSet) collection).table)))
+            for (E e : ((E[]) (((IdentityHashSet<?>) collection).table)))
                 if (e != null) state |= add(e);
         } else {
             for (E e : collection)
@@ -335,7 +335,7 @@ class IdentityHashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable, Se
     }
 
     @SuppressWarnings("unchecked")
-    public IdentityHashSet clone() {
+    public IdentityHashSet<E> clone() {
         try {
             IdentityHashSet<E> clone = (IdentityHashSet<E>) super.clone();
             clone.table = table.clone();
@@ -345,13 +345,13 @@ class IdentityHashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable, Se
             throw new IllegalStateException(e);
         }
     }
-    
+
     /**
      * Advanced method that returns a copy of the internal table. The resuling
      * array will contain nulls at random places that must be skipped. In
      * addition, it will not operate correctly if a null was inserted into the
      * set. Use at your own risk....
-     * 
+     *
      * @return an array containing elements in this set along with randomly
      *         placed nulls,
      */
@@ -359,7 +359,7 @@ class IdentityHashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable, Se
     public E[] toScatteredArray(E[] dummy) {
         final E[] ret = (E[]) Array.newInstance(dummy.getClass().getComponentType(), table.length);
         System.arraycopy((E[])table, 0, ret, 0, ret.length);
-        
+
         return ret;
     }
 

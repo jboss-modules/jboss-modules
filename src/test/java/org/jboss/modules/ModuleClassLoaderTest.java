@@ -123,8 +123,6 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
         moduleWithFilteredDoubleExportBuilder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_WITH_EXPORT_ID, true));
         moduleWithFilteredDoubleExportBuilder.addDependency(DependencySpec.createLocalDependencySpec());
         moduleLoader.addModuleSpec(moduleWithFilteredDoubleExportBuilder.create());
-
-        Module.setModuleLoaderSelector(new SimpleModuleLoaderSelector(moduleLoader));
     }
 
     @Test

@@ -35,10 +35,14 @@ import org.jboss.modules.SystemModuleLoader;
 /**
  * Test module loader that allows for modules specs to be added at runtime and it will only load modules from the
  * provided specs.
- * 
+ *
  * @author John E. Bailey
  */
 public class TestModuleLoader extends ModuleLoader {
+
+    public TestModuleLoader() {
+        super("test");
+    }
 
     private final Map<ModuleIdentifier, ModuleSpec> moduleSpecs = new HashMap<ModuleIdentifier, ModuleSpec>();
 

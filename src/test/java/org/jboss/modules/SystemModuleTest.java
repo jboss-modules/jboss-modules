@@ -40,7 +40,6 @@ public class SystemModuleTest extends AbstractModuleTestCase {
     @Test
     public void testSmoke() throws Exception {
         final TestModuleLoader moduleLoader = new TestModuleLoader();
-        Module.setModuleLoaderSelector(new SimpleModuleLoaderSelector(moduleLoader));
 
         ModuleSpec.Builder builder = ModuleSpec.build(MODULE_A);
         builder.addDependency(DependencySpec.createModuleDependencySpec(PathFilters.match("org/jboss/modules/**"), PathFilters.rejectAll(), null, ModuleIdentifier.SYSTEM, false));
@@ -54,7 +53,6 @@ public class SystemModuleTest extends AbstractModuleTestCase {
     @Test
     public void testTransitive() throws Exception {
         TestModuleLoader moduleLoader = new TestModuleLoader();
-        Module.setModuleLoaderSelector(new SimpleModuleLoaderSelector(moduleLoader));
 
         ModuleSpec.Builder builder = ModuleSpec.build(MODULE_B);
 
@@ -68,13 +66,8 @@ public class SystemModuleTest extends AbstractModuleTestCase {
 
         moduleLoader.addModuleSpec(builder.create());
 
-        Module.setModuleLoaderSelector(new SimpleModuleLoaderSelector(moduleLoader));
-        try {
-            Module module = moduleLoader.loadModule(MODULE_B);
-            ClassLoader cl = module.getClassLoader();
-            Assert.assertNotNull(cl.loadClass("org.jboss.modules.util.Util"));
-        } finally {
-            Module.setModuleLoaderSelector(ModuleLoaderSelector.DEFAULT);
-        }
+        Module module = moduleLoader.loadModule(MODULE_B);
+        ClassLoader cl = module.getClassLoader();
+        Assert.assertNotNull(cl.loadClass("org.jboss.modules.util.Util"));
     }
 }

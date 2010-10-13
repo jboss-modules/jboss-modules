@@ -39,8 +39,8 @@ public final class LocalModuleLoader extends ModuleLoader {
      *
      * @param repoRoots the array of repository roots to look for modules
      */
-    public LocalModuleLoader(final File[] repoRoots) {
-        super(0);
+    public LocalModuleLoader(String name, final File[] repoRoots) {
+        super(name, 0);
         this.repoRoots = repoRoots;
     }
 

@@ -41,8 +41,7 @@ public class LocalModuleLoaderTest extends AbstractModuleTestCase {
     @Before
     public void setupModuleLoader() throws Exception {
         final File repoRoot = getResource("test/repo");
-        moduleLoader = new LocalModuleLoader(new File[] {repoRoot});
-        Module.setModuleLoaderSelector(new SimpleModuleLoaderSelector(moduleLoader));
+        moduleLoader = new LocalModuleLoader("test", new File[] {repoRoot});
     }
 
     @Test

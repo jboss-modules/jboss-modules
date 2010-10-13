@@ -37,6 +37,7 @@ import java.util.concurrent.ConcurrentMap;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
+ * @author Jason T. Greene
  */
 public abstract class ModuleLoader {
 
@@ -48,14 +49,16 @@ public abstract class ModuleLoader {
     );
 
     private final boolean canRedefine;
+    private final String name;
 
     // Bypass security check for classes in this package
-    @SuppressWarnings({ "unused" })
-    ModuleLoader(int dummy) {
+    ModuleLoader(String name, int dummy) {
         canRedefine = true;
+        this.name = name;
     }
 
-    protected ModuleLoader() {
+    protected ModuleLoader(String name) {
+        this.name = name;
         SecurityManager manager = System.getSecurityManager();
         if (manager == null) {
             canRedefine = true;
@@ -73,6 +76,14 @@ public abstract class ModuleLoader {
         }
 
         this.canRedefine = canRedefine;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String toString() {
+        return "module loader " + name;
     }
 
     /**

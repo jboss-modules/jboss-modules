@@ -114,7 +114,6 @@ final class FileResourceLoader implements ResourceLoader {
         });
     }
 
-    private final ModuleIdentifier moduleIdentifier;
     private final String rootName;
     private final File root;
     private final Manifest manifest;
@@ -133,7 +132,6 @@ final class FileResourceLoader implements ResourceLoader {
         if (exportFilter == null) {
             throw new IllegalArgumentException("exportFilter is null");
         }
-        this.moduleIdentifier = moduleIdentifier;
         this.rootName = rootName;
         this.root = root;
         this.exportFilter = exportFilter;
@@ -209,7 +207,7 @@ final class FileResourceLoader implements ResourceLoader {
         spec.setImplVersion(getDefinedAttribute(Attributes.Name.IMPLEMENTATION_VERSION, entryAttribute, mainAttribute));
         spec.setImplVendor(getDefinedAttribute(Attributes.Name.IMPLEMENTATION_VENDOR, entryAttribute, mainAttribute));
         if (Boolean.parseBoolean(getDefinedAttribute(Attributes.Name.SEALED, entryAttribute, mainAttribute))) {
-            spec.setSealBase(moduleIdentifier.toURL(rootName));
+            spec.setSealBase(root.toURI().toURL());
         }
         return spec;
     }
@@ -230,7 +228,7 @@ final class FileResourceLoader implements ResourceLoader {
             if (! file.exists()) {
                 return null;
             }
-            return new FileEntryResource(name, file, moduleIdentifier.toURL(rootName, name));
+            return new FileEntryResource(name, file, file.toURI().toURL());
         } catch (MalformedURLException e) {
             // must be invalid...?  (todo: check this out)
             return null;

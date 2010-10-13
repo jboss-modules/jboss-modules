@@ -39,7 +39,7 @@ import static org.junit.Assert.assertTrue;
 
 /**
  * Test to verify the module export dependencies and imports are created correctly.  Each module should have an entry
- * directly to the module that has an exported path. 
+ * directly to the module that has an exported path.
  *
  * @author John E. Bailey
  */
@@ -53,7 +53,6 @@ public class ModuleExportTest extends AbstractModuleTestCase {
     @Test
     public void testExportDependencies() throws Exception {
         final TestModuleLoader moduleLoader = new TestModuleLoader();
-        Module.setModuleLoaderSelector(new SimpleModuleLoaderSelector(moduleLoader));
 
         ModuleSpec.Builder builder = ModuleSpec.build(MODULE_A);
         builder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_B, true, false));
@@ -117,7 +116,6 @@ public class ModuleExportTest extends AbstractModuleTestCase {
     @Test
     public void testImportPaths() throws Exception {
         final TestModuleLoader moduleLoader = new TestModuleLoader();
-        Module.setModuleLoaderSelector(new SimpleModuleLoaderSelector(moduleLoader));
 
         ModuleSpec.Builder builder = ModuleSpec.build(MODULE_A);
         builder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_B, true));
