@@ -849,7 +849,7 @@ public final class Module {
     }
 
     private static <E> void removeDuplicatesFromLists(Collection<List<E>> lists) {
-        Set<E> set = Collections.newSetFromMap(new IdentityHashMap<E, Boolean>());
+        Set<E> set = new IdentityHashSet<E>(128);
         for (List<E> list: lists) {
             if (list.size() <= 1) {
                 continue;
