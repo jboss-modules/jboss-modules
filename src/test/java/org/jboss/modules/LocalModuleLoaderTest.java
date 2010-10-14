@@ -51,6 +51,13 @@ public class LocalModuleLoaderTest extends AbstractModuleTestCase {
     }
 
     @Test
+    public void testCurrent() throws Exception {
+        ModuleLoader loader = Module.getCurrentModuleLoader();
+        System.out.println(loader);
+    }
+
+
+    @Test
     public void testLoadWithDeps() throws Exception {
         Module module = moduleLoader.loadModule(ModuleIdentifier.fromString("test.with-deps"));
         assertNotNull(module);

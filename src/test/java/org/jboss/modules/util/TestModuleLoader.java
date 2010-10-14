@@ -40,10 +40,6 @@ import org.jboss.modules.SystemModuleLoader;
  */
 public class TestModuleLoader extends ModuleLoader {
 
-    public TestModuleLoader() {
-        super("test");
-    }
-
     private final Map<ModuleIdentifier, ModuleSpec> moduleSpecs = new HashMap<ModuleIdentifier, ModuleSpec>();
 
     protected Module preloadModule(final ModuleIdentifier identifier) throws ModuleLoadException {
@@ -62,5 +58,9 @@ public class TestModuleLoader extends ModuleLoader {
 
     public void addModuleSpec(final ModuleSpec moduleSpec) {
         moduleSpecs.put(moduleSpec.getModuleIdentifier(), moduleSpec);
+    }
+
+    public String toString() {
+        return "test@" + System.identityHashCode(this);
     }
 }

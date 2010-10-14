@@ -33,6 +33,7 @@ import java.io.File;
 public final class LocalModuleLoader extends ModuleLoader {
 
     private final File[] repoRoots;
+    private final String name;
 
     /**
      * Construct a new instance.
@@ -40,8 +41,8 @@ public final class LocalModuleLoader extends ModuleLoader {
      * @param repoRoots the array of repository roots to look for modules
      */
     public LocalModuleLoader(String name, final File[] repoRoots) {
-        super(name, 0);
         this.repoRoots = repoRoots;
+        this.name = name;
     }
 
     /** {@inheritDoc} */
@@ -83,5 +84,9 @@ public final class LocalModuleLoader extends ModuleLoader {
 
     private ModuleSpec parseModuleInfoFile(final ModuleIdentifier moduleIdentifier, final File moduleRoot, final File moduleInfoFile) throws ModuleLoadException {
         return ModuleXmlParser.parse(moduleIdentifier, moduleRoot, moduleInfoFile);
+    }
+
+    public String toString() {
+        return name;
     }
 }

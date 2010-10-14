@@ -34,6 +34,7 @@ import java.util.Map;
 public final class ClassifyingModuleLoader extends ModuleLoader {
     private volatile Map<String, ModuleLoader> delegates;
     private final ModuleLoader defaultLoader;
+    private final String name;
 
     /**
      * Construct a new instance.  The given delegates map is copied.
@@ -42,9 +43,10 @@ public final class ClassifyingModuleLoader extends ModuleLoader {
      * @param defaultLoader the default loader to use if no delegate mapping exists
      */
     public ClassifyingModuleLoader(final String name, final Map<String, ModuleLoader> delegates, final ModuleLoader defaultLoader) {
-        super(name, 0);
+        super(0);
         this.defaultLoader = defaultLoader;
         this.delegates = new HashMap<String, ModuleLoader>(delegates);
+        this.name = name;
     }
 
     /** {@inheritDoc} */
@@ -78,5 +80,9 @@ public final class ClassifyingModuleLoader extends ModuleLoader {
      */
     public void setDelegates(Map<String, ModuleLoader> delegates) {
         this.delegates = new HashMap<String, ModuleLoader>(delegates);
+    }
+
+    public String toString() {
+        return name;
     }
 }

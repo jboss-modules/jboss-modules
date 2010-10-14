@@ -49,16 +49,13 @@ public abstract class ModuleLoader {
     );
 
     private final boolean canRedefine;
-    private final String name;
 
     // Bypass security check for classes in this package
-    ModuleLoader(String name, int dummy) {
+    ModuleLoader(int dummy) {
         canRedefine = true;
-        this.name = name;
     }
 
-    protected ModuleLoader(String name) {
-        this.name = name;
+    protected ModuleLoader() {
         SecurityManager manager = System.getSecurityManager();
         if (manager == null) {
             canRedefine = true;
@@ -78,13 +75,8 @@ public abstract class ModuleLoader {
         this.canRedefine = canRedefine;
     }
 
-    public String getName() {
-        return name;
-    }
 
-    public String toString() {
-        return "module loader " + name;
-    }
+    public abstract String toString();
 
     /**
      * Load a module based on an identifier.  This method delegates to {@link #preloadModule(ModuleIdentifier)} and then

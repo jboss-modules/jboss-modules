@@ -31,10 +31,6 @@ public final class SystemModuleLoader extends ModuleLoader {
 
     static final SystemModuleLoader INSTANCE = new SystemModuleLoader();
 
-    private SystemModuleLoader() {
-        super("system", 0);
-    }
-
     /**
      * Get the system module loader.
      *
@@ -54,5 +50,9 @@ public final class SystemModuleLoader extends ModuleLoader {
         final ModuleSpec.Builder builder = ModuleSpec.build(ModuleIdentifier.SYSTEM);
         builder.addDependency(DependencySpec.createLocalDependencySpec(systemLocalLoader, systemLocalLoader.getPathSet(), true));
         return builder.create();
+    }
+
+    public String toString() {
+        return "system";
     }
 }
