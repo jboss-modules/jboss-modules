@@ -697,7 +697,7 @@ final class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
                 V oldValue;
                 if (e != null) {
                     oldValue = e.value();
-                    if (!onlyIfAbsent)
+                    if (!onlyIfAbsent || oldValue == null) // null = gc AFTER stale removal
                         e.setValue(value, valueType, refQueue);
                 }
                 else {
