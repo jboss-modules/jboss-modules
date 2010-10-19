@@ -51,6 +51,7 @@ public abstract class ModuleLoader {
     private final boolean canRedefine;
 
     // Bypass security check for classes in this package
+    @SuppressWarnings({ "unused" })
     ModuleLoader(int dummy) {
         canRedefine = true;
     }
@@ -157,7 +158,7 @@ public abstract class ModuleLoader {
             if (! moduleSpec.getModuleIdentifier().equals(identifier)) {
                 throw new ModuleLoadException("Module loader found a module with the wrong name");
             }
-            final Module module = defineModule(moduleSpec);
+            final Module module = defineModule(moduleSpec, newFuture);
             log.trace("Loaded module %s from %s", identifier, this);
             ok = true;
             return module;
@@ -211,28 +212,21 @@ public abstract class ModuleLoader {
      * Defines a Module based on a specification.  May only be called from {@link #loadModuleLocal(ModuleIdentifier)}.
      *
      * @param moduleSpec The module specification to create the Module from
+     * @param futureModule the future module to populate
      * @return The defined Module
      * @throws ModuleLoadException If any dependent modules can not be loaded
      */
-    private Module defineModule(ModuleSpec moduleSpec) throws ModuleLoadException {
+    private Module defineModule(ModuleSpec moduleSpec, final FutureModule futureModule) throws ModuleLoadException {
 
         final ModuleLogger log = Module.log;
         final ModuleIdentifier moduleIdentifier = moduleSpec.getModuleIdentifier();
 
-        FutureModule futureModule = moduleMap.get(moduleIdentifier);
-        if (futureModule == null) {
-            // should never happen
-            throw new IllegalStateException("Attempted to define a module from outside loadModuleLocal");
-        }
         final Module module = new Module(moduleSpec, this, futureModule);
         module.getClassLoaderPrivate().recalculate();
         module.initializeDependencies(Arrays.asList(moduleSpec.getDependencies()));
         try {
             futureModule.setModule(module);
             return module;
-        } catch (ModuleLoadException e) {
-            log.trace(e, "Failed to load module %s", moduleIdentifier);
-            throw e;
         } catch (RuntimeException e) {
             log.trace(e, "Failed to load module %s", moduleIdentifier);
             throw e;
@@ -339,7 +333,7 @@ public abstract class ModuleLoader {
             }
         }
 
-        void setModule(Module m) throws ModuleAlreadyExistsException {
+        void setModule(Module m) {
             synchronized (this) {
                 module = m == null ? NOT_FOUND : m;
                 notifyAll();
