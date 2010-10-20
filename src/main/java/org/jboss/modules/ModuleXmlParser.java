@@ -104,6 +104,7 @@ final class ModuleXmlParser {
         static {
             Map<QName, Attribute> attributesMap = new HashMap<QName, Attribute>();
             attributesMap.put(new QName("name"), NAME);
+            attributesMap.put(new QName("slot"), SLOT);
             attributesMap.put(new QName("export"), EXPORT);
             attributesMap.put(new QName("path"), PATH);
             attributesMap.put(new QName("optional"), OPTIONAL);
