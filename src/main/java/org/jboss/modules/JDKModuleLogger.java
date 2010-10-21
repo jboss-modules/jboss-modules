@@ -33,15 +33,23 @@ import java.util.logging.Logger;
 public final class JDKModuleLogger implements ModuleLogger {
 
     private static final Level TRACE;
+    private static final Level DEBUG;
 
     static {
-        Level level = null;
+        Level trace = null;
+        Level debug = null;
         try {
-            level = Level.parse("TRACE");
+            trace = Level.parse("TRACE");
         } catch (IllegalArgumentException ignored) {
-            level = Level.FINEST;
+            trace = Level.FINEST;
         }
-        TRACE = level;
+        try {
+            trace = Level.parse("DEBUG");
+        } catch (IllegalArgumentException ignored) {
+            trace = Level.FINE;
+        }
+        TRACE = trace;
+        DEBUG = debug;
     }
 
     @SuppressWarnings({ "NonConstantLogger" })
@@ -154,6 +162,13 @@ public final class JDKModuleLogger implements ModuleLogger {
 
     /** {@inheritDoc} */
     public void greeting() {
-        doLog(Level.INFO, "JBoss Modules version " + Main.getVersionString());
+        doLog(Level.INFO, String.format("JBoss Modules version %s", Main.getVersionString()));
+    }
+
+    /** {@inheritDoc} */
+    public void moduleDefined(final ModuleIdentifier identifier, final ModuleLoader moduleLoader) {
+        if (logger.isLoggable(DEBUG)) {
+            doLog(DEBUG, String.format("Module %s defined by %s", identifier, moduleLoader));
+        }
     }
 }

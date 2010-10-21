@@ -142,4 +142,8 @@ public final class StreamModuleLogger implements ModuleLogger {
     /** {@inheritDoc} */
     public void greeting() {
     }
+
+    /** {@inheritDoc} */
+    public void moduleDefined(final ModuleIdentifier identifier, final ModuleLoader moduleLoader) {
+    }
 }

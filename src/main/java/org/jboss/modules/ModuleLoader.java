@@ -224,6 +224,7 @@ public abstract class ModuleLoader {
         final Module module = new Module(moduleSpec, this, futureModule);
         module.getClassLoaderPrivate().recalculate();
         module.initializeDependencies(Arrays.asList(moduleSpec.getDependencies()));
+        log.moduleDefined(moduleIdentifier, this);
         try {
             futureModule.setModule(module);
             return module;

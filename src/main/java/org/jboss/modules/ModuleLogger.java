@@ -50,4 +50,6 @@ public interface ModuleLogger {
     void trace(Throwable t, String format, Object... args);
 
     void greeting();
+
+    void moduleDefined(ModuleIdentifier identifier, final ModuleLoader moduleLoader);
 }

@@ -78,4 +78,8 @@ public final class NoopModuleLogger implements ModuleLogger {
     @Override
     public void greeting() {
     }
+
+    @Override
+    public void moduleDefined(final ModuleIdentifier identifier, final ModuleLoader moduleLoader) {
+    }
 }
