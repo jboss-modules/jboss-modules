@@ -377,6 +377,16 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
                 final LinkageError ne = new LinkageError("Failed to link " + name.replace('.', '/') + " (" + module + ")");
                 ne.initCause(e);
                 throw ne;
+            } catch (LinkageError e) {
+                // make sure it wasn't a duplicate definition
+                log.trace(e, "Encountered linkage error; attempting to recover");
+                final Class<?> loadedClass = findLoadedClass(name);
+                if (loadedClass != null) {
+                    // ditch the class spec and return the loaded class
+                    return loadedClass;
+                }
+                // no recovery possible; propagate
+                throw e;
             }
         } catch (Error e) {
             log.trace(e, "Failed to define class %s in %s", name, module);
