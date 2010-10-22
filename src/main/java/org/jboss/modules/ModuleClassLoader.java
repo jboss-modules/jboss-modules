@@ -62,6 +62,8 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
 
     private volatile Paths<ResourceLoader, ResourceLoader> paths;
 
+    private final Map<String, Thread> defining = new HashMap<String, Thread>();
+
     private final LocalLoader localLoader = new LocalLoader() {
         public Class<?> loadClassLocal(final String name, final boolean resolve) {
             try {
@@ -227,35 +229,84 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
             return null;
         }
 
-        // Check to see if we can define it locally it
-        ClassSpec classSpec = null;
-        try {
-            for (ResourceLoader loader : loaders) {
-                classSpec = loader.getClassSpec(className);
-                if (classSpec != null) {
-                    break;
+        // Grab a lock for the class definition
+        final Map<String, Thread> defining = this.defining;
+        final Thread currentThread = Thread.currentThread();
+        Thread thread;
+        synchronized (defining) {
+            thread = defining.get(className);
+            if (thread == null) {
+                defining.put(className, currentThread);
+            } else if (thread == currentThread) {
+                // Should not be possible
+                final IllegalStateException ise = new IllegalStateException("Unexpected recursion to defineClass()");
+                log.trace(ise, "Unexpected recursion to defineClass()");
+                throw ise;
+            } else {
+                boolean intr = false;
+                try {
+                    // Someone else got here first!
+                    do {
+                        loadedClass = findLoadedClass(className);
+                        if (loadedClass != null) {
+                            log.trace("Found previously loaded %s from %s", loadedClass, module);
+                            return loadedClass;
+                        }
+                        try {
+                            defining.wait();
+                        } catch (InterruptedException e) {
+                            intr = true;
+                        }
+                    } while (defining.containsKey(className));
+                } finally {
+                    if (intr) Thread.currentThread().interrupt();
                 }
+                // someone else released the lock without defining the class
+                throw new ClassNotFoundException(className);
             }
-        } catch (IOException e) {
-            throw new ClassNotFoundException(className, e);
-        } catch (RuntimeException e) {
-            log.trace(e, "Unexpected runtime exception in module loader");
-            throw new ClassNotFoundException(className, e);
-        } catch (Error e) {
-            log.trace(e, "Unexpected error in module loader");
-            throw new ClassNotFoundException(className, e);
         }
 
-        if (classSpec == null) {
-            log.trace("No local specification found for class %s in %s", className, module);
-            return null;
-        }
+        try {
+            // Check to see if we can define it locally
+            ClassSpec classSpec = null;
+            try {
+                for (ResourceLoader loader : loaders) {
+                    classSpec = loader.getClassSpec(className);
+                    if (classSpec != null) {
+                        break;
+                    }
+                }
+            } catch (IOException e) {
+                throw new ClassNotFoundException(className, e);
+            } catch (RuntimeException e) {
+                log.trace(e, "Unexpected runtime exception in module loader");
+                throw new ClassNotFoundException(className, e);
+            } catch (Error e) {
+                log.trace(e, "Unexpected error in module loader");
+                throw new ClassNotFoundException(className, e);
+            }
 
-        final Class<?> clazz = defineClass(className, classSpec);
-        if (resolve) {
-            resolveClass(clazz);
+            if (classSpec == null) {
+                log.trace("No local specification found for class %s in %s", className, module);
+                return null;
+            }
+
+            final Class<?> clazz = defineClass(className, classSpec);
+            if (resolve) {
+                resolveClass(clazz);
+            }
+            return clazz;
+        } finally {
+            synchronized (defining) {
+                // Just to be safe make sure the map doesn't get messed up
+                if (defining.get(className) == currentThread) {
+                    defining.remove(className);
+                } else {
+                    log.trace("Found unexpected thread registered in defining map for class %s in %s", className, module);
+                }
+                defining.notifyAll();
+            }
         }
-        return clazz;
     }
 
     /**
