@@ -44,9 +44,9 @@ public final class JDKModuleLogger implements ModuleLogger {
             trace = Level.FINEST;
         }
         try {
-            trace = Level.parse("DEBUG");
+            debug = Level.parse("DEBUG");
         } catch (IllegalArgumentException ignored) {
-            trace = Level.FINE;
+            debug = Level.FINE;
         }
         TRACE = trace;
         DEBUG = debug;
