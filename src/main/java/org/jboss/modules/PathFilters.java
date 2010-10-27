@@ -85,7 +85,9 @@ public final class PathFilters {
     }
 
     /**
-     * Get a path filter which matches a glob.
+     * Get a path filter which matches a glob.  The given glob is a path separated
+     * by "{@code /}" characters, which may include the special "{@code *}" and "{@code **}" segment strings
+     * which match any directory and any number of nested directories, respectively.
      *
      * @param glob the glob
      * @return a filter which returns {@code true} if the glob matches
@@ -125,6 +127,7 @@ public final class PathFilters {
 
     /**
      * Get a filter which returns {@code true} if the tested path is contained within the given set.
+     * Each member of the set is a path separated by "{@code /}" characters; {@code null}s are disallowed.
      *
      * @param paths the path set
      * @return the filter

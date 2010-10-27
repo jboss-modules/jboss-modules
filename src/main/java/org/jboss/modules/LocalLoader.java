@@ -45,7 +45,8 @@ public interface LocalLoader {
     Class<?> loadClassLocal(String name, boolean resolve);
 
     /**
-     * Load a resource which is locally defined by this loader.
+     * Load a resource which is locally defined by this loader.  The given name is a path separated
+     * by "{@code /}" characters.
      *
      * @param name the resource path
      * @return the resource or resources, or an empty list if there is no local resource with this name
@@ -53,7 +54,8 @@ public interface LocalLoader {
     List<Resource> loadResourceLocal(String name);
 
     /**
-     * Load a resource which is locally defined by a specific root on this loader.
+     * Load a resource which is locally defined by a specific root on this loader.  The given name is a path separated
+     * by "{@code /}" characters.
      *
      * @param name the resource path
      * @return the resource, or {@code null} if there is no local resource with this name

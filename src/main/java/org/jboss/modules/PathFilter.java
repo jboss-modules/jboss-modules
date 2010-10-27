@@ -30,7 +30,8 @@ package org.jboss.modules;
 public interface PathFilter {
 
     /**
-     * Determine whether a path should be accepted.
+     * Determine whether a path should be accepted.  The given name is a path separated
+     * by "{@code /}" characters.
      *
      * @param path the path to check
      * @return true if the path should be accepted, false if not

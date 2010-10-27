@@ -51,7 +51,8 @@ public interface ResourceLoader {
     /**
      * Get the package specification for the given directory name.  Always returns a package specification; this
      * method cannot be used to test for the existence of a package.  A package spec should always be acquired from
-     * the same resource loader which provided the class specification.
+     * the same resource loader which provided the class specification.  The directory name will always be specified
+     * using "{@code /}" separators.
      *
      * @param name the directory name
      * @return the package specification
@@ -61,6 +62,7 @@ public interface ResourceLoader {
 
     /**
      * Get a resource with the given name.  If no such resource is available, {@code null} is returned.
+     * The resource name will always be specified using "{@code /}" separators for the directory segments.
      *
      * @param name the resource name
      * @return the resource, or {@code null} if it is not available
@@ -68,7 +70,8 @@ public interface ResourceLoader {
     Resource getResource(String name);
 
     /**
-     * Get the absolute physical filesystem path for a library with the given name.
+     * Get the absolute physical filesystem path for a library with the given name.  The resultant path should be
+     * path-separated using "{@code /}" characters.
      *
      * @param name the name
      * @return the path or {@code null} if the library is not present
@@ -76,7 +79,8 @@ public interface ResourceLoader {
     String getLibrary(String name);
 
     /**
-     * Get the collection of resource paths.  Called one time only when the resource loader is initialized.
+     * Get the collection of resource paths.  Called one time only when the resource loader is initialized.  The
+     * paths should use "{@code /}" characters to separate the path segments.
      *
      * @return the resource paths
      */
