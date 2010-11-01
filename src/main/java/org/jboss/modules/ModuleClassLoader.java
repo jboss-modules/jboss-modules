@@ -173,6 +173,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
     }
 
     /** {@inheritDoc} */
+    @Override
     protected final Class<?> findClass(String className, boolean exportsOnly, final boolean resolve) throws ClassNotFoundException {
         // Check if we have already loaded it..
         Class<?> loadedClass = findLoadedClass(className);
@@ -219,9 +220,8 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
 
         log.trace("Loading class %s locally from %s", className, module);
 
-        final String path = Module.pathOfClass(className);
-
-        final List<ResourceLoader> loaders = paths.get(path);
+        String pathOfClass = Module.pathOfClass(className);
+        final List<ResourceLoader> loaders = paths.get(pathOfClass);
         if (loaders == null) {
             // no loaders for this path
             return null;
@@ -230,10 +230,13 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         // Check to see if we can define it locally it
         ClassSpec classSpec = null;
         try {
-            for (ResourceLoader loader : loaders) {
-                classSpec = loader.getClassSpec(className);
-                if (classSpec != null) {
-                    break;
+            if (loaders.size() > 0) {
+                String fileName = Module.fileNameOfClass(className);
+                for (ResourceLoader loader : loaders) {
+                    classSpec = loader.getClassSpec(fileName);
+                    if (classSpec != null) {
+                        break;
+                    }
                 }
             }
         } catch (IOException e) {
@@ -487,6 +490,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
      *
      * @return the string
      */
+    @Override
     public final String toString() {
         return "ClassLoader for " + module;
     }
@@ -496,61 +500,73 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
     }
 
     /** {@inheritDoc} */
+    @Override
     protected final PermissionCollection getPermissions(final CodeSource codesource) {
         return super.getPermissions(codesource);
     }
 
     /** {@inheritDoc} */
+    @Override
     protected final Package definePackage(final String name, final String specTitle, final String specVersion, final String specVendor, final String implTitle, final String implVersion, final String implVendor, final URL sealBase) throws IllegalArgumentException {
         return super.definePackage(name, specTitle, specVersion, specVendor, implTitle, implVersion, implVendor, sealBase);
     }
 
     /** {@inheritDoc} */
+    @Override
     protected final Package getPackage(final String name) {
         return super.getPackage(name);
     }
 
     /** {@inheritDoc} */
+    @Override
     protected final Package[] getPackages() {
         return super.getPackages();
     }
 
     /** {@inheritDoc} */
+    @Override
     public final void setDefaultAssertionStatus(final boolean enabled) {
         super.setDefaultAssertionStatus(enabled);
     }
 
     /** {@inheritDoc} */
+    @Override
     public final void setPackageAssertionStatus(final String packageName, final boolean enabled) {
         super.setPackageAssertionStatus(packageName, enabled);
     }
 
     /** {@inheritDoc} */
+    @Override
     public final void setClassAssertionStatus(final String className, final boolean enabled) {
         super.setClassAssertionStatus(className, enabled);
     }
 
     /** {@inheritDoc} */
+    @Override
     public final void clearAssertionStatus() {
         super.clearAssertionStatus();
     }
 
     /** {@inheritDoc} */
+    @Override
     public final int hashCode() {
         return super.hashCode();
     }
 
     /** {@inheritDoc} */
+    @Override
     public final boolean equals(final Object obj) {
         return super.equals(obj);
     }
 
     /** {@inheritDoc} */
+    @Override
     protected final Object clone() throws CloneNotSupportedException {
         return super.clone();
     }
 
     /** {@inheritDoc} */
+    @Override
     protected final void finalize() throws Throwable {
         super.finalize();
     }

@@ -155,8 +155,7 @@ final class FileResourceLoader implements ResourceLoader {
         return rootName;
     }
 
-    public ClassSpec getClassSpec(final String name) throws IOException {
-        final String fileName = Module.fileNameOfClass(name);
+    public ClassSpec getClassSpec(final String fileName) throws IOException {
         final File file = new File(root, fileName);
         if (! file.exists()) {
             return null;

@@ -42,11 +42,12 @@ public interface ResourceLoader {
     /**
      * Get the class specification for the given class name.  If no matching class is found, {@code null} is returned.
      *
-     * @param name the name
+     * @param fileName the fileName of the class, e.g. for the class <code>org.jboss.modules.ResourceLoader</code>
+     * the fileName will be <code>org/jboss/modules/ResourceLoader.class</code>
      * @return the class specification, or {@code null} if the named class is not found
      * @throws IOException if an I/O error occurs
      */
-    ClassSpec getClassSpec(String name) throws IOException;
+    ClassSpec getClassSpec(String fileName) throws IOException;
 
     /**
      * Get the package specification for the given directory name.  Always returns a package specification; this

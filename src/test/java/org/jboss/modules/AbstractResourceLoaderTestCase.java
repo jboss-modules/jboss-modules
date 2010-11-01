@@ -22,12 +22,6 @@
 
 package org.jboss.modules;
 
-import org.junit.Before;
-import org.junit.Test;
-
-import java.net.URL;
-import java.util.Collection;
-
 import static org.jboss.modules.util.Util.readBytes;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -35,6 +29,12 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+
+import java.net.URL;
+import java.util.Collection;
+
+import org.junit.Before;
+import org.junit.Test;
 
 
 /**
@@ -86,7 +86,7 @@ public abstract class AbstractResourceLoaderTestCase extends AbstractModuleTestC
 
     @Test
     public void testGetClassSpec() throws Exception {
-        ClassSpec spec = loader.getClassSpec("org.jboss.modules.test.TestClass");
+        ClassSpec spec = loader.getClassSpec(Module.fileNameOfClass("org.jboss.modules.test.TestClass"));
         assertNotNull(spec);
         byte[] bytes = spec.getBytes();
 
@@ -97,7 +97,7 @@ public abstract class AbstractResourceLoaderTestCase extends AbstractModuleTestC
 
     @Test
     public void testMissingClassSpec() throws Exception {
-        ClassSpec spec = loader.getClassSpec("org.jboss.modules.test.BogusClass");
+        ClassSpec spec = loader.getClassSpec(Module.fileNameOfClass("org.jboss.modules.test.BogusClass"));
         assertNull(spec);
     }
 
@@ -130,7 +130,7 @@ public abstract class AbstractResourceLoaderTestCase extends AbstractModuleTestC
     /**
      * This test has some repeated bits from the ExportFilterTest, but the main purpose
      * of this test is to verify the ExportFilter is being created correctly.
-     * 
+     *
      * @throws Exception
      */
     @Test

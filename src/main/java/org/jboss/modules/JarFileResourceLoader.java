@@ -76,8 +76,7 @@ final class JarFileResourceLoader implements ResourceLoader {
         return rootName;
     }
 
-    public ClassSpec getClassSpec(final String name) throws IOException {
-        final String fileName = Module.fileNameOfClass(name);
+    public ClassSpec getClassSpec(final String fileName) throws IOException {
         final ClassSpec spec = new ClassSpec();
         final JarEntry entry = jarFile.getJarEntry(fileName);
         if (entry == null) {

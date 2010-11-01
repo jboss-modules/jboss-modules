@@ -633,6 +633,7 @@ public final class Module {
      *
      * @return the string representation
      */
+    @Override
     public String toString() {
         return "Module \"" + identifier + "\"" + " from " + moduleLoader.toString();
     }

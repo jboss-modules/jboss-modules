@@ -22,11 +22,8 @@
 
 package org.jboss.modules.util;
 
-import org.jboss.modules.ClassSpec;
-import org.jboss.modules.PackageSpec;
-import org.jboss.modules.PathFilter;
-import org.jboss.modules.PathFilters;
-import org.jboss.modules.Resource;
+import static junit.framework.Assert.assertTrue;
+import static org.jboss.modules.util.Util.getClassBytes;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -41,10 +38,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
-import org.jboss.modules.ResourceLoader;
 
-import static junit.framework.Assert.assertTrue;
-import static org.jboss.modules.util.Util.getClassBytes;
+import org.jboss.modules.ClassSpec;
+import org.jboss.modules.PackageSpec;
+import org.jboss.modules.PathFilter;
+import org.jboss.modules.PathFilters;
+import org.jboss.modules.Resource;
+import org.jboss.modules.ResourceLoader;
 
 /**
  * A test resource loader that simple retrieves resources frm maps.  This allows tests to build
@@ -55,7 +55,7 @@ import static org.jboss.modules.util.Util.getClassBytes;
 public class TestResourceLoader implements ResourceLoader {
     private final Map<String, ClassSpec> classSpecs = new HashMap<String, ClassSpec>();
     private final Map<String, Resource> resources = new HashMap<String, Resource>();
-    private Set<String> paths = new HashSet<String>();
+    private final Set<String> paths = new HashSet<String>();
     private Manifest manifest;
 
     public String getRootName() {
@@ -63,14 +63,14 @@ public class TestResourceLoader implements ResourceLoader {
     }
 
     @Override
-    public ClassSpec getClassSpec(final String name) throws IOException {
+    public ClassSpec getClassSpec(final String fileName) throws IOException {
         final Map<String, ClassSpec> classSpecs = this.classSpecs;
-        return classSpecs.get(name);
+        return classSpecs.get(fileName);
     }
 
     void addClassSpec(final String name, final ClassSpec classSpec) {
         final Map<String, ClassSpec> classSpecs = this.classSpecs;
-        classSpecs.put(name, classSpec);
+        classSpecs.put(name.replace('.', '/') + ".class", classSpec);
         addPaths(getPathFromClassName(name));
     }
 
@@ -95,7 +95,7 @@ public class TestResourceLoader implements ResourceLoader {
     private Manifest getManifest() throws IOException {
         if(manifest != null)
             return manifest;
-        
+
         final Resource manifestResource = getResource("META-INF/MANIFEST.MF");
         if(manifestResource  == null)
             return null;
