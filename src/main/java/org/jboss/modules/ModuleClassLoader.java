@@ -333,37 +333,39 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         if (lastIdx != -1) {
             // there's a package name; get the Package for it
             final String packageName = name.substring(0, lastIdx);
-            final Package pkg = getPackage(packageName);
-            if (pkg != null) {
-                // Package is defined already
-                if (pkg.isSealed() && ! pkg.isSealed(classSpec.getCodeSource().getLocation())) {
-                    log.trace("Detected a sealing violation (attempt to define class %s in sealed package %s in %s)", name, packageName, module);
-                    // use the same message as the JDK
-                    throw new SecurityException("sealing violation: package " + packageName + " is sealed");
-                }
-            } else {
-                final Map<String, List<ResourceLoader>> paths = this.paths.getAllPaths();
-                final String path = Module.pathOf(name);
-                final List<ResourceLoader> loaders = paths.get(path);
-                if (loaders != null) {
-                    PackageSpec spec = null;
-                    for (ResourceLoader loader : loaders) {
-                        try {
-                            spec = loader.getPackageSpec(name);
-                            if (spec != null) {
-                                break;
-                            }
-                        } catch (IOException e) {
-                            // skip
-                        }
+            synchronized (this) {
+                final Package pkg = getPackage(packageName);
+                if (pkg != null) {
+                    // Package is defined already
+                    if (pkg.isSealed() && ! pkg.isSealed(classSpec.getCodeSource().getLocation())) {
+                        log.trace("Detected a sealing violation (attempt to define class %s in sealed package %s in %s)", name, packageName, module);
+                        // use the same message as the JDK
+                        throw new SecurityException("sealing violation: package " + packageName + " is sealed");
                     }
-                    if (spec != null) {
-                        definePackage(packageName, spec);
+                } else {
+                    final Map<String, List<ResourceLoader>> paths = this.paths.getAllPaths();
+                    final String path = Module.pathOf(name);
+                    final List<ResourceLoader> loaders = paths.get(path);
+                    if (loaders != null) {
+                        PackageSpec spec = null;
+                        for (ResourceLoader loader : loaders) {
+                            try {
+                                spec = loader.getPackageSpec(name);
+                                if (spec != null) {
+                                    break;
+                                }
+                            } catch (IOException e) {
+                                // skip
+                            }
+                        }
+                        if (spec != null) {
+                            definePackage(packageName, spec);
+                        } else {
+                            definePackage(packageName, null);
+                        }
                     } else {
                         definePackage(packageName, null);
                     }
-                } else {
-                    definePackage(packageName, null);
                 }
             }
         }
