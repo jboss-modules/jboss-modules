@@ -93,6 +93,9 @@ public abstract class ModuleLoader {
 
     final Module loadModule(ModuleIdentifier identifier, Set<Module> visited) throws ModuleLoadException {
         final Module module = preloadModule(identifier);
+        if (module == null) {
+            throw new ModuleNotFoundException(identifier.toString());
+        }
         module.linkExportsIfNeeded(visited);
         return module;
     }
@@ -103,15 +106,11 @@ public abstract class ModuleLoader {
      * loader based on loader-specific criteria (via the {@link #preloadModule(ModuleIdentifier, ModuleLoader)} method).
      *
      * @param identifier the module identifier
-     * @return the load result
+     * @return the load result, or {@code null} if the module is not found
      * @throws ModuleLoadException if an error occurs
      */
     protected Module preloadModule(ModuleIdentifier identifier) throws ModuleLoadException {
-        Module module = loadModuleLocal(identifier);
-        if (module == null) {
-            throw new ModuleNotFoundException(identifier.toString());
-        }
-        return module;
+        return loadModuleLocal(identifier);
     }
 
     /**
