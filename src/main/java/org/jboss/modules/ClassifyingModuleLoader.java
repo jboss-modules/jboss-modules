@@ -83,6 +83,6 @@ public final class ClassifyingModuleLoader extends ModuleLoader {
     }
 
     public String toString() {
-        return name;
+        return String.format("Classifying Module Loader @%x \"%s\"", Integer.valueOf(hashCode()), name);
     }
 }

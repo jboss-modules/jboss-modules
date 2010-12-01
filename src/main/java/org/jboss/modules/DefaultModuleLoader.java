@@ -22,7 +22,7 @@
 
 package org.jboss.modules;
 
-import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
@@ -36,29 +36,29 @@ final class DefaultModuleLoader  {
     static {
         INSTANCE = AccessController.doPrivileged(new PrivilegedAction<ModuleLoader>() {
             public ModuleLoader run() {
-                final String modulePath = System.getProperty("module.path");
-                final File[] roots;
-                if (modulePath == null) {
-                    //noinspection ZeroLengthArrayAllocation
-                    roots = new File[0];
-                } else {
-                    roots = getFiles(modulePath, 0, 0);
+                final String loaderClass = System.getProperty("system.module.loader", LocalModuleLoader.class.getName());
+                try {
+                    return Class.forName(loaderClass, true, DefaultModuleLoader.class.getClassLoader()).asSubclass(ModuleLoader.class).getConstructor().newInstance();
+                } catch (InstantiationException e) {
+                    throw new InstantiationError(e.getMessage());
+                } catch (IllegalAccessException e) {
+                    throw new IllegalAccessError(e.getMessage());
+                } catch (InvocationTargetException e) {
+                    try {
+                        throw e.getCause();
+                    } catch (RuntimeException cause) {
+                        throw cause;
+                    } catch (Error cause) {
+                        throw cause;
+                    } catch (Throwable t) {
+                        throw new Error(t);
+                    }
+                } catch (NoSuchMethodException e) {
+                    throw new NoSuchMethodError(e.getMessage());
+                } catch (ClassNotFoundException e) {
+                    throw new NoClassDefFoundError(e.getMessage());
                 }
-                return new LocalModuleLoader("default", roots);
             }
         });
-    }
-
-    private static File[] getFiles(final String modulePath, final int stringIdx, final int arrayIdx) {
-        final int i = modulePath.indexOf(File.pathSeparatorChar, stringIdx);
-        final File[] files;
-        if (i == -1) {
-            files = new File[arrayIdx + 1];
-            files[arrayIdx] = new File(modulePath.substring(stringIdx)).getAbsoluteFile();
-        } else {
-            files = getFiles(modulePath, i + 1, arrayIdx + 1);
-            files[arrayIdx] = new File(modulePath.substring(stringIdx, i)).getAbsoluteFile();
-        }
-        return files;
     }
 }

@@ -53,6 +53,6 @@ public final class SystemModuleLoader extends ModuleLoader {
     }
 
     public String toString() {
-        return "system";
+        return "System Module Loader";
     }
 }

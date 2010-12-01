@@ -33,16 +33,41 @@ import java.io.File;
 public final class LocalModuleLoader extends ModuleLoader {
 
     private final File[] repoRoots;
-    private final String name;
 
     /**
      * Construct a new instance.
      *
      * @param repoRoots the array of repository roots to look for modules
      */
-    public LocalModuleLoader(String name, final File[] repoRoots) {
+    public LocalModuleLoader(final File[] repoRoots) {
         this.repoRoots = repoRoots;
-        this.name = name;
+    }
+
+    /**
+     * Construct a new instance, using the {@code module.path} system property
+     * to get the list of module repository roots.
+     */
+    public LocalModuleLoader() {
+        final String modulePath = System.getProperty("module.path");
+        if (modulePath == null) {
+            //noinspection ZeroLengthArrayAllocation
+            repoRoots = new File[0];
+        } else {
+            repoRoots = getFiles(modulePath, 0, 0);
+        }
+    }
+
+    private static File[] getFiles(final String modulePath, final int stringIdx, final int arrayIdx) {
+        final int i = modulePath.indexOf(File.pathSeparatorChar, stringIdx);
+        final File[] files;
+        if (i == -1) {
+            files = new File[arrayIdx + 1];
+            files[arrayIdx] = new File(modulePath.substring(stringIdx)).getAbsoluteFile();
+        } else {
+            files = getFiles(modulePath, i + 1, arrayIdx + 1);
+            files[arrayIdx] = new File(modulePath.substring(stringIdx, i)).getAbsoluteFile();
+        }
+        return files;
     }
 
     /** {@inheritDoc} */
@@ -87,6 +112,17 @@ public final class LocalModuleLoader extends ModuleLoader {
     }
 
     public String toString() {
-        return name;
+        final StringBuilder b = new StringBuilder();
+        b.append("local module loader @").append(Integer.toHexString(hashCode())).append(" (roots: ");
+        final int repoRootsLength = repoRoots.length;
+        for (int i = 0; i < repoRootsLength; i++) {
+            final File root = repoRoots[i];
+            b.append(root);
+            if (i != repoRootsLength - 1) {
+                b.append(',');
+            }
+        }
+        b.append(')');
+        return b.toString();
     }
 }
