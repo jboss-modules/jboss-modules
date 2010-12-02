@@ -136,21 +136,76 @@ public final class PathFilters {
         return new SetPathFilter(new HashSet<String>(paths));
     }
 
-    private static final PathFilter defaultExportFilter;
+    private static final PathFilter defaultImportFilter;
+    private static final PathFilter defaultImportFilterWithServices;
+    private static final PathFilter metaInfFilter;
+    private static final PathFilter metaInfSubdirectoriesFilter;
+    private static final PathFilter metaInfServicesFilter;
 
     static {
+        final PathFilter metaInfChildren = PathFilters.match("META-INF/**");
+        final PathFilter metaInf = PathFilters.match("META-INF");
+        final PathFilter metaInfServices = PathFilters.match("META-INF/services");
+
+        metaInfFilter = metaInf;
+        metaInfSubdirectoriesFilter = metaInfChildren;
+        metaInfServicesFilter = metaInfServices;
+
         final MultiplePathFilterBuilder builder = PathFilters.multiplePathFilterBuilder(true);
-        builder.addFilter(PathFilters.match("META-INF/**"), false);
-        builder.addFilter(PathFilters.match("META-INF"), false);
-        defaultExportFilter = builder.create();
+        builder.addFilter(metaInfChildren, false);
+        builder.addFilter(metaInf, false);
+        defaultImportFilter = builder.create();
+
+        final MultiplePathFilterBuilder builder2 = PathFilters.multiplePathFilterBuilder(true);
+        builder2.addFilter(metaInfServices, true);
+        builder2.addFilter(metaInfChildren, false);
+        builder2.addFilter(metaInf, false);
+        defaultImportFilterWithServices = builder2.create();
     }
 
     /**
-     * Get the default export path filter, which excludes all of {@code META-INF} except for the {@code services} path.
+     * Get the default import path filter, which excludes all of {@code META-INF} and its subdirectories.
      *
-     * @return the default export path filter
+     * @return the default import path filter
      */
-    public static PathFilter getDefaultExportFilter() {
-        return defaultExportFilter;
+    public static PathFilter getDefaultImportFilter() {
+        return defaultImportFilter;
+    }
+
+    /**
+     * Get the default import-with-services path filter which excludes all of {@code META-INF} and its subdirectories,
+     * with the exception of {@code META-INF/services}.
+     *
+     * @return the default import-with-services path filter
+     */
+    public static PathFilter getDefaultImportFilterWithServices() {
+        return defaultImportFilterWithServices;
+    }
+
+    /**
+     * Get a filter which matches the path {@code "META-INF"}.
+     *
+     * @return the filter
+     */
+    public static PathFilter getMetaInfFilter() {
+        return metaInfFilter;
+    }
+
+    /**
+     * Get a filter which matches any subdirectory of the path {@code "META-INF"}.
+     *
+     * @return the filter
+     */
+    public static PathFilter getMetaInfSubdirectoriesFilter() {
+        return metaInfSubdirectoriesFilter;
+    }
+
+    /**
+     * Get a filter which matches the path {@code "META-INF/services"}.
+     *
+     * @return the filter
+     */
+    public static PathFilter getMetaInfServicesFilter() {
+        return metaInfServicesFilter;
     }
 }

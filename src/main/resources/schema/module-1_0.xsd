@@ -54,8 +54,17 @@
         </xsd:choice>
         <xsd:attribute name="name" type="xsd:string" use="required"/>
         <xsd:attribute name="export" type="xsd:boolean" use="optional" default="false"/>
+        <xsd:attribute name="services" type="importDispositionType" use="optional" default="none"/>
         <xsd:attribute name="optional" type="xsd:boolean" use="optional" default="false"/>
     </xsd:complexType>
+
+    <xsd:simpleType name="importDispositionType">
+        <xsd:restriction base="xsd:string">
+            <xsd:enumeration value="none"/>
+            <xsd:enumeration value="import"/>
+            <xsd:enumeration value="export"/>
+        </xsd:restriction>
+    </xsd:simpleType>
 
     <xsd:complexType name="classNameType">
         <xsd:attribute name="name" type="xsd:string" use="required"/>

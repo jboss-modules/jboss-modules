@@ -93,6 +93,7 @@ final class ModuleXmlParser {
         NAME,
         SLOT,
         EXPORT,
+        SERVICES,
         PATH,
         OPTIONAL,
         
@@ -106,6 +107,7 @@ final class ModuleXmlParser {
             attributesMap.put(new QName("name"), NAME);
             attributesMap.put(new QName("slot"), SLOT);
             attributesMap.put(new QName("export"), EXPORT);
+            attributesMap.put(new QName("services"), SERVICES);
             attributesMap.put(new QName("path"), PATH);
             attributesMap.put(new QName("optional"), OPTIONAL);
             attributes = attributesMap;
@@ -114,6 +116,34 @@ final class ModuleXmlParser {
         static Attribute of(QName qName) {
             final Attribute attribute = attributes.get(qName);
             return attribute == null ? UNKNOWN : attribute;
+        }
+    }
+
+    enum Disposition {
+        NONE("none"),
+        IMPORT("import"),
+        EXPORT("export"),
+        ;
+
+        private static final Map<String, Disposition> values;
+
+        static {
+            final Map<String, Disposition> map = new HashMap<String, Disposition>();
+            for (Disposition d : values()) {
+                map.put(d.value, d);
+            }
+            values = map;
+        }
+
+        private final String value;
+
+        Disposition(String value) {
+            this.value = value;
+        }
+
+        static Disposition of(String value) {
+            final Disposition disposition = values.get(value);
+            return disposition == null ? NONE : disposition;
         }
     }
 
@@ -336,6 +366,7 @@ final class ModuleXmlParser {
         String slot = null;
         boolean export = false;
         boolean optional = false;
+        Disposition services = Disposition.NONE;
         final Set<Attribute> required = EnumSet.of(Attribute.NAME);
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
@@ -345,6 +376,7 @@ final class ModuleXmlParser {
                 case NAME:    name = reader.getAttributeValue(i); break;
                 case SLOT:    slot = reader.getAttributeValue(i); break;
                 case EXPORT:  export = Boolean.parseBoolean(reader.getAttributeValue(i)); break;
+                case SERVICES:services = Disposition.of(reader.getAttributeValue(i)); break;
                 case OPTIONAL:optional = Boolean.parseBoolean(reader.getAttributeValue(i)); break;
                 default: throw unexpectedContent(reader);
             }
@@ -353,12 +385,31 @@ final class ModuleXmlParser {
             throw missingAttributes(reader.getLocation(), required);
         }
         final MultiplePathFilterBuilder importBuilder = PathFilters.multiplePathFilterBuilder(true);
-        final MultiplePathFilterBuilder exportBuilder = PathFilters.multiplePathFilterBuilder(true);
+        final MultiplePathFilterBuilder exportBuilder = PathFilters.multiplePathFilterBuilder(export);
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {
-                    final PathFilter exportFilter = export ? exportBuilder.create() : PathFilters.rejectAll();
-                    final PathFilter importFilter = importBuilder.create();
+                    if (services == ModuleXmlParser.Disposition.EXPORT) {
+                        // If services are to be re-exported, add META-INF/services -> true near the end of the list
+                        exportBuilder.addFilter(PathFilters.getMetaInfServicesFilter(), true);
+                    }
+                    if (export) {
+                        // If re-exported, add META-INF/** -> false at the end of the list (require explicit override)
+                        exportBuilder.addFilter(PathFilters.getMetaInfFilter(), false);
+                        exportBuilder.addFilter(PathFilters.getMetaInfSubdirectoriesFilter(), false);
+                    }
+                    final PathFilter exportFilter = exportBuilder.create();
+                    final PathFilter importFilter;
+                    if (importBuilder.isEmpty()) {
+                        importFilter = services == Disposition.NONE ? PathFilters.getDefaultImportFilter() : PathFilters.getDefaultImportFilterWithServices();
+                    } else {
+                        if (services != Disposition.NONE) {
+                            importBuilder.addFilter(PathFilters.getMetaInfServicesFilter(), true);
+                        }
+                        importBuilder.addFilter(PathFilters.getMetaInfFilter(), false);
+                        importBuilder.addFilter(PathFilters.getMetaInfSubdirectoriesFilter(), false);
+                        importFilter = importBuilder.create();
+                    }
                     specBuilder.addDependency(DependencySpec.createModuleDependencySpec(importFilter, exportFilter, null, ModuleIdentifier.create(name, slot), optional));
                     return;
                 }
@@ -441,7 +492,6 @@ final class ModuleXmlParser {
             throw missingAttributes(reader.getLocation(), required);
         }
         if (name == null) name = path;
-        // todo add to spec
         final File file = new File(root, path);
 
         final ResourceLoader resourceLoader;

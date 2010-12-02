@@ -51,7 +51,7 @@ public abstract class DependencySpec {
      * @return the dependency spec
      */
     public static DependencySpec createLocalDependencySpec() {
-        return createLocalDependencySpec(PathFilters.acceptAll(), PathFilters.getDefaultExportFilter());
+        return createLocalDependencySpec(PathFilters.acceptAll(), PathFilters.acceptAll());
     }
 
     /**
@@ -101,7 +101,7 @@ public abstract class DependencySpec {
      * @return the dependency spec
      */
     public static DependencySpec createLocalDependencySpec(final LocalLoader localLoader, final Set<String> loaderPaths, boolean export) {
-        return createLocalDependencySpec(PathFilters.acceptAll(), export ? PathFilters.getDefaultExportFilter() : PathFilters.rejectAll(), localLoader, loaderPaths);
+        return createLocalDependencySpec(PathFilters.acceptAll(), export ? PathFilters.getDefaultImportFilter() : PathFilters.rejectAll(), localLoader, loaderPaths);
     }
 
     /**
@@ -166,7 +166,7 @@ public abstract class DependencySpec {
      * @return the dependency spec
      */
     public static DependencySpec createModuleDependencySpec(final ModuleIdentifier identifier, final boolean export, final boolean optional) {
-        return createModuleDependencySpec(PathFilters.acceptAll(), export ? PathFilters.acceptAll() : PathFilters.rejectAll(), null, identifier, optional);
+        return createModuleDependencySpec(PathFilters.getDefaultImportFilter(), export ? PathFilters.acceptAll() : PathFilters.rejectAll(), null, identifier, optional);
     }
 
     /**
@@ -178,7 +178,7 @@ public abstract class DependencySpec {
      * @return the dependency spec
      */
     public static DependencySpec createModuleDependencySpec(final ModuleLoader moduleLoader, final ModuleIdentifier identifier, final boolean export) {
-        return createModuleDependencySpec(PathFilters.acceptAll(), export ? PathFilters.acceptAll() : PathFilters.rejectAll(), moduleLoader, identifier, false);
+        return createModuleDependencySpec(PathFilters.getDefaultImportFilter(), export ? PathFilters.acceptAll() : PathFilters.rejectAll(), moduleLoader, identifier, false);
     }
 
     /**
@@ -191,7 +191,7 @@ public abstract class DependencySpec {
      * @return the dependency spec
      */
     public static DependencySpec createModuleDependencySpec(final ModuleLoader moduleLoader, final ModuleIdentifier identifier, final boolean export, final boolean optional) {
-        return createModuleDependencySpec(PathFilters.acceptAll(), export ? PathFilters.acceptAll() : PathFilters.rejectAll(), moduleLoader, identifier, optional);
+        return createModuleDependencySpec(PathFilters.getDefaultImportFilter(), export ? PathFilters.acceptAll() : PathFilters.rejectAll(), moduleLoader, identifier, optional);
     }
 
     /**
@@ -203,7 +203,7 @@ public abstract class DependencySpec {
      * @return the dependency spec
      */
     public static DependencySpec createModuleDependencySpec(final PathFilter exportFilter, final ModuleIdentifier identifier, final boolean optional) {
-        return createModuleDependencySpec(PathFilters.acceptAll(), exportFilter, null, identifier, optional);
+        return createModuleDependencySpec(PathFilters.getDefaultImportFilter(), exportFilter, null, identifier, optional);
     }
 
     /**
@@ -216,7 +216,7 @@ public abstract class DependencySpec {
      * @return the dependency spec
      */
     public static DependencySpec createModuleDependencySpec(final PathFilter exportFilter, final ModuleLoader moduleLoader, final ModuleIdentifier identifier, final boolean optional) {
-        return createModuleDependencySpec(PathFilters.acceptAll(), exportFilter, moduleLoader, identifier, optional);
+        return createModuleDependencySpec(PathFilters.getDefaultImportFilter(), exportFilter, moduleLoader, identifier, optional);
     }
 
     /**
