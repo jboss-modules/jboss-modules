@@ -117,7 +117,7 @@ public final class Main {
             usage();
             System.exit(1);
         }
-        final ModuleLoader loader = DefaultModuleLoader.INSTANCE;
+        final ModuleLoader loader = SystemModuleLoaderHolder.INSTANCE;
         if (logManagerModuleIdentifier != null) {
             final ModuleClassLoader classLoader = loader.loadModule(logManagerModuleIdentifier).getClassLoaderPrivate();
             final InputStream stream = classLoader.getResourceAsStream("META-INF/services/java.util.logging.LogManager");

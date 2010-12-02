@@ -26,11 +26,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
-final class DefaultModuleLoader  {
+final class SystemModuleLoaderHolder {
 
     static final ModuleLoader INSTANCE;
 
-    private DefaultModuleLoader() {
+    private SystemModuleLoaderHolder() {
     }
 
     static {
@@ -38,7 +38,7 @@ final class DefaultModuleLoader  {
             public ModuleLoader run() {
                 final String loaderClass = System.getProperty("system.module.loader", LocalModuleLoader.class.getName());
                 try {
-                    return Class.forName(loaderClass, true, DefaultModuleLoader.class.getClassLoader()).asSubclass(ModuleLoader.class).getConstructor().newInstance();
+                    return Class.forName(loaderClass, true, SystemModuleLoaderHolder.class.getClassLoader()).asSubclass(ModuleLoader.class).getConstructor().newInstance();
                 } catch (InstantiationException e) {
                     throw new InstantiationError(e.getMessage());
                 } catch (IllegalAccessException e) {

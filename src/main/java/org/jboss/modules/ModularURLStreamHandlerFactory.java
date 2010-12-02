@@ -58,7 +58,7 @@ final class ModularURLStreamHandlerFactory implements URLStreamHandlerFactory {
             if (moduleId.length() > 0) {
                 try {
                     final ModuleIdentifier identifier = ModuleIdentifier.fromString(moduleId);
-                    final ServiceLoader<URLStreamHandlerFactory> loader = Module.getModuleFromDefaultLoader(identifier).loadService(URLStreamHandlerFactory.class);
+                    final ServiceLoader<URLStreamHandlerFactory> loader = Module.getSystemModuleLoader().loadModule(identifier).loadService(URLStreamHandlerFactory.class);
                     for (URLStreamHandlerFactory factory : loader) {
                         final URLStreamHandler handler = factory.createURLStreamHandler(protocol);
                         if (handler != null) {

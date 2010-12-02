@@ -129,12 +129,19 @@ public final class Module {
 
     // mutable properties
 
-    private static final Dependency[] NO_DEPENDENCIES = new Dependency[0];
-
     /**
      * The complete collection of all paths.  Initially, the paths are uninitialized.
      */
     private volatile Paths<LocalLoader, Dependency> paths = Paths.none();
+
+    // private constants
+
+    private static final Dependency[] NO_DEPENDENCIES = new Dependency[0];
+
+    private static final RuntimePermission GET_CLASS_LOADER = new RuntimePermission("getClassLoader");
+    private static final RuntimePermission GET_SYSTEM_MODULE = new RuntimePermission("getSystemModule");
+    private static final RuntimePermission GET_SYSTEM_MODULE_LOADER = new RuntimePermission("getSystemModuleLoader");
+    private static final RuntimePermission ACCESS_MODULE_LOGGER = new RuntimePermission("accessModuleLogger");
 
     private static final AtomicReferenceFieldUpdater<Module, Paths<LocalLoader, Dependency>> pathsUpdater
             = unsafeCast(AtomicReferenceFieldUpdater.newUpdater(Module.class, Paths.class, "paths"));
@@ -186,7 +193,10 @@ public final class Module {
      * @return the system module
      */
     public static Module getSystemModule() {
-        // todo: do we need a perm check here?
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(GET_SYSTEM_MODULE);
+        }
         return SystemModuleHolder.SYSTEM;
     }
 
@@ -277,14 +287,12 @@ public final class Module {
      * @param <S> the the service type
      * @param identifier the module identifier containing the service loader
      * @param serviceType the service type class
-     * @return the
+     * @return the loaded service from the caller's module
      * @throws ModuleLoadException
      */
     public static <S> ServiceLoader<S> loadServiceFromCurrent(ModuleIdentifier identifier, Class<S> serviceType) throws ModuleLoadException {
         return getCurrentModule().getModule(identifier).loadService(serviceType);
     }
-
-    private static final RuntimePermission GET_CLASS_LOADER = new RuntimePermission("getClassLoader");
 
     /**
      * Get the class loader for a module.  The class loader can be used to access non-exported classes and
@@ -345,14 +353,20 @@ public final class Module {
     }
 
     /**
-     * Gets the default module loader. The default module loader is the
+     * Gets the system module loader. The system module loader is the
      * initial loader that is established by the module framework. It typically
-     * is based off of the environmental module path.
+     * is based off of the environmental module path unless it is overridden by
+     * specifying a different class name for the {@code system.module.loader} system
+     * property.
      *
-     * @return the default module loader
+     * @return the system module loader
      */
-    public static ModuleLoader getDefaultModuleLoader() {
-        return DefaultModuleLoader.INSTANCE;
+    public static ModuleLoader getSystemModuleLoader() {
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(GET_SYSTEM_MODULE_LOADER);
+        }
+        return SystemModuleLoaderHolder.INSTANCE;
     }
 
     /**
@@ -365,18 +379,6 @@ public final class Module {
      */
     public static ModuleLoader getCurrentModuleLoader() {
         return getCurrentModule().getModuleLoader();
-    }
-
-    /**
-     * Get a module from the default module loader.
-     * @see #getDefaultModuleLoader()
-     *
-     * @param identifier the module identifier
-     * @return the module
-     * @throws ModuleLoadException if the module could not be loaded
-     */
-    public static Module getModuleFromDefaultLoader(final ModuleIdentifier identifier) throws ModuleLoadException {
-        return getDefaultModuleLoader().loadModule(identifier);
     }
 
     /**
@@ -415,9 +417,9 @@ public final class Module {
     }
 
     /**
-     * Load a class from a module in the default module loader.
+     * Load a class from a module in the system module loader.
      *
-     * @see #getDefaultModuleLoader()
+     * @see #getSystemModuleLoader()
      *
      * @param moduleIdentifier the identifier of the module from which the class
      *        should be loaded
@@ -426,15 +428,15 @@ public final class Module {
      * @throws ModuleLoadException if the module could not be loaded
      * @throws ClassNotFoundException if the class could not be loaded
      */
-    public static Class<?> loadClassFromDefaultLoader(final ModuleIdentifier moduleIdentifier, final String className)
+    public static Class<?> loadClassFromSystemLoader(final ModuleIdentifier moduleIdentifier, final String className)
             throws ModuleLoadException, ClassNotFoundException {
-        return Class.forName(className, true, getModuleFromDefaultLoader(moduleIdentifier).getClassLoader());
+        return Class.forName(className, true, getSystemModuleLoader().loadModule(moduleIdentifier).getClassLoader());
     }
 
     /**
      * Load a class from a module in the current module loader.
      *
-     * @see #getDefaultModuleLoader()
+     * @see #getCurrentModuleLoader()
      *
      * @param moduleIdentifier the identifier of the module from which the class
      *        should be loaded
@@ -591,7 +593,6 @@ public final class Module {
         if (idx > -1) {
             path = resourceName.substring(0, idx);
         } else {
-            // todo: do we want to disallow the default package?
             path = "";
         }
         return path;
@@ -612,7 +613,6 @@ public final class Module {
         if (idx > -1) {
             path = resourceName.substring(0, idx);
         } else {
-            // todo: do we want to disallow the default package?
             path = "";
         }
         return path;
@@ -637,8 +637,6 @@ public final class Module {
     public String toString() {
         return "Module \"" + identifier + "\"" + " from " + moduleLoader.toString();
     }
-
-    private static final RuntimePermission ACCESS_MODULE_LOGGER = new RuntimePermission("accessModuleLogger");
 
     /**
      * Get the logger used by the module system.
