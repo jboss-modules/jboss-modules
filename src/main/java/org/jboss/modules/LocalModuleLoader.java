@@ -44,11 +44,11 @@ public final class LocalModuleLoader extends ModuleLoader {
     }
 
     /**
-     * Construct a new instance, using the {@code module.path} system property
+     * Construct a new instance, using the {@code module.path} system property or the {@code MODULEPATH} environment variable
      * to get the list of module repository roots.
      */
     public LocalModuleLoader() {
-        final String modulePath = System.getProperty("module.path");
+        final String modulePath = System.getProperty("module.path", System.getenv("MODULEPATH"));
         if (modulePath == null) {
             //noinspection ZeroLengthArrayAllocation
             repoRoots = new File[0];
