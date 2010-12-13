@@ -79,11 +79,6 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
             return ModuleClassLoader.this.loadResourceLocal(root, name, false);
         }
     };
-    private final PathFilter exportPathFilter = new PathFilter() {
-        public boolean accept(final String path) {
-            return paths.getExportedPaths().containsKey(path);
-        }
-    };
 
     private static final AtomicReferenceFieldUpdater<ModuleClassLoader, Paths<ResourceLoader, ResourceLoader>> pathsUpdater
             = unsafeCast(AtomicReferenceFieldUpdater.newUpdater(ModuleClassLoader.class, Paths.class, "paths"));
@@ -161,15 +156,6 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
      */
     LocalLoader getLocalLoader() {
         return localLoader;
-    }
-
-    /**
-     * Get the path filter which determines which local loader paths are exported.
-     *
-     * @return the path filter
-     */
-    PathFilter getExportPathFilter() {
-        return exportPathFilter;
     }
 
     /** {@inheritDoc} */
