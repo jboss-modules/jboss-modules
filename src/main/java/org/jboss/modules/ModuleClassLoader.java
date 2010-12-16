@@ -78,6 +78,10 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         public Resource loadResourceLocal(final String root, final String name) {
             return ModuleClassLoader.this.loadResourceLocal(root, name, false);
         }
+
+        public String toString() {
+            return "local loader for " + ModuleClassLoader.this.toString();
+        }
     };
 
     private static final AtomicReferenceFieldUpdater<ModuleClassLoader, Paths<ResourceLoader, ResourceLoader>> pathsUpdater

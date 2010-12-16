@@ -46,10 +46,10 @@ public class ModuleIdentifierTest {
     @Test
     public void testToString() {
         ModuleIdentifier identifier = ModuleIdentifier.fromString("test.module");
-        assertEquals("module:test.module:main", identifier.toString());
+        assertEquals("test.module:main", identifier.toString());
 
         identifier = ModuleIdentifier.fromString("test.module:old");
-        assertEquals("module:test.module:old", identifier.toString());
+        assertEquals("test.module:old", identifier.toString());
     }
 
     @Test

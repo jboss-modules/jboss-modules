@@ -25,13 +25,31 @@ package org.jboss.modules;
 import static org.jboss.modules.ConcurrentReferenceHashMap.ReferenceType.STRONG;
 import static org.jboss.modules.ConcurrentReferenceHashMap.ReferenceType.WEAK;
 
+import java.lang.management.ManagementFactory;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.Hashtable;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.jboss.modules.management.DependencyInfo;
+import org.jboss.modules.management.ModuleLoaderMXBean;
+import org.jboss.modules.ref.Reaper;
+import org.jboss.modules.ref.Reference;
+import org.jboss.modules.ref.WeakReference;
+
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 
 /**
  *
@@ -43,41 +61,71 @@ public abstract class ModuleLoader {
 
     private static final RuntimePermission ML_PERM = new RuntimePermission("canCreateModuleLoader");
     private static final RuntimePermission MODULE_REDEFINE_PERM = new RuntimePermission("canRedefineModule");
+    private static final RuntimePermission MODULE_REDEFINE_ANY_PERM = new RuntimePermission("canRedefineAnyModule");
+    private static final RuntimePermission MODULE_UNLOAD_ANY_PERM = new RuntimePermission("canUnloadAnyModule");
+
+    private static final AtomicInteger SEQ = new AtomicInteger(1);
+
+    private static volatile MBeanReg REG_REF = new TempMBeanReg();
 
     private final ConcurrentMap<ModuleIdentifier, FutureModule> moduleMap = new ConcurrentReferenceHashMap<ModuleIdentifier, FutureModule>(
             256, 0.5f, 32, STRONG, WEAK, EnumSet.noneOf(ConcurrentReferenceHashMap.Option.class)
     );
 
     private final boolean canRedefine;
+    private final ModuleLoaderMXBean mxBean;
 
     // Bypass security check for classes in this package
-    @SuppressWarnings({ "unused" })
-    ModuleLoader(int dummy) {
-        canRedefine = true;
+    ModuleLoader(boolean canRedefine, boolean skipRegister) {
+        this.canRedefine = canRedefine;
+        mxBean = skipRegister ? null : AccessController.doPrivileged(new PrivilegedAction<ModuleLoaderMXBean>() {
+            public ModuleLoaderMXBean run() {
+                ObjectName objectName = null;
+                try {
+                    Hashtable<String, String> table = new Hashtable<String, String>();
+                    table.put("type", "ModuleLoader");
+                    table.put("name", ModuleLoader.this.getClass().getSimpleName() + "-" + Integer.toString(SEQ.incrementAndGet()));
+                    objectName = new ObjectName("jboss.modules", table);
+                } catch (MalformedObjectNameException e) {
+                    return null;
+                }
+                try {
+                    MXBeanImpl mxBean = new MXBeanImpl(ModuleLoader.this, objectName);
+                    REG_REF.addMBean(objectName, mxBean);
+                    return mxBean;
+                } catch (Throwable ignored) {
+                }
+                return null;
+            }
+        });
     }
 
+    /**
+     * Construct a new instance.
+     */
     protected ModuleLoader() {
+        this(checkPermissions(), false);
+    }
+
+    private static boolean checkPermissions() {
         SecurityManager manager = System.getSecurityManager();
         if (manager == null) {
-            canRedefine = true;
-            return;
+            return true;
         }
-
         manager.checkPermission(ML_PERM);
-
-        boolean canRedefine;
         try {
             manager.checkPermission(MODULE_REDEFINE_PERM);
-            canRedefine = true;
+            return true;
         } catch (SecurityException e) {
-            canRedefine = false;
+            return false;
         }
-
-        this.canRedefine = canRedefine;
     }
 
-
     public abstract String toString();
+
+    static void installMBeanServer() {
+        REG_REF.installReal();
+    }
 
     /**
      * Load a module based on an identifier.  This method delegates to {@link #preloadModule(ModuleIdentifier)} and then
@@ -166,6 +214,27 @@ public abstract class ModuleLoader {
                 newFuture.setModule(null);
                 moduleMap.remove(identifier, newFuture);
             }
+        }
+    }
+
+    /**
+     * Find an already-loaded module, returning {@code null} if the module isn't currently loaded.  May block
+     * while the loaded state of the module is in question (if the module is being concurrently loaded from another
+     * thread, for example).
+     *
+     * @param identifier the module identifier
+     * @return the module, or {@code null} if it wasn't found
+     */
+    protected final Module findLoadedModuleLocal(ModuleIdentifier identifier) {
+        FutureModule futureModule = moduleMap.get(identifier);
+        if (futureModule != null) {
+            try {
+                return futureModule.getModule();
+            } catch (ModuleNotFoundException e) {
+                return null;
+            }
+        } else {
+            return null;
         }
     }
 
@@ -338,6 +407,200 @@ public abstract class ModuleLoader {
                 module = m == null ? NOT_FOUND : m;
                 notifyAll();
             }
+        }
+    }
+
+    private static final Reaper<ModuleLoader, ObjectName> reaper = new Reaper<ModuleLoader, ObjectName>() {
+        public void reap(final Reference<ModuleLoader, ObjectName> reference) {
+            REG_REF.removeMBean(reference.getAttachment());
+        }
+    };
+
+    private static final class MXBeanImpl implements ModuleLoaderMXBean {
+        private final Reference<ModuleLoader, ObjectName> reference;
+
+        public MXBeanImpl(final ModuleLoader moduleLoader, final ObjectName objectName) {
+            reference = new WeakReference<ModuleLoader, ObjectName>(moduleLoader, objectName, reaper);
+        }
+
+        public int getLoadedModuleCount() {
+            return getModuleLoader().moduleMap.size();
+        }
+
+        public List<String> queryLoadedModuleNames() {
+            ModuleLoader loader = getModuleLoader();
+            final Set<ModuleIdentifier> identifiers = loader.moduleMap.keySet();
+            final ArrayList<String> list = new ArrayList<String>(identifiers.size());
+            for (ModuleIdentifier identifier : identifiers) {
+                list.add(identifier.toString());
+            }
+            Collections.sort(list);
+            return list;
+        }
+
+        public boolean unloadModule(final String name) {
+            final SecurityManager sm = System.getSecurityManager();
+            if (sm != null) {
+                sm.checkPermission(MODULE_UNLOAD_ANY_PERM);
+            }
+            final ModuleLoader loader = getModuleLoader();
+            final Module module = loader.findLoadedModuleLocal(ModuleIdentifier.fromString(name));
+            if (module == null) {
+                return false;
+            } else {
+                loader.unloadModuleLocal(module);
+                return true;
+            }
+        }
+
+        public void refreshResourceLoaders(final String name) {
+            final SecurityManager sm = System.getSecurityManager();
+            if (sm != null) {
+                sm.checkPermission(MODULE_REDEFINE_ANY_PERM);
+            }
+            final ModuleLoader loader = getModuleLoader();
+            final Module module = loader.findLoadedModuleLocal(ModuleIdentifier.fromString(name));
+            if (module == null) {
+                throw new IllegalArgumentException("Module " + name + " not found");
+            }
+            loader.refreshResourceLoaders(module);
+        }
+
+        public void relink(final String name) {
+            final SecurityManager sm = System.getSecurityManager();
+            if (sm != null) {
+                sm.checkPermission(MODULE_REDEFINE_ANY_PERM);
+            }
+            final ModuleLoader loader = getModuleLoader();
+            final Module module = loader.findLoadedModuleLocal(ModuleIdentifier.fromString(name));
+            if (module == null) {
+                throw new IllegalArgumentException("Module " + name + " not found");
+            }
+            try {
+                loader.relink(module);
+            } catch (ModuleLoadException e) {
+                throw new IllegalStateException("Module load failure for module " + name + ": " + e.toString());
+            }
+        }
+
+        public List<DependencyInfo> getDependencies(final String name) {
+            final ModuleLoader loader = getModuleLoader();
+            final Module module = loader.findLoadedModuleLocal(ModuleIdentifier.fromString(name));
+            if (module == null) {
+                throw new IllegalArgumentException("Module " + name + " not found");
+            }
+            Dependency[] dependencies = module.getDependencies();
+            if (dependencies == null) {
+                return Collections.emptyList();
+            }
+            ArrayList<DependencyInfo> list = new ArrayList<DependencyInfo>(dependencies.length);
+            for (Dependency dependency : dependencies) {
+                final String dependencyType = dependency.getClass().getSimpleName();
+                final String exportFilter = dependency.getExportFilter().toString();
+                final String importFilter = dependency.getImportFilter().toString();
+                final DependencyInfo info;
+                if (dependency instanceof LocalDependency) {
+                    final LocalDependency localDependency = (LocalDependency) dependency;
+                    ArrayList<String> pathList = new ArrayList<String>(localDependency.getPaths());
+                    Collections.sort(pathList);
+                    info = new DependencyInfo(dependencyType, exportFilter, importFilter, null, null, false, localDependency.getLocalLoader().toString(), pathList);
+                } else if (dependency instanceof ModuleDependency) {
+                    final ModuleDependency moduleDependency = (ModuleDependency) dependency;
+                    info = new DependencyInfo(dependencyType, exportFilter, importFilter, moduleDependency.getModuleLoader().mxBean, moduleDependency.getIdentifier().toString(), moduleDependency.isOptional(), null, null);
+                } else {
+                    info = new DependencyInfo(dependencyType, exportFilter, importFilter, null, null, false, null, null);
+                }
+                list.add(info);
+            }
+            return list;
+        }
+
+        private ModuleLoader getModuleLoader() {
+            final ModuleLoader loader = reference.get();
+            if (loader == null) {
+                throw new IllegalStateException("Module Loader is gone");
+            }
+            return loader;
+        }
+    }
+
+    private interface MBeanReg {
+        boolean addMBean(ObjectName name, Object bean);
+
+        void removeMBean(ObjectName name);
+
+        void installReal();
+    }
+
+    private static final class TempMBeanReg implements MBeanReg {
+        private final Map<ObjectName, Object> mappings = new LinkedHashMap<ObjectName, Object>();
+
+        public boolean addMBean(final ObjectName name, final Object bean) {
+            if (bean == null) {
+                throw new IllegalArgumentException("bean is null");
+            }
+            synchronized (ModuleLoader.class) {
+                if (REG_REF == this) {
+                    return mappings.put(name, bean) == null;
+                } else {
+                    return REG_REF.addMBean(name, bean);
+                }
+            }
+        }
+
+        public void removeMBean(final ObjectName name) {
+            synchronized (ModuleLoader.class) {
+                if (REG_REF == this) {
+                    mappings.remove(name);
+                } else {
+                    REG_REF.removeMBean(name);
+                }
+            }
+        }
+
+        public void installReal() {
+            synchronized (ModuleLoader.class) {
+                RealMBeanReg real = new RealMBeanReg();
+                if (REG_REF == this) {
+                    REG_REF = real;
+                    for (Map.Entry<ObjectName, Object> entry : mappings.entrySet()) {
+                        real.addMBean(entry.getKey(), entry.getValue());
+                    }
+                    mappings.clear();
+                }
+            }
+        }
+    }
+
+    private static final class RealMBeanReg implements MBeanReg {
+        private final MBeanServer server;
+
+        RealMBeanReg() {
+            server = AccessController.doPrivileged(new PrivilegedAction<MBeanServer>() {
+                public MBeanServer run() {
+                    return ManagementFactory.getPlatformMBeanServer();
+                }
+            });
+        }
+
+        public boolean addMBean(final ObjectName name, final Object bean) {
+            try {
+                server.registerMBean(bean, name);
+                return true;
+            } catch (Throwable e) {
+            }
+            return false;
+        }
+
+        public void removeMBean(final ObjectName name) {
+            try {
+                server.unregisterMBean(name);
+            } catch (Throwable e) {
+            }
+        }
+
+        public void installReal() {
+            // ignore
         }
     }
 }

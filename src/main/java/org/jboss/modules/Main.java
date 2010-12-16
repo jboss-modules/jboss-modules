@@ -171,6 +171,7 @@ public final class Main {
             return;
         }
         try {
+            ModuleLoader.installMBeanServer();
             module.run(moduleArgs);
         } catch (InvocationTargetException e) {
             throw e.getCause();

@@ -43,4 +43,20 @@ final class MultiplePathFilter implements PathFilter {
         }
         return defaultVal;
     }
+
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("multi-path filter {");
+        int len = filters.length;
+        for (int i = 0; i < len; i++) {
+            final PathFilter filter = filters[i];
+            final boolean include = includeFlag[i];
+            builder.append(include ? "include " : "exclude ");
+            builder.append(filter);
+            builder.append(", ");
+        }
+        builder.append("default ").append(defaultVal ? "accept" : "reject");
+        builder.append('}');
+        return builder.toString();
+    }
 }

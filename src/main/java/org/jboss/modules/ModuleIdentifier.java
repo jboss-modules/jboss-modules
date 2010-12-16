@@ -85,7 +85,7 @@ public final class ModuleIdentifier implements Serializable {
 
     @Override
     public String toString() {
-        return "module:" + toSpecString();
+        return name + ":" + slot;
     }
 
     public static ModuleIdentifier fromString(String moduleSpec) throws IllegalArgumentException {
@@ -93,7 +93,7 @@ public final class ModuleIdentifier implements Serializable {
             throw new IllegalArgumentException("Module specification is null");
         }
         if (moduleSpec.length() == 0) {
-            throw new IllegalArgumentException("Empty module specificiation");
+            throw new IllegalArgumentException("Empty module specification");
         }
 
         final int c1 = moduleSpec.lastIndexOf(':');
@@ -116,10 +116,6 @@ public final class ModuleIdentifier implements Serializable {
         }
 
         return new ModuleIdentifier(name, slot);
-    }
-
-    private String toSpecString() {
-        return name + ":" + slot;
     }
 
     /**

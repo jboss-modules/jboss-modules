@@ -20,46 +20,56 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.jboss.modules;
+package org.jboss.modules.management;
+
+import java.util.List;
 
 /**
- * The module loader for the system module.
- *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class SystemModuleLoader extends ModuleLoader {
-
-    static final SystemModuleLoader INSTANCE = new SystemModuleLoader();
+public interface ModuleLoaderMXBean {
 
     /**
-     * Construct a new instance.
-     */
-    public SystemModuleLoader() {
-        super(false, false);
-    }
-
-    /**
-     * Get the system module loader.
+     * Get the number of modules currently loaded.
      *
-     * @return the system module loader
+     * @return the loaded module count
      */
-    public static SystemModuleLoader getInstance() {
-        return INSTANCE;
-    }
+    int getLoadedModuleCount();
 
-    /** {@inheritDoc} */
-    protected ModuleSpec findModule(final ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
-        if (! moduleIdentifier.equals(ModuleIdentifier.SYSTEM)) {
-            return null;
-        }
+    /**
+     * Obtain a list of the current module names.
+     *
+     * @return the module names
+     */
+    List<String> queryLoadedModuleNames();
 
-        final SystemLocalLoader systemLocalLoader = SystemLocalLoader.getInstance();
-        final ModuleSpec.Builder builder = ModuleSpec.build(ModuleIdentifier.SYSTEM);
-        builder.addDependency(DependencySpec.createLocalDependencySpec(systemLocalLoader, systemLocalLoader.getPathSet(), true));
-        return builder.create();
-    }
+    /**
+     * Attempt to unload a module from this module loader.
+     *
+     * @param name the string form of the module identifier to unload
+     */
+    boolean unloadModule(String name);
 
-    public String toString() {
-        return "System Module Loader";
-    }
+    /**
+     * Attempt to refresh the resource loaders of the given module.
+     *
+     * @param name the name of the module to refresh
+     */
+    void refreshResourceLoaders(String name);
+
+    /**
+     * Attempt to relink the given module.
+     *
+     * @param name the name of the module to relink
+     */
+    void relink(String name);
+
+    /**
+     * Get the dependencies of the named module.
+     *
+     *
+     * @param name the module name
+     * @return the module's dependencies
+     */
+    List<DependencyInfo> getDependencies(String name);
 }
