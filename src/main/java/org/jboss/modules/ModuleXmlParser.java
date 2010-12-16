@@ -395,8 +395,8 @@ final class ModuleXmlParser {
                     }
                     if (export) {
                         // If re-exported, add META-INF/** -> false at the end of the list (require explicit override)
-                        exportBuilder.addFilter(PathFilters.getMetaInfFilter(), false);
                         exportBuilder.addFilter(PathFilters.getMetaInfSubdirectoriesFilter(), false);
+                        exportBuilder.addFilter(PathFilters.getMetaInfFilter(), false);
                     }
                     final PathFilter exportFilter = exportBuilder.create();
                     final PathFilter importFilter;
@@ -406,8 +406,8 @@ final class ModuleXmlParser {
                         if (services != Disposition.NONE) {
                             importBuilder.addFilter(PathFilters.getMetaInfServicesFilter(), true);
                         }
-                        importBuilder.addFilter(PathFilters.getMetaInfFilter(), false);
                         importBuilder.addFilter(PathFilters.getMetaInfSubdirectoriesFilter(), false);
+                        importBuilder.addFilter(PathFilters.getMetaInfFilter(), false);
                         importFilter = importBuilder.create();
                     }
                     specBuilder.addDependency(DependencySpec.createModuleDependencySpec(importFilter, exportFilter, null, ModuleIdentifier.create(name, slot), optional));

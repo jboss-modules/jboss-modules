@@ -24,6 +24,7 @@ package org.jboss.modules;
 
 import static org.jboss.modules.ConcurrentReferenceHashMap.ReferenceType.STRONG;
 import static org.jboss.modules.ConcurrentReferenceHashMap.ReferenceType.WEAK;
+import static org.jboss.modules.management.ObjectProperties.property;
 
 import java.lang.management.ManagementFactory;
 import java.security.AccessController;
@@ -43,6 +44,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.jboss.modules.management.DependencyInfo;
 import org.jboss.modules.management.ModuleLoaderMXBean;
+import org.jboss.modules.management.ObjectProperties;
 import org.jboss.modules.ref.Reaper;
 import org.jboss.modules.ref.Reference;
 import org.jboss.modules.ref.WeakReference;
@@ -85,7 +87,10 @@ public abstract class ModuleLoader {
                     Hashtable<String, String> table = new Hashtable<String, String>();
                     table.put("type", "ModuleLoader");
                     table.put("name", ModuleLoader.this.getClass().getSimpleName() + "-" + Integer.toString(SEQ.incrementAndGet()));
-                    objectName = new ObjectName("jboss.modules", table);
+                    objectName = new ObjectName("jboss.modules", ObjectProperties.properties(
+                            property("type", "ModuleLoader"),
+                            property("name", ModuleLoader.this.getClass().getSimpleName() + "-" + Integer.toString(SEQ.incrementAndGet()))
+                    ));
                 } catch (MalformedObjectNameException e) {
                     return null;
                 }
