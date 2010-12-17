@@ -43,6 +43,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.jboss.modules.management.DependencyInfo;
+import org.jboss.modules.management.ModuleInfo;
 import org.jboss.modules.management.ModuleLoaderMXBean;
 import org.jboss.modules.management.ObjectProperties;
 import org.jboss.modules.management.ResourceLoaderInfo;
@@ -495,6 +496,10 @@ public abstract class ModuleLoader {
             if (module == null) {
                 throw new IllegalArgumentException("Module " + name + " not found");
             }
+            return doGetDependencies(module);
+        }
+
+        private List<DependencyInfo> doGetDependencies(final Module module) {
             Dependency[] dependencies = module.getDependencies();
             if (dependencies == null) {
                 return Collections.emptyList();
@@ -527,6 +532,10 @@ public abstract class ModuleLoader {
             if (module == null) {
                 throw new IllegalArgumentException("Module " + name + " not found");
             }
+            return doGetResourceLoaders(module);
+        }
+
+        private List<ResourceLoaderInfo> doGetResourceLoaders(final Module module) {
             final ModuleClassLoader classLoader = module.getClassLoaderPrivate();
             final ResourceLoader[] loaders = classLoader.getResourceLoaders();
             final ArrayList<ResourceLoaderInfo> list = new ArrayList<ResourceLoaderInfo>(loaders.length);
@@ -534,6 +543,19 @@ public abstract class ModuleLoader {
                 list.add(new ResourceLoaderInfo(resourceLoader.getClass().getName(), resourceLoader.getExportFilter().toString(), new ArrayList<String>(resourceLoader.getPaths())));
             }
             return list;
+        }
+
+        public ModuleInfo getModuleDescription(final String name) {
+            ModuleLoader loader = getModuleLoader();
+            final Module module = loader.findLoadedModuleLocal(ModuleIdentifier.fromString(name));
+            if (module == null) {
+                throw new IllegalArgumentException("Module " + name + " not found");
+            }
+            final List<DependencyInfo> dependencies = doGetDependencies(module);
+            final List<ResourceLoaderInfo> resourceLoaders = doGetResourceLoaders(module);
+            final LocalLoader fallbackLoader = module.getFallbackLoader();
+            final String fallbackLoaderString = fallbackLoader == null ? null : fallbackLoader.toString();
+            return new ModuleInfo(module.getIdentifier().toString(), module.getModuleLoader().mxBean, dependencies, resourceLoaders, module.getMainClass(), module.getClassLoaderPrivate().toString(), fallbackLoaderString);
         }
 
         private ModuleLoader getModuleLoader() {

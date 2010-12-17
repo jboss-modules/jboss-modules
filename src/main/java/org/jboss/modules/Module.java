@@ -892,6 +892,10 @@ public final class Module {
         return dependencies;
     }
 
+    String getMainClass() {
+        return mainClassName;
+    }
+
     private static final class SystemModuleHolder {
 
         private static final Module SYSTEM;

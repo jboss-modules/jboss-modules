@@ -79,4 +79,12 @@ public interface ModuleLoaderMXBean {
      * @return the module's resource loaders
      */
     List<ResourceLoaderInfo> getResourceLoaders(String name);
+
+    /**
+     * Get the complete description of this module.
+     *
+     * @param name the module name
+     * @return the module description
+     */
+    ModuleInfo getModuleDescription(String name);
 }
