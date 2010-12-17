@@ -67,9 +67,16 @@ public interface ModuleLoaderMXBean {
     /**
      * Get the dependencies of the named module.
      *
-     *
      * @param name the module name
      * @return the module's dependencies
      */
     List<DependencyInfo> getDependencies(String name);
+
+    /**
+     * Get the resource loaders of the named module.
+     *
+     * @param name the module name
+     * @return the module's resource loaders
+     */
+    List<ResourceLoaderInfo> getResourceLoaders(String name);
 }

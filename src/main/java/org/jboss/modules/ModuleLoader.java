@@ -45,6 +45,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.jboss.modules.management.DependencyInfo;
 import org.jboss.modules.management.ModuleLoaderMXBean;
 import org.jboss.modules.management.ObjectProperties;
+import org.jboss.modules.management.ResourceLoaderInfo;
 import org.jboss.modules.ref.Reaper;
 import org.jboss.modules.ref.Reference;
 import org.jboss.modules.ref.WeakReference;
@@ -516,6 +517,21 @@ public abstract class ModuleLoader {
                     info = new DependencyInfo(dependencyType, exportFilter, importFilter, null, null, false, null, null);
                 }
                 list.add(info);
+            }
+            return list;
+        }
+
+        public List<ResourceLoaderInfo> getResourceLoaders(final String name) {
+            ModuleLoader loader = getModuleLoader();
+            final Module module = loader.findLoadedModuleLocal(ModuleIdentifier.fromString(name));
+            if (module == null) {
+                throw new IllegalArgumentException("Module " + name + " not found");
+            }
+            final ModuleClassLoader classLoader = module.getClassLoaderPrivate();
+            final ResourceLoader[] loaders = classLoader.getResourceLoaders();
+            final ArrayList<ResourceLoaderInfo> list = new ArrayList<ResourceLoaderInfo>(loaders.length);
+            for (ResourceLoader resourceLoader : loaders) {
+                list.add(new ResourceLoaderInfo(resourceLoader.getClass().getName(), resourceLoader.getExportFilter().toString(), new ArrayList<String>(resourceLoader.getPaths())));
             }
             return list;
         }

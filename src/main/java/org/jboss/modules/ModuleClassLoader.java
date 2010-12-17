@@ -561,6 +561,10 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         super.finalize();
     }
 
+    ResourceLoader[] getResourceLoaders() {
+        return paths.getSourceList(NO_RESOURCE_LOADERS);
+    }
+
     /**
      * An opaque configuration used internally to create a module class loader.
      */
