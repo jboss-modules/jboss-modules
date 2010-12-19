@@ -804,7 +804,7 @@ public final class Module {
         pathsUpdater.compareAndSet(this, paths, newPaths);
     }
 
-    private Map<String, List<LocalLoader>> getPaths(final boolean exportsOnly) {
+    Map<String, List<LocalLoader>> getPaths(final boolean exportsOnly) {
         final Paths<LocalLoader, Dependency> paths = this.paths;
         Map<String, List<LocalLoader>> map = paths.getPaths(exportsOnly);
         if (map != null) {

@@ -97,6 +97,27 @@ public final class PathFilters {
     }
 
     /**
+     * Get a path filter which matches an exact path name.
+     *
+     * @param path the path name
+     * @return a filter which returns {@code true} if the path name is an exact match
+     */
+    public static PathFilter is(String path) {
+        return new EqualsPathFilter(path);
+    }
+
+    /**
+     * Get a path filter which matches any path which is a child of the given path name (not including the
+     * path name itself).
+     *
+     * @param path the path name
+     * @return a filter which returns {@code true} if the path name is a child of the given path
+     */
+    public static PathFilter isChildOf(String path) {
+        return new ChildPathFilter(path);
+    }
+
+    /**
      * Get a builder for a multiple-path filter.  Such a filter contains multiple filters, each associated
      * with a flag which indicates that matching paths should be included or excluded.
      *
@@ -143,9 +164,9 @@ public final class PathFilters {
     private static final PathFilter metaInfServicesFilter;
 
     static {
-        final PathFilter metaInfChildren = PathFilters.match("META-INF/**");
-        final PathFilter metaInf = PathFilters.match("META-INF");
-        final PathFilter metaInfServices = PathFilters.match("META-INF/services");
+        final PathFilter metaInfChildren = PathFilters.isChildOf("META-INF");
+        final PathFilter metaInf = PathFilters.is("META-INF");
+        final PathFilter metaInfServices = PathFilters.is("META-INF/services");
 
         metaInfFilter = metaInf;
         metaInfSubdirectoriesFilter = metaInfChildren;

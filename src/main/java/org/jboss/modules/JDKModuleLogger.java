@@ -54,14 +54,18 @@ public final class JDKModuleLogger implements ModuleLogger {
 
     @SuppressWarnings({ "NonConstantLogger" })
     private final Logger logger;
+    @SuppressWarnings({ "NonConstantLogger" })
+    private final Logger defineLogger;
 
     /**
      * Construct a new instance.
      *
-     * @param logger the logger to write to
+     * @param logger the main logger to write to
+     * @param defineLogger the main logger to write class-define-related trace messages to
      */
-    public JDKModuleLogger(final Logger logger) {
+    public JDKModuleLogger(final Logger logger, final Logger defineLogger) {
         this.logger = logger;
+        this.defineLogger = defineLogger;
     }
 
     /**
@@ -70,7 +74,7 @@ public final class JDKModuleLogger implements ModuleLogger {
      * @param category the name of the logger category to write to
      */
     public JDKModuleLogger(final String category) {
-        this(Logger.getLogger(category));
+        this(Logger.getLogger(category), Logger.getLogger(category + ".define"));
     }
 
     /**
@@ -169,6 +173,18 @@ public final class JDKModuleLogger implements ModuleLogger {
     public void moduleDefined(final ModuleIdentifier identifier, final ModuleLoader moduleLoader) {
         if (logger.isLoggable(DEBUG)) {
             doLog(DEBUG, String.format("Module %s defined by %s", identifier, moduleLoader));
+        }
+    }
+
+    public void classDefineFailed(final Throwable throwable, final String className, final Module module) {
+        if (defineLogger.isLoggable(TRACE)) {
+            doLog(TRACE, String.format("Failed to define class %s in %s", className, module), throwable);
+        }
+    }
+
+    public void classDefined(final String name, final Module module) {
+        if (defineLogger.isLoggable(TRACE)) {
+            doLog(TRACE, String.format("Defined class %s in %s", name, module));
         }
     }
 }

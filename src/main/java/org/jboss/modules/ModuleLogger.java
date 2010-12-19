@@ -52,4 +52,8 @@ public interface ModuleLogger {
     void greeting();
 
     void moduleDefined(ModuleIdentifier identifier, final ModuleLoader moduleLoader);
+
+    void classDefineFailed(Throwable throwable, String className, Module module);
+
+    void classDefined(String name, Module module);
 }

@@ -136,14 +136,18 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
             for (String path : loader.getPaths()) {
                 final List<ResourceLoader> allLoaders = allPaths.get(path);
                 if (allLoaders == null) {
-                    allPaths.put(path, new ArrayList<ResourceLoader>(Collections.singleton(loader)));
+                    ArrayList<ResourceLoader> newList = new ArrayList<ResourceLoader>(16);
+                    newList.add(loader);
+                    allPaths.put(path, newList);
                 } else {
                     allLoaders.add(loader);
                 }
                 if (exportFilter.accept(path)) {
                     final List<ResourceLoader> exportedLoaders = exportedPaths.get(path);
                     if (exportedLoaders == null) {
-                        exportedPaths.put(path, new ArrayList<ResourceLoader>(Collections.singleton(loader)));
+                        ArrayList<ResourceLoader> newList = new ArrayList<ResourceLoader>(16);
+                        newList.add(loader);
+                        exportedPaths.put(path, newList);
                     } else {
                         exportedLoaders.add(loader);
                     }
@@ -367,6 +371,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
             final byte[] bytes = classSpec.getBytes();
             try {
                 newClass = defineClass(name, bytes, 0, bytes.length, classSpec.getCodeSource());
+                log.classDefined(name, module);
             } catch (NoClassDefFoundError e) {
                 // Prepend the current class name, so that transitive class definition issues are clearly expressed
                 final LinkageError ne = new LinkageError("Failed to link " + name.replace('.', '/') + " (" + module + ")");
@@ -384,10 +389,10 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
                 throw e;
             }
         } catch (Error e) {
-            log.trace(e, "Failed to define class %s in %s", name, module);
+            log.classDefineFailed(e, name, module);
             throw e;
         } catch (RuntimeException e) {
-            log.trace(e, "Failed to define class %s in %s", name, module);
+            log.classDefineFailed(e, name, module);
             throw e;
         }
         final AssertionSetting setting = classSpec.getAssertionSetting();
@@ -482,7 +487,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
      */
     @Override
     public final String toString() {
-        return "ClassLoader for " + module;
+        return getClass().getSimpleName() + " for " + module;
     }
 
     Set<String> getPaths() {

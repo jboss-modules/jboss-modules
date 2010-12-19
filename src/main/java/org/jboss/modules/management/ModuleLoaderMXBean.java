@@ -23,6 +23,7 @@
 package org.jboss.modules.management;
 
 import java.util.List;
+import java.util.SortedMap;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -87,4 +88,13 @@ public interface ModuleLoaderMXBean {
      * @return the module description
      */
     ModuleInfo getModuleDescription(String name);
+
+    /**
+     * Get a paths map for a given module.
+     *
+     * @param name the module name
+     * @param exports {@code true} for the exported paths, {@code false} for all paths
+     * @return the paths map information
+     */
+    SortedMap<String, List<String>> getModulePathsInfo(String name, boolean exports);
 }

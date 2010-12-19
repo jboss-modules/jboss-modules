@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarFile;
@@ -59,10 +60,13 @@ final class ModuleXmlParser {
         EXPORTS,
         IMPORTS,
         INCLUDE,
+        INCLUDE_SET,
         EXCLUDE,
+        EXCLUDE_SET,
         RESOURCES,
         MAIN_CLASS,
         RESOURCE_ROOT,
+        PATH,
 
         // default unknown element
         UNKNOWN;
@@ -76,10 +80,13 @@ final class ModuleXmlParser {
             elementsMap.put(new QName(NAMESPACE, "resources"), Element.RESOURCES);
             elementsMap.put(new QName(NAMESPACE, "main-class"), Element.MAIN_CLASS);
             elementsMap.put(new QName(NAMESPACE, "resource-root"), Element.RESOURCE_ROOT);
+            elementsMap.put(new QName(NAMESPACE, "path"), Element.PATH);
             elementsMap.put(new QName(NAMESPACE, "exports"), Element.EXPORTS);
             elementsMap.put(new QName(NAMESPACE, "imports"), Element.IMPORTS);
             elementsMap.put(new QName(NAMESPACE, "include"), Element.INCLUDE);
             elementsMap.put(new QName(NAMESPACE, "exclude"), Element.EXCLUDE);
+            elementsMap.put(new QName(NAMESPACE, "include-set"), Element.INCLUDE_SET);
+            elementsMap.put(new QName(NAMESPACE, "exclude-set"), Element.EXCLUDE_SET);
             elements = elementsMap;
         }
 
@@ -537,7 +544,9 @@ final class ModuleXmlParser {
                 case XMLStreamConstants.START_ELEMENT: {
                     switch (Element.of(reader.getName())) {
                         case INCLUDE: parsePath(reader, true, builder); break;
-                        case EXCLUDE: parsePath(reader, false, builder);  break;
+                        case EXCLUDE: parsePath(reader, false, builder); break;
+                        case INCLUDE_SET: parseSet(reader, true, builder); break;
+                        case EXCLUDE_SET: parseSet(reader, false, builder); break;
                         default: throw unexpectedContent(reader);
                     }
                     break;
@@ -566,7 +575,55 @@ final class ModuleXmlParser {
             throw missingAttributes(reader.getLocation(), required);
         }
 
-        builder.addFilter(PathFilters.match(path), include);
+        final boolean literal = path.indexOf('*') == -1 && path.indexOf('?') == -1;
+        if (literal) {
+            if (path.charAt(path.length() - 1) == '/') {
+                builder.addFilter(PathFilters.isChildOf(path), include);
+            } else {
+                builder.addFilter(PathFilters.is(path), include);
+            }
+        } else {
+            builder.addFilter(PathFilters.match(path), include);
+        }
+
+        // consume remainder of element
+        parseNoContent(reader);
+    }
+
+    private static void parseSet(final XMLStreamReader reader, final boolean include, final MultiplePathFilterBuilder builder) throws XMLStreamException {
+        final Set<String> set = new HashSet<String>();
+        // xsd:choice
+        while (reader.hasNext()) {
+            switch (reader.nextTag()) {
+                case XMLStreamConstants.END_ELEMENT: {
+                    builder.addFilter(new SetPathFilter(set), include);
+                    return;
+                }
+                case XMLStreamConstants.START_ELEMENT: {
+                    switch (Element.of(reader.getName())) {
+                        case PATH: parsePathName(reader, set); break;
+                    }
+                }
+            }
+        }
+    }
+
+    private static void parsePathName(final XMLStreamReader reader, final Set<String> set) throws XMLStreamException {
+        String name = null;
+        final Set<Attribute> required = EnumSet.of(Attribute.NAME);
+        final int count = reader.getAttributeCount();
+        for (int i = 0; i < count; i ++) {
+            final Attribute attribute = Attribute.of(reader.getAttributeName(i));
+            required.remove(attribute);
+            switch (attribute) {
+                case NAME: name = reader.getAttributeValue(i); break;
+                default: throw unexpectedContent(reader);
+            }
+        }
+        if (! required.isEmpty()) {
+            throw missingAttributes(reader.getLocation(), required);
+        }
+        set.add(name);
 
         // consume remainder of element
         parseNoContent(reader);

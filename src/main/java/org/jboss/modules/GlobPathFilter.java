@@ -97,7 +97,7 @@ final class GlobPathFilter implements PathFilter {
                 patternBuilder.append("[^/]");
             } else if ((grp = m.group(3)) != null) {
                 // backslash-escaped value
-                patternBuilder.append(grp.charAt(1));
+                patternBuilder.append(Pattern.quote(m.group().substring(1)));
             } else if ((grp = m.group(4)) != null) {
                 // match any number of / chars
                 patternBuilder.append("/+");

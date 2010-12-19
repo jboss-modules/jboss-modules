@@ -40,6 +40,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.jboss.modules.management.DependencyInfo;
@@ -466,10 +468,7 @@ public abstract class ModuleLoader {
                 sm.checkPermission(MODULE_REDEFINE_ANY_PERM);
             }
             final ModuleLoader loader = getModuleLoader();
-            final Module module = loader.findLoadedModuleLocal(ModuleIdentifier.fromString(name));
-            if (module == null) {
-                throw new IllegalArgumentException("Module " + name + " not found");
-            }
+            final Module module = loadModule(name, loader);
             loader.refreshResourceLoaders(module);
         }
 
@@ -479,10 +478,7 @@ public abstract class ModuleLoader {
                 sm.checkPermission(MODULE_REDEFINE_ANY_PERM);
             }
             final ModuleLoader loader = getModuleLoader();
-            final Module module = loader.findLoadedModuleLocal(ModuleIdentifier.fromString(name));
-            if (module == null) {
-                throw new IllegalArgumentException("Module " + name + " not found");
-            }
+            final Module module = loadModule(name, loader);
             try {
                 loader.relink(module);
             } catch (ModuleLoadException e) {
@@ -492,10 +488,7 @@ public abstract class ModuleLoader {
 
         public List<DependencyInfo> getDependencies(final String name) {
             final ModuleLoader loader = getModuleLoader();
-            final Module module = loader.findLoadedModuleLocal(ModuleIdentifier.fromString(name));
-            if (module == null) {
-                throw new IllegalArgumentException("Module " + name + " not found");
-            }
+            final Module module = loadModule(name, loader);
             return doGetDependencies(module);
         }
 
@@ -528,10 +521,7 @@ public abstract class ModuleLoader {
 
         public List<ResourceLoaderInfo> getResourceLoaders(final String name) {
             ModuleLoader loader = getModuleLoader();
-            final Module module = loader.findLoadedModuleLocal(ModuleIdentifier.fromString(name));
-            if (module == null) {
-                throw new IllegalArgumentException("Module " + name + " not found");
-            }
+            final Module module = loadModule(name, loader);
             return doGetResourceLoaders(module);
         }
 
@@ -547,15 +537,52 @@ public abstract class ModuleLoader {
 
         public ModuleInfo getModuleDescription(final String name) {
             ModuleLoader loader = getModuleLoader();
-            final Module module = loader.findLoadedModuleLocal(ModuleIdentifier.fromString(name));
-            if (module == null) {
-                throw new IllegalArgumentException("Module " + name + " not found");
-            }
+            final Module module = loadModule(name, loader);
             final List<DependencyInfo> dependencies = doGetDependencies(module);
             final List<ResourceLoaderInfo> resourceLoaders = doGetResourceLoaders(module);
             final LocalLoader fallbackLoader = module.getFallbackLoader();
             final String fallbackLoaderString = fallbackLoader == null ? null : fallbackLoader.toString();
             return new ModuleInfo(module.getIdentifier().toString(), module.getModuleLoader().mxBean, dependencies, resourceLoaders, module.getMainClass(), module.getClassLoaderPrivate().toString(), fallbackLoaderString);
+        }
+
+        public SortedMap<String, List<String>> getModulePathsInfo(final String name, final boolean exports) {
+            ModuleLoader loader = getModuleLoader();
+            final Module module = loadModule(name, loader);
+            final Map<String, List<LocalLoader>> paths;
+            try {
+                paths = module.getPaths(exports);
+            } catch (ModuleLoadError e) {
+                throw new IllegalArgumentException("Error loading module " + name + ": " + e.toString());
+            }
+            final TreeMap<String, List<String>> result = new TreeMap<String, List<String>>();
+            for (Map.Entry<String, List<LocalLoader>> entry : paths.entrySet()) {
+                final String path = entry.getKey();
+                final List<LocalLoader> loaders = entry.getValue();
+                if (loaders.isEmpty()) {
+                    result.put(path, Collections.<String>emptyList());
+                } else if (loaders.size() == 1) {
+                    result.put(path, Collections.<String>singletonList(loaders.get(0).toString()));
+                } else {
+                    final ArrayList<String> list = new ArrayList<String>();
+                    for (LocalLoader localLoader : loaders) {
+                        list.add(localLoader.toString());
+                    }
+                    result.put(path, list);
+                }
+            }
+            return result;
+        }
+
+        private Module loadModule(final String name, final ModuleLoader loader) {
+            try {
+                final Module module = loader.findLoadedModuleLocal(ModuleIdentifier.fromString(name));
+                if (module == null) {
+                    throw new IllegalArgumentException("Module " + name + " not found");
+                }
+                return module;
+            } catch (ModuleLoadError e) {
+                throw new IllegalArgumentException("Error loading module " + name + ": " + e.toString());
+            }
         }
 
         private ModuleLoader getModuleLoader() {

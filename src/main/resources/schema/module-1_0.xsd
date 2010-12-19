@@ -36,7 +36,7 @@
         <xsd:all>
             <xsd:element name="dependencies" type="dependenciesType" minOccurs="0"/>
             <xsd:element name="resources" type="resourcesType" minOccurs="0"/>
-            <xsd:element name="main-class" type="classNameType" minOccurs="0"/>
+            <xsd:element name="main-class" type="nameType" minOccurs="0"/>
         </xsd:all>
         <xsd:attribute name="name" type="xsd:string" use="required"/>
     </xsd:complexType>
@@ -66,7 +66,7 @@
         </xsd:restriction>
     </xsd:simpleType>
 
-    <xsd:complexType name="classNameType">
+    <xsd:complexType name="nameType">
         <xsd:attribute name="name" type="xsd:string" use="required"/>
     </xsd:complexType>
 
@@ -90,11 +90,19 @@
         <xsd:choice minOccurs="0" maxOccurs="unbounded">
             <xsd:element name="include" type="pathSpecType" minOccurs="0"/>
             <xsd:element name="exclude" type="pathSpecType" minOccurs="0"/>
+            <xsd:element name="include-set" type="pathSetType" minOccurs="0"/>
+            <xsd:element name="exclude-set" type="pathSetType" minOccurs="0"/>
         </xsd:choice>
     </xsd:complexType>
 
     <xsd:complexType name="pathSpecType">
         <xsd:attribute name="path" type="xsd:string" use="required"/>
+    </xsd:complexType>
+
+    <xsd:complexType name="pathSetType">
+        <xsd:choice minOccurs="0" maxOccurs="unbounded">
+            <xsd:element name="path" type="nameType" minOccurs="0"/>
+        </xsd:choice>
     </xsd:complexType>
 
 </xsd:schema>
