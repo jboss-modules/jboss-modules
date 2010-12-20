@@ -34,7 +34,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -145,7 +144,7 @@ public abstract class ModuleLoader {
      * @throws ModuleLoadException if the Module can not be loaded
      */
     public final Module loadModule(ModuleIdentifier identifier) throws ModuleLoadException {
-        return loadModule(identifier, new HashSet<Module>());
+        return loadModule(identifier, new FastCopyHashSet<Module>());
     }
 
     final Module loadModule(ModuleIdentifier identifier, Set<Module> visited) throws ModuleLoadException {

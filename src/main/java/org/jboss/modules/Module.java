@@ -34,7 +34,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -689,7 +688,7 @@ public final class Module {
      * (Re)calculate the exports paths.
      */
     Paths<LocalLoader, Dependency> linkExports(final Paths<LocalLoader, Dependency> paths) throws ModuleLoadException {
-        return linkExports(paths, new HashSet<Module>());
+        return linkExports(paths, new FastCopyHashSet<Module>());
     }
 
 
@@ -753,7 +752,7 @@ public final class Module {
     }
 
     private void linkImports(final Paths<LocalLoader, Dependency> paths) throws ModuleLoadException {
-        final Set<Module> visited = new HashSet<Module>();
+        final Set<Module> visited = new FastCopyHashSet<Module>();
         visited.add(this);
         final Map<String, List<LocalLoader>> newMap = new HashMap<String, List<LocalLoader>>();
 
@@ -814,12 +813,14 @@ public final class Module {
             try {
                 linkExports(paths);
             } catch (ModuleLoadException e) {
+                log.trace(e, "Failed to link exports for %s", this);
                 throw e.toError();
             }
         } else {
             try {
                 linkImports(paths);
             } catch (ModuleLoadException e) {
+                log.trace(e, "Failed to link imports for %s", this);
                 throw e.toError();
             }
         }
@@ -879,7 +880,7 @@ public final class Module {
     }
 
     void setDependencies(final List<DependencySpec> dependencySpecs) throws ModuleLoadException {
-        linkExports(paths, calculateDependencies(dependencySpecs), new HashSet<Module>());
+        linkExports(paths, calculateDependencies(dependencySpecs), new FastCopyHashSet<Module>());
     }
 
     private Dependency[] calculateDependencies(final List<DependencySpec> dependencySpecs) {

@@ -23,7 +23,6 @@
 package org.jboss.modules;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -154,7 +153,7 @@ public final class PathFilters {
      * @return the filter
      */
     public static PathFilter in(Set<String> paths) {
-        return new SetPathFilter(new HashSet<String>(paths));
+        return new SetPathFilter(new FastCopyHashSet<String>(paths));
     }
 
     private static final PathFilter defaultImportFilter;

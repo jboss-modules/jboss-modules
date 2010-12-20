@@ -29,7 +29,6 @@ import java.security.AccessController;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.zip.ZipEntry;
@@ -43,8 +42,8 @@ final class SystemLocalLoader implements LocalLoader {
     private final Set<String> pathSet;
 
     private SystemLocalLoader() {
-        final Set<String> pathSet = new HashSet<String>(128);
-        final Set<String> jarSet = new HashSet<String>(128);
+        final Set<String> pathSet = new FastCopyHashSet<String>(1024);
+        final Set<String> jarSet = new FastCopyHashSet<String>(1024);
         final String sunBootClassPath = AccessController.doPrivileged(new PropertyReadAction("sun.boot.class.path"));
         final String javaClassPath = AccessController.doPrivileged(new PropertyReadAction("java.class.path"));
         processClassPathItem(sunBootClassPath, jarSet, pathSet);

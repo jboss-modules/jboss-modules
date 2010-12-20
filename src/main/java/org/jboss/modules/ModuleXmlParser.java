@@ -36,7 +36,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarFile;
@@ -591,7 +590,7 @@ final class ModuleXmlParser {
     }
 
     private static void parseSet(final XMLStreamReader reader, final boolean include, final MultiplePathFilterBuilder builder) throws XMLStreamException {
-        final Set<String> set = new HashSet<String>();
+        final Set<String> set = new FastCopyHashSet<String>();
         // xsd:choice
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
