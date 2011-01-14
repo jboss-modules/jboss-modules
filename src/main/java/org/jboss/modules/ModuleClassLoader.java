@@ -172,6 +172,9 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         // Check if we have already loaded it..
         Class<?> loadedClass = findLoadedClass(className);
         if (loadedClass != null) {
+            if (resolve) {
+                resolveClass(loadedClass);
+            }
             return loadedClass;
         }
         final ModuleLogger log = Module.log;
@@ -207,6 +210,9 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         Class<?> loadedClass = findLoadedClass(className);
         if (loadedClass != null) {
             log.trace("Found previously loaded %s from %s", loadedClass, module);
+            if (resolve) {
+                resolveClass(loadedClass);
+            }
             return loadedClass;
         }
 
