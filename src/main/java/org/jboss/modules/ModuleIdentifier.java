@@ -34,7 +34,7 @@ public final class ModuleIdentifier implements Serializable {
 
     private static final long serialVersionUID = 118533026624827995L;
 
-    private static Pattern MODULE_NAME_PATTERN = Pattern.compile("[a-zA-Z_][-a-zA-Z0-9_]*(?:\\.[a-zA-Z0-9_][-a-zA-Z0-9_]*)*");
+    private static Pattern MODULE_NAME_PATTERN = Pattern.compile("[a-zA-Z0-9_](?:[-a-zA-Z0-9_]*[a-zA-Z0-9_])?(?:\\.[a-zA-Z0-9_](?:[-a-zA-Z0-9_]*[a-zA-Z0-9_])?)*");
     private static Pattern SLOT_PATTERN = Pattern.compile("[-a-zA-Z0-9_+*.]+");
     private static String DEFAULT_SLOT = "main";
 
