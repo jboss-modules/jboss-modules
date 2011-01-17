@@ -33,7 +33,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.security.AccessController;
+import java.security.CodeSigner;
+import java.security.CodeSource;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -162,6 +165,7 @@ final class FileResourceLoader implements ResourceLoader {
         }
         final long size = file.length();
         final ClassSpec spec = new ClassSpec();
+        spec.setCodeSource(new CodeSource(new URL("file", null, -1, file.getAbsolutePath()), (CodeSigner[])null));
         final InputStream is = new FileInputStream(file);
         try {
             if (size <= (long) Integer.MAX_VALUE) {

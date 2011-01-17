@@ -83,10 +83,7 @@ final class JarFileResourceLoader implements ResourceLoader {
             // no such entry
             return null;
         }
-        final CodeSigner[] codeSigners = entry.getCodeSigners();
-        if (codeSigners != null) {
-            spec.setCodeSource(new CodeSource(new URL("jar", null, -1, jarFile.getName()), codeSigners));
-        }
+        spec.setCodeSource(new CodeSource(new URL("jar", null, -1, jarFile.getName()), entry.getCodeSigners()));
         final long size = entry.getSize();
         final InputStream is = jarFile.getInputStream(entry);
         try {
