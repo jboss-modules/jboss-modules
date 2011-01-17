@@ -34,8 +34,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
-import java.security.CodeSigner;
 import java.security.CodeSource;
 import java.util.Collection;
 import java.util.Enumeration;
@@ -53,6 +54,7 @@ final class JarFileResourceLoader implements ResourceLoader {
     private final JarFile jarFile;
     private final String rootName;
     private final PathFilter exportFilter;
+    private final URL rootUrl;
 
     JarFileResourceLoader(final ModuleIdentifier moduleIdentifier, final JarFile jarFile, final String rootName, final PathFilter exportFilter) {
         if (moduleIdentifier == null) {
@@ -70,6 +72,13 @@ final class JarFileResourceLoader implements ResourceLoader {
         this.jarFile = jarFile;
         this.rootName = rootName;
         this.exportFilter = exportFilter;
+        try {
+            rootUrl = new URI("jar", "file:" + jarFile.getName() + "!/", null).toURL();
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Invalid root file specified", e);
+        } catch (MalformedURLException e) {
+            throw new IllegalArgumentException("Invalid root file specified", e);
+        }
     }
 
     public String getRootName() {
@@ -83,7 +92,7 @@ final class JarFileResourceLoader implements ResourceLoader {
             // no such entry
             return null;
         }
-        spec.setCodeSource(new CodeSource(new URL("jar", null, -1, jarFile.getName()), entry.getCodeSigners()));
+        spec.setCodeSource(new CodeSource(rootUrl, entry.getCodeSigners()));
         final long size = entry.getSize();
         final InputStream is = jarFile.getInputStream(entry);
         try {

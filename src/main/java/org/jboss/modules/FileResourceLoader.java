@@ -33,6 +33,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.AccessController;
 import java.security.CodeSigner;
@@ -121,6 +123,7 @@ final class FileResourceLoader implements ResourceLoader {
     private final File root;
     private final Manifest manifest;
     private final PathFilter exportFilter;
+    private final CodeSource codeSource;
 
     FileResourceLoader(final ModuleIdentifier moduleIdentifier, final File root, final String rootName, final PathFilter exportFilter) {
         if (moduleIdentifier == null) {
@@ -140,6 +143,15 @@ final class FileResourceLoader implements ResourceLoader {
         this.exportFilter = exportFilter;
         final File manifestFile = new File(root, "META-INF" + File.separator + "MANIFEST.MF");
         manifest = readManifestFile(manifestFile);
+        final URL rootUrl;
+        try {
+            rootUrl = new URI("file", null, root.getAbsolutePath(), null).toURL();
+        } catch (MalformedURLException e) {
+            throw new IllegalArgumentException("Invalid root file specified", e);
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Invalid root file specified", e);
+        }
+        codeSource = new CodeSource(rootUrl, (CodeSigner[])null);
     }
 
     private static Manifest readManifestFile(final File manifestFile) {
@@ -165,7 +177,7 @@ final class FileResourceLoader implements ResourceLoader {
         }
         final long size = file.length();
         final ClassSpec spec = new ClassSpec();
-        spec.setCodeSource(new CodeSource(new URL("file", null, -1, file.getAbsolutePath()), (CodeSigner[])null));
+        spec.setCodeSource(codeSource);
         final InputStream is = new FileInputStream(file);
         try {
             if (size <= (long) Integer.MAX_VALUE) {
