@@ -34,7 +34,7 @@ public final class SystemClassPathModuleLoader extends ModuleLoader {
     /**
      * Construct a new instance.
      */
-    public SystemClassPathModuleLoader() {
+    SystemClassPathModuleLoader() {
         super(false, false);
     }
 
