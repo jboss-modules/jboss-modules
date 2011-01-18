@@ -127,10 +127,10 @@ public class ModuleExportTest extends AbstractModuleTestCase {
         moduleLoader.addModuleSpec(builder.create());
 
         builder = ModuleSpec.build(MODULE_C);
-        builder.addResourceRoot(TestResourceLoader.build()
+        builder.addResourceRoot(ResourceLoaderSpec.createResourceLoaderSpec(TestResourceLoader.build()
             .addClass(ImportedClass.class)
             .create()
-        );
+        ));
         builder.addDependency(DependencySpec.createLocalDependencySpec());
         moduleLoader.addModuleSpec(builder.create());
 

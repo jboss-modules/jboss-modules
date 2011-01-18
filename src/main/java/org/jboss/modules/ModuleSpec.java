@@ -37,12 +37,12 @@ public final class ModuleSpec {
     private final ModuleIdentifier moduleIdentifier;
     private final String mainClass;
     private final AssertionSetting assertionSetting;
-    private final ResourceLoader[] resourceLoaders;
+    private final ResourceLoaderSpec[] resourceLoaders;
     private final DependencySpec[] dependencies;
     private final LocalLoader fallbackLoader;
     private final ModuleClassLoaderFactory moduleClassLoaderFactory;
 
-    private ModuleSpec(final ModuleIdentifier moduleIdentifier, final String mainClass, final AssertionSetting assertionSetting, final ResourceLoader[] resourceLoaders, final DependencySpec[] dependencies, final LocalLoader fallbackLoader, final ModuleClassLoaderFactory moduleClassLoaderFactory) {
+    private ModuleSpec(final ModuleIdentifier moduleIdentifier, final String mainClass, final AssertionSetting assertionSetting, final ResourceLoaderSpec[] resourceLoaders, final DependencySpec[] dependencies, final LocalLoader fallbackLoader, final ModuleClassLoaderFactory moduleClassLoaderFactory) {
         this.moduleIdentifier = moduleIdentifier;
         this.mainClass = mainClass;
         this.assertionSetting = assertionSetting;
@@ -69,7 +69,7 @@ public final class ModuleSpec {
         return assertionSetting;
     }
 
-    ResourceLoader[] getResourceLoaders() {
+    ResourceLoaderSpec[] getResourceLoaders() {
         return resourceLoaders;
     }
 
@@ -120,7 +120,7 @@ public final class ModuleSpec {
          * @param resourceLoader the resource loader for the root
          * @return this builder
          */
-        Builder addResourceRoot(ResourceLoader resourceLoader);
+        Builder addResourceRoot(ResourceLoaderSpec resourceLoader);
 
         /**
          * Create the module specification from this builder.
@@ -165,7 +165,7 @@ public final class ModuleSpec {
         return new Builder() {
             private String mainClass;
             private AssertionSetting assertionSetting = AssertionSetting.INHERIT;
-            private final List<ResourceLoader> resourceLoaders = new ArrayList<ResourceLoader>(0);
+            private final List<ResourceLoaderSpec> resourceLoaders = new ArrayList<ResourceLoaderSpec>(0);
             private final List<DependencySpec> dependencies = new ArrayList<DependencySpec>();
             private LocalLoader fallbackLoader;
             private ModuleClassLoaderFactory moduleClassLoaderFactory;
@@ -195,7 +195,7 @@ public final class ModuleSpec {
             }
 
             @Override
-            public Builder addResourceRoot(final ResourceLoader resourceLoader) {
+            public Builder addResourceRoot(final ResourceLoaderSpec resourceLoader) {
                 resourceLoaders.add(resourceLoader);
                 return this;
             }
@@ -208,7 +208,7 @@ public final class ModuleSpec {
 
             @Override
             public ModuleSpec create() {
-                return new ModuleSpec(moduleIdentifier, mainClass, assertionSetting, resourceLoaders.toArray(new ResourceLoader[resourceLoaders.size()]), dependencies.toArray(new DependencySpec[dependencies.size()]), fallbackLoader, moduleClassLoaderFactory);
+                return new ModuleSpec(moduleIdentifier, mainClass, assertionSetting, resourceLoaders.toArray(new ResourceLoaderSpec[resourceLoaders.size()]), dependencies.toArray(new DependencySpec[dependencies.size()]), fallbackLoader, moduleClassLoaderFactory);
             }
 
             @Override

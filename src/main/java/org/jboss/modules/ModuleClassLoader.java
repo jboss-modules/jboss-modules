@@ -56,11 +56,11 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         }
     }
 
-    static final ResourceLoader[] NO_RESOURCE_LOADERS = new ResourceLoader[0];
+    static final ResourceLoaderSpec[] NO_RESOURCE_LOADERS = new ResourceLoaderSpec[0];
 
     private final Module module;
 
-    private volatile Paths<ResourceLoader, ResourceLoader> paths;
+    private volatile Paths<ResourceLoader, ResourceLoaderSpec> paths;
 
     private final LocalLoader localLoader = new LocalLoader() {
         public Class<?> loadClassLocal(final String name, final boolean resolve) {
@@ -84,7 +84,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         }
     };
 
-    private static final AtomicReferenceFieldUpdater<ModuleClassLoader, Paths<ResourceLoader, ResourceLoader>> pathsUpdater
+    private static final AtomicReferenceFieldUpdater<ModuleClassLoader, Paths<ResourceLoader, ResourceLoaderSpec>> pathsUpdater
             = unsafeCast(AtomicReferenceFieldUpdater.newUpdater(ModuleClassLoader.class, Paths.class, "paths"));
 
     @SuppressWarnings({ "unchecked" })
@@ -99,7 +99,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
      */
     protected ModuleClassLoader(final Configuration configuration) {
         module = configuration.getModule();
-        paths = new Paths<ResourceLoader, ResourceLoader>(configuration.getResourceLoaders(), Collections.<String, List<ResourceLoader>>emptyMap(), Collections.<String, List<ResourceLoader>>emptyMap());
+        paths = new Paths<ResourceLoader, ResourceLoaderSpec>(configuration.getResourceLoaders(), Collections.<String, List<ResourceLoader>>emptyMap(), Collections.<String, List<ResourceLoader>>emptyMap());
         final AssertionSetting setting = configuration.getAssertionSetting();
         if (setting != AssertionSetting.INHERIT) {
             setDefaultAssertionStatus(setting == AssertionSetting.ENABLED);
@@ -113,7 +113,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
      *  before the calling thread
      */
     boolean recalculate() {
-        final Paths<ResourceLoader, ResourceLoader> paths = this.paths;
+        final Paths<ResourceLoader, ResourceLoaderSpec> paths = this.paths;
         return setResourceLoaders(paths, paths.getSourceList(NO_RESOURCE_LOADERS));
     }
 
@@ -124,25 +124,29 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
      * @return {@code true} if the paths were recalculated, or {@code false} if another thread finished recalculating
      *  before the calling thread
      */
-    boolean setResourceLoaders(final ResourceLoader[] resourceLoaders) {
+    boolean setResourceLoaders(final ResourceLoaderSpec[] resourceLoaders) {
         return setResourceLoaders(paths, resourceLoaders);
     }
 
-    private boolean setResourceLoaders(final Paths<ResourceLoader, ResourceLoader> paths, final ResourceLoader[] resourceLoaders) {
+    private boolean setResourceLoaders(final Paths<ResourceLoader, ResourceLoaderSpec> paths, final ResourceLoaderSpec[] resourceLoaders) {
         final Map<String, List<ResourceLoader>> allPaths = new HashMap<String, List<ResourceLoader>>();
-        for (ResourceLoader loader : resourceLoaders) {
+        for (ResourceLoaderSpec loaderSpec : resourceLoaders) {
+            final ResourceLoader loader = loaderSpec.getResourceLoader();
+            final PathFilter filter = loaderSpec.getPathFilter();
             for (String path : loader.getPaths()) {
-                final List<ResourceLoader> allLoaders = allPaths.get(path);
-                if (allLoaders == null) {
-                    ArrayList<ResourceLoader> newList = new ArrayList<ResourceLoader>(16);
-                    newList.add(loader);
-                    allPaths.put(path, newList);
-                } else {
-                    allLoaders.add(loader);
+                if (filter.accept(path)) {
+                    final List<ResourceLoader> allLoaders = allPaths.get(path);
+                    if (allLoaders == null) {
+                        ArrayList<ResourceLoader> newList = new ArrayList<ResourceLoader>(16);
+                        newList.add(loader);
+                        allPaths.put(path, newList);
+                    } else {
+                        allLoaders.add(loader);
+                    }
                 }
             }
         }
-        return pathsUpdater.compareAndSet(this, paths, new Paths<ResourceLoader, ResourceLoader>(resourceLoaders, allPaths, null));
+        return pathsUpdater.compareAndSet(this, paths, new Paths<ResourceLoader, ResourceLoaderSpec>(resourceLoaders, allPaths, null));
     }
 
     /**
@@ -430,8 +434,8 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         final ModuleLogger log = Module.log;
         log.trace("Attempting to load native library %s from %s", libname, module);
 
-        for (ResourceLoader loader : paths.getSourceList(NO_RESOURCE_LOADERS)) {
-            final String library = loader.getLibrary(libname);
+        for (ResourceLoaderSpec loader : paths.getSourceList(NO_RESOURCE_LOADERS)) {
+            final String library = loader.getResourceLoader().getLibrary(libname);
             if (library != null) {
                 return library;
             }
@@ -558,7 +562,13 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
     }
 
     ResourceLoader[] getResourceLoaders() {
-        return paths.getSourceList(NO_RESOURCE_LOADERS);
+        final ResourceLoaderSpec[] specs = paths.getSourceList(NO_RESOURCE_LOADERS);
+        final int length = specs.length;
+        final ResourceLoader[] loaders = new ResourceLoader[length];
+        for (int i = 0; i < length; i++) {
+            loaders[i] = specs[i].getResourceLoader();
+        }
+        return loaders;
     }
 
     /**
@@ -567,9 +577,9 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
     protected static final class Configuration {
         private final Module module;
         private final AssertionSetting assertionSetting;
-        private final ResourceLoader[] resourceLoaders;
+        private final ResourceLoaderSpec[] resourceLoaders;
 
-        Configuration(final Module module, final AssertionSetting assertionSetting, final ResourceLoader[] resourceLoaders) {
+        Configuration(final Module module, final AssertionSetting assertionSetting, final ResourceLoaderSpec[] resourceLoaders) {
             this.module = module;
             this.assertionSetting = assertionSetting;
             this.resourceLoaders = resourceLoaders;
@@ -583,7 +593,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
             return assertionSetting;
         }
 
-        ResourceLoader[] getResourceLoaders() {
+        ResourceLoaderSpec[] getResourceLoaders() {
             return resourceLoaders;
         }
     }

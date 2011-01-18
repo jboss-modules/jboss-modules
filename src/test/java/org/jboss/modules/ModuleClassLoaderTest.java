@@ -66,24 +66,24 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
         moduleLoader = new TestModuleLoader();
 
         final ModuleSpec.Builder moduleWithContentBuilder = ModuleSpec.build(MODULE_WITH_CONTENT_ID);
-        moduleWithContentBuilder.addResourceRoot(
+        moduleWithContentBuilder.addResourceRoot(ResourceLoaderSpec.createResourceLoaderSpec(
                 TestResourceLoader.build()
                 .addClass(TestClass.class)
                 .addResources(getResource("test/modulecontentloader/rootOne"))
                 .create()
-        );
+        ));
         moduleWithContentBuilder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_TO_IMPORT_ID));
         moduleWithContentBuilder.addDependency(DependencySpec.createLocalDependencySpec());
         moduleLoader.addModuleSpec(moduleWithContentBuilder.create());
 
         final ModuleSpec.Builder moduleToImportBuilder = ModuleSpec.build(MODULE_TO_IMPORT_ID);
-        moduleToImportBuilder.addResourceRoot(
+        moduleToImportBuilder.addResourceRoot(ResourceLoaderSpec.createResourceLoaderSpec(
                 TestResourceLoader.build()
                 .addClass(ImportedClass.class)
                 .addClass(ImportedInterface.class)
                 .addResources(getResource("test/modulecontentloader/rootTwo"))
                 .create()
-        );
+        ));
         moduleToImportBuilder.addDependency(DependencySpec.createLocalDependencySpec());
         moduleLoader.addModuleSpec(moduleToImportBuilder.create());
 

@@ -339,11 +339,11 @@ public abstract class ModuleLoader {
      * @param module the module to update and refresh
      * @param loaders the new collection of loaders the module should use
      */
-    protected void setAndRefreshResourceLoaders(Module module, Collection<ResourceLoader> loaders) {
+    protected void setAndRefreshResourceLoaders(Module module, Collection<ResourceLoaderSpec> loaders) {
         if (!canRedefine)
             throw new SecurityException("Module redefinition requires canRedefineModule permission");
 
-        module.getClassLoaderPrivate().setResourceLoaders(loaders.toArray(new ResourceLoader[loaders.size()]));
+        module.getClassLoaderPrivate().setResourceLoaders(loaders.toArray(new ResourceLoaderSpec[loaders.size()]));
     }
 
     /**

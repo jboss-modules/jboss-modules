@@ -293,6 +293,15 @@
                 A resource root within a deployment.
             </documentation>
         </annotation>
+        <xsd:all>
+            <xsd:element name="filter" type="filterType">
+                <annotation xmlns="http://www.w3.org/2001/XMLSchema">
+                    <documentation>
+                        A path filter specification for this resource root (optional). By default all paths are accepted.
+                    </documentation>
+                </annotation>
+            </xsd:element>
+        </xsd:all>
         <xsd:attribute name="name" type="xsd:string" use="optional">
             <annotation xmlns="http://www.w3.org/2001/XMLSchema">
                 <documentation>

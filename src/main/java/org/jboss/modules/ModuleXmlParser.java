@@ -66,6 +66,7 @@ final class ModuleXmlParser {
         MAIN_CLASS,
         RESOURCE_ROOT,
         PATH,
+        FILTER,
 
         // default unknown element
         UNKNOWN;
@@ -86,6 +87,7 @@ final class ModuleXmlParser {
             elementsMap.put(new QName(NAMESPACE, "exclude"), Element.EXCLUDE);
             elementsMap.put(new QName(NAMESPACE, "include-set"), Element.INCLUDE_SET);
             elementsMap.put(new QName(NAMESPACE, "exclude-set"), Element.EXCLUDE_SET);
+            elementsMap.put(new QName(NAMESPACE, "filter"), Element.FILTER);
             elements = elementsMap;
         }
 
@@ -502,8 +504,10 @@ final class ModuleXmlParser {
         if (name == null) name = path;
         final File file = new File(root, path);
 
+        final MultiplePathFilterBuilder filterBuilder = new MultiplePathFilterBuilder(true);
         final ResourceLoader resourceLoader;
 
+        final Set<Element> encountered = EnumSet.noneOf(Element.class);
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {
@@ -516,11 +520,14 @@ final class ModuleXmlParser {
                             throw new XMLStreamException("Invalid JAR file specified", reader.getLocation(), e);
                         }
                     }
-                    specBuilder.addResourceRoot(resourceLoader);
+                    specBuilder.addResourceRoot(new ResourceLoaderSpec(resourceLoader, filterBuilder.create()));
                     return;
                 }
                 case XMLStreamConstants.START_ELEMENT: {
-                    switch (Element.of(reader.getName())) {
+                    final Element element = Element.of(reader.getName());
+                    if (! encountered.add(element)) throw unexpectedContent(reader);
+                    switch (element) {
+                        case FILTER: parseFilterList(reader, filterBuilder); break;
                         default: throw unexpectedContent(reader);
                     }
                     // not reached
