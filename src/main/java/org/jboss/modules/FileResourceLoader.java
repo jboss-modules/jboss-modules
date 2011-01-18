@@ -39,7 +39,6 @@ import java.net.URL;
 import java.security.AccessController;
 import java.security.CodeSigner;
 import java.security.CodeSource;
-import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -54,69 +53,75 @@ final class FileResourceLoader implements ResourceLoader {
     private static final String ARCH_NAME;
 
     static {
-        ARCH_NAME = AccessController.doPrivileged(new PrivilegedAction<String>() {
-            public String run() {
-                final String sysName = System.getProperty("os.name").toUpperCase();
-                final String sysArch = System.getProperty("os.arch").toUpperCase();
-                final String realName;
-                final String realArch;
-                if (sysName.startsWith("Linux")) {
-                    realName = "linux";
-                } else if (sysName.startsWith("MAC OS")) {
-                    realName = "macosx";
-                } else if (sysName.startsWith("WINDOWS")) {
-                    realName = "win";
-                } else if (sysName.startsWith("OS/2")) {
-                    realName = "os2";
-                } else if (sysName.startsWith("SOLARIS") || sysName.startsWith("SUNOS")) {
-                    realName = "solaris";
-                } else if (sysName.startsWith("MPE/IX")) {
-                    realName = "mpeix";
-                } else if (sysName.startsWith("HP-UX")) {
-                    realName = "hpux";
-                } else if (sysName.startsWith("AIX")) {
-                    realName = "aix";
-                } else if (sysName.startsWith("OS/390")) {
-                    realName = "os390";
-                } else if (sysName.startsWith("FREEBSD")) {
-                    realName = "freebsd";
-                } else if (sysName.startsWith("IRIX")) {
-                    realName = "irix";
-                } else if (sysName.startsWith("DIGITAL UNIX")) {
-                    realName = "digitalunix";
-                } else if (sysName.startsWith("OSF1")) {
-                    realName = "osf1";
-                } else if (sysName.startsWith("OPENVMS")) {
-                    realName = "openvms";
-                } else {
-                    realName = "unknown";
-                }
-                if (sysArch.startsWith("SPARCV9") || sysArch.startsWith("SPARC64")) {
-                    realArch = "sparcv9";
-                } else if (sysArch.startsWith("SPARC")) {
-                    realArch = "sparc";
-                } else if (sysArch.startsWith("X86_64")) {
-                    realArch = "x86_64";
-                } else if (sysArch.startsWith("I386") || sysArch.startsWith("I586") || sysArch.startsWith("I686") || sysArch.startsWith("X86")) {
-                    realArch = "i686";
-                } else if (sysArch.startsWith("PPC64")) {
-                    realArch = "ppc64";
-                } else if (sysArch.startsWith("PPC") || sysArch.startsWith("POWER")) {
-                    realArch = "ppc";
-                } else if (sysArch.startsWith("ARM")) {
-                    realArch = "arm";
-                } else if (sysArch.startsWith("PA_RISC") || sysArch.startsWith("PA-RISC")) {
-                    realArch = "parisc";
-                } else if (sysArch.startsWith("ALPHA")) {
-                    realArch = "alpha";
-                } else if (sysArch.startsWith("MIPS")) {
-                    realArch = "mips";
-                } else {
-                    realArch = "unknown";
-                }
-                return realName + "-" + realArch;
-            }
-        });
+        final PropertyReadAction osNameReadAction = new PropertyReadAction("os.name");
+        final PropertyReadAction osArchReadAction = new PropertyReadAction("os.arch");
+        final SecurityManager sm = System.getSecurityManager();
+        final String sysName;
+        final String sysArch;
+        if (sm != null) {
+            sysName = AccessController.doPrivileged(osNameReadAction).toUpperCase();
+            sysArch = AccessController.doPrivileged(osArchReadAction).toUpperCase();
+        } else {
+            sysName = osNameReadAction.run().toUpperCase();
+            sysArch = osArchReadAction.run().toUpperCase();
+        }
+        final String realName;
+        final String realArch;
+        if (sysName.startsWith("Linux")) {
+            realName = "linux";
+        } else if (sysName.startsWith("MAC OS")) {
+            realName = "macosx";
+        } else if (sysName.startsWith("WINDOWS")) {
+            realName = "win";
+        } else if (sysName.startsWith("OS/2")) {
+            realName = "os2";
+        } else if (sysName.startsWith("SOLARIS") || sysName.startsWith("SUNOS")) {
+            realName = "solaris";
+        } else if (sysName.startsWith("MPE/IX")) {
+            realName = "mpeix";
+        } else if (sysName.startsWith("HP-UX")) {
+            realName = "hpux";
+        } else if (sysName.startsWith("AIX")) {
+            realName = "aix";
+        } else if (sysName.startsWith("OS/390")) {
+            realName = "os390";
+        } else if (sysName.startsWith("FREEBSD")) {
+            realName = "freebsd";
+        } else if (sysName.startsWith("IRIX")) {
+            realName = "irix";
+        } else if (sysName.startsWith("DIGITAL UNIX")) {
+            realName = "digitalunix";
+        } else if (sysName.startsWith("OSF1")) {
+            realName = "osf1";
+        } else if (sysName.startsWith("OPENVMS")) {
+            realName = "openvms";
+        } else {
+            realName = "unknown";
+        }
+        if (sysArch.startsWith("SPARCV9") || sysArch.startsWith("SPARC64")) {
+            realArch = "sparcv9";
+        } else if (sysArch.startsWith("SPARC")) {
+            realArch = "sparc";
+        } else if (sysArch.startsWith("X86_64")) {
+            realArch = "x86_64";
+        } else if (sysArch.startsWith("I386") || sysArch.startsWith("I586") || sysArch.startsWith("I686") || sysArch.startsWith("X86")) {
+            realArch = "i686";
+        } else if (sysArch.startsWith("PPC64")) {
+            realArch = "ppc64";
+        } else if (sysArch.startsWith("PPC") || sysArch.startsWith("POWER")) {
+            realArch = "ppc";
+        } else if (sysArch.startsWith("ARM")) {
+            realArch = "arm";
+        } else if (sysArch.startsWith("PA_RISC") || sysArch.startsWith("PA-RISC")) {
+            realArch = "parisc";
+        } else if (sysArch.startsWith("ALPHA")) {
+            realArch = "alpha";
+        } else if (sysArch.startsWith("MIPS")) {
+            realArch = "mips";
+        } else {
+            realArch = "unknown";
+        }
+        ARCH_NAME = realName + "-" + realArch;
     }
 
     private final String rootName;
