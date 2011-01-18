@@ -28,7 +28,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLConnection;
-import java.net.URLStreamHandler;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
