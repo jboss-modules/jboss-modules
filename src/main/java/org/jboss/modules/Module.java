@@ -27,6 +27,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLStreamHandler;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
@@ -60,6 +62,11 @@ public final class Module {
             public Void run() {
                 try {
                     URL.setURLStreamHandlerFactory(new ModularURLStreamHandlerFactory());
+                } catch (Throwable t) {
+                    // todo log a warning or something
+                }
+                try {
+                    URLConnection.setContentHandlerFactory(new ModularContentHandlerFactory());
                 } catch (Throwable t) {
                     // todo log a warning or something
                 }
