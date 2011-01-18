@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import org.jboss.modules.log.ModuleLogger;
 
 /**
  * A module classloader.  Instances of this class implement the complete view of classes and resources available in a

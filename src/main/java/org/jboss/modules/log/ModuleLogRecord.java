@@ -20,7 +20,7 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.jboss.modules;
+package org.jboss.modules.log;
 
 import java.util.logging.LogRecord;
 import java.util.logging.Level;

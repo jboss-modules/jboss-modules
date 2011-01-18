@@ -22,6 +22,7 @@
 
 package org.jboss.modules;
 
+import org.jboss.modules.log.StreamModuleLogger;
 import org.jboss.modules.util.Util;
 import org.junit.BeforeClass;
 

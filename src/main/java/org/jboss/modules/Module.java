@@ -40,6 +40,8 @@ import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import org.jboss.modules.log.ModuleLogger;
+import org.jboss.modules.log.NoopModuleLogger;
 
 /**
 * A module is a unit of classes and other resources, along with the specification of what is imported and exported
@@ -94,7 +96,7 @@ public final class Module {
     static final String[] systemPackages;
 
     /**
-     * The system-wide module logger, which may be changed via {@link #setModuleLogger(ModuleLogger)}.
+     * The system-wide module logger, which may be changed via {@link #setModuleLogger(org.jboss.modules.log.ModuleLogger)}.
      */
     static volatile ModuleLogger log = NoopModuleLogger.getInstance();
 

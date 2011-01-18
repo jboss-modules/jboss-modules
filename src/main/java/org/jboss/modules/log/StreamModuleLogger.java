@@ -19,10 +19,14 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.modules;
+
+package org.jboss.modules.log;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
+import org.jboss.modules.Module;
+import org.jboss.modules.ModuleIdentifier;
+import org.jboss.modules.ModuleLoader;
 
 /**
  * A {@link ModuleLogger} implementation that logs all output (including trace) to an output or print stream.

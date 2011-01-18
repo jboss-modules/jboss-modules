@@ -30,6 +30,7 @@ import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import org.jboss.modules.log.JDKModuleLogger;
 
 import java.util.logging.LogManager;
 

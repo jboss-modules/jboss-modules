@@ -43,6 +43,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.jboss.modules.log.ModuleLogger;
 import org.jboss.modules.management.DependencyInfo;
 import org.jboss.modules.management.ModuleInfo;
 import org.jboss.modules.management.ModuleLoaderMXBean;
