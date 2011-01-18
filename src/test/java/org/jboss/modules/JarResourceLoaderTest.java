@@ -53,7 +53,7 @@ public class JarResourceLoaderTest extends AbstractResourceLoaderTestCase {
         buildJar(fileResourceRoot, outputFile);
         // Create the jar file and resource loader
         jarFile = new JarFile(outputFile);
-        return new JarFileResourceLoader(MODULE_ID, jarFile, "test-root", exportFilter);
+        return new JarFileResourceLoader(MODULE_ID, jarFile, "test-root");
     }
 
     @Override

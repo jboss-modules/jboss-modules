@@ -86,11 +86,4 @@ public interface ResourceLoader {
      * @return the resource paths
      */
     Collection<String> getPaths();
-
-    /**
-     * Get the export filter for this resource loader.
-     *
-     * @return the export filter
-     */
-    PathFilter getExportFilter();
 }

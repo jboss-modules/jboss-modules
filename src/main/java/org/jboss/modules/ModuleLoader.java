@@ -529,7 +529,7 @@ public abstract class ModuleLoader {
             final ResourceLoader[] loaders = classLoader.getResourceLoaders();
             final ArrayList<ResourceLoaderInfo> list = new ArrayList<ResourceLoaderInfo>(loaders.length);
             for (ResourceLoader resourceLoader : loaders) {
-                list.add(new ResourceLoaderInfo(resourceLoader.getClass().getName(), resourceLoader.getExportFilter().toString(), new ArrayList<String>(resourceLoader.getPaths())));
+                list.add(new ResourceLoaderInfo(resourceLoader.getClass().getName(), new ArrayList<String>(resourceLoader.getPaths())));
             }
             return list;
         }

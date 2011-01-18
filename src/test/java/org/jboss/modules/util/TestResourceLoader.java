@@ -41,8 +41,6 @@ import java.util.jar.Manifest;
 
 import org.jboss.modules.ClassSpec;
 import org.jboss.modules.PackageSpec;
-import org.jboss.modules.PathFilter;
-import org.jboss.modules.PathFilters;
 import org.jboss.modules.Resource;
 import org.jboss.modules.ResourceLoader;
 
@@ -136,11 +134,6 @@ public class TestResourceLoader implements ResourceLoader {
             paths.add(current);
             current += "/";
         }
-    }
-
-    @Override
-    public PathFilter getExportFilter() {
-        return PathFilters.acceptAll();
     }
 
     @Override

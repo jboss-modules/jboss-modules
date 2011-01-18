@@ -26,28 +26,40 @@ import java.beans.ConstructorProperties;
 import java.util.List;
 
 /**
+ * Information about a resource loader.
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class ResourceLoaderInfo {
     private final String type;
-    private final String exportFilter;
     private final List<String> paths;
 
-    @ConstructorProperties({"type", "exportFilter", "paths"})
-    public ResourceLoaderInfo(final String type, final String exportFilter, final List<String> paths) {
+    /**
+     * Construct a new instance.
+     *
+     * @param type the type name
+     * @param paths the paths list
+     */
+    @ConstructorProperties({"type", "paths"})
+    public ResourceLoaderInfo(final String type, final List<String> paths) {
         this.type = type;
-        this.exportFilter = exportFilter;
         this.paths = paths;
     }
 
+    /**
+     * Get the type name.
+     *
+     * @return the type name
+     */
     public String getType() {
         return type;
     }
 
-    public String getExportFilter() {
-        return exportFilter;
-    }
-
+    /**
+     * Get the paths list.
+     *
+     * @return the paths list
+     */
     public List<String> getPaths() {
         return paths;
     }

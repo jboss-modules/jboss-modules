@@ -53,10 +53,9 @@ import java.util.jar.Manifest;
 final class JarFileResourceLoader implements ResourceLoader {
     private final JarFile jarFile;
     private final String rootName;
-    private final PathFilter exportFilter;
     private final URL rootUrl;
 
-    JarFileResourceLoader(final ModuleIdentifier moduleIdentifier, final JarFile jarFile, final String rootName, final PathFilter exportFilter) {
+    JarFileResourceLoader(final ModuleIdentifier moduleIdentifier, final JarFile jarFile, final String rootName) {
         if (moduleIdentifier == null) {
             throw new IllegalArgumentException("moduleIdentifier is null");
         }
@@ -66,12 +65,8 @@ final class JarFileResourceLoader implements ResourceLoader {
         if (rootName == null) {
             throw new IllegalArgumentException("rootName is null");
         }
-        if (exportFilter == null) {
-            throw new IllegalArgumentException("exportFilter is null");
-        }
         this.jarFile = jarFile;
         this.rootName = rootName;
-        this.exportFilter = exportFilter;
         try {
             rootUrl = new URI("jar", "file:" + jarFile.getName() + "!/", null).toURL();
         } catch (URISyntaxException e) {
@@ -134,10 +129,6 @@ final class JarFileResourceLoader implements ResourceLoader {
         } catch (IOException e) {
             // ignore
         }
-    }
-
-    public PathFilter getExportFilter() {
-        return exportFilter;
     }
 
     public PackageSpec getPackageSpec(final String name) throws IOException {

@@ -23,18 +23,18 @@
 package org.jboss.modules;
 
 /**
- * The module loader for the system module.
+ * The module loader for the system/application class path module.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class SystemModuleLoader extends ModuleLoader {
+public final class SystemClassPathModuleLoader extends ModuleLoader {
 
-    static final SystemModuleLoader INSTANCE = new SystemModuleLoader();
+    static final SystemClassPathModuleLoader INSTANCE = new SystemClassPathModuleLoader();
 
     /**
      * Construct a new instance.
      */
-    public SystemModuleLoader() {
+    public SystemClassPathModuleLoader() {
         super(false, false);
     }
 
@@ -43,7 +43,7 @@ public final class SystemModuleLoader extends ModuleLoader {
      *
      * @return the system module loader
      */
-    public static SystemModuleLoader getInstance() {
+    public static SystemClassPathModuleLoader getInstance() {
         return INSTANCE;
     }
 

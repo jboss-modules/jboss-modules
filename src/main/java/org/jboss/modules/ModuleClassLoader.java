@@ -65,18 +65,18 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
     private final LocalLoader localLoader = new LocalLoader() {
         public Class<?> loadClassLocal(final String name, final boolean resolve) {
             try {
-                return ModuleClassLoader.this.loadClassLocal(name, false, resolve);
+                return ModuleClassLoader.this.loadClassLocal(name, resolve);
             } catch (ClassNotFoundException e) {
                 return null;
             }
         }
 
         public List<Resource> loadResourceLocal(final String name) {
-            return ModuleClassLoader.this.loadResourceLocal(name, false);
+            return ModuleClassLoader.this.loadResourceLocal(name);
         }
 
         public Resource loadResourceLocal(final String root, final String name) {
-            return ModuleClassLoader.this.loadResourceLocal(root, name, false);
+            return ModuleClassLoader.this.loadResourceLocal(root, name);
         }
 
         public String toString() {
@@ -129,10 +129,8 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
     }
 
     private boolean setResourceLoaders(final Paths<ResourceLoader, ResourceLoader> paths, final ResourceLoader[] resourceLoaders) {
-        final Map<String, List<ResourceLoader>> exportedPaths = new HashMap<String, List<ResourceLoader>>();
         final Map<String, List<ResourceLoader>> allPaths = new HashMap<String, List<ResourceLoader>>();
         for (ResourceLoader loader : resourceLoaders) {
-            final PathFilter exportFilter = loader.getExportFilter();
             for (String path : loader.getPaths()) {
                 final List<ResourceLoader> allLoaders = allPaths.get(path);
                 if (allLoaders == null) {
@@ -142,19 +140,9 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
                 } else {
                     allLoaders.add(loader);
                 }
-                if (exportFilter.accept(path)) {
-                    final List<ResourceLoader> exportedLoaders = exportedPaths.get(path);
-                    if (exportedLoaders == null) {
-                        ArrayList<ResourceLoader> newList = new ArrayList<ResourceLoader>(16);
-                        newList.add(loader);
-                        exportedPaths.put(path, newList);
-                    } else {
-                        exportedLoaders.add(loader);
-                    }
-                }
             }
         }
-        return pathsUpdater.compareAndSet(this, paths, new Paths<ResourceLoader, ResourceLoader>(resourceLoaders, allPaths, exportedPaths));
+        return pathsUpdater.compareAndSet(this, paths, new Paths<ResourceLoader, ResourceLoader>(resourceLoaders, allPaths, null));
     }
 
     /**
@@ -196,12 +184,11 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
      * Load a local class from this class loader.
      *
      * @param className the class name
-     * @param exportOnly {@code true} to consider only exports
      * @param resolve {@code true} to resolve the loaded class
      * @return the loaded class or {@code null} if it was not found
      * @throws ClassNotFoundException if an error occurs while loading the class
      */
-    Class<?> loadClassLocal(final String className, final boolean exportOnly, final boolean resolve) throws ClassNotFoundException {
+    Class<?> loadClassLocal(final String className, final boolean resolve) throws ClassNotFoundException {
         final ModuleLogger log = Module.log;
         final Module module = this.module;
         log.trace("Finding local class %s from %s", className, module);
@@ -216,7 +203,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
             return loadedClass;
         }
 
-        final Map<String, List<ResourceLoader>> paths = this.paths.getPaths(exportOnly);
+        final Map<String, List<ResourceLoader>> paths = this.paths.getPaths(false);
 
         log.trace("Loading class %s locally from %s", className, module);
 
@@ -266,12 +253,11 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
      *
      * @param root the root name
      * @param name the resource name
-     * @param exportsOnly {@code true} to only include exported paths
      * @return the resource, or {@code null} if it was not found
      */
-    Resource loadResourceLocal(final String root, final String name, final boolean exportsOnly) {
+    Resource loadResourceLocal(final String root, final String name) {
 
-        final Map<String, List<ResourceLoader>> paths = this.paths.getPaths(exportsOnly);
+        final Map<String, List<ResourceLoader>> paths = this.paths.getPaths(false);
 
         final String path = Module.pathOf(name);
 
@@ -294,11 +280,10 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
      * Load a local resource from this class loader.
      *
      * @param name the resource name
-     * @param exportsOnly {@code true} to only consider exported resource paths
      * @return the list of resources
      */
-    List<Resource> loadResourceLocal(final String name, final boolean exportsOnly) {
-        final Map<String, List<ResourceLoader>> paths = this.paths.getPaths(exportsOnly);
+    List<Resource> loadResourceLocal(final String name) {
+        final Map<String, List<ResourceLoader>> paths = this.paths.getPaths(false);
 
         final String path = Module.pathOf(name);
 

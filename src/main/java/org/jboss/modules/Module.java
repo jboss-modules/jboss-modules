@@ -207,7 +207,7 @@ public final class Module {
      * @return the resource
      */
     public Resource getExportedResource(final String rootPath, final String resourcePath) {
-        return moduleClassLoader.loadResourceLocal(rootPath, resourcePath, true);
+        return moduleClassLoader.loadResourceLocal(rootPath, resourcePath);
     }
 
     /**
@@ -218,7 +218,7 @@ public final class Module {
      * @return the resource
      */
     Resource getResource(final String rootPath, final String resourcePath) {
-        return moduleClassLoader.loadResourceLocal(rootPath, resourcePath, false);
+        return moduleClassLoader.loadResourceLocal(rootPath, resourcePath);
     }
 
     /**
@@ -903,7 +903,7 @@ public final class Module {
 
         static {
             try {
-                SYSTEM = SystemModuleLoader.getInstance().loadModule(ModuleIdentifier.SYSTEM);
+                SYSTEM = SystemClassPathModuleLoader.getInstance().loadModule(ModuleIdentifier.SYSTEM);
             } catch (ModuleLoadException e) {
                 throw e.toError();
             }

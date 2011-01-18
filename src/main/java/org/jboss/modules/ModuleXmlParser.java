@@ -501,17 +501,15 @@ final class ModuleXmlParser {
         final File file = new File(root, path);
 
         final ResourceLoader resourceLoader;
-        final MultiplePathFilterBuilder builder = PathFilters.multiplePathFilterBuilder(true);
 
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {
-                    final PathFilter exportFilter = builder.create();
                     if (file.isDirectory()) {
-                        resourceLoader = new FileResourceLoader(identifier, file, name, exportFilter);
+                        resourceLoader = new FileResourceLoader(identifier, file, name);
                     } else {
                         try {
-                            resourceLoader = new JarFileResourceLoader(identifier, new JarFile(file), name, exportFilter);
+                            resourceLoader = new JarFileResourceLoader(identifier, new JarFile(file), name);
                         } catch (IOException e) {
                             throw new XMLStreamException("Invalid JAR file specified", reader.getLocation(), e);
                         }
@@ -521,10 +519,9 @@ final class ModuleXmlParser {
                 }
                 case XMLStreamConstants.START_ELEMENT: {
                     switch (Element.of(reader.getName())) {
-                        case EXPORTS: parseFilterList(reader, builder); break;
                         default: throw unexpectedContent(reader);
                     }
-                    break;
+                    // not reached
                 }
                 default: {
                     throw unexpectedContent(reader);

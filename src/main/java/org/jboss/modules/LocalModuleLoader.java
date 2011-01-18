@@ -74,7 +74,7 @@ public final class LocalModuleLoader extends ModuleLoader {
     @Override
     protected Module preloadModule(final ModuleIdentifier identifier) throws ModuleLoadException {
         if (identifier.equals(ModuleIdentifier.SYSTEM)) {
-            return preloadModule(ModuleIdentifier.SYSTEM, SystemModuleLoader.getInstance());
+            return preloadModule(ModuleIdentifier.SYSTEM, SystemClassPathModuleLoader.getInstance());
         }
         return super.preloadModule(identifier);
     }

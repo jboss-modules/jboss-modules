@@ -126,22 +126,4 @@ public abstract class AbstractResourceLoaderTestCase extends AbstractModuleTestC
         assertNull(spec.getImplVersion());
         assertNull(spec.getImplVendor());
     }
-
-    /**
-     * This test has some repeated bits from the ExportFilterTest, but the main purpose
-     * of this test is to verify the ExportFilter is being created correctly.
-     *
-     * @throws Exception
-     */
-    @Test
-    public void testExportFiltering() throws Exception {
-        final MultiplePathFilterBuilder builder = PathFilters.multiplePathFilterBuilder(false);
-        builder.addFilter(PathFilters.match("nested/other/**"), true);
-        builder.addFilter(PathFilters.match("nested/**"), false);
-        loader = createLoader(builder.create());
-        PathFilter exportFilter = loader.getExportFilter();
-        assertFalse(exportFilter.accept("nested/test"));
-        assertFalse(exportFilter.accept("nested/other"));
-        assertTrue(exportFilter.accept("nested/other/test"));
-    }
 }

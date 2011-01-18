@@ -284,16 +284,6 @@
                 A resource root within a deployment.
             </documentation>
         </annotation>
-        <xsd:choice minOccurs="0" maxOccurs="unbounded">
-            <xsd:element name="exports" type="filterType">
-                <annotation xmlns="http://www.w3.org/2001/XMLSchema">
-                    <documentation>
-                        The list of path filters corresponding to resources exported by this resource root.  By default
-                        all paths are exported.
-                    </documentation>
-                </annotation>
-            </xsd:element>
-        </xsd:choice>
         <xsd:attribute name="name" type="xsd:string" use="optional">
             <annotation xmlns="http://www.w3.org/2001/XMLSchema">
                 <documentation>

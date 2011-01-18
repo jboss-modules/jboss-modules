@@ -30,7 +30,7 @@ import org.jboss.modules.ModuleSpec;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.jboss.modules.SystemModuleLoader;
+import org.jboss.modules.SystemClassPathModuleLoader;
 
 /**
  * Test module loader that allows for modules specs to be added at runtime and it will only load modules from the
@@ -44,7 +44,7 @@ public class TestModuleLoader extends ModuleLoader {
 
     protected Module preloadModule(final ModuleIdentifier identifier) throws ModuleLoadException {
         if (ModuleIdentifier.SYSTEM.equals(identifier)) {
-            return preloadModule(identifier, SystemModuleLoader.getInstance());
+            return preloadModule(identifier, SystemClassPathModuleLoader.getInstance());
         }
         return super.preloadModule(identifier);
     }

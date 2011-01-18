@@ -122,10 +122,9 @@ final class FileResourceLoader implements ResourceLoader {
     private final String rootName;
     private final File root;
     private final Manifest manifest;
-    private final PathFilter exportFilter;
     private final CodeSource codeSource;
 
-    FileResourceLoader(final ModuleIdentifier moduleIdentifier, final File root, final String rootName, final PathFilter exportFilter) {
+    FileResourceLoader(final ModuleIdentifier moduleIdentifier, final File root, final String rootName) {
         if (moduleIdentifier == null) {
             throw new IllegalArgumentException("moduleIdentifier is null");
         }
@@ -135,12 +134,8 @@ final class FileResourceLoader implements ResourceLoader {
         if (rootName == null) {
             throw new IllegalArgumentException("rootName is null");
         }
-        if (exportFilter == null) {
-            throw new IllegalArgumentException("exportFilter is null");
-        }
         this.rootName = rootName;
         this.root = root;
-        this.exportFilter = exportFilter;
         final File manifestFile = new File(root, "META-INF" + File.separator + "MANIFEST.MF");
         manifest = readManifestFile(manifestFile);
         final URL rootUrl;
@@ -160,10 +155,6 @@ final class FileResourceLoader implements ResourceLoader {
         } catch (IOException e) {
             return null;
         }
-    }
-
-    public PathFilter getExportFilter() {
-        return exportFilter;
     }
 
     public String getRootName() {
