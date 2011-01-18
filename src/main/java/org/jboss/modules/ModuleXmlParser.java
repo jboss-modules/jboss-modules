@@ -316,11 +316,12 @@ final class ModuleXmlParser {
             throw invalidModuleName(reader.getLocation(), specBuilder.getIdentifier());
         }
         // xsd:all
+        MultiplePathFilterBuilder exportsBuilder = new MultiplePathFilterBuilder(true);
         Set<Element> visited = EnumSet.noneOf(Element.class);
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {
-                    specBuilder.addDependency(DependencySpec.createLocalDependencySpec());
+                    specBuilder.addDependency(DependencySpec.createLocalDependencySpec(PathFilters.acceptAll(), exportsBuilder.create()));
                     return;
                 }
                 case XMLStreamConstants.START_ELEMENT: {
@@ -330,6 +331,7 @@ final class ModuleXmlParser {
                     }
                     visited.add(element);
                     switch (element) {
+                        case EXPORTS:      parseFilterList(reader, exportsBuilder); break;
                         case DEPENDENCIES: parseDependencies(reader, specBuilder); break;
                         case MAIN_CLASS:   parseMainClass(reader, specBuilder); break;
                         case RESOURCES:    parseResources(root, reader, specBuilder); break;
