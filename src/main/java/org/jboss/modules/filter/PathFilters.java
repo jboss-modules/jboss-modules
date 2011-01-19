@@ -23,8 +23,8 @@
 package org.jboss.modules.filter;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
-import org.jboss.modules.FastCopyHashSet;
 
 /**
  * Static factory methods for path filter types.
@@ -154,7 +154,7 @@ public final class PathFilters {
      * @return the filter
      */
     public static PathFilter in(Set<String> paths) {
-        return new SetPathFilter(new FastCopyHashSet<String>(paths));
+        return new SetPathFilter(new HashSet<String>(paths));
     }
 
     private static final PathFilter defaultImportFilter;

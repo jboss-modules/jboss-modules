@@ -42,7 +42,6 @@ import java.util.jar.JarFile;
 import org.jboss.modules.filter.MultiplePathFilterBuilder;
 import org.jboss.modules.filter.PathFilter;
 import org.jboss.modules.filter.PathFilters;
-import org.jboss.modules.filter.SetPathFilter;
 
 /**
  * A fast, validating module.xml parser.
@@ -322,7 +321,7 @@ final class ModuleXmlParser {
             throw invalidModuleName(reader.getLocation(), specBuilder.getIdentifier());
         }
         // xsd:all
-        MultiplePathFilterBuilder exportsBuilder = new MultiplePathFilterBuilder(true);
+        MultiplePathFilterBuilder exportsBuilder = PathFilters.multiplePathFilterBuilder(true);
         Set<Element> visited = EnumSet.noneOf(Element.class);
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
@@ -508,7 +507,7 @@ final class ModuleXmlParser {
         if (name == null) name = path;
         final File file = new File(root, path);
 
-        final MultiplePathFilterBuilder filterBuilder = new MultiplePathFilterBuilder(true);
+        final MultiplePathFilterBuilder filterBuilder = PathFilters.multiplePathFilterBuilder(true);
         final ResourceLoader resourceLoader;
 
         final Set<Element> encountered = EnumSet.noneOf(Element.class);
@@ -605,7 +604,7 @@ final class ModuleXmlParser {
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {
-                    builder.addFilter(new SetPathFilter(set), include);
+                    builder.addFilter(PathFilters.in(set), include);
                     return;
                 }
                 case XMLStreamConstants.START_ELEMENT: {
