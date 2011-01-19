@@ -22,6 +22,7 @@
 
 package org.jboss.modules;
 
+import org.jboss.modules.filter.PathFilter;
 import org.junit.Assert;
 
 import java.io.BufferedInputStream;

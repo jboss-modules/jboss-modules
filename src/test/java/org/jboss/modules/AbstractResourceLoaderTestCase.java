@@ -33,6 +33,8 @@ import static org.junit.Assert.assertTrue;
 import java.net.URL;
 import java.util.Collection;
 
+import org.jboss.modules.filter.PathFilter;
+import org.jboss.modules.filter.PathFilters;
 import org.junit.Before;
 import org.junit.Test;
 

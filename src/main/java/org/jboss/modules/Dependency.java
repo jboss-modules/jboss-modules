@@ -22,6 +22,8 @@
 
 package org.jboss.modules;
 
+import org.jboss.modules.filter.PathFilter;
+
 /**
  * A dependency item.
  *

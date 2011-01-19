@@ -22,6 +22,8 @@
 
 package org.jboss.modules;
 
+import org.jboss.modules.filter.PathFilter;
+
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */

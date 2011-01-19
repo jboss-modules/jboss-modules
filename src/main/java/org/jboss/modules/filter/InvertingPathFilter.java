@@ -20,50 +20,46 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.jboss.modules;
-
-import java.util.Iterator;
-import java.util.Set;
+package org.jboss.modules.filter;
 
 /**
+ * A path filter which simply inverts the result of another path filter.
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-final class SetPathFilter implements PathFilter {
+final class InvertingPathFilter implements PathFilter {
+    private final PathFilter delegate;
 
-    private final Set<String> paths;
-
-    SetPathFilter(final Set<String> paths) {
-        this.paths = paths;
-    }
-
-    public boolean accept(final String path) {
-        return paths.contains(path);
-    }
-
-    public String toString() {
-        final StringBuilder b = new StringBuilder();
-        b.append("in {");
-        Iterator<String> iterator = paths.iterator();
-        while (iterator.hasNext()) {
-            final String path = iterator.next();
-            b.append(path);
-            if (iterator.hasNext()) {
-                b.append(", ");
-            }
+    /**
+     * Construct a new instance.
+     *
+     * @param delegate the filter to delegate to
+     */
+    InvertingPathFilter(final PathFilter delegate) {
+        if (delegate == null) {
+            throw new IllegalArgumentException("delegate is null");
         }
-        b.append('}');
-        return b.toString();
+        this.delegate = delegate;
     }
 
-    public boolean equals(final Object obj) {
-        return obj instanceof SetPathFilter && equals((SetPathFilter) obj);
-    }
-
-    public boolean equals(final SetPathFilter obj) {
-        return obj != null && obj.paths.equals(paths);
+    /** {@inheritDoc} */
+    public boolean accept(final String path) {
+        return ! delegate.accept(path);
     }
 
     public int hashCode() {
-        return paths.hashCode();
+        return 47 * delegate.hashCode();
+    }
+
+    public boolean equals(final Object obj) {
+        return obj instanceof InvertingPathFilter && equals((InvertingPathFilter) obj);
+    }
+
+    public boolean equals(final InvertingPathFilter obj) {
+        return obj != null && obj.delegate.equals(delegate);
+    }
+
+    public String toString() {
+        return "not " + delegate.toString();
     }
 }

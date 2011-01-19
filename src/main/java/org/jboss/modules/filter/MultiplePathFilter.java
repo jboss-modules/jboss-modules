@@ -20,36 +20,43 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.jboss.modules;
+package org.jboss.modules.filter;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-final class ChildPathFilter implements PathFilter {
+final class MultiplePathFilter implements PathFilter {
+    private final PathFilter[] filters;
+    private final boolean[] includeFlag;
+    private final boolean defaultVal;
 
-    private final String prefix;
-
-    ChildPathFilter(final String path) {
-        prefix = path.charAt(path.length() - 1) == '/' ? path : path + "/";
+    MultiplePathFilter(final PathFilter[] filters, final boolean[] includeFlag, final boolean defaultVal) {
+        this.filters = filters;
+        this.includeFlag = includeFlag;
+        this.defaultVal = defaultVal;
     }
 
     public boolean accept(final String path) {
-        return path.startsWith(prefix);
-    }
-
-    public boolean equals(final Object obj) {
-        return obj instanceof EqualsPathFilter && equals((ChildPathFilter) obj);
-    }
-
-    public boolean equals(final ChildPathFilter obj) {
-        return obj != null && obj.prefix.equals(prefix);
+        final int len = filters.length;
+        for (int i = 0; i < len; i++) {
+            if (filters[i].accept(path)) return includeFlag[i];
+        }
+        return defaultVal;
     }
 
     public String toString() {
-        return "children of \"" + prefix + "\"";
-    }
-
-    public int hashCode() {
-        return prefix.hashCode();
+        StringBuilder builder = new StringBuilder();
+        builder.append("multi-path filter {");
+        int len = filters.length;
+        for (int i = 0; i < len; i++) {
+            final PathFilter filter = filters[i];
+            final boolean include = includeFlag[i];
+            builder.append(include ? "include " : "exclude ");
+            builder.append(filter);
+            builder.append(", ");
+        }
+        builder.append("default ").append(defaultVal ? "accept" : "reject");
+        builder.append('}');
+        return builder.toString();
     }
 }

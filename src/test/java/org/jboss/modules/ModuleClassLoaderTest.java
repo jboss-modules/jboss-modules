@@ -34,6 +34,8 @@ import java.net.URL;
 import java.util.Enumeration;
 import java.util.List;
 
+import org.jboss.modules.filter.MultiplePathFilterBuilder;
+import org.jboss.modules.filter.PathFilters;
 import org.jboss.modules.test.ImportedClass;
 import org.jboss.modules.test.ImportedInterface;
 import org.jboss.modules.test.TestClass;

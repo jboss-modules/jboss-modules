@@ -20,10 +20,11 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.jboss.modules;
+package org.jboss.modules.filter;
 
 import java.util.Collection;
 import java.util.Set;
+import org.jboss.modules.FastCopyHashSet;
 
 /**
  * Static factory methods for path filter types.

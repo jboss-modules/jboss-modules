@@ -22,6 +22,9 @@
 
 package org.jboss.modules;
 
+import org.jboss.modules.filter.MultiplePathFilterBuilder;
+import org.jboss.modules.filter.PathFilter;
+import org.jboss.modules.filter.PathFilters;
 import org.junit.Test;
 
 import static org.junit.Assert.assertFalse;

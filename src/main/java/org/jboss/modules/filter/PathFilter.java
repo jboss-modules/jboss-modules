@@ -20,7 +20,7 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.jboss.modules;
+package org.jboss.modules.filter;
 
 /**
  * Filter used to determine whether an path should be included or excluded from imports and exports.

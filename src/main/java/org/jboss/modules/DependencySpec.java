@@ -23,6 +23,8 @@
 package org.jboss.modules;
 
 import java.util.Set;
+import org.jboss.modules.filter.PathFilter;
+import org.jboss.modules.filter.PathFilters;
 
 /**
  * A dependency specification that represents a single dependency for a module.  The dependency can be on a local loader

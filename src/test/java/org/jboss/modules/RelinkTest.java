@@ -25,6 +25,7 @@ package org.jboss.modules;
 import java.util.Arrays;
 import junit.framework.AssertionFailedError;
 
+import org.jboss.modules.filter.PathFilters;
 import org.jboss.modules.util.TestModuleLoader;
 
 import org.junit.Assert;

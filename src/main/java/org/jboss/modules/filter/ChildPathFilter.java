@@ -20,46 +20,36 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.jboss.modules;
+package org.jboss.modules.filter;
 
 /**
- * A path filter which simply inverts the result of another path filter.
- *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-final class InvertingPathFilter implements PathFilter {
-    private final PathFilter delegate;
+final class ChildPathFilter implements PathFilter {
 
-    /**
-     * Construct a new instance.
-     *
-     * @param delegate the filter to delegate to
-     */
-    InvertingPathFilter(final PathFilter delegate) {
-        if (delegate == null) {
-            throw new IllegalArgumentException("delegate is null");
-        }
-        this.delegate = delegate;
+    private final String prefix;
+
+    ChildPathFilter(final String path) {
+        prefix = path.charAt(path.length() - 1) == '/' ? path : path + "/";
     }
 
-    /** {@inheritDoc} */
     public boolean accept(final String path) {
-        return ! delegate.accept(path);
-    }
-
-    public int hashCode() {
-        return 47 * delegate.hashCode();
+        return path.startsWith(prefix);
     }
 
     public boolean equals(final Object obj) {
-        return obj instanceof InvertingPathFilter && equals((InvertingPathFilter) obj);
+        return obj instanceof EqualsPathFilter && equals((ChildPathFilter) obj);
     }
 
-    public boolean equals(final InvertingPathFilter obj) {
-        return obj != null && obj.delegate.equals(delegate);
+    public boolean equals(final ChildPathFilter obj) {
+        return obj != null && obj.prefix.equals(prefix);
     }
 
     public String toString() {
-        return "not " + delegate.toString();
+        return "children of \"" + prefix + "\"";
+    }
+
+    public int hashCode() {
+        return prefix.hashCode();
     }
 }

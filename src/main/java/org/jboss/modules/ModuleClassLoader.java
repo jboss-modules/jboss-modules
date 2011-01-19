@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import org.jboss.modules.filter.PathFilter;
 import org.jboss.modules.log.ModuleLogger;
 
 /**

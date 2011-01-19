@@ -20,39 +20,35 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.jboss.modules;
+package org.jboss.modules.filter;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-final class EqualsPathFilter implements PathFilter {
+final class BooleanPathFilter implements PathFilter {
 
-    private final String path;
+    private final boolean result;
 
-    EqualsPathFilter(final String path) {
-        if (path == null) {
-            throw new IllegalArgumentException("path is null");
-        }
-        this.path = path;
+    private BooleanPathFilter(final boolean result) {
+        this.result = result;
     }
 
     public boolean accept(final String path) {
-        return path.equals(this.path);
+        return result;
+    }
+
+    static final BooleanPathFilter TRUE = new BooleanPathFilter(true);
+    static final BooleanPathFilter FALSE = new BooleanPathFilter(false);
+
+    public int hashCode() {
+        return Boolean.valueOf(result).hashCode();
     }
 
     public boolean equals(final Object obj) {
-        return obj instanceof EqualsPathFilter && equals((EqualsPathFilter) obj);
-    }
-
-    public boolean equals(final EqualsPathFilter obj) {
-        return obj != null && obj.path.equals(path);
+        return obj == this;
     }
 
     public String toString() {
-        return "equals \"" + path + "\"";
-    }
-
-    public int hashCode() {
-        return path.hashCode();
+        return result ? "Accept" : "Reject";
     }
 }

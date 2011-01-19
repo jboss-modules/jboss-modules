@@ -22,6 +22,7 @@
 
 package org.jboss.modules;
 
+import org.jboss.modules.filter.PathFilters;
 import org.jboss.modules.test.ImportedClass;
 import org.jboss.modules.util.TestModuleLoader;
 import org.jboss.modules.util.TestResourceLoader;

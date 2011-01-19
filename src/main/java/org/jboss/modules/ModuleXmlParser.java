@@ -39,6 +39,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarFile;
+import org.jboss.modules.filter.MultiplePathFilterBuilder;
+import org.jboss.modules.filter.PathFilter;
+import org.jboss.modules.filter.PathFilters;
+import org.jboss.modules.filter.SetPathFilter;
 
 /**
  * A fast, validating module.xml parser.

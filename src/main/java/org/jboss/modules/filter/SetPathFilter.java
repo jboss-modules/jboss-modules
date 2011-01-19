@@ -20,35 +20,50 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.jboss.modules;
+package org.jboss.modules.filter;
+
+import java.util.Iterator;
+import java.util.Set;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-final class BooleanPathFilter implements PathFilter {
+final class SetPathFilter implements PathFilter {
 
-    private final boolean result;
+    private final Set<String> paths;
 
-    private BooleanPathFilter(final boolean result) {
-        this.result = result;
+    SetPathFilter(final Set<String> paths) {
+        this.paths = paths;
     }
 
     public boolean accept(final String path) {
-        return result;
-    }
-
-    static final BooleanPathFilter TRUE = new BooleanPathFilter(true);
-    static final BooleanPathFilter FALSE = new BooleanPathFilter(false);
-
-    public int hashCode() {
-        return Boolean.valueOf(result).hashCode();
-    }
-
-    public boolean equals(final Object obj) {
-        return obj == this;
+        return paths.contains(path);
     }
 
     public String toString() {
-        return result ? "Accept" : "Reject";
+        final StringBuilder b = new StringBuilder();
+        b.append("in {");
+        Iterator<String> iterator = paths.iterator();
+        while (iterator.hasNext()) {
+            final String path = iterator.next();
+            b.append(path);
+            if (iterator.hasNext()) {
+                b.append(", ");
+            }
+        }
+        b.append('}');
+        return b.toString();
+    }
+
+    public boolean equals(final Object obj) {
+        return obj instanceof SetPathFilter && equals((SetPathFilter) obj);
+    }
+
+    public boolean equals(final SetPathFilter obj) {
+        return obj != null && obj.paths.equals(paths);
+    }
+
+    public int hashCode() {
+        return paths.hashCode();
     }
 }

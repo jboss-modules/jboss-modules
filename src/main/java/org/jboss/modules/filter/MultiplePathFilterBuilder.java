@@ -20,7 +20,7 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.jboss.modules;
+package org.jboss.modules.filter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +28,7 @@ import java.util.List;
 /**
  * A builder for a multiple-path filter.
  *
- * @see org.jboss.modules.PathFilters#multiplePathFilterBuilder(boolean)
+ * @see PathFilters#multiplePathFilterBuilder(boolean)
  */
 public class MultiplePathFilterBuilder {
     private final List<PathFilter> filters = new ArrayList<PathFilter>();

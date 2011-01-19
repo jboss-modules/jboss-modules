@@ -22,6 +22,9 @@
 
 package org.jboss.modules;
 
+import org.jboss.modules.filter.PathFilter;
+import org.jboss.modules.filter.PathFilters;
+
 /**
  * A specification of a resource loader within a module.  A resource loader may optionally be associated with a
  * path filter which can be used to decide which paths of a resource loader to include.

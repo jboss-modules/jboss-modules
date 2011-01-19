@@ -20,43 +20,39 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.jboss.modules;
+package org.jboss.modules.filter;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-final class MultiplePathFilter implements PathFilter {
-    private final PathFilter[] filters;
-    private final boolean[] includeFlag;
-    private final boolean defaultVal;
+final class EqualsPathFilter implements PathFilter {
 
-    MultiplePathFilter(final PathFilter[] filters, final boolean[] includeFlag, final boolean defaultVal) {
-        this.filters = filters;
-        this.includeFlag = includeFlag;
-        this.defaultVal = defaultVal;
+    private final String path;
+
+    EqualsPathFilter(final String path) {
+        if (path == null) {
+            throw new IllegalArgumentException("path is null");
+        }
+        this.path = path;
     }
 
     public boolean accept(final String path) {
-        final int len = filters.length;
-        for (int i = 0; i < len; i++) {
-            if (filters[i].accept(path)) return includeFlag[i];
-        }
-        return defaultVal;
+        return path.equals(this.path);
+    }
+
+    public boolean equals(final Object obj) {
+        return obj instanceof EqualsPathFilter && equals((EqualsPathFilter) obj);
+    }
+
+    public boolean equals(final EqualsPathFilter obj) {
+        return obj != null && obj.path.equals(path);
     }
 
     public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("multi-path filter {");
-        int len = filters.length;
-        for (int i = 0; i < len; i++) {
-            final PathFilter filter = filters[i];
-            final boolean include = includeFlag[i];
-            builder.append(include ? "include " : "exclude ");
-            builder.append(filter);
-            builder.append(", ");
-        }
-        builder.append("default ").append(defaultVal ? "accept" : "reject");
-        builder.append('}');
-        return builder.toString();
+        return "equals \"" + path + "\"";
+    }
+
+    public int hashCode() {
+        return path.hashCode();
     }
 }
