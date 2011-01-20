@@ -310,7 +310,7 @@
                 </documentation>
             </annotation>
         </xsd:attribute>
-        <xsd:attribute name="path" type="pathType" use="required">
+        <xsd:attribute name="path" type="xsd:string" use="required">
             <annotation xmlns="http://www.w3.org/2001/XMLSchema">
                 <documentation>
                     The path of this resource root, relative to the path in which the module.xml file is found.
