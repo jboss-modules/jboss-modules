@@ -129,10 +129,7 @@ final class FileResourceLoader implements ResourceLoader {
     private final Manifest manifest;
     private final CodeSource codeSource;
 
-    FileResourceLoader(final ModuleIdentifier moduleIdentifier, final File root, final String rootName) {
-        if (moduleIdentifier == null) {
-            throw new IllegalArgumentException("moduleIdentifier is null");
-        }
+    FileResourceLoader(final String rootName, final File root) {
         if (root == null) {
             throw new IllegalArgumentException("root is null");
         }

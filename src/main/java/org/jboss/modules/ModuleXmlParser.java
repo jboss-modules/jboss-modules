@@ -515,10 +515,10 @@ final class ModuleXmlParser {
             switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {
                     if (file.isDirectory()) {
-                        resourceLoader = new FileResourceLoader(identifier, file, name);
+                        resourceLoader = new FileResourceLoader(name, file);
                     } else {
                         try {
-                            resourceLoader = new JarFileResourceLoader(identifier, new JarFile(file), name);
+                            resourceLoader = new JarFileResourceLoader(name, new JarFile(file));
                         } catch (IOException e) {
                             throw new XMLStreamException("Invalid JAR file specified", reader.getLocation(), e);
                         }

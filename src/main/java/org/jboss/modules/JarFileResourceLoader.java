@@ -55,10 +55,7 @@ final class JarFileResourceLoader implements ResourceLoader {
     private final String rootName;
     private final URL rootUrl;
 
-    JarFileResourceLoader(final ModuleIdentifier moduleIdentifier, final JarFile jarFile, final String rootName) {
-        if (moduleIdentifier == null) {
-            throw new IllegalArgumentException("moduleIdentifier is null");
-        }
+    JarFileResourceLoader(final String rootName, final JarFile jarFile) {
         if (jarFile == null) {
             throw new IllegalArgumentException("jarFile is null");
         }
