@@ -53,11 +53,25 @@ public final class ResourceLoaders {
      * Create a JAR-backed resource loader.  JAR resource loaders do not have native library support.
      * Created classes have a code source with a {@code jar:} URL; nested JARs are not supported.
      *
-     * @param name the name of the resource root
+     * @param name    the name of the resource root
      * @param jarFile the backing JAR file
      * @return the resource loader
      */
     public static ResourceLoader createJarResourceLoader(final String name, final JarFile jarFile) {
         return new JarFileResourceLoader(name, jarFile);
+    }
+
+    /**
+     * Create a ClassPath-backed resource loader.  ClassPath resource loaders do not have native library support.
+     * Created classes have a code source with either a {@code file:} or {@code jar:} URL, depending on whether
+     * the class is located in a plain directory or in a JAR file; nested JARs are not supported.
+     *
+     * @param name        the name of the resource root
+     * @param root        the resource root's path on the classpath
+     * @param classLoader the classloader to be used for loading resources
+     * @return the resource loader
+     */
+    public static ResourceLoader createClassPathResourceLoader(final String name, final String root, final ClassLoader classLoader) {
+        return new ClassPathResourceLoader(classLoader, name, root);
     }
 }
