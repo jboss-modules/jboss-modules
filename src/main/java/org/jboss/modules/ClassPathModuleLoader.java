@@ -41,8 +41,8 @@ public final class ClassPathModuleLoader extends ModuleLoader {
                                      String resourceRootPath) throws IllegalArgumentException,
                 NoResourceLoaderForResourceRootException {
             // TODO: We should really check if the resource root passed in is indeed valid.
-            return new ClassPathResourceLoader(ClassPathModuleLoader.this.classLoaderDelegate,
-                    resourceRootName, resourceRootPath);
+            return ResourceLoaders.createClassPathResourceLoader(
+                    resourceRootName, resourceRootPath, ClassPathModuleLoader.this.classLoaderDelegate);
         }
     }
 

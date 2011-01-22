@@ -42,10 +42,10 @@ public final class LocalModuleLoader extends ModuleLoader {
             ResourceLoader resourceLoader = null;
             final File resourceRootFile = new File(moduleRoot.getPath(), resourceRootPath);
             if (resourceRootFile.isDirectory()) {
-                resourceLoader = new FileResourceLoader(resourceRootName, resourceRootFile);
+                resourceLoader = ResourceLoaders.createFileResourceLoader(resourceRootName, resourceRootFile);
             } else {
                 try {
-                    resourceLoader = new JarFileResourceLoader(resourceRootName, new JarFile(resourceRootFile));
+                    resourceLoader = ResourceLoaders.createJarResourceLoader(resourceRootName, new JarFile(resourceRootFile));
                 } catch (IOException e) {
                     // TODO: What now?
                 }
