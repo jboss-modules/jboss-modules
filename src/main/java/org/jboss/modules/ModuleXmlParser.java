@@ -180,6 +180,18 @@ final class ModuleXmlParser {
         }
     }
 
+    ModuleSpec parse(final ModuleIdentifier moduleIdentifier, final URL moduleRoot, final URL moduleInfoFile) throws ModuleLoadException {
+        InputStream moduleInfoInputStream = null;
+        try {
+            moduleInfoInputStream = moduleInfoFile.openStream();
+            return parse(moduleRoot, moduleInfoInputStream, moduleInfoFile, moduleIdentifier);
+        } catch (IOException e) {
+            throw new ModuleLoadException("Error opening input stream to module.xml at " + moduleInfoFile);
+        } finally {
+            safeClose(moduleInfoInputStream);
+        }
+    }
+
     private static void setIfSupported(XMLInputFactory inputFactory, String property, Object value) {
         if (inputFactory.isPropertySupported(property)) {
             inputFactory.setProperty(property, value);
