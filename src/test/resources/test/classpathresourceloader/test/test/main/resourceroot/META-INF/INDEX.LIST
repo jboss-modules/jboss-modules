@@ -1,0 +1,11 @@
+META-INF
+META-INF/INDEX.LIST
+META-INF/MANIFEST.MF
+nested
+nested/nested.txt
+test.txt
+org
+org/jboss
+org/jboss/modules
+org/jboss/modules/test
+org/jboss/modules/test/TestClass.class
