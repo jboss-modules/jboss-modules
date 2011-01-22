@@ -56,7 +56,7 @@ public class ClassPathResourceLoaderTest extends AbstractResourceLoaderTestCase 
         this.repositoryRootDir = getResource(REPOSITORY_ROOT_DIR);
         final URLClassLoader classLoaderDelegate = new URLClassLoader(new URL[]{this.repositoryRootDir.toURI().toURL()});
 
-        return new ClassPathResourceLoader(classLoaderDelegate, MODULE_ID, RESOURCE_ROOT_PATH, RESOURCE_ROOT_PATH);
+        return new ClassPathResourceLoader(classLoaderDelegate, RESOURCE_ROOT_PATH, REPOSITORY_ROOT_DIR + MODULE_ROOT_PATH + RESOURCE_ROOT_PATH);
     }
 
     @Override

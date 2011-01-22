@@ -80,27 +80,23 @@ final class ClassPathResourceLoader implements ResourceLoader {
 
     private final ClassLoader classLoaderDelegate;
 
-    private final ModuleIdentifier moduleIdentifier;
-
     private final String resourceRootName;
 
     private final String resourceRootPath;
 
     private final Manifest manifest;
 
+    private final CodeSource codeSource;
+
     /**
      * @param classLoaderDelegate
-     * @param moduleIdentifier
      * @param resourceRootName
      * @param resourceRootPath
      */
-    ClassPathResourceLoader(final ClassLoader classLoaderDelegate, final ModuleIdentifier moduleIdentifier,
+    ClassPathResourceLoader(final ClassLoader classLoaderDelegate,
                             final String resourceRootName, final String resourceRootPath) {
         if (classLoaderDelegate == null) {
             throw new IllegalArgumentException("classLoaderDelegate is null");
-        }
-        if (moduleIdentifier == null) {
-            throw new IllegalArgumentException("moduleIdentifier is null");
         }
         if (resourceRootName == null) {
             throw new IllegalArgumentException("resourceRootName is null");
@@ -109,10 +105,10 @@ final class ClassPathResourceLoader implements ResourceLoader {
             throw new IllegalArgumentException("resourceRootPath is null");
         }
         this.classLoaderDelegate = classLoaderDelegate;
-        this.moduleIdentifier = moduleIdentifier;
         this.resourceRootName = resourceRootName;
-        this.resourceRootPath = resourceRootPath;
+        this.resourceRootPath = resourceRootPath.endsWith("/") ? resourceRootPath : resourceRootPath + "/";
         this.manifest = readManifest();
+        this.codeSource = new CodeSource(getResourceUrl(this.resourceRootPath), (CodeSigner[]) null);
     }
 
     /**
@@ -145,7 +141,7 @@ final class ClassPathResourceLoader implements ResourceLoader {
 
             final ClassSpec classSpec = new ClassSpec();
             classSpec.setBytes(classBytesBuf.toByteArray());
-            classSpec.setCodeSource(new CodeSource(getResourceUrl(this.resourceRootPath), (CodeSigner[]) null));
+            classSpec.setCodeSource(this.codeSource);
 
             return classSpec;
         } finally {
@@ -267,16 +263,9 @@ final class ClassPathResourceLoader implements ResourceLoader {
      */
     protected String toFullResourcePath(final String resourceName) {
         final StringBuilder fullResourcePath = (new StringBuilder())
-                .append(this.moduleIdentifier.getName().replace('.', '/'))
-                .append('/')
-                .append(this.moduleIdentifier.getSlot())
-                .append('/')
                 .append(this.resourceRootPath)
-                .append(this.resourceRootPath.endsWith("/")
-                        || resourceName.startsWith("/") ? "" : '/')
-                .append(resourceName);
-        return fullResourcePath.toString().replace("//",
-                "/");
+                .append(resourceName.startsWith("/") ? resourceName.substring(1) : resourceName);
+        return fullResourcePath.toString();
     }
 }
 
