@@ -23,6 +23,9 @@
 package org.jboss.modules;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.util.jar.JarFile;
 
 /**
  * A local filesystem-backed module loader.
@@ -32,7 +35,29 @@ import java.io.File;
  */
 public final class LocalModuleLoader extends ModuleLoader {
 
+    private static class LocalResourceLoaderFactory implements ResourceLoaderFactory {
+
+        @Override
+        public ResourceLoader create(URL moduleRoot, String resourceRootName, String resourceRootPath) throws IllegalArgumentException {
+            ResourceLoader resourceLoader = null;
+            final File resourceRootFile = new File(moduleRoot.getPath(), resourceRootPath);
+            if (resourceRootFile.isDirectory()) {
+                resourceLoader = new FileResourceLoader(resourceRootName, resourceRootFile);
+            } else {
+                try {
+                    resourceLoader = new JarFileResourceLoader(resourceRootName, new JarFile(resourceRootFile));
+                } catch (IOException e) {
+                    // TODO: What now?
+                }
+            }
+
+            return resourceLoader;
+        }
+    }
+
     private final File[] repoRoots;
+
+    private final ModuleXmlParser moduleXmlParser;
 
     /**
      * Construct a new instance.
@@ -41,6 +66,7 @@ public final class LocalModuleLoader extends ModuleLoader {
      */
     public LocalModuleLoader(final File[] repoRoots) {
         this.repoRoots = repoRoots;
+        this.moduleXmlParser = new ModuleXmlParser(new LocalResourceLoaderFactory());
     }
 
     /**
@@ -55,6 +81,7 @@ public final class LocalModuleLoader extends ModuleLoader {
         } else {
             repoRoots = getFiles(modulePath, 0, 0);
         }
+        this.moduleXmlParser = new ModuleXmlParser(new LocalResourceLoaderFactory());
     }
 
     private static File[] getFiles(final String modulePath, final int stringIdx, final int arrayIdx) {
@@ -70,7 +97,9 @@ public final class LocalModuleLoader extends ModuleLoader {
         return files;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected Module preloadModule(final ModuleIdentifier identifier) throws ModuleLoadException {
         if (identifier.equals(ModuleIdentifier.SYSTEM)) {
@@ -79,7 +108,9 @@ public final class LocalModuleLoader extends ModuleLoader {
         return super.preloadModule(identifier);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected ModuleSpec findModule(final ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
         final File moduleRoot = getModuleRoot(moduleIdentifier);
@@ -108,7 +139,7 @@ public final class LocalModuleLoader extends ModuleLoader {
     }
 
     private ModuleSpec parseModuleInfoFile(final ModuleIdentifier moduleIdentifier, final File moduleRoot, final File moduleInfoFile) throws ModuleLoadException {
-        return ModuleXmlParser.parse(moduleIdentifier, moduleRoot, moduleInfoFile);
+        return this.moduleXmlParser.parse(moduleIdentifier, moduleRoot, moduleInfoFile);
     }
 
     public String toString() {

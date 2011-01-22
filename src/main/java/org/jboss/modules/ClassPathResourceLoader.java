@@ -79,13 +79,9 @@ import java.util.jar.Manifest;
 final class ClassPathResourceLoader implements ResourceLoader {
 
     private final ClassLoader classLoaderDelegate;
-
     private final String resourceRootName;
-
     private final String resourceRootPath;
-
     private final Manifest manifest;
-
     private final CodeSource codeSource;
 
     /**
