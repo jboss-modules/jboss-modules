@@ -27,6 +27,8 @@ import java.io.InputStream;
 import java.net.URL;
 
 /**
+ * A single resource from a {@link ResourceLoader}.
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public interface Resource {

@@ -34,6 +34,13 @@ import org.jboss.modules.log.JDKModuleLogger;
 
 import java.util.logging.LogManager;
 
+/**
+ * The main entry point of JBoss Modules when run as a JAR on the command line.
+ *
+ * @apiviz.exclude
+ *
+ * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ */
 public final class Main {
 
     static {
@@ -45,10 +52,20 @@ public final class Main {
     private Main() {
     }
 
+    /**
+     * Get the name of the JBoss Modules JAR.
+     *
+     * @return the name
+     */
     public static String getJarName() {
         return "UNSET";
     }
 
+    /**
+     * Get the version string of JBoss Modules.
+     *
+     * @return the version string
+     */
     public static String getVersionString() {
         return "TRUNK SNAPSHOT";
     }
@@ -67,6 +84,12 @@ public final class Main {
         System.out.println("and module-spec is a valid module specification string");
     }
 
+    /**
+     * Run JBoss Modules.
+     *
+     * @param args the command-line arguments
+     * @throws Throwable if an error occurs
+     */
     public static void main(String[] args) throws Throwable {
         final int argsLen = args.length;
         String[] moduleArgs = null;

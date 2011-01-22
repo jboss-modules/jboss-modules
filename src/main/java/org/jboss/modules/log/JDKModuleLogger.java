@@ -31,7 +31,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * A {@code ModuleLogger} which logs to a JDK logging category.
+ * A {@link ModuleLogger} which logs to a JDK logging category.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */

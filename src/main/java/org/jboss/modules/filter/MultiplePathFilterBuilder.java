@@ -28,6 +28,7 @@ import java.util.List;
 /**
  * A builder for a multiple-path filter.
  *
+ * @apiviz.exclude
  * @see PathFilters#multiplePathFilterBuilder(boolean)
  */
 public class MultiplePathFilterBuilder {

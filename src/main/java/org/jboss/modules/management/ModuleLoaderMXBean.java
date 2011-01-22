@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.SortedMap;
 
 /**
+ * An MXBean for getting runtime information about a module loader.
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public interface ModuleLoaderMXBean {

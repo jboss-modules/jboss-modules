@@ -271,7 +271,7 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
         }
     }
 
-    protected static final class LoaderThreadHolder {
+    static final class LoaderThreadHolder {
 
         static final Thread LOADER_THREAD;
         static final Queue<LoadRequest> REQUEST_QUEUE = new ArrayDeque<LoadRequest>();

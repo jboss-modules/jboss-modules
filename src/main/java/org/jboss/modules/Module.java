@@ -47,14 +47,16 @@ import org.jboss.modules.log.ModuleLogger;
 import org.jboss.modules.log.NoopModuleLogger;
 
 /**
-* A module is a unit of classes and other resources, along with the specification of what is imported and exported
-* by this module from and to other modules.  Modules are created by {@link ModuleLoader}s which build modules from
-* various configuration information and resource roots.
-*
-* @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
-* @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
-* @author <a href="mailto:flavia.rainone@jboss.com">Flavia Rainone</a>
-* @author Jason T. Greene
+ * A module is a unit of classes and other resources, along with the specification of what is imported and exported
+ * by this module from and to other modules.  Modules are created by {@link ModuleLoader}s which build modules from
+ * various configuration information and resource roots.
+ *
+ * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
+ * @author <a href="mailto:flavia.rainone@jboss.com">Flavia Rainone</a>
+ * @author Jason T. Greene
+ *
+ * @apiviz.landmark
 */
 public final class Module {
 

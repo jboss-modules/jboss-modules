@@ -143,6 +143,9 @@ public final class ObjectProperties extends Hashtable<String, String> {
         return realMap.values();
     }
 
+    /**
+     * A single property in a properties list.
+     */
     public static final class Property {
         private final String key;
         private final String value;

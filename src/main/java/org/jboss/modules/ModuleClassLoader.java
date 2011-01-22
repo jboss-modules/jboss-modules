@@ -46,6 +46,8 @@ import org.jboss.modules.log.ModuleLogger;
  * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  * @author thomas.diesler@jboss.com
+ *
+ * @apiviz.landmark
  */
 public class ModuleClassLoader extends ConcurrentClassLoader {
 
@@ -575,6 +577,8 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
 
     /**
      * An opaque configuration used internally to create a module class loader.
+     *
+     * @apiviz.exclude
      */
     protected static final class Configuration {
         private final Module module;

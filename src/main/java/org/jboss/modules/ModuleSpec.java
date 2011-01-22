@@ -29,6 +29,8 @@ import java.util.List;
 /**
  * A {@code Module} specification which is used by a {@code ModuleLoader} to define new modules.
  *
+ * @apiviz.exclude
+ *
  * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
@@ -87,6 +89,8 @@ public final class ModuleSpec {
 
     /**
      * A builder for new module specifications.
+     *
+     * @apiviz.exclude
      */
     public interface Builder {
 

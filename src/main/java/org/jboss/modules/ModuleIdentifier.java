@@ -22,13 +22,22 @@
 
 package org.jboss.modules;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
+import java.lang.reflect.Field;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.regex.Pattern;
 
 /**
+ * A unique identifier for a module within a module loader.
+ *
  * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  * @author Jason T. Greene
+ *
+ * @apiviz.landmark
  */
 public final class ModuleIdentifier implements Serializable {
 
@@ -41,7 +50,24 @@ public final class ModuleIdentifier implements Serializable {
     private final String name;
     private final String slot;
 
-    private int hash = 0;
+    private final transient int hashCode;
+
+    private static final Field hashField;
+
+    static {
+        hashField = AccessController.doPrivileged(new PrivilegedAction<Field>() {
+            public Field run() {
+                final Field field;
+                try {
+                    field = ModuleIdentifier.class.getDeclaredField("hashCode");
+                    field.setAccessible(true);
+                } catch (NoSuchFieldException e) {
+                    throw new NoSuchFieldError(e.getMessage());
+                }
+                return field;
+            }
+        });
+    }
 
     /**
      * The system module.
@@ -51,43 +77,90 @@ public final class ModuleIdentifier implements Serializable {
     private ModuleIdentifier(final String name, final String slot) {
         this.name = name;
         this.slot = slot;
+        hashCode = calculateHashCode(name, slot);
     }
 
+    private static int calculateHashCode(final String name, final String slot) {
+        int h = 17;
+        h = 37 * h + name.hashCode();
+        h = 37 * h + slot.hashCode();
+        return h;
+    }
+
+    /**
+     * Get the module name.
+     *
+     * @return the module name
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * Get the module version slot.
+     *
+     * @return the version slot
+     */
     public String getSlot() {
         return slot;
     }
 
-    @Override
-    public boolean equals(final Object o) {
-        return o instanceof ModuleIdentifier && equals((ModuleIdentifier) o);
+    /**
+     * Determine whether this object is equal to another.
+     *
+     * @param other the other object
+     * @return {@code true} if they are equal, {@code false} otherwise
+     */
+    public boolean equals(Object other) {
+        return other instanceof ModuleIdentifier && equals((ModuleIdentifier)other);
     }
 
-    public boolean equals(final ModuleIdentifier o) {
-        return this == o || o != null && name.equals(o.name) && slot.equals(o.slot);
+    /**
+     * Determine whether this object is equal to another.
+     *
+     * @param other the other object
+     * @return {@code true} if they are equal, {@code false} otherwise
+     */
+    public boolean equals(ModuleIdentifier other) {
+        return this == other || other != null && name.equals(other.name) && slot.equals(other.slot);
     }
 
+    /**
+     * Determine the hash code of this module identifier.
+     *
+     * @return the hash code
+     */
     @Override
     public int hashCode() {
-        if (hash == 0) {
-            int h = 17;
-            h = 37 * h + name.hashCode();
-            h = 37 * h + slot.hashCode();
-
-            hash = h;
-        }
-
-        return hash;
+        return hashCode;
     }
 
+    /**
+     * Get the string representation of this module identifier.
+     *
+     * @return the string representation
+     */
     @Override
     public String toString() {
         return name + ":" + slot;
     }
 
+    private void readObject(ObjectInputStream ois) throws ClassNotFoundException, IOException {
+        ois.defaultReadObject();
+        try {
+            hashField.setInt(this, calculateHashCode(name, slot));
+        } catch (IllegalAccessException e) {
+            throw new IllegalAccessError(e.getMessage());
+        }
+    }
+
+    /**
+     * Parse a module specification from a string.
+     *
+     * @param moduleSpec the specification string
+     * @return the module identifier
+     * @throws IllegalArgumentException if the format of the module specification is invalid or it is {@code null}
+     */
     public static ModuleIdentifier fromString(String moduleSpec) throws IllegalArgumentException {
         if (moduleSpec == null) {
             throw new IllegalArgumentException("Module specification is null");

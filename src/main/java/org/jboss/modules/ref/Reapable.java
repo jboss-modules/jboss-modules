@@ -28,6 +28,8 @@ package org.jboss.modules.ref;
  * @param <T> the reference type
  * @param <A> the reference attachment type
  *
+ * @apiviz.exclude
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 interface Reapable<T, A> {

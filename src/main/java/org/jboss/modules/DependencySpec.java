@@ -30,6 +30,8 @@ import org.jboss.modules.filter.PathFilters;
  * A dependency specification that represents a single dependency for a module.  The dependency can be on a local loader
  * or another module, or on the target module's local loader.
  *
+ * @apiviz.exclude
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
  * @author Jason T. Greene

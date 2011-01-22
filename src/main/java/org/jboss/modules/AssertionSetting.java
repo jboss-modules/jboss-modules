@@ -23,6 +23,10 @@
 package org.jboss.modules;
 
 /**
+ * The assertion setting for a package or class.
+ *
+ * @apiviz.exclude
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public enum AssertionSetting {

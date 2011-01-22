@@ -62,6 +62,8 @@ public interface Reference<T, A> {
 
     /**
      * A reference type.
+     *
+     * @apiviz.exclude
      */
     enum Type {
 

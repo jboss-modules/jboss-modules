@@ -58,10 +58,14 @@ import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
 /**
+ * A repository for modules, from which a module may be loaded by identifier.  Module loaders may additionally
+ * delegate to one or more other module loaders.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
  * @author Jason T. Greene
+ *
+ * @apiviz.landmark
  */
 public abstract class ModuleLoader {
 
@@ -130,6 +134,11 @@ public abstract class ModuleLoader {
         }
     }
 
+    /**
+     * Get the string representation of this module loader.
+     *
+     * @return the string representation
+     */
     public abstract String toString();
 
     static void installMBeanServer() {

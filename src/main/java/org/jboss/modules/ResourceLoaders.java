@@ -28,6 +28,8 @@ import java.util.jar.JarFile;
 /**
  * Static factory methods for various types of resource loaders.
  *
+ * @apiviz.exclude
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class ResourceLoaders {
