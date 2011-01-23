@@ -59,6 +59,10 @@ public final class ClassPathModuleLoader extends ModuleLoader {
         this.moduleXmlParser = new ModuleXmlParser(this.new ClassPathResourceLoaderFactory());
     }
 
+    public ClassPathModuleLoader() {
+        this(Main.class.getClassLoader());
+    }
+
     /**
      * @see org.jboss.modules.ModuleLoader#findModule(org.jboss.modules.ModuleIdentifier)
      */
