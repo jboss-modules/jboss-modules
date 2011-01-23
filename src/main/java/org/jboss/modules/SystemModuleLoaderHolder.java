@@ -30,6 +30,33 @@ import java.lang.reflect.InvocationTargetException;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
+/**
+ * <p>
+ * Instantiates and stores a module-based application's <i>bootstrap</i> {@link ModuleLoader <code>ModuleLoader</code>},
+ * i.e. the ModuleLoader used to load the {@link org.jboss.modules.log.ModuleLogger <i>Logging Module</i>} and the main
+ * Module given as a command-line parameter.
+ * </p>
+ * <p>
+ * This class is responsible for choosing the {@link ModuleLoader <code>ModuleLoader</code>}-implementation to use during
+ * startup. The algorithm for doing so is as follows:
+ * <ol>
+ * <li>
+ * If the system property &quot;system.module.loader&quot; is set, its value is interpreted as the fully qualified
+ * name of the implementation to use.
+ * </li>
+ * <li>
+ * Otherwise, <code>SystemModuleLoaderHolder</code> will look for the file &quot;META-INF/services/org.jboss.module.ModuleLoader&quot;
+ * on the application classpath. If successful, it will assume that this file contains the fully qualified name of
+ * the implementation to use.
+ * </li>
+ * <li>
+ * Otherwise, it will fall back to using {@link LocalModuleLoader <code>LocalModuleLoader</code>}.
+ * </li>
+ * </ol>
+ * </p>
+ *
+ * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ */
 final class SystemModuleLoaderHolder {
 
     static final ModuleLoader INSTANCE;
@@ -44,6 +71,7 @@ final class SystemModuleLoaderHolder {
     private static class ModuleLoaderLookupAction implements PrivilegedAction<ModuleLoader> {
 
         private static final String SERVICE_DEFINITION_PATH = "META-INF/services/org.jboss.modules.ModuleLoader";
+
         private static final String SYSTEM_MODULE_LOADER_KEY = "system.module.loader";
 
         public ModuleLoader run() {
