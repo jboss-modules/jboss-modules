@@ -46,7 +46,7 @@ public class ClassPathModuleLoaderTest extends AbstractModuleTestCase {
     public void setupModuleLoader() throws Exception {
         final File classPathRepositoryRootDir = getResource(CLASSPATH_REPOSITORY_ROOT_DIR);
         final URLClassLoader classLoaderDelegate = new URLClassLoader(new URL[]{classPathRepositoryRootDir.toURI().toURL()});
-        this.moduleLoader = new ClassPathModuleLoader(classLoaderDelegate);
+        this.moduleLoader = new ClassPathModuleLoader(classLoaderDelegate, "");
     }
 
     @Test

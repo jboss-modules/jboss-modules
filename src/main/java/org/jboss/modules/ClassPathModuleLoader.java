@@ -27,7 +27,13 @@ import java.net.URLClassLoader;
 
 /**
  * <p>
- * TODO: Javadocs for ClassPathModuleLoader.
+ * A {@link ModuleLoader <code>ModuleLoader</code>} for loading {@link Module <code>Modules</code>} from a repository
+ * located on the classpath.
+ * </p>
+ * <p>
+ * Per default <code>ClassPathModuleLoader</code> uses the <i>application class loader</i> (also called <i>system class
+ * loader</i>) and expects <code>Modules</code> to be found beneath the &quot;modules/&quot;-directory on the class
+ * path. Both of these setting, however, may be overridden at instantiation time.
  * </p>
  *
  * @author <a href="mailto:olaf.bergner@gmx.de">Olaf Bergner</a>
@@ -46,21 +52,50 @@ public final class ClassPathModuleLoader extends ModuleLoader {
         }
     }
 
+    private static final String DEFAULT_REPOSITORY_ROOT_ON_CLASSPATH = "modules/";
+
     private final ClassLoader classLoaderDelegate;
 
     private final ModuleXmlParser moduleXmlParser;
+
+    private final String repositoryRootOnClassPath;
+
+    /**
+     * @param classLoaderDelegate
+     * @param repositoryRootOnClassPath
+     * @throws IllegalArgumentException
+     */
+    ClassPathModuleLoader(final ClassLoader classLoaderDelegate, final String repositoryRootOnClassPath) throws IllegalArgumentException {
+        if (classLoaderDelegate == null) throw new IllegalArgumentException("classLoaderDelegate is null");
+        this.classLoaderDelegate = classLoaderDelegate;
+        this.repositoryRootOnClassPath = repositoryRootOnClassPath != null ? repositoryRootOnClassPath : DEFAULT_REPOSITORY_ROOT_ON_CLASSPATH;
+        this.moduleXmlParser = new ModuleXmlParser(this.new ClassPathResourceLoaderFactory());
+    }
 
     /**
      * @param classLoaderDelegate
      * @throws IllegalArgumentException
      */
     ClassPathModuleLoader(final ClassLoader classLoaderDelegate) throws IllegalArgumentException {
-        this.classLoaderDelegate = classLoaderDelegate;
-        this.moduleXmlParser = new ModuleXmlParser(this.new ClassPathResourceLoaderFactory());
+        this(classLoaderDelegate, null);
     }
 
-    public ClassPathModuleLoader() {
-        this(Main.class.getClassLoader());
+    /**
+     * Instantiates a <code>ClassPathModuleLoader</code> that uses the application classloader for loading
+     * <code>Modules</code>.
+     *
+     * @param repositoryRootOnClassPath
+     */
+    ClassPathModuleLoader(final String repositoryRootOnClassPath) {
+        this(Main.class.getClassLoader(), repositoryRootOnClassPath);
+    }
+
+    /**
+     * Instantiates a <code>ClassPathModuleLoader</code> that uses the application classloader for loading
+     * <code>Modules</code>.
+     */
+    ClassPathModuleLoader() {
+        this(Main.class.getClassLoader(), null);
     }
 
     /**
@@ -84,7 +119,7 @@ public final class ClassPathModuleLoader extends ModuleLoader {
     }
 
     private String toPathOnClassPath(final ModuleIdentifier moduleIdentifier) {
-        final StringBuilder builder = new StringBuilder();
+        final StringBuilder builder = new StringBuilder(this.repositoryRootOnClassPath);
         builder.append(moduleIdentifier.getName().replace('.', '/'));
         builder.append('/').append(moduleIdentifier.getSlot());
         builder.append('/');
