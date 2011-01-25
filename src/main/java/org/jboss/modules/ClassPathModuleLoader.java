@@ -46,9 +46,10 @@ public final class ClassPathModuleLoader extends ModuleLoader {
         public ResourceLoader create(ModuleIdentifier moduleIdentifier, URL moduleRoot, String resourceRootName,
                                      String resourceRootPath) throws IllegalArgumentException,
                 NoResourceLoaderForResourceRootException {
+            final String resourceRootOnClassPath = toPathOnClassPath(moduleIdentifier) + resourceRootPath;
             // TODO: We should really check if the resource root passed in is indeed valid.
             return ResourceLoaders.createClassPathResourceLoader(
-                    resourceRootName, resourceRootPath, ClassPathModuleLoader.this.classLoaderDelegate);
+                    resourceRootName, resourceRootOnClassPath, ClassPathModuleLoader.this.classLoaderDelegate);
         }
     }
 
@@ -65,7 +66,7 @@ public final class ClassPathModuleLoader extends ModuleLoader {
      * @param repositoryRootOnClassPath
      * @throws IllegalArgumentException
      */
-    ClassPathModuleLoader(final ClassLoader classLoaderDelegate, final String repositoryRootOnClassPath) throws IllegalArgumentException {
+    public ClassPathModuleLoader(final ClassLoader classLoaderDelegate, final String repositoryRootOnClassPath) throws IllegalArgumentException {
         if (classLoaderDelegate == null) throw new IllegalArgumentException("classLoaderDelegate is null");
         this.classLoaderDelegate = classLoaderDelegate;
         this.repositoryRootOnClassPath = repositoryRootOnClassPath != null ? repositoryRootOnClassPath : DEFAULT_REPOSITORY_ROOT_ON_CLASSPATH;
@@ -76,7 +77,7 @@ public final class ClassPathModuleLoader extends ModuleLoader {
      * @param classLoaderDelegate
      * @throws IllegalArgumentException
      */
-    ClassPathModuleLoader(final ClassLoader classLoaderDelegate) throws IllegalArgumentException {
+    public ClassPathModuleLoader(final ClassLoader classLoaderDelegate) throws IllegalArgumentException {
         this(classLoaderDelegate, null);
     }
 
@@ -86,7 +87,7 @@ public final class ClassPathModuleLoader extends ModuleLoader {
      *
      * @param repositoryRootOnClassPath
      */
-    ClassPathModuleLoader(final String repositoryRootOnClassPath) {
+    public ClassPathModuleLoader(final String repositoryRootOnClassPath) {
         this(Main.class.getClassLoader(), repositoryRootOnClassPath);
     }
 
@@ -94,7 +95,7 @@ public final class ClassPathModuleLoader extends ModuleLoader {
      * Instantiates a <code>ClassPathModuleLoader</code> that uses the application classloader for loading
      * <code>Modules</code>.
      */
-    ClassPathModuleLoader() {
+    public ClassPathModuleLoader() {
         this(Main.class.getClassLoader(), null);
     }
 

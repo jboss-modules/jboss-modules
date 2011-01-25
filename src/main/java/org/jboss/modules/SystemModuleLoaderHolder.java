@@ -100,7 +100,7 @@ final class SystemModuleLoaderHolder {
         private String readModuleLoaderClass(final String serviceDefintionPath) {
             BufferedReader serviceDefintionReader = null;
             try {
-                final InputStream serviceDefinitionStream = SystemModuleLoaderHolder.class.getResourceAsStream(serviceDefintionPath);
+                final InputStream serviceDefinitionStream = SystemModuleLoaderHolder.class.getClassLoader().getResourceAsStream(serviceDefintionPath);
                 if (serviceDefinitionStream == null) return null;
 
                 serviceDefintionReader = new BufferedReader(new InputStreamReader(serviceDefinitionStream));
