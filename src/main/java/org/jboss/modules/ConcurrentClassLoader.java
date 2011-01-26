@@ -232,7 +232,7 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
     // Private members
 
     /**
-     * Perform a class load operation.  If the class is in the {@code "java."} package or one of its subpackages,
+     * Perform a class load operation.  If the class is in the package or a subpackage of a package in the system packages list,
      * the parent class loader is used to load the class.  Otherwise, this method checks to see if the class loader
      * object is locked; if so, it unlocks it and submits the request to the class loader thread.  Otherwise, it will
      * load the class itself by delegating to {@link #findClass(String, boolean, boolean)}.
@@ -254,12 +254,30 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
                 return findSystemClass(className);
             }
         }
+        return performLoadClassChecked(className, exportsOnly, resolve);
+    }
+
+    /**
+     * Perform a class load operation.  This method checks to see if the class loader object is locked; if so, it
+     * unlocks it and submits the request to the class loader thread.  Otherwise, it will load the class itself by
+     * delegating to {@link #findClass(String, boolean, boolean)}.
+     * <p>
+     * If the {@code jboss.modules.unsafe-locks} system property is set to {@code true}, then rather than using the
+     * class loading thread, the lock is forcibly broken and the load retried.
+     *
+     * @param className the class name
+     * @param exportsOnly {@code true} to consider only exported resources or {@code false} to consider all resources
+     * @param resolve {@code true} to resolve the loaded class
+     * @return the class returned by {@link #findClass(String, boolean, boolean)}
+     * @throws ClassNotFoundException if {@link #findClass(String, boolean, boolean)} throws this exception
+     */
+    private Class<?> performLoadClassChecked(final String className, final boolean exportsOnly, final boolean resolve) throws ClassNotFoundException {
         if (Thread.holdsLock(this) && Thread.currentThread() != LoaderThreadHolder.LOADER_THREAD) {
             if (UNSAFE_LOCKS) {
-                final Unsafe unsafe = UnsafeHolder.UNSAFE;
+                final Unsafe unsafe = ConcurrentClassLoader.UnsafeHolder.UNSAFE;
                 unsafe.monitorExit(this);
                 try {
-                    return performLoadClass(className, exportsOnly, resolve);
+                    return performLoadClassChecked(className, exportsOnly, resolve);
                 } finally {
                     unsafe.monitorEnter(this);
                 }
@@ -354,7 +372,7 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
                     Class<?> result = null;
                     synchronized (loader) {
                         try {
-                            result = loader.performLoadClass(request.className, request.exportsOnly, request.resolve);
+                            result = loader.performLoadClassChecked(request.className, request.exportsOnly, request.resolve);
                         } finally {
                             // no matter what, the requester MUST be notified
                             request.result = result;
