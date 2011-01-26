@@ -79,10 +79,6 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
             return ModuleClassLoader.this.loadResourceLocal(name);
         }
 
-        public Resource loadResourceLocal(final String root, final String name) {
-            return ModuleClassLoader.this.loadResourceLocal(root, name);
-        }
-
         public String toString() {
             return "local loader for " + ModuleClassLoader.this.toString();
         }

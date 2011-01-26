@@ -76,14 +76,6 @@ final class SystemLocalLoader implements LocalLoader {
         return list;
     }
 
-    public Resource loadResourceLocal(final String root, final String name) {
-        if (! "".equals(root)) {
-            return null;
-        }
-        final URL url = SYSTEM_CL.getResource(name);
-        return url == null ? null : new URLResource(url);
-    }
-
     // Nonpublic API
 
     static SystemLocalLoader getInstance() {

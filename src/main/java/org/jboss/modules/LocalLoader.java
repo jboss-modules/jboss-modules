@@ -52,13 +52,4 @@ public interface LocalLoader {
      * @return the resource or resources, or an empty list if there is no local resource with this name
      */
     List<Resource> loadResourceLocal(String name);
-
-    /**
-     * Load a resource which is locally defined by a specific root on this loader.  The given name is a path separated
-     * by "{@code /}" characters.
-     *
-     * @param name the resource path
-     * @return the resource, or {@code null} if there is no local resource with this name
-     */
-    Resource loadResourceLocal(String root, String name);
 }
