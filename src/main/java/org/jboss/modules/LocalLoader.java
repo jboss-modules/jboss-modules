@@ -39,7 +39,7 @@ public interface LocalLoader {
      * Load a class which is locally defined by this loader.
      *
      * @param name the class name
-     * @param resolve {@code true} to initialize the class
+     * @param resolve {@code true} to resolve the class
      * @return the class, or {@code null} if there is no local class with this name
      */
     Class<?> loadClassLocal(String name, boolean resolve);
