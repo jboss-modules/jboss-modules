@@ -126,8 +126,10 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
      * permission to access it
      */
     public final URL getResource(final String name) {
-        if (name.startsWith("java/")) {
-            return super.getResource(name);
+        for (String s : Module.systemPaths) {
+            if (name.startsWith(s)) {
+                return super.getResource(name);
+            }
         }
         return findResource(name, false);
     }
@@ -142,8 +144,10 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
      * @throws IOException if an I/O error occurs
      */
     public final Enumeration<URL> getResources(final String name) throws IOException {
-        if (name.startsWith("java/")) {
-            return super.getResources(name);
+        for (String s : Module.systemPaths) {
+            if (name.startsWith(s)) {
+                return super.getResources(name);
+            }
         }
         return findResources(name, false);
     }
@@ -223,8 +227,10 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
      * @return the resource stream, or {@code null} if the resource is not found
      */
     public final InputStream getResourceAsStream(final String name) {
-        if (name.startsWith("java/")) {
-            return super.getResourceAsStream(name);
+        for (String s : Module.systemPaths) {
+            if (name.startsWith(s)) {
+                return super.getResourceAsStream(name);
+            }
         }
         return findResourceAsStream(name, false);
     }
@@ -285,7 +291,7 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
             // Only the classloader thread may take this lock; use a condition to relinquish it
             final LoadRequest req = new LoadRequest(className, resolve, exportsOnly, this);
             final Queue<LoadRequest> queue = LoaderThreadHolder.REQUEST_QUEUE;
-            synchronized (LoaderThreadHolder.REQUEST_QUEUE) {
+            synchronized (queue) {
                 queue.add(req);
                 queue.notify();
             }

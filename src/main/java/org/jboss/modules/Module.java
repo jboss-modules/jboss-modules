@@ -37,6 +37,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
@@ -99,11 +100,17 @@ public final class Module {
             } while (nc != -1);
         }
         systemPackages = list.toArray(list.toArray(new String[list.size()]));
+        final ListIterator<String> iterator = list.listIterator();
+        while (iterator.hasNext()) {
+            iterator.set(iterator.next().replace('.', '/'));
+        }
+        systemPaths = list.toArray(list.toArray(new String[list.size()]));
     }
 
     // static properties
 
     static final String[] systemPackages;
+    static final String[] systemPaths;
 
     /**
      * The system-wide module logger, which may be changed via {@link #setModuleLogger(org.jboss.modules.log.ModuleLogger)}.
@@ -299,7 +306,7 @@ public final class Module {
      * @param identifier the module identifier containing the service loader
      * @param serviceType the service type class
      * @return the loaded service from the caller's module
-     * @throws ModuleLoadException
+     * @throws ModuleLoadException if the named module failed to load
      */
     public static <S> ServiceLoader<S> loadServiceFromCurrent(ModuleIdentifier identifier, Class<S> serviceType) throws ModuleLoadException {
         return getCurrentModule().getModule(identifier).loadService(serviceType);
@@ -310,7 +317,7 @@ public final class Module {
      * resources of the module.
      * <p>
      * If a security manager is present, then this method invokes the security manager's {@code checkPermission} method
-     * with a {@code RuntimePermission("getClassLoader")} permission to verify access to the class loader. If
+     * with a <code>RuntimePermission("getClassLoader")</code> permission to verify access to the class loader. If
      * access is not granted, a {@code SecurityException} will be thrown.
      *
      * @return the module class loader
@@ -506,8 +513,10 @@ public final class Module {
      * @return the resource URL, or {@code null} if not found
      */
     URL getResource(final String name, final boolean exportsOnly) {
-        if (name.startsWith("java/")) {
-            return moduleClassLoader.getResource(name);
+        for (String s : Module.systemPaths) {
+            if (name.startsWith(s)) {
+                return moduleClassLoader.getResource(name);
+            }
         }
         log.trace("Attempting to find resource %s in %s", name, this);
         final String path = pathOf(name);
@@ -539,11 +548,13 @@ public final class Module {
      * @return the enumeration of all the matching resource URLs (may be empty)
      */
     Enumeration<URL> getResources(final String name, final boolean exportsOnly) {
-        if (name.startsWith("java/")) {
-            try {
-                return moduleClassLoader.getResources(name);
-            } catch (IOException e) {
-                return ConcurrentClassLoader.EMPTY_ENUMERATION;
+        for (String s : Module.systemPaths) {
+            if (name.startsWith(s)) {
+                try {
+                    return moduleClassLoader.getResources(name);
+                } catch (IOException e) {
+                    return ConcurrentClassLoader.EMPTY_ENUMERATION;
+                }
             }
         }
         log.trace("Attempting to find all resources %s in %s", name, this);
@@ -653,8 +664,10 @@ public final class Module {
      * Get the logger used by the module system.
      *
      * If a security manager is present, then this method invokes the security manager's {@code checkPermission} method
-     * with a {@code RuntimePermission("accessModuleLogger")} permission to verify access to the module logger. If
+     * with a <code>RuntimePermission("accessModuleLogger")</code> permission to verify access to the module logger. If
      * access is not granted, a {@code SecurityException} will be thrown.
+     *
+     * @return the module logger
      */
     public static ModuleLogger getModuleLogger() {
         final SecurityManager sm = System.getSecurityManager();
@@ -668,7 +681,7 @@ public final class Module {
      * Change the logger used by the module system.
      *
      * If a security manager is present, then this method invokes the security manager's {@code checkPermission} method
-     * with a {@code RuntimePermission("accessModuleLogger")} permission to verify access to the module logger. If
+     * with a <code>RuntimePermission("accessModuleLogger")</code> permission to verify access to the module logger. If
      * access is not granted, a {@code SecurityException} will be thrown.
      *
      * @param logger the new logger, must not be {@code null}
@@ -696,13 +709,9 @@ public final class Module {
 
     // Linking and resolution
 
-    /**
-     * (Re)calculate the exports paths.
-     */
     Paths<LocalLoader, Dependency> linkExports(final Paths<LocalLoader, Dependency> paths) throws ModuleLoadException {
         return linkExports(paths, new FastCopyHashSet<Module>());
     }
-
 
     Paths<LocalLoader, Dependency> linkExports(final Paths<LocalLoader, Dependency> paths, Set<Module> visited) throws ModuleLoadException {
         return linkExports(paths, paths.getSourceList(NO_DEPENDENCIES), visited);
