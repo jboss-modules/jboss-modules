@@ -24,12 +24,15 @@ package org.jboss.modules;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.net.URL;
+import java.security.AccessController;
 import java.security.SecureClassLoader;
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Queue;
+import sun.misc.Unsafe;
 
 /**
  * A classloader which can delegate to multiple other classloaders without risk of deadlock.  A concurrent class loader
@@ -40,6 +43,12 @@ import java.util.Queue;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public abstract class ConcurrentClassLoader extends SecureClassLoader {
+
+    private static final boolean UNSAFE_LOCKS;
+
+    static {
+        UNSAFE_LOCKS = Boolean.parseBoolean(AccessController.doPrivileged(new PropertyReadAction("jboss.modules.unsafe-locks")));
+    }
 
     /**
      * An empty enumeration, for subclasses to use if desired.
@@ -246,6 +255,15 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
             }
         }
         if (Thread.holdsLock(this) && Thread.currentThread() != LoaderThreadHolder.LOADER_THREAD) {
+            if (UNSAFE_LOCKS) {
+                final Unsafe unsafe = UnsafeHolder.UNSAFE;
+                unsafe.monitorExit(this);
+                try {
+                    return performLoadClass(className, exportsOnly, resolve);
+                } finally {
+                    unsafe.monitorEnter(this);
+                }
+            }
             // Only the classloader thread may take this lock; use a condition to relinquish it
             final LoadRequest req = new LoadRequest(className, resolve, exportsOnly, this);
             final Queue<LoadRequest> queue = LoaderThreadHolder.REQUEST_QUEUE;
@@ -348,6 +366,25 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
                     // ignore
                 }
             }
+        }
+    }
+
+    private static final class UnsafeHolder {
+        static Unsafe UNSAFE;
+
+        static {
+            try {
+                final Field field = Unsafe.class.getDeclaredField("theUnsafe");
+                field.setAccessible(true);
+                UNSAFE = (Unsafe) field.get(null);
+            } catch (IllegalAccessException e) {
+                throw new IllegalAccessError(e.getMessage());
+            } catch (NoSuchFieldException e) {
+                throw new NoSuchFieldError(e.getMessage());
+            }
+        }
+
+        private UnsafeHolder() {
         }
     }
 }
