@@ -44,10 +44,10 @@ import sun.misc.Unsafe;
  */
 public abstract class ConcurrentClassLoader extends SecureClassLoader {
 
-    private static final boolean UNSAFE_LOCKS;
+    private static final boolean LOCKLESS;
 
     static {
-        UNSAFE_LOCKS = Boolean.parseBoolean(AccessController.doPrivileged(new PropertyReadAction("jboss.modules.unsafe-locks")));
+        LOCKLESS = Boolean.parseBoolean(AccessController.doPrivileged(new PropertyReadAction("jboss.modules.lockless")));
     }
 
     /**
@@ -278,9 +278,9 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
      * @throws ClassNotFoundException if {@link #findClass(String, boolean, boolean)} throws this exception
      */
     private Class<?> performLoadClassChecked(final String className, final boolean exportsOnly, final boolean resolve) throws ClassNotFoundException {
-        if (Thread.holdsLock(this) && Thread.currentThread() != LoaderThreadHolder.LOADER_THREAD) {
-            if (UNSAFE_LOCKS) {
-                final Unsafe unsafe = ConcurrentClassLoader.UnsafeHolder.UNSAFE;
+        if (Thread.holdsLock(this)) {
+            if (LOCKLESS) {
+                final Unsafe unsafe = UnsafeHolder.UNSAFE;
                 unsafe.monitorExit(this);
                 try {
                     return performLoadClassChecked(className, exportsOnly, resolve);
@@ -288,29 +288,30 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
                     unsafe.monitorEnter(this);
                 }
             }
-            // Only the classloader thread may take this lock; use a condition to relinquish it
-            final LoadRequest req = new LoadRequest(className, resolve, exportsOnly, this);
-            final Queue<LoadRequest> queue = LoaderThreadHolder.REQUEST_QUEUE;
-            synchronized (queue) {
-                queue.add(req);
-                queue.notify();
-            }
-            boolean intr = false;
-            try {
-                while (!req.done) try {
-                    wait();
-                } catch (InterruptedException e) {
-                    intr = true;
+            if (Thread.currentThread() != LoaderThreadHolder.LOADER_THREAD) {
+                // Only the classloader thread may take this lock; use a condition to relinquish it
+                final LoadRequest req = new LoadRequest(className, resolve, exportsOnly, this);
+                final Queue<LoadRequest> queue = LoaderThreadHolder.REQUEST_QUEUE;
+                synchronized (queue) {
+                    queue.add(req);
+                    queue.notify();
                 }
-            } finally {
-                if (intr) Thread.currentThread().interrupt();
-            }
+                boolean intr = false;
+                try {
+                    while (!req.done) try {
+                        wait();
+                    } catch (InterruptedException e) {
+                        intr = true;
+                    }
+                } finally {
+                    if (intr) Thread.currentThread().interrupt();
+                }
 
-            return req.result;
-        } else {
-            // no deadlock risk!  Either the lock isn't held, or we're inside the class loader thread.
-            return findClass(className, exportsOnly, resolve);
+                return req.result;
+            }
         }
+        // no deadlock risk!  Either the lock isn't held, or we're inside the class loader thread.
+        return findClass(className, exportsOnly, resolve);
     }
 
     static final class LoaderThreadHolder {
