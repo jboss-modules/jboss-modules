@@ -138,14 +138,12 @@ final class FileResourceLoader implements ResourceLoader {
         }
         this.rootName = rootName;
         this.root = root;
-        final File manifestFile = new File(root, "META-INF" + File.separator + "MANIFEST.MF");
+        final File manifestFile = new File(root, "META-INF" + File.separatorChar + "MANIFEST.MF");
         manifest = readManifestFile(manifestFile);
         final URL rootUrl;
         try {
-            rootUrl = new URI("file", null, root.getAbsolutePath(), null).toURL();
+            rootUrl = root.getAbsoluteFile().toURI().toURL();
         } catch (MalformedURLException e) {
-            throw new IllegalArgumentException("Invalid root file specified", e);
-        } catch (URISyntaxException e) {
             throw new IllegalArgumentException("Invalid root file specified", e);
         }
         codeSource = new CodeSource(rootUrl, (CodeSigner[])null);
@@ -226,7 +224,7 @@ final class FileResourceLoader implements ResourceLoader {
     }
 
     public String getLibrary(final String name) {
-        final File file = new File(root, ARCH_NAME + "/" + name);
+        final File file = new File(root, ARCH_NAME + File.separatorChar + name);
         return file.exists() ? file.getAbsolutePath() : null;
     }
 
