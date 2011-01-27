@@ -98,7 +98,7 @@
         <annotation xmlns="http://www.w3.org/2001/XMLSchema">
             <documentation>
                 A module name, which consists of one or more dot (.)-separated segments. Each segment must begin and end
-                with an alphanumeric or underscore (_), and may otherwise contain alphanumerics, underscores, and hypens
+                with an alphanumeric or underscore (_), and may otherwise contain alphanumerics, underscores, and hyphens
                 (-).
             </documentation>
         </annotation>

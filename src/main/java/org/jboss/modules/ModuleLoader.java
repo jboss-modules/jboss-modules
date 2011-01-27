@@ -90,7 +90,7 @@ public abstract class ModuleLoader {
         this.canRedefine = canRedefine;
         mxBean = skipRegister ? null : AccessController.doPrivileged(new PrivilegedAction<ModuleLoaderMXBean>() {
             public ModuleLoaderMXBean run() {
-                ObjectName objectName = null;
+                ObjectName objectName;
                 try {
                     Hashtable<String, String> table = new Hashtable<String, String>();
                     table.put("type", "ModuleLoader");
@@ -364,6 +364,7 @@ public abstract class ModuleLoader {
      * {@link #setAndRelinkDependencies(Module, java.util.List)}.
      *
      * @param module the module to relink
+     * @throws ModuleLoadException if relinking failed
      */
     protected void relink(Module module) throws ModuleLoadException {
         if (!canRedefine)

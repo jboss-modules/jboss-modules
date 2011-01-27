@@ -53,7 +53,7 @@ class CallerContext {
         Class<?> stack[] = hack.getClassContext();
         int i = 3;
         while (stack[i] == stack[2]) {
-            // skip nested calls fromt the same class
+            // skip nested calls front the same class
             if (++i >= stack.length)
                 return null;
         }

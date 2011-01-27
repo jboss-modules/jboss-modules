@@ -230,17 +230,6 @@ public final class Module {
     }
 
     /**
-     * Get a resource from a specific root in this module.
-     *
-     * @param rootPath the module root to search
-     * @param resourcePath the path of the resource
-     * @return the resource
-     */
-    Resource getResource(final String rootPath, final String resourcePath) {
-        return moduleClassLoader.loadResourceLocal(rootPath, resourcePath);
-    }
-
-    /**
      * Run a module's main class, if any.
      *
      * @param args the arguments to pass
@@ -473,7 +462,7 @@ public final class Module {
      *
      * @param className the class name
      * @param exportsOnly {@code true} to only load if the class is exported, {@code false} to load any class
-     * @param resolve {@code true} to initialize (resolve) the class after definition
+     * @param resolve {@code true} to resolve the class after definition
      * @return the class
      */
     Class<?> loadModuleClass(final String className, final boolean exportsOnly, final boolean resolve) {
@@ -490,7 +479,7 @@ public final class Module {
         final Map<String, List<LocalLoader>> paths = getPaths(exportsOnly);
         final List<LocalLoader> loaders = paths.get(path);
         if (loaders != null) {
-            Class<?> clazz = null;
+            Class<?> clazz;
             for (LocalLoader loader : loaders) {
                 clazz = loader.loadClassLocal(className, resolve);
                 if (clazz != null) {
@@ -879,10 +868,6 @@ public final class Module {
             }
             set.clear();
         }
-    }
-
-    void linkExports(final Set<Module> visited) throws ModuleLoadException {
-        linkExports(paths, visited);
     }
 
     void linkExportsIfNeeded(final Set<Module> visited) throws ModuleLoadException {

@@ -347,7 +347,7 @@ class IdentityHashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable, Se
     }
 
     /**
-     * Advanced method that returns a copy of the internal table. The resuling
+     * Advanced method that returns a copy of the internal table. The resulting
      * array will contain nulls at random places that must be skipped. In
      * addition, it will not operate correctly if a null was inserted into the
      * set. Use at your own risk....
@@ -409,11 +409,11 @@ class IdentityHashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable, Se
             }
         }
 
-        System.out.println(" Size:            " + size);
-        System.out.println(" Real Size:       " + total);
-        System.out.println(" Optimal:         " + optimal + " (" + (float) optimal * 100 / total + "%)");
-        System.out.println(" Average Distnce: " + ((float) totalSkew / (total - optimal)));
-        System.out.println(" Max Distance:    " + maxSkew);
+        System.out.println(" Size:             " + size);
+        System.out.println(" Real Size:        " + total);
+        System.out.println(" Optimal:          " + optimal + " (" + (float) optimal * 100 / total + "%)");
+        System.out.println(" Average Distance: " + ((float) totalSkew / (total - optimal)));
+        System.out.println(" Max Distance:     " + maxSkew);
     }
 
     @SuppressWarnings("unchecked")

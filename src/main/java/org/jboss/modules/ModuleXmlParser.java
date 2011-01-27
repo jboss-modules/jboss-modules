@@ -487,7 +487,6 @@ final class ModuleXmlParser {
     }
 
     private static void parseResourceRoot(final File root, final XMLStreamReader reader, final ModuleSpec.Builder specBuilder) throws XMLStreamException {
-        final ModuleIdentifier identifier = specBuilder.getIdentifier();
         String name = null;
         String path = null;
         final Set<Attribute> required = EnumSet.of(Attribute.PATH);
