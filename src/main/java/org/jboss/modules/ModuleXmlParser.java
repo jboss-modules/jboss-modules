@@ -605,7 +605,7 @@ final class ModuleXmlParser {
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {
-                    final ResourceLoader resourceLoader = getResourceLoader(root, reader.getLocation(), name, path);
+                    final ResourceLoader resourceLoader = getResourceLoader(specBuilder.getIdentifier(), root, reader.getLocation(), name, path);
                     specBuilder.addResourceRoot(new ResourceLoaderSpec(resourceLoader, filterBuilder.create()));
                     return;
                 }
@@ -628,10 +628,10 @@ final class ModuleXmlParser {
         }
     }
 
-    private ResourceLoader getResourceLoader(final URL moduleRoot, final Location readerLocation, final String name, final String path)
+    private ResourceLoader getResourceLoader(final ModuleIdentifier moduleIdentifier, final URL moduleRoot, final Location readerLocation, final String name, final String path)
             throws XMLStreamException {
         try {
-            final ResourceLoader resourceLoader = this.resourceLoaderFactory.create(moduleRoot, name, path);
+            final ResourceLoader resourceLoader = this.resourceLoaderFactory.create(moduleIdentifier, moduleRoot, name, path);
 
             return resourceLoader;
         } catch (NoResourceLoaderForResourceRootException e) {

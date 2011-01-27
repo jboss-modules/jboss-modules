@@ -38,14 +38,15 @@ public final class LocalModuleLoader extends ModuleLoader {
     private static class LocalResourceLoaderFactory implements ResourceLoaderFactory {
 
         @Override
-        public ResourceLoader create(URL moduleRoot, String resourceRootName, String resourceRootPath) throws IllegalArgumentException {
+        public ResourceLoader create(ModuleIdentifier moduleIdentifier, URL moduleRoot, String resourceRootName,
+                                     String resourceRootPath) throws IllegalArgumentException {
             ResourceLoader resourceLoader = null;
             final File resourceRootFile = new File(moduleRoot.getPath(), resourceRootPath);
             if (resourceRootFile.isDirectory()) {
-                resourceLoader = ResourceLoaders.createFileResourceLoader(resourceRootName, resourceRootFile);
+                resourceLoader = new FileResourceLoader(resourceRootName, resourceRootFile);
             } else {
                 try {
-                    resourceLoader = ResourceLoaders.createJarResourceLoader(resourceRootName, new JarFile(resourceRootFile));
+                    resourceLoader = new JarFileResourceLoader(resourceRootName, new JarFile(resourceRootFile));
                 } catch (IOException e) {
                     // TODO: What now?
                 }

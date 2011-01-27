@@ -46,6 +46,8 @@ interface ResourceLoaderFactory {
      * {@link NoResourceLoaderForResourceRootException <code>NoResourceLoaderForResourceRootException</code>}.
      * </p>
      *
+     * @param moduleIdentifier The {@link ModuleIdentifier <code>ModuleIdentifier</code>} of the {@link Module
+     *                         <code>Module</code>} that owns the <i>resource root</i> we are creating a <code>ResourceLoader</code> for
      * @param moduleRoot       The {@link URL <code>URL</code>} of the <i>module root</i>
      * @param resourceRootName The <i>resource root's</i> name
      * @param resourceRootPath The <i>resource root's</i> path, relative to the <code>moduleRoot</code>
@@ -56,6 +58,7 @@ interface ResourceLoaderFactory {
      *                                  If this <code>ResourceLoaderFactory</code> fails to create a
      *                                  <code>ResourceLoader</code> capable of handling the given <code>resourceRootPath</code>
      */
-    ResourceLoader create(final URL moduleRoot, final String resourceRootName, final String resourceRootPath) throws IllegalArgumentException,
+    ResourceLoader create(final ModuleIdentifier moduleIdentifier, final URL moduleRoot, final String resourceRootName,
+                          final String resourceRootPath) throws IllegalArgumentException,
             NoResourceLoaderForResourceRootException;
 }
