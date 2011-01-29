@@ -47,9 +47,25 @@ public interface ModuleLoaderMXBean {
     List<String> queryLoadedModuleNames();
 
     /**
+     * Dump all information for a single module as a string.
+     *
+     * @param name the module name
+     * @return the string of module information
+     */
+    String dumpModuleInformation(String name);
+
+    /**
+     * Dump all information for all modules as a string.
+     *
+     * @return the string of module information
+     */
+    String dumpAllModuleInformation();
+
+    /**
      * Attempt to unload a module from this module loader.
      *
      * @param name the string form of the module identifier to unload
+     * @return {@code true} if the module was unloaded
      */
     boolean unloadModule(String name);
 

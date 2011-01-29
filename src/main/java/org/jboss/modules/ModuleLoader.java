@@ -457,6 +457,58 @@ public abstract class ModuleLoader {
             return list;
         }
 
+        public String dumpAllModuleInformation() {
+            final StringBuilder b = new StringBuilder();
+            for (String name : queryLoadedModuleNames()) {
+                dumpModuleInformation(name);
+            }
+            return b.toString();
+        }
+
+        public String dumpModuleInformation(final String name) {
+            final StringBuilder b = new StringBuilder();
+            doDumpModuleInformation(name, b);
+            return b.toString();
+        }
+
+        private void doDumpModuleInformation(final String name, final StringBuilder b) {
+            ModuleInfo description = getModuleDescription(name);
+            b.append("Module ").append(name).append('\n');
+            b.append("    Class loader: ").append(description.getClassLoader()).append('\n');
+            String fallbackLoader = description.getFallbackLoader();
+            if (fallbackLoader != null) b.append("    Fallback loader: ").append(fallbackLoader).append('\n');
+            String mainClass = description.getMainClass();
+            if (mainClass != null) b.append("    Main Class: ").append(mainClass).append('\n');
+            List<ResourceLoaderInfo> loaders = description.getResourceLoaders();
+            b.append("    Resource Loaders:\n");
+            for (ResourceLoaderInfo loader : loaders) {
+                b.append("        Loader Type: ").append(loader.getType()).append('\n');
+                b.append("        Paths:\n");
+                for (String path : loader.getPaths()) {
+                    b.append("            ").append(path).append('\n');
+                }
+            }
+            b.append("    Dependencies:\n");
+            for (DependencyInfo dependencyInfo : description.getDependencies()) {
+                b.append("        Type: ").append(dependencyInfo.getDependencyType()).append('\n');
+                String moduleName = dependencyInfo.getModuleName();
+                if (moduleName != null) {
+                    b.append("        Module Name: ").append(moduleName).append('\n');
+                }
+                if (dependencyInfo.isOptional()) b.append("        (optional)\n");
+                b.append("        Export Filter: ").append(dependencyInfo.getExportFilter()).append('\n');
+                b.append("        Import Filter: ").append(dependencyInfo.getImportFilter()).append('\n');
+                String localLoader = dependencyInfo.getLocalLoader();
+                if (localLoader != null) {
+                    b.append("        Local Loader: ").append(localLoader).append('\n');
+                    b.append("        Paths:\n");
+                    for (String path : dependencyInfo.getLocalLoaderPaths()) {
+                        b.append("            ").append(path).append('\n');
+                    }
+                }
+            }
+        }
+
         public boolean unloadModule(final String name) {
             final SecurityManager sm = System.getSecurityManager();
             if (sm != null) {
