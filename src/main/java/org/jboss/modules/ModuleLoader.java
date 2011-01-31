@@ -22,8 +22,6 @@
 
 package org.jboss.modules;
 
-import static org.jboss.modules.ConcurrentReferenceHashMap.ReferenceType.STRONG;
-import static org.jboss.modules.ConcurrentReferenceHashMap.ReferenceType.WEAK;
 import static org.jboss.modules.management.ObjectProperties.property;
 
 import java.lang.management.ManagementFactory;
@@ -33,7 +31,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.Hashtable;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -78,9 +75,7 @@ public abstract class ModuleLoader {
 
     private static volatile MBeanReg REG_REF = new TempMBeanReg();
 
-    private final ConcurrentMap<ModuleIdentifier, FutureModule> moduleMap = new ConcurrentReferenceHashMap<ModuleIdentifier, FutureModule>(
-            256, 0.5f, 32, STRONG, WEAK, EnumSet.noneOf(ConcurrentReferenceHashMap.Option.class)
-    );
+    private final ConcurrentMap<ModuleIdentifier, FutureModule> moduleMap = new UnlockedReadHashMap<ModuleIdentifier, FutureModule>(256);
 
     private final boolean canRedefine;
     private final ModuleLoaderMXBean mxBean;
