@@ -39,10 +39,12 @@ public final class JDKModuleLogger implements ModuleLogger {
 
     private static final Level TRACE;
     private static final Level DEBUG;
+    private static final Level WARN;
 
     static {
         Level trace;
         Level debug;
+        Level warn;
         try {
             trace = Level.parse("TRACE");
         } catch (IllegalArgumentException ignored) {
@@ -53,8 +55,14 @@ public final class JDKModuleLogger implements ModuleLogger {
         } catch (IllegalArgumentException ignored) {
             debug = Level.FINE;
         }
+        try {
+            warn = Level.parse("WARN");
+        } catch (IllegalArgumentException ignored) {
+            warn = Level.WARNING;
+        }
         TRACE = trace;
         DEBUG = debug;
+        WARN = warn;
     }
 
     @SuppressWarnings({ "NonConstantLogger" })
@@ -182,8 +190,8 @@ public final class JDKModuleLogger implements ModuleLogger {
     }
 
     public void classDefineFailed(final Throwable throwable, final String className, final Module module) {
-        if (defineLogger.isLoggable(TRACE)) {
-            doLog(TRACE, String.format("Failed to define class %s in %s", className, module), throwable);
+        if (defineLogger.isLoggable(WARN)) {
+            doLog(WARN, String.format("Failed to define class %s in %s", className, module), throwable);
         }
     }
 
