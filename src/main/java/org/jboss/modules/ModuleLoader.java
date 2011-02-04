@@ -175,7 +175,19 @@ public abstract class ModuleLoader {
     }
 
     /**
-     * Utility method to delegate to another module loader, accessible from subclasses.
+     * Preload an "exported" module based on an identifier.  By default this simply delegates to {@link #preloadModule(ModuleIdentifier)}.
+     *
+     * @param identifier the module identifier
+     * @return the load result, or {@code null} if the module is not found
+     * @throws ModuleLoadException if an error occurs
+     */
+    protected Module preloadExportedModule(ModuleIdentifier identifier) throws ModuleLoadException {
+        return preloadModule(identifier);
+    }
+
+    /**
+     * Utility method to delegate to another module loader, accessible from subclasses.  The delegate module loader
+     * will be queried for exported modules only.
      *
      * @param identifier the module identifier
      * @param moduleLoader the module loader to delegate to
@@ -183,7 +195,7 @@ public abstract class ModuleLoader {
      * @throws ModuleLoadException if an error occurs
      */
     protected static Module preloadModule(ModuleIdentifier identifier, ModuleLoader moduleLoader) throws ModuleLoadException {
-        return moduleLoader.preloadModule(identifier);
+        return moduleLoader.preloadExportedModule(identifier);
     }
 
     /**
