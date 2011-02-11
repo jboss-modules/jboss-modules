@@ -168,8 +168,11 @@ final class JarFileResourceLoader implements ResourceLoader {
             if (entry == null) {
                 return null;
             }
-            return new JarEntryResource(jarFile, entry, new URL("jar", null, -1, "file:" + jarFile.getName() + "!/" + entryName));
+            return new JarEntryResource(jarFile, entry, new URI("jar", "file:" + jarFile.getName() + "!/" + entryName, null).toURL());
         } catch (MalformedURLException e) {
+            // must be invalid...?  (todo: check this out)
+            return null;
+        } catch (URISyntaxException e) {
             // must be invalid...?  (todo: check this out)
             return null;
         }
