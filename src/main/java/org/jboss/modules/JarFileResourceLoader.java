@@ -143,7 +143,7 @@ final class JarFileResourceLoader implements ResourceLoader {
         spec.setImplVersion(getDefinedAttribute(Attributes.Name.IMPLEMENTATION_VERSION, entryAttribute, mainAttribute));
         spec.setImplVendor(getDefinedAttribute(Attributes.Name.IMPLEMENTATION_VENDOR, entryAttribute, mainAttribute));
         if (Boolean.parseBoolean(getDefinedAttribute(Attributes.Name.SEALED, entryAttribute, mainAttribute))) {
-            spec.setSealBase(new URL("jar", null, -1, jarFile.getName()));
+            spec.setSealBase(rootUrl);
         }
         return spec;
     }
