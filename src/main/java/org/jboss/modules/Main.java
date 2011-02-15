@@ -78,6 +78,9 @@ public final class Main {
         System.out.println("    -mp <search path of directories>");
         System.out.println("                  A list of directories, separated by '" + File.pathSeparator + "', where modules may be located");
         System.out.println("                  If not specified, the value of the \"module.path\" system property is used");
+        System.out.println("    -config <config-location>");
+        System.out.println("                  The location of the module configuration.  Either -mp or -config");
+        System.out.println("                  may be specified, but not both");
         System.out.println("    -logmodule <module-name>");
         System.out.println("                  The module to use to load the system logmanager");
         System.out.println("    -version      Print version and exit\n");
@@ -94,6 +97,7 @@ public final class Main {
         final int argsLen = args.length;
         String[] moduleArgs = null;
         String modulePath = null;
+        String configPath = null;
         ModuleIdentifier moduleIdentifier = null;
         ModuleIdentifier logManagerModuleIdentifier = null;
         for (int i = 0, argsLength = argsLen; i < argsLength; i++) {
@@ -112,8 +116,22 @@ public final class Main {
                             System.err.println("Module path may only be specified once");
                             System.exit(1);
                         }
+                        if (configPath != null) {
+                            System.err.println("Module path may not be specified with config path");
+                            System.exit(1);
+                        }
                         modulePath = args[++i];
                         System.setProperty("module.path", modulePath);
+                    } else if ("-config".equals(arg)) {
+                        if (configPath != null) {
+                            System.err.println("Config file path may only be specified once");
+                            System.exit(1);
+                        }
+                        if (modulePath != null) {
+                            System.err.println("Module path may not be specified with config path");
+                            System.exit(1);
+                        }
+                        configPath = args[++i];
                     } else if ("-logmodule".equals(arg)) {
                         logManagerModuleIdentifier = ModuleIdentifier.fromString(args[++i]);
                     } else {
@@ -141,7 +159,13 @@ public final class Main {
             usage();
             System.exit(1);
         }
-        final ModuleLoader loader = SystemModuleLoaderHolder.INSTANCE;
+        final ModuleLoader loader;
+        if (configPath != null) {
+            loader = ModuleXmlParser.parseModuleConfigXml(new File(configPath));
+        } else {
+            loader = DefaultBootModuleLoaderHolder.INSTANCE;
+        }
+        Module.initBootModuleLoader(loader);
         if (logManagerModuleIdentifier != null) {
             final ModuleClassLoader classLoader = loader.loadModule(logManagerModuleIdentifier).getClassLoaderPrivate();
             final InputStream stream = classLoader.getResourceAsStream("META-INF/services/java.util.logging.LogManager");

@@ -61,6 +61,8 @@ import org.jboss.modules.log.NoopModuleLogger;
 */
 public final class Module {
 
+    private static volatile ModuleLoader BOOT_MODULE_LOADER;
+
     static {
         AccessController.doPrivileged(new PrivilegedAction<Void>() {
             public Void run() {
@@ -158,7 +160,7 @@ public final class Module {
 
     private static final RuntimePermission GET_CLASS_LOADER = new RuntimePermission("getClassLoader");
     private static final RuntimePermission GET_SYSTEM_MODULE = new RuntimePermission("getSystemModule");
-    private static final RuntimePermission GET_SYSTEM_MODULE_LOADER = new RuntimePermission("getSystemModuleLoader");
+    private static final RuntimePermission GET_BOOT_MODULE_LOADER = new RuntimePermission("getBootModuleLoader");
     private static final RuntimePermission ACCESS_MODULE_LOGGER = new RuntimePermission("accessModuleLogger");
 
     private static final AtomicReferenceFieldUpdater<Module, Paths<LocalLoader, Dependency>> pathsUpdater
@@ -360,20 +362,34 @@ public final class Module {
     }
 
     /**
-     * Gets the system module loader. The system module loader is the
+     * Gets the boot module loader. The boot module loader is the
      * initial loader that is established by the module framework. It typically
      * is based off of the environmental module path unless it is overridden by
-     * specifying a different class name for the {@code system.module.loader} system
+     * specifying a different class name for the {@code boot.module.loader} system
      * property.
      *
-     * @return the system module loader
+     * @return the boot module loader
      */
-    public static ModuleLoader getSystemModuleLoader() {
+    public static ModuleLoader getBootModuleLoader() {
         final SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
-            sm.checkPermission(GET_SYSTEM_MODULE_LOADER);
+            sm.checkPermission(GET_BOOT_MODULE_LOADER);
         }
-        return SystemModuleLoaderHolder.INSTANCE;
+        return BOOT_MODULE_LOADER;
+    }
+
+    /**
+     * @deprecated Use {@link #getBootModuleLoader()}.  This method will be removed.
+     *
+     * @return the boot module loader
+     */
+    @Deprecated
+    public static ModuleLoader getSystemModuleLoader() {
+        return getBootModuleLoader();
+    }
+
+    static void initBootModuleLoader(ModuleLoader loader) {
+        BOOT_MODULE_LOADER = loader;
     }
 
     /**

@@ -36,12 +36,29 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarFile;
 import org.jboss.modules.filter.MultiplePathFilterBuilder;
 import org.jboss.modules.filter.PathFilter;
 import org.jboss.modules.filter.PathFilters;
+
+import static javax.xml.stream.XMLStreamConstants.ATTRIBUTE;
+import static javax.xml.stream.XMLStreamConstants.CDATA;
+import static javax.xml.stream.XMLStreamConstants.CHARACTERS;
+import static javax.xml.stream.XMLStreamConstants.COMMENT;
+import static javax.xml.stream.XMLStreamConstants.DTD;
+import static javax.xml.stream.XMLStreamConstants.END_DOCUMENT;
+import static javax.xml.stream.XMLStreamConstants.END_ELEMENT;
+import static javax.xml.stream.XMLStreamConstants.ENTITY_DECLARATION;
+import static javax.xml.stream.XMLStreamConstants.ENTITY_REFERENCE;
+import static javax.xml.stream.XMLStreamConstants.NOTATION_DECLARATION;
+import static javax.xml.stream.XMLStreamConstants.PROCESSING_INSTRUCTION;
+import static javax.xml.stream.XMLStreamConstants.SPACE;
+import static javax.xml.stream.XMLStreamConstants.START_DOCUMENT;
+import static javax.xml.stream.XMLStreamConstants.START_ELEMENT;
 
 /**
  * A fast, validating module.xml parser.
@@ -70,6 +87,10 @@ final class ModuleXmlParser {
         RESOURCE_ROOT,
         PATH,
         FILTER,
+        CONFIGURATION,
+        LOADER,
+        MODULE_PATH,
+        IMPORT,
 
         // default unknown element
         UNKNOWN;
@@ -91,6 +112,10 @@ final class ModuleXmlParser {
             elementsMap.put(new QName(NAMESPACE, "include-set"), Element.INCLUDE_SET);
             elementsMap.put(new QName(NAMESPACE, "exclude-set"), Element.EXCLUDE_SET);
             elementsMap.put(new QName(NAMESPACE, "filter"), Element.FILTER);
+            elementsMap.put(new QName(NAMESPACE, "configuration"), Element.CONFIGURATION);
+            elementsMap.put(new QName(NAMESPACE, "loader"), Element.LOADER);
+            elementsMap.put(new QName(NAMESPACE, "module-path"), Element.MODULE_PATH);
+            elementsMap.put(new QName(NAMESPACE, "import"), Element.IMPORT);
             elements = elementsMap;
         }
 
@@ -107,7 +132,8 @@ final class ModuleXmlParser {
         SERVICES,
         PATH,
         OPTIONAL,
-        
+        DEFAULT_LOADER,
+
         // default unknown attribute
         UNKNOWN;
 
@@ -121,6 +147,7 @@ final class ModuleXmlParser {
             attributesMap.put(new QName("services"), SERVICES);
             attributesMap.put(new QName("path"), PATH);
             attributesMap.put(new QName("optional"), OPTIONAL);
+            attributesMap.put(new QName("default-loader"), DEFAULT_LOADER);
             attributes = attributesMap;
         }
 
@@ -158,7 +185,7 @@ final class ModuleXmlParser {
         }
     }
 
-    static ModuleSpec parse(final ModuleIdentifier moduleIdentifier, final File root, final File moduleInfoFile) throws ModuleLoadException {
+    static ModuleSpec parseModuleXml(final ModuleIdentifier moduleIdentifier, final File root, final File moduleInfoFile) throws ModuleLoadException {
         final FileInputStream fis;
         try {
             fis = new FileInputStream(moduleInfoFile);
@@ -166,7 +193,21 @@ final class ModuleXmlParser {
             throw new ModuleLoadException("No module.xml file found at " + moduleInfoFile);
         }
         try {
-            return parse(root, fis, moduleInfoFile, moduleIdentifier);
+            return parseModuleXml(root, fis, moduleInfoFile, moduleIdentifier);
+        } finally {
+            safeClose(fis);
+        }
+    }
+
+    static ModuleLoader parseModuleConfigXml(final File moduleConfigFile) {
+        final FileInputStream fis;
+        try {
+            fis = new FileInputStream(moduleConfigFile);
+        } catch (FileNotFoundException e) {
+            throw new IllegalArgumentException("No module-config.xml file found at " + moduleConfigFile);
+        }
+        try {
+            return parseModuleConfigXml(moduleConfigFile, fis);
         } finally {
             safeClose(fis);
         }
@@ -180,7 +221,7 @@ final class ModuleXmlParser {
 
     private static final XMLInputFactory INPUT_FACTORY = XMLInputFactory.newInstance();
 
-    private static ModuleSpec parse(final File root, InputStream source, final File moduleInfoFile, final ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
+    private static ModuleSpec parseModuleXml(final File root, InputStream source, final File moduleInfoFile, final ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
         try {
             final XMLInputFactory inputFactory = INPUT_FACTORY;
             setIfSupported(inputFactory, XMLInputFactory.IS_VALIDATING, Boolean.FALSE);
@@ -193,6 +234,22 @@ final class ModuleXmlParser {
             }
         } catch (XMLStreamException e) {
             throw new ModuleLoadException("Error loading module from " + moduleInfoFile.getPath(), e);
+        }
+    }
+
+    private static ModuleLoader parseModuleConfigXml(final File file, final InputStream source) {
+        try {
+            final XMLInputFactory inputFactory = INPUT_FACTORY;
+            setIfSupported(inputFactory, XMLInputFactory.IS_VALIDATING, Boolean.FALSE);
+            setIfSupported(inputFactory, XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
+            final XMLStreamReader streamReader = inputFactory.createXMLStreamReader(source);
+            try {
+                return parseConfigDocument(streamReader);
+            } finally {
+                safeClose(streamReader);
+            }
+        } catch (XMLStreamException e) {
+            throw new IllegalArgumentException("Error loading module configuration from " + file.getPath(), e);
         }
     }
 
@@ -215,21 +272,21 @@ final class ModuleXmlParser {
     private static XMLStreamException unexpectedContent(final XMLStreamReader reader) {
         final String kind;
         switch (reader.getEventType()) {
-            case XMLStreamConstants.ATTRIBUTE: kind = "attribute"; break;
-            case XMLStreamConstants.CDATA: kind = "cdata"; break;
-            case XMLStreamConstants.CHARACTERS: kind = "characters"; break;
-            case XMLStreamConstants.COMMENT: kind = "comment"; break;
-            case XMLStreamConstants.DTD: kind = "dtd"; break;
-            case XMLStreamConstants.END_DOCUMENT: kind = "document end"; break;
-            case XMLStreamConstants.END_ELEMENT: kind = "element end"; break;
-            case XMLStreamConstants.ENTITY_DECLARATION: kind = "entity declaration"; break;
-            case XMLStreamConstants.ENTITY_REFERENCE: kind = "entity ref"; break;
+            case ATTRIBUTE: kind = "attribute"; break;
+            case CDATA: kind = "cdata"; break;
+            case CHARACTERS: kind = "characters"; break;
+            case COMMENT: kind = "comment"; break;
+            case DTD: kind = "dtd"; break;
+            case END_DOCUMENT: kind = "document end"; break;
+            case END_ELEMENT: kind = "element end"; break;
+            case ENTITY_DECLARATION: kind = "entity declaration"; break;
+            case ENTITY_REFERENCE: kind = "entity ref"; break;
             case XMLStreamConstants.NAMESPACE: kind = "namespace"; break;
-            case XMLStreamConstants.NOTATION_DECLARATION: kind = "notation declaration"; break;
-            case XMLStreamConstants.PROCESSING_INSTRUCTION: kind = "processing instruction"; break;
-            case XMLStreamConstants.SPACE: kind = "whitespace"; break;
-            case XMLStreamConstants.START_DOCUMENT: kind = "document start"; break;
-            case XMLStreamConstants.START_ELEMENT: kind = "element start"; break;
+            case NOTATION_DECLARATION: kind = "notation declaration"; break;
+            case PROCESSING_INSTRUCTION: kind = "processing instruction"; break;
+            case SPACE: kind = "whitespace"; break;
+            case START_DOCUMENT: kind = "document start"; break;
+            case START_ELEMENT: kind = "element start"; break;
             default: kind = "unknown"; break;
         }
         final StringBuilder b = new StringBuilder("Unexpected content of type '").append(kind).append('\'');
@@ -258,14 +315,177 @@ final class ModuleXmlParser {
         return new XMLStreamException(b.toString(), location);
     }
 
+    private static XMLStreamException noSuchLoader(final XMLStreamReader reader, final String loader) {
+        return new XMLStreamException("No such loader found named '" + loader + "'", reader.getLocation());
+    }
+
+    private static XMLStreamException selfImport(final XMLStreamReader reader, final String loader) {
+        return new XMLStreamException("Module loader '" + loader + "' imports itself", reader.getLocation());
+    }
+
+    private static XMLStreamException duplicateLoader(final XMLStreamReader reader, final String loader) {
+        return new XMLStreamException("Multiple loaders defined named '" + loader + "'", reader.getLocation());
+    }
+
+    private static ModuleLoader parseConfigDocument(XMLStreamReader reader) throws XMLStreamException {
+        while (reader.hasNext()) {
+            switch (reader.nextTag()) {
+                case START_DOCUMENT: {
+                    return parseConfigRootElement(reader);
+                }
+                case START_ELEMENT: {
+                    if (Element.of(reader.getName()) != Element.CONFIGURATION) {
+                        throw unexpectedContent(reader);
+                    }
+                    return parseConfigRootElementContents(reader);
+                }
+                default: {
+                    throw unexpectedContent(reader);
+                }
+            }
+        }
+        throw endOfDocument(reader.getLocation());
+    }
+
+    private static ModuleLoader parseConfigRootElement(final XMLStreamReader reader) throws XMLStreamException {
+        while (reader.hasNext()) {
+            switch (reader.nextTag()) {
+                case START_ELEMENT: {
+                    if (Element.of(reader.getName()) != Element.CONFIGURATION) {
+                        throw unexpectedContent(reader);
+                    }
+                    return parseConfigRootElementContents(reader);
+                }
+                default: {
+                    throw unexpectedContent(reader);
+                }
+            }
+        }
+        throw endOfDocument(reader.getLocation());
+    }
+
+    private static ModuleLoader parseConfigRootElementContents(final XMLStreamReader reader) throws XMLStreamException {
+        final int count = reader.getAttributeCount();
+        String defaultLoader = null;
+        final Set<Attribute> required = EnumSet.of(Attribute.DEFAULT_LOADER);
+        for (int i = 0; i < count; i ++) {
+            final Attribute attribute = Attribute.of(reader.getAttributeName(i));
+            required.remove(attribute);
+            switch (attribute) {
+                case DEFAULT_LOADER: defaultLoader = reader.getAttributeValue(i); break;
+                default: throw unexpectedContent(reader);
+            }
+        }
+        if (! required.isEmpty() || defaultLoader == null) {
+            throw missingAttributes(reader.getLocation(), required);
+        }
+        final Map<String, LocalModuleLoader> moduleLoaderMap = new HashMap<String, LocalModuleLoader>();
+        final Map<String, Set<String>> importsMap = new HashMap<String, Set<String>>();
+        while (reader.hasNext()) {
+            switch (reader.nextTag()) {
+                case START_ELEMENT: {
+                    switch (Element.of(reader.getName())) {
+                        case LOADER: {
+                            parseConfigLoaderElement(reader, moduleLoaderMap, importsMap);
+                            break;
+                        }
+                        default: throw unexpectedContent(reader);
+                    }
+                    break;
+                }
+                case END_ELEMENT: {
+                    ModuleLoader loader = moduleLoaderMap.get(defaultLoader);
+                    if (loader == null) {
+                        throw noSuchLoader(reader, defaultLoader);
+                    }
+                    for (Map.Entry<String, Set<String>> entry : importsMap.entrySet()) {
+                        String key = entry.getKey();
+                        Set<String> value = entry.getValue();
+                        LocalModuleLoader moduleLoader = moduleLoaderMap.get(key);
+                        assert moduleLoader != null;
+                        final ModuleLoader[] importedLoaders = new ModuleLoader[value.size()];
+                        int i = 0;
+                        for (String importName : value) {
+                            LocalModuleLoader importedLoader = moduleLoaderMap.get(importName);
+                            if (importedLoader == null) {
+                                throw noSuchLoader(reader, importName);
+                            }
+                            if (importName.equals(key)) {
+                                throw selfImport(reader, importName);
+                            }
+                            importedLoaders[i++] = importedLoader;
+                        }
+                        moduleLoader.setImportLoaders(importedLoaders);
+                    }
+                    return loader;
+                }
+                default: {
+                    throw unexpectedContent(reader);
+                }
+            }
+        }
+        throw endOfDocument(reader.getLocation());
+    }
+
+    private static void parseConfigLoaderElement(final XMLStreamReader reader, final Map<String, LocalModuleLoader> map, final Map<String, Set<String>> importsMap) throws XMLStreamException {
+        final Set<String> roots = new HashSet<String>();
+        final Set<String> imports = new LinkedHashSet<String>();
+        final int count = reader.getAttributeCount();
+        String name = null;
+        final Set<Attribute> required = EnumSet.of(Attribute.NAME);
+        for (int i = 0; i < count; i ++) {
+            final Attribute attribute = Attribute.of(reader.getAttributeName(i));
+            required.remove(attribute);
+            switch (attribute) {
+                case NAME:    name = reader.getAttributeValue(i); break;
+                default: throw unexpectedContent(reader);
+            }
+        }
+        if (! required.isEmpty() || name == null) {
+            throw missingAttributes(reader.getLocation(), required);
+        }
+        if (map.containsKey(name)) {
+            throw duplicateLoader(reader, name);
+        }
+        while (reader.hasNext()) {
+            switch (reader.nextTag()) {
+                case START_ELEMENT: {
+                    switch (Element.of(reader.getName())) {
+                        case MODULE_PATH: {
+                            parsePathName(reader, roots);
+                            break;
+                        }
+                        case IMPORT: {
+                            // it's not really a path name, but whatever works
+                            parsePathName(reader, imports);
+                            break;
+                        }
+                    }
+                    break;
+                }
+                case END_ELEMENT: {
+                    File[] files = new File[roots.size()];
+                    int i = 0;
+                    for (String root : roots) {
+                        files[i++] = new File(root);
+                    }
+                    map.put(name, new LocalModuleLoader(files));
+                    importsMap.put(name, imports);
+                    return;
+                }
+                default: throw unexpectedContent(reader);
+            }
+        }
+    }
+
     private static ModuleSpec parseDocument(final File root, XMLStreamReader reader, ModuleSpec.Builder specBuilder) throws XMLStreamException {
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
-                case XMLStreamConstants.START_DOCUMENT: {
+                case START_DOCUMENT: {
                     parseRootElement(root, reader, specBuilder);
                     return specBuilder.create();
                 }
-                case XMLStreamConstants.START_ELEMENT: {
+                case START_ELEMENT: {
                     if (Element.of(reader.getName()) != Element.MODULE) {
                         throw unexpectedContent(reader);
                     }
@@ -284,7 +504,7 @@ final class ModuleXmlParser {
     private static void parseRootElement(final File root, final XMLStreamReader reader, final ModuleSpec.Builder specBuilder) throws XMLStreamException {
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
-                case XMLStreamConstants.START_ELEMENT: {
+                case START_ELEMENT: {
                     if (Element.of(reader.getName()) != Element.MODULE) {
                         throw unexpectedContent(reader);
                     }
@@ -325,11 +545,11 @@ final class ModuleXmlParser {
         Set<Element> visited = EnumSet.noneOf(Element.class);
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
-                case XMLStreamConstants.END_ELEMENT: {
+                case END_ELEMENT: {
                     specBuilder.addDependency(DependencySpec.createLocalDependencySpec(PathFilters.acceptAll(), exportsBuilder.create()));
                     return;
                 }
-                case XMLStreamConstants.START_ELEMENT: {
+                case START_ELEMENT: {
                     final Element element = Element.of(reader.getName());
                     if (visited.contains(element)) {
                         throw unexpectedContent(reader);
@@ -356,10 +576,10 @@ final class ModuleXmlParser {
         // xsd:choice
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
-                case XMLStreamConstants.END_ELEMENT: {
+                case END_ELEMENT: {
                     return;
                 }
-                case XMLStreamConstants.START_ELEMENT: {
+                case START_ELEMENT: {
                     switch (Element.of(reader.getName())) {
                         case MODULE: parseModuleDependency(reader, specBuilder); break;
                         default: throw unexpectedContent(reader);
@@ -401,7 +621,7 @@ final class ModuleXmlParser {
         final MultiplePathFilterBuilder exportBuilder = PathFilters.multiplePathFilterBuilder(export);
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
-                case XMLStreamConstants.END_ELEMENT: {
+                case END_ELEMENT: {
                     if (services == ModuleXmlParser.Disposition.EXPORT) {
                         // If services are to be re-exported, add META-INF/services -> true near the end of the list
                         exportBuilder.addFilter(PathFilters.getMetaInfServicesFilter(), true);
@@ -426,7 +646,7 @@ final class ModuleXmlParser {
                     specBuilder.addDependency(DependencySpec.createModuleDependencySpec(importFilter, exportFilter, null, ModuleIdentifier.create(name, slot), optional));
                     return;
                 }
-                case XMLStreamConstants.START_ELEMENT: {
+                case START_ELEMENT: {
                     switch (Element.of(reader.getName())) {
                         case EXPORTS: parseFilterList(reader, exportBuilder); break;
                         case IMPORTS: parseFilterList(reader, importBuilder); break;
@@ -465,10 +685,10 @@ final class ModuleXmlParser {
         // xsd:choice
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
-                case XMLStreamConstants.END_ELEMENT: {
+                case END_ELEMENT: {
                     return;
                 }
-                case XMLStreamConstants.START_ELEMENT: {
+                case START_ELEMENT: {
                     switch (Element.of(reader.getName())) {
                         case RESOURCE_ROOT: {
                             parseResourceRoot(root, reader, specBuilder);
@@ -512,7 +732,7 @@ final class ModuleXmlParser {
         final Set<Element> encountered = EnumSet.noneOf(Element.class);
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
-                case XMLStreamConstants.END_ELEMENT: {
+                case END_ELEMENT: {
                     if (file.isDirectory()) {
                         resourceLoader = new FileResourceLoader(name, file);
                     } else {
@@ -525,7 +745,7 @@ final class ModuleXmlParser {
                     specBuilder.addResourceRoot(new ResourceLoaderSpec(resourceLoader, filterBuilder.create()));
                     return;
                 }
-                case XMLStreamConstants.START_ELEMENT: {
+                case START_ELEMENT: {
                     final Element element = Element.of(reader.getName());
                     if (! encountered.add(element)) throw unexpectedContent(reader);
                     switch (element) {
@@ -545,10 +765,10 @@ final class ModuleXmlParser {
         // xsd:choice
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
-                case XMLStreamConstants.END_ELEMENT: {
+                case END_ELEMENT: {
                     return;
                 }
-                case XMLStreamConstants.START_ELEMENT: {
+                case START_ELEMENT: {
                     switch (Element.of(reader.getName())) {
                         case INCLUDE: parsePath(reader, true, builder); break;
                         case EXCLUDE: parsePath(reader, false, builder); break;
@@ -602,11 +822,11 @@ final class ModuleXmlParser {
         // xsd:choice
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
-                case XMLStreamConstants.END_ELEMENT: {
+                case END_ELEMENT: {
                     builder.addFilter(PathFilters.in(set), include);
                     return;
                 }
-                case XMLStreamConstants.START_ELEMENT: {
+                case START_ELEMENT: {
                     switch (Element.of(reader.getName())) {
                         case PATH: parsePathName(reader, set); break;
                     }
@@ -639,7 +859,7 @@ final class ModuleXmlParser {
     private static void parseNoContent(final XMLStreamReader reader) throws XMLStreamException {
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
-                case XMLStreamConstants.END_ELEMENT: {
+                case END_ELEMENT: {
                     return;
                 }
                 default: {
@@ -653,18 +873,18 @@ final class ModuleXmlParser {
     private static void parseEndDocument(final XMLStreamReader reader) throws XMLStreamException {
         while (reader.hasNext()) {
             switch (reader.next()) {
-                case XMLStreamConstants.END_DOCUMENT: {
+                case END_DOCUMENT: {
                     return;
                 }
-                case XMLStreamConstants.CHARACTERS: {
+                case CHARACTERS: {
                     if (! reader.isWhiteSpace()) {
                         throw unexpectedContent(reader);
                     }
                     // ignore
                     break;
                 }
-                case XMLStreamConstants.COMMENT:
-                case XMLStreamConstants.SPACE: {
+                case COMMENT:
+                case SPACE: {
                     // ignore
                     break;
                 }

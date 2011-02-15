@@ -38,6 +38,15 @@
         </xsd:annotation>
     </xsd:element>
 
+    <!-- Root element -->
+    <xsd:element name="configuration" type="configurationType">
+        <annotation xmlns="http://www.w3.org/2001/XMLSchema">
+            <documentation>
+                Root element for a filesystem module loader configuration.
+            </documentation>
+        </annotation>
+    </xsd:element>
+
     <xsd:complexType name="moduleType">
         <xsd:annotation>
             <xsd:documentation>
@@ -392,5 +401,66 @@
         </xsd:choice>
     </xsd:complexType>
 
+    <xsd:complexType name="configurationType">
+        <annotation xmlns="http://www.w3.org/2001/XMLSchema">
+            <documentation>
+                A configuration for the default module loader.
+            </documentation>
+        </annotation>
+        <xsd:choice minOccurs="1" maxOccurs="unbounded">
+            <xsd:element name="loader" type="loaderType">
+                <annotation xmlns="http://www.w3.org/2001/XMLSchema">
+                    <documentation>
+                        A defined loader. More than one loader may be defined.
+                    </documentation>
+                </annotation>
+            </xsd:element>
+        </xsd:choice>
+        <xsd:attribute name="default-loader" type="loaderNameType" use="required">
+            <annotation xmlns="http://www.w3.org/2001/XMLSchema">
+                <documentation>
+                    The loader to use. The name matches the value of the "name" attribute of one of the defined loaders.
+                </documentation>
+            </annotation>
+        </xsd:attribute>
+    </xsd:complexType>
+
+    <xsd:complexType name="loaderType">
+        <xsd:choice minOccurs="0" maxOccurs="unbounded">
+            <xsd:element name="module-path" type="pathType">
+                <annotation xmlns="http://www.w3.org/2001/XMLSchema">
+                    <documentation>
+                        A module root path for this loader. Paths are relative to ${user.dir} by default.
+                    </documentation>
+                </annotation>
+            </xsd:element>
+            <xsd:element name="import" type="xsd:string">
+                <annotation xmlns="http://www.w3.org/2001/XMLSchema">
+                    <documentation>
+                        Specifies another loader whose content should be imported. Such loaders are visible to modules
+                        defined by this loader, but not to modules defined in other loaders.
+                    </documentation>
+                </annotation>
+            </xsd:element>
+        </xsd:choice>
+        <xsd:attribute name="name" type="loaderNameType" use="required">
+            <annotation xmlns="http://www.w3.org/2001/XMLSchema">
+                <documentation>
+                    The name of this particular module loader.
+                </documentation>
+            </annotation>
+        </xsd:attribute>
+    </xsd:complexType>
+
+    <xsd:simpleType name="loaderNameType">
+        <annotation xmlns="http://www.w3.org/2001/XMLSchema">
+            <documentation>
+                A loader type name, which may consist of letters, numbers, hyphens, and underscores.
+            </documentation>
+        </annotation>
+        <xsd:restriction base="xsd:token">
+            <xsd:pattern value="[-0-9a-zA-Z_]+"/>
+        </xsd:restriction>
+    </xsd:simpleType>
 </xsd:schema>
 

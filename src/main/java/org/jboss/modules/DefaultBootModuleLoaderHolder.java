@@ -26,19 +26,19 @@ import java.lang.reflect.InvocationTargetException;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
-final class SystemModuleLoaderHolder {
+final class DefaultBootModuleLoaderHolder {
 
     static final ModuleLoader INSTANCE;
 
-    private SystemModuleLoaderHolder() {
+    private DefaultBootModuleLoaderHolder() {
     }
 
     static {
         INSTANCE = AccessController.doPrivileged(new PrivilegedAction<ModuleLoader>() {
             public ModuleLoader run() {
-                final String loaderClass = System.getProperty("system.module.loader", LocalModuleLoader.class.getName());
+                final String loaderClass = System.getProperty("boot.module.loader", LocalModuleLoader.class.getName());
                 try {
-                    return Class.forName(loaderClass, true, SystemModuleLoaderHolder.class.getClassLoader()).asSubclass(ModuleLoader.class).getConstructor().newInstance();
+                    return Class.forName(loaderClass, true, DefaultBootModuleLoaderHolder.class.getClassLoader()).asSubclass(ModuleLoader.class).getConstructor().newInstance();
                 } catch (InstantiationException e) {
                     throw new InstantiationError(e.getMessage());
                 } catch (IllegalAccessException e) {
