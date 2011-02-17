@@ -55,7 +55,13 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
      */
     protected static final Enumeration<URL> EMPTY_ENUMERATION = Collections.enumeration(Collections.<URL>emptySet());
 
-    /** {@inheritDoc} */
+    /**
+     * Loads the class with the specified binary name.  Equivalent to calling {@link #loadClass(String, boolean) loadClass(className, false)}.
+     *
+     * @param className The binary name of the class
+     * @return the resulting {@code Class} instance
+     * @throws ClassNotFoundException if the class was not found
+     */
     @Override
     public final Class<?> loadClass(final String className) throws ClassNotFoundException {
         return performLoadClass(className, false, false);
@@ -63,6 +69,10 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
 
     /**
      * Loads the class with the specified binary name.
+     *
+     * @param className The binary name of the class
+     * @param resolve {@code true} if the class should be linked after loading
+     * @return the resulting {@code Class} instance
      */
     @Override
     public final Class<?> loadClass(final String className, boolean resolve) throws ClassNotFoundException {
@@ -84,7 +94,7 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
      * Same as {@link #loadClass(String,boolean)}, except only exported classes will be considered.
      *
      * @param className the class name
-     * @param resolve {@code true} to resolve the class after loading
+     * @param resolve {@code true} if the class should be linked after loading
      * @return the class
      * @throws ClassNotFoundException if the class isn't found
      */
@@ -98,7 +108,7 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
      *
      * @param className the class name
      * @param exportsOnly {@code true} if only exported classes should be considered
-     * @param resolve {@code true} to resolve the loaded class
+     * @param resolve {@code true} if the class should be linked after loading
      * @return the class
      * @throws ClassNotFoundException if the class is not found
      */
