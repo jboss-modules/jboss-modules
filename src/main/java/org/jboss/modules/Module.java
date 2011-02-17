@@ -41,6 +41,7 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import org.jboss.modules.filter.PathFilter;
 import org.jboss.modules.filter.PathFilters;
@@ -61,7 +62,7 @@ import org.jboss.modules.log.NoopModuleLogger;
 */
 public final class Module {
 
-    private static volatile ModuleLoader BOOT_MODULE_LOADER;
+    private static final AtomicReference<ModuleLoader> BOOT_MODULE_LOADER = new AtomicReference<ModuleLoader>();
 
     static {
         AccessController.doPrivileged(new PrivilegedAction<Void>() {
@@ -383,7 +384,15 @@ public final class Module {
         if (sm != null) {
             sm.checkPermission(GET_BOOT_MODULE_LOADER);
         }
-        return BOOT_MODULE_LOADER;
+        ModuleLoader loader;
+        while ((loader = BOOT_MODULE_LOADER.get()) == null) {
+            loader = DefaultBootModuleLoaderHolder.INSTANCE;
+            if (BOOT_MODULE_LOADER.compareAndSet(null, loader)) {
+                break;
+            }
+            // get it again
+        }
+        return loader;
     }
 
     /**
@@ -397,7 +406,7 @@ public final class Module {
     }
 
     static void initBootModuleLoader(ModuleLoader loader) {
-        BOOT_MODULE_LOADER = loader;
+        BOOT_MODULE_LOADER.set(loader);
     }
 
     /**
