@@ -22,6 +22,11 @@
 
 package org.jboss.modules;
 
+import __redirected.__DocumentBuilderFactory;
+import __redirected.__SAXParserFactory;
+import __redirected.__XMLEventFactory;
+import __redirected.__XMLInputFactory;
+import __redirected.__XMLOutputFactory;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -77,6 +82,12 @@ public final class Module {
                 } catch (Throwable t) {
                     // todo log a warning or something
                 }
+                // install all redirect classes
+                __XMLInputFactory.init();
+                __XMLOutputFactory.init();
+                __XMLEventFactory.init();
+                __SAXParserFactory.init();
+                __DocumentBuilderFactory.init();
                 return null;
             }
         });
@@ -799,6 +810,8 @@ public final class Module {
         }
 
         final Map<String, List<LocalLoader>> newMap = new HashMap<String, List<LocalLoader>>();
+
+        addToMapList(newMap, "__redirected", SystemModuleHolder.SYSTEM.getClassLoaderPrivate().getLocalLoader());
 
         // Iterate dependencies and get their export paths.
         for (Dependency dependency : dependencies) {
