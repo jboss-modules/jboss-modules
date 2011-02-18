@@ -26,7 +26,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.net.URL;
+import java.security.AccessControlContext;
 import java.security.AccessController;
+import java.security.PrivilegedExceptionAction;
 import java.security.SecureClassLoader;
 import java.util.ArrayDeque;
 import java.util.Collections;
@@ -300,7 +302,7 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
             }
             if (Thread.currentThread() != LoaderThreadHolder.LOADER_THREAD) {
                 // Only the classloader thread may take this lock; use a condition to relinquish it
-                final LoadRequest req = new LoadRequest(className, resolve, exportsOnly, this);
+                final LoadRequest req = new LoadRequest(className, resolve, exportsOnly, this, AccessController.getContext());
                 final Queue<LoadRequest> queue = LoaderThreadHolder.REQUEST_QUEUE;
                 synchronized (queue) {
                     queue.add(req);
@@ -346,16 +348,18 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
         private final String className;
         private final boolean resolve;
         private final ConcurrentClassLoader requester;
+        private final AccessControlContext context;
         Class<?> result;
         private boolean exportsOnly;
 
         boolean done;
 
-        LoadRequest(final String className, final boolean resolve, final boolean exportsOnly, final ConcurrentClassLoader requester) {
+        LoadRequest(final String className, final boolean resolve, final boolean exportsOnly, final ConcurrentClassLoader requester, final AccessControlContext context) {
             this.className = className;
             this.resolve = resolve;
             this.exportsOnly = exportsOnly;
             this.requester = requester;
+            this.context = context;
         }
     }
 
@@ -389,7 +393,17 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
                     Class<?> result = null;
                     synchronized (loader) {
                         try {
-                            result = loader.performLoadClassChecked(request.className, request.exportsOnly, request.resolve);
+                            final SecurityManager sm = System.getSecurityManager();
+                            if (sm != null) {
+                                final LoadRequest localRequest = request;
+                                result = AccessController.doPrivileged(new PrivilegedExceptionAction<Class<?>>() {
+                                    public Class<?> run() throws ClassNotFoundException {
+                                        return loader.performLoadClassChecked(localRequest.className, localRequest.exportsOnly, localRequest.resolve);
+                                    }
+                                }, request.context);
+                            } else {
+                                result = loader.performLoadClassChecked(request.className, request.exportsOnly, request.resolve);
+                            }
                         } finally {
                             // no matter what, the requester MUST be notified
                             request.result = result;
