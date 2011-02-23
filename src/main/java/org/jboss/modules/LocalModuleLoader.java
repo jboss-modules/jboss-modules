@@ -23,7 +23,6 @@
 package org.jboss.modules;
 
 import java.io.File;
-import java.util.Arrays;
 
 /**
  * A local filesystem-backed module loader.
