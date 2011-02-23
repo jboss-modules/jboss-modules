@@ -216,30 +216,32 @@ final class JarFileResourceLoader implements ResourceLoader {
             }
             index.add(path);
         }
-        // Now try to write it
-        boolean ok = false;
-        try {
-            final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(indexFile)));
+        if (ResourceLoaders.WRITE_INDEXES) {
+            // Now try to write it
+            boolean ok = false;
             try {
-                for (String name : index) {
-                    writer.write(name);
-                    writer.write('\n');
-                }
-                writer.close();
-                ok = true;
-            } finally {
+                final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(indexFile)));
                 try {
+                    for (String name : index) {
+                        writer.write(name);
+                        writer.write('\n');
+                    }
                     writer.close();
-                } catch (IOException e) {
-                    // ignored
+                    ok = true;
+                } finally {
+                    try {
+                        writer.close();
+                    } catch (IOException e) {
+                        // ignored
+                    }
                 }
-            }
-        } catch (IOException e) {
-            // failed, ignore
-        } finally {
-            if (! ok) {
-                // well, we tried...
-                indexFile.delete();
+            } catch (IOException e) {
+                // failed, ignore
+            } finally {
+                if (! ok) {
+                    // well, we tried...
+                    indexFile.delete();
+                }
             }
         }
         return index;

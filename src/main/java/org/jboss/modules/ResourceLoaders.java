@@ -23,6 +23,7 @@
 package org.jboss.modules;
 
 import java.io.File;
+import java.security.AccessController;
 import java.util.jar.JarFile;
 
 /**
@@ -33,6 +34,11 @@ import java.util.jar.JarFile;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class ResourceLoaders {
+    static final boolean WRITE_INDEXES;
+
+    static {
+        WRITE_INDEXES = Boolean.parseBoolean(AccessController.doPrivileged(new PropertyReadAction("jboss.modules.write-indexes", "true")));
+    }
 
     private ResourceLoaders() {
     }
