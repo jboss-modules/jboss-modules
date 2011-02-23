@@ -49,6 +49,12 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
     private static final boolean LOCKLESS;
 
     static {
+        /*
+         This resolves a know deadlock that can occur if one thread is in the process of defining a package as part of
+         defining a class, and another thread is defining the system package that can result in loading a class.  One holds
+         the Package.pkgs lock and one holds the Classloader lock.
+        */
+        Package.getPackages();
         LOCKLESS = Boolean.parseBoolean(AccessController.doPrivileged(new PropertyReadAction("jboss.modules.lockless")));
     }
 
@@ -372,13 +378,6 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
 
         @Override
         public void run() {
-            /*
-             This resolves a know deadlock that can occur if one thread is in the process of defining a package as part of
-             defining a class, and another thread is defining the system package that can result in loading a class.  One holds
-             the Package.pkgs lock and one holds the Classloader lock.
-            */
-            Package.getPackages();
-
             final Queue<LoadRequest> queue = LoaderThreadHolder.REQUEST_QUEUE;
             for (; ;) {
                 try {
