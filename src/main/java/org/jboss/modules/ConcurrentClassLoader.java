@@ -55,7 +55,14 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
          the Package.pkgs lock and one holds the Classloader lock.
         */
         Package.getPackages();
-        LOCKLESS = Boolean.parseBoolean(AccessController.doPrivileged(new PropertyReadAction("jboss.modules.lockless")));
+        String locklessDefault = "false";
+        try {
+            Class.forName("sun.misc.Unsafe", false, null);
+            locklessDefault = "true";
+        } catch (Throwable t) {
+            // ignored
+        }
+        LOCKLESS = Boolean.parseBoolean(AccessController.doPrivileged(new PropertyReadAction("jboss.modules.lockless", locklessDefault)));
     }
 
     /**
