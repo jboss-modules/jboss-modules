@@ -30,9 +30,11 @@ import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.logging.LogManager;
+
 import org.jboss.modules.log.JDKModuleLogger;
 
-import java.util.logging.LogManager;
+import __redirected.__JAXPRedirected;
 
 /**
  * The main entry point of JBoss Modules when run as a JAR on the command line.
@@ -40,6 +42,7 @@ import java.util.logging.LogManager;
  * @apiviz.exclude
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author Jason T. Greene
  */
 public final class Main {
 
@@ -83,6 +86,8 @@ public final class Main {
         System.out.println("                  may be specified, but not both");
         System.out.println("    -logmodule <module-name>");
         System.out.println("                  The module to use to load the system logmanager");
+        System.out.println("    -jaxpmodule <module-name>");
+        System.out.println("                  The default JAXP implementation to use of the JDK.");
         System.out.println("    -version      Print version and exit\n");
         System.out.println("and module-spec is a valid module specification string");
     }
@@ -100,6 +105,7 @@ public final class Main {
         String configPath = null;
         ModuleIdentifier moduleIdentifier = null;
         ModuleIdentifier logManagerModuleIdentifier = null;
+        ModuleIdentifier jaxpModuleIdentifier = null;
         for (int i = 0, argsLength = argsLen; i < argsLength; i++) {
             final String arg = args[i];
             try {
@@ -134,6 +140,8 @@ public final class Main {
                         configPath = args[++i];
                     } else if ("-logmodule".equals(arg)) {
                         logManagerModuleIdentifier = ModuleIdentifier.fromString(args[++i]);
+                    } else if ("-jaxpmodule".equals(arg)) {
+                        jaxpModuleIdentifier = ModuleIdentifier.fromString(args[++i]);
                     } else {
                         System.err.printf("Invalid option '%s'\n", arg);
                         usage();
@@ -210,6 +218,9 @@ public final class Main {
                 System.err.println("WARNING: No log manager service descriptor found in specified logmodule " + logManagerModuleIdentifier);
             }
         }
+        if (jaxpModuleIdentifier != null)
+            __JAXPRedirected.changeAll(jaxpModuleIdentifier, Module.getBootModuleLoader());
+
         final Module module;
         try {
             module = loader.loadModule(moduleIdentifier);

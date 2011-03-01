@@ -22,11 +22,6 @@
 
 package org.jboss.modules;
 
-import __redirected.__DocumentBuilderFactory;
-import __redirected.__SAXParserFactory;
-import __redirected.__XMLEventFactory;
-import __redirected.__XMLInputFactory;
-import __redirected.__XMLOutputFactory;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -48,10 +43,13 @@ import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+
 import org.jboss.modules.filter.PathFilter;
 import org.jboss.modules.filter.PathFilters;
 import org.jboss.modules.log.ModuleLogger;
 import org.jboss.modules.log.NoopModuleLogger;
+
+import __redirected.__JAXPRedirected;
 
 /**
  * A module is a unit of classes and other resources, along with the specification of what is imported and exported
@@ -82,12 +80,9 @@ public final class Module {
                 } catch (Throwable t) {
                     // todo log a warning or something
                 }
-                // install all redirect classes
-                __XMLInputFactory.init();
-                __XMLOutputFactory.init();
-                __XMLEventFactory.init();
-                __SAXParserFactory.init();
-                __DocumentBuilderFactory.init();
+
+                __JAXPRedirected.initAll();
+
                 return null;
             }
         });
@@ -811,8 +806,6 @@ public final class Module {
 
         final Map<String, List<LocalLoader>> newMap = new HashMap<String, List<LocalLoader>>();
 
-        addToMapList(newMap, "__redirected", SystemModuleHolder.SYSTEM.getClassLoaderPrivate().getLocalLoader());
-
         // Iterate dependencies and get their export paths.
         for (Dependency dependency : dependencies) {
             final PathFilter exportFilter = dependency.getExportFilter();
@@ -904,6 +897,8 @@ public final class Module {
                 throw new IllegalArgumentException("Invalid dependency " + dependency + " encountered");
             }
         }
+
+        addToMapList(newMap, "__redirected", SystemLocalLoader.getInstance());
 
         // Final optimizing step
         removeDuplicatesFromLists(newMap.values());

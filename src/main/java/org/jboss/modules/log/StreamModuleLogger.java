@@ -24,6 +24,7 @@ package org.jboss.modules.log;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
+
 import org.jboss.modules.Module;
 import org.jboss.modules.ModuleIdentifier;
 import org.jboss.modules.ModuleLoader;
@@ -156,5 +157,8 @@ public final class StreamModuleLogger implements ModuleLogger {
     }
 
     public void classDefined(final String name, final Module module) {
+    }
+
+    public void providerUnloadable(String name, ClassLoader loader) {
     }
 }

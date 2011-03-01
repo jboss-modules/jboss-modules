@@ -26,7 +26,6 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import org.jboss.modules.Module;
 
 import javax.xml.stream.EventFilter;
 import javax.xml.stream.StreamFilter;
@@ -39,11 +38,18 @@ import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.util.XMLEventAllocator;
 import javax.xml.transform.Source;
 
+import org.jboss.modules.ModuleIdentifier;
+import org.jboss.modules.ModuleLoader;
+
 /**
+ * A redirected XMLInputFactory
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @authore Jason T. Greene
  */
 public final class __XMLInputFactory extends XMLInputFactory {
     private static final Constructor<? extends XMLInputFactory> PLATFORM_FACTORY;
+    private static volatile Constructor<? extends XMLInputFactory> DEFAULT_FACTORY;
 
     static {
         Thread thread = Thread.currentThread();
@@ -52,7 +58,7 @@ public final class __XMLInputFactory extends XMLInputFactory {
         try {
             XMLInputFactory factory = XMLInputFactory.newInstance();
             try {
-                PLATFORM_FACTORY = factory.getClass().getConstructor();
+                DEFAULT_FACTORY = PLATFORM_FACTORY = factory.getClass().getConstructor();
             } catch (NoSuchMethodException e) {
                 throw __RedirectedUtils.wrapped(new NoSuchMethodError(e.getMessage()), e);
             }
@@ -62,27 +68,48 @@ public final class __XMLInputFactory extends XMLInputFactory {
         }
     }
 
+    public static void changeDefaultFactory(ModuleIdentifier id, ModuleLoader loader) {
+        Class<? extends XMLInputFactory> clazz = __RedirectedUtils.loadProvider(id, XMLInputFactory.class, loader);
+        if (clazz != null) {
+            try {
+                DEFAULT_FACTORY = clazz.getConstructor();
+            } catch (NoSuchMethodException e) {
+                throw __RedirectedUtils.wrapped(new NoSuchMethodError(e.getMessage()), e);
+            }
+        }
+    }
+
     /**
      * Init method.
      */
     public static void init() {}
 
+    public static void restorePlatformFactory() {
+        DEFAULT_FACTORY = PLATFORM_FACTORY;
+    }
+
     /**
      * Construct a new instance.
      */
     public __XMLInputFactory() {
-        Module module = Module.forClassLoader(Thread.currentThread().getContextClassLoader(), true);
-        if (module != null) {
-            // todo - see if a specific impl is attached to the module
-        }
+        Constructor<? extends XMLInputFactory> factory = DEFAULT_FACTORY;
+        ClassLoader loader = Thread.currentThread().getContextClassLoader();
         try {
-            actual = PLATFORM_FACTORY.newInstance();
+            if (loader != null) {
+                Class<? extends XMLInputFactory> provider = __RedirectedUtils.loadProvider(XMLInputFactory.class, loader);
+                if (provider != null)
+                    factory = provider.getConstructor();
+            }
+
+            actual = factory.newInstance();
         } catch (InstantiationException e) {
             throw __RedirectedUtils.wrapped(new InstantiationError(e.getMessage()), e);
         } catch (IllegalAccessException e) {
             throw __RedirectedUtils.wrapped(new IllegalAccessError(e.getMessage()), e);
         } catch (InvocationTargetException e) {
             throw __RedirectedUtils.rethrowCause(e);
+        } catch (NoSuchMethodException e) {
+            throw __RedirectedUtils.wrapped(new NoSuchMethodError(e.getMessage()), e);
         }
     }
 

@@ -22,12 +22,25 @@
 
 package __redirected;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.UndeclaredThrowableException;
 
+import org.jboss.modules.Module;
+import org.jboss.modules.ModuleClassLoader;
+import org.jboss.modules.ModuleIdentifier;
+import org.jboss.modules.ModuleLoadException;
+import org.jboss.modules.ModuleLoader;
+
 /**
+ * Common utilities for redirected factories
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @authore Jason T. Greene
  */
-final class __RedirectedUtils {
+public final class __RedirectedUtils {
 
     static RuntimeException rethrowCause(Throwable t) throws Error {
         try {
@@ -48,4 +61,80 @@ final class __RedirectedUtils {
         }
         return e;
     }
+
+    static <T> Class<? extends T> loadProvider(ModuleIdentifier id, Class<T> intf, ModuleLoader moduleLoader) {
+        Module module;
+        try {
+            module = moduleLoader.loadModule(id);
+        } catch (ModuleLoadException e) {
+            Module.getModuleLogger().providerUnloadable(id.toString(), null);
+            return null;
+        }
+
+        ModuleClassLoader classLoader = module.getClassLoader();
+        return loadProvider(intf, classLoader);
+    }
+
+     static <T> Class<? extends T> loadProvider(Class<T> intf, ClassLoader classLoader) {
+        String name = findProviderClassName(intf, classLoader);
+
+        if (name == null) {
+            Module.getModuleLogger().providerUnloadable(name, classLoader);
+            return null;
+        }
+
+        Class<? extends T> clazz = null;
+        try {
+            @SuppressWarnings("unchecked")
+            Class<? extends T> t = (Class<? extends T>) classLoader.loadClass(name);
+            clazz = t;
+        } catch (ClassNotFoundException ignore) {
+        }
+
+        if (clazz == null || !intf.isAssignableFrom(clazz)) {
+            Module.getModuleLogger().providerUnloadable(name, classLoader);
+            return null;
+        }
+
+        return clazz;
+    }
+
+     static <T> String findProviderClassName(Class<T> intf, ClassLoader loader) {
+        final InputStream stream = loader.getResourceAsStream("META-INF/services/" + intf.getName());
+        if (stream == null)
+            return null;
+
+        String name = null;
+        try {
+            final BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
+
+            String line;
+            while ((line = readLine(reader)) != null) {
+                final int i = line.indexOf('#');
+                if (i != -1) {
+                    line = line.substring(0, i);
+                }
+                line = line.trim();
+                if (line.length() == 0)
+                    continue;
+                name = line;
+                break;
+            }
+        } finally {
+            try {
+                stream.close();
+            } catch (IOException ignored) {
+            }
+        }
+        return name;
+    }
+
+    private static String readLine(final BufferedReader reader) {
+        try {
+            return reader.readLine();
+        } catch (IOException ignore) {
+            return null;
+        }
+    }
+
 }

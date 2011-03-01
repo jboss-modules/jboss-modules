@@ -24,18 +24,24 @@ package __redirected;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import org.jboss.modules.Module;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.validation.Schema;
 
+import org.jboss.modules.ModuleIdentifier;
+import org.jboss.modules.ModuleLoader;
+
 /**
+ * A redirecting DocumentBuilderFactory
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author Jason T. Greene
  */
 public final class __DocumentBuilderFactory extends DocumentBuilderFactory {
     private static final Constructor<? extends DocumentBuilderFactory> PLATFORM_FACTORY;
+    private static volatile Constructor<? extends DocumentBuilderFactory> DEFAULT_FACTORY;
 
     static {
         Thread thread = Thread.currentThread();
@@ -44,7 +50,7 @@ public final class __DocumentBuilderFactory extends DocumentBuilderFactory {
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             try {
-                PLATFORM_FACTORY = factory.getClass().getConstructor();
+                DEFAULT_FACTORY = PLATFORM_FACTORY = factory.getClass().getConstructor();
             } catch (NoSuchMethodException e) {
                 throw __RedirectedUtils.wrapped(new NoSuchMethodError(e.getMessage()), e);
             }
@@ -59,22 +65,43 @@ public final class __DocumentBuilderFactory extends DocumentBuilderFactory {
      */
     public static void init() {}
 
+    public static void changeDefaultFactory(ModuleIdentifier id, ModuleLoader loader) {
+        Class<? extends DocumentBuilderFactory> clazz = __RedirectedUtils.loadProvider(id, DocumentBuilderFactory.class, loader);
+        if (clazz != null) {
+            try {
+                DEFAULT_FACTORY = clazz.getConstructor();
+            } catch (NoSuchMethodException e) {
+                throw __RedirectedUtils.wrapped(new NoSuchMethodError(e.getMessage()), e);
+            }
+        }
+    }
+
+    public static void restorePlatformFactory() {
+        DEFAULT_FACTORY = PLATFORM_FACTORY;
+    }
+
     /**
      * Construct a new instance.
      */
     public __DocumentBuilderFactory() {
-        Module module = Module.forClassLoader(Thread.currentThread().getContextClassLoader(), true);
-        if (module != null) {
-            // todo - see if a specific impl is attached to the module
-        }
+        Constructor<? extends DocumentBuilderFactory> factory = DEFAULT_FACTORY;
+        ClassLoader loader = Thread.currentThread().getContextClassLoader();
         try {
-            actual = PLATFORM_FACTORY.newInstance();
+            if (loader != null) {
+                Class<? extends DocumentBuilderFactory> provider = __RedirectedUtils.loadProvider(DocumentBuilderFactory.class, loader);
+                if (provider != null)
+                    factory = provider.getConstructor();
+            }
+
+            actual = factory.newInstance();
         } catch (InstantiationException e) {
             throw __RedirectedUtils.wrapped(new InstantiationError(e.getMessage()), e);
         } catch (IllegalAccessException e) {
             throw __RedirectedUtils.wrapped(new IllegalAccessError(e.getMessage()), e);
         } catch (InvocationTargetException e) {
             throw __RedirectedUtils.rethrowCause(e);
+        } catch (NoSuchMethodException e) {
+            throw __RedirectedUtils.wrapped(new NoSuchMethodError(e.getMessage()), e);
         }
     }
 

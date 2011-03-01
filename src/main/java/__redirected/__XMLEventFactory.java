@@ -25,7 +25,6 @@ package __redirected;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Iterator;
-import org.jboss.modules.Module;
 
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.namespace.QName;
@@ -44,13 +43,19 @@ import javax.xml.stream.events.ProcessingInstruction;
 import javax.xml.stream.events.StartDocument;
 import javax.xml.stream.events.StartElement;
 
+import org.jboss.modules.ModuleIdentifier;
+import org.jboss.modules.ModuleLoader;
+
 /**
+ * A redirected XMLEventFactory
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @authore Jason T. Greene
  */
 @SuppressWarnings("unchecked")
 public final class __XMLEventFactory extends XMLEventFactory {
-
     private static final Constructor<? extends XMLEventFactory> PLATFORM_FACTORY;
+    private static volatile Constructor<? extends XMLEventFactory> DEFAULT_FACTORY;
 
     static {
         Thread thread = Thread.currentThread();
@@ -59,7 +64,7 @@ public final class __XMLEventFactory extends XMLEventFactory {
         try {
             XMLEventFactory factory = XMLEventFactory.newInstance();
             try {
-                PLATFORM_FACTORY = factory.getClass().getConstructor();
+                DEFAULT_FACTORY = PLATFORM_FACTORY = factory.getClass().getConstructor();
             } catch (NoSuchMethodException e) {
                 throw __RedirectedUtils.wrapped(new NoSuchMethodError(e.getMessage()), e);
             }
@@ -67,6 +72,21 @@ public final class __XMLEventFactory extends XMLEventFactory {
         } finally {
             thread.setContextClassLoader(old);
         }
+    }
+
+    public static void changeDefaultFactory(ModuleIdentifier id, ModuleLoader loader) {
+        Class<? extends XMLEventFactory> clazz = __RedirectedUtils.loadProvider(id, XMLEventFactory.class, loader);
+        if (clazz != null) {
+            try {
+                DEFAULT_FACTORY = clazz.getConstructor();
+            } catch (NoSuchMethodException e) {
+                throw __RedirectedUtils.wrapped(new NoSuchMethodError(e.getMessage()), e);
+            }
+        }
+    }
+
+    public static void restorePlatformFactory() {
+        DEFAULT_FACTORY = PLATFORM_FACTORY;
     }
 
     /**
@@ -78,18 +98,24 @@ public final class __XMLEventFactory extends XMLEventFactory {
      * Construct a new instance.
      */
     public __XMLEventFactory() {
-        Module module = Module.forClassLoader(Thread.currentThread().getContextClassLoader(), true);
-        if (module != null) {
-            // todo - see if a specific impl is attached to the module
-        }
+        Constructor<? extends XMLEventFactory> factory = DEFAULT_FACTORY;
+        ClassLoader loader = Thread.currentThread().getContextClassLoader();
         try {
-            actual = PLATFORM_FACTORY.newInstance();
+            if (loader != null) {
+                Class<? extends XMLEventFactory> provider = __RedirectedUtils.loadProvider(XMLEventFactory.class, loader);
+                if (provider != null)
+                    factory = provider.getConstructor();
+            }
+
+            actual = factory.newInstance();
         } catch (InstantiationException e) {
             throw __RedirectedUtils.wrapped(new InstantiationError(e.getMessage()), e);
         } catch (IllegalAccessException e) {
             throw __RedirectedUtils.wrapped(new IllegalAccessError(e.getMessage()), e);
         } catch (InvocationTargetException e) {
             throw __RedirectedUtils.rethrowCause(e);
+        } catch (NoSuchMethodException e) {
+            throw __RedirectedUtils.wrapped(new NoSuchMethodError(e.getMessage()), e);
         }
     }
 

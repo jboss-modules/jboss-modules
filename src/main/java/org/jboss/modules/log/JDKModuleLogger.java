@@ -22,13 +22,13 @@
 
 package org.jboss.modules.log;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import org.jboss.modules.Main;
 import org.jboss.modules.Module;
 import org.jboss.modules.ModuleIdentifier;
 import org.jboss.modules.ModuleLoader;
-
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * A {@link ModuleLogger} which logs to a JDK logging category.
@@ -198,6 +198,12 @@ public final class JDKModuleLogger implements ModuleLogger {
     public void classDefined(final String name, final Module module) {
         if (defineLogger.isLoggable(TRACE)) {
             doLog(TRACE, String.format("Defined class %s in %s", name, module));
+        }
+    }
+
+    public void providerUnloadable(String name, ClassLoader loader) {
+        if (defineLogger.isLoggable(TRACE)) {
+            doLog(TRACE, String.format("Could not load provider %s in %s", name, loader));
         }
     }
 }

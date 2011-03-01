@@ -95,4 +95,8 @@ public final class NoopModuleLogger implements ModuleLogger {
     @Override
     public void classDefined(final String name, final Module module) {
     }
+
+    @Override
+    public void providerUnloadable(String name, ClassLoader loader) {
+    }
 }

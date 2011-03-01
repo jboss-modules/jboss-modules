@@ -61,4 +61,6 @@ public interface ModuleLogger {
     void classDefineFailed(Throwable throwable, String className, Module module);
 
     void classDefined(String name, Module module);
+
+    void providerUnloadable(String name, ClassLoader loader);
 }

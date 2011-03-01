@@ -22,49 +22,49 @@
 
 package __redirected;
 
-import java.io.OutputStream;
-import java.io.Writer;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
-import javax.xml.stream.XMLEventWriter;
-import javax.xml.stream.XMLOutputFactory;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamWriter;
-import javax.xml.transform.Result;
+import javax.xml.transform.ErrorListener;
+import javax.xml.transform.Source;
+import javax.xml.transform.Templates;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.URIResolver;
 
 import org.jboss.modules.ModuleIdentifier;
 import org.jboss.modules.ModuleLoader;
 
 /**
- * A redirected XMLOutputFactory
+ * A redirected TransformerFactory
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
- * @authore Jason T. Greene
+ * @author Jason T. Greene
  */
-public final class __XMLOutputFactory extends XMLOutputFactory {
-    private static final Constructor<? extends XMLOutputFactory> PLATFORM_FACTORY;
-    private static volatile Constructor<? extends XMLOutputFactory> DEFAULT_FACTORY;
+public final class __TransformerFactory extends TransformerFactory {
+    private static final Constructor<? extends TransformerFactory> PLATFORM_FACTORY;
+    private static volatile Constructor<? extends TransformerFactory> DEFAULT_FACTORY;
 
     static {
         Thread thread = Thread.currentThread();
         ClassLoader old = thread.getContextClassLoader();
         thread.setContextClassLoader(null);
         try {
-            XMLOutputFactory factory = XMLOutputFactory.newInstance();
+            TransformerFactory factory = TransformerFactory.newInstance();
             try {
                 DEFAULT_FACTORY = PLATFORM_FACTORY = factory.getClass().getConstructor();
             } catch (NoSuchMethodException e) {
                 throw __RedirectedUtils.wrapped(new NoSuchMethodError(e.getMessage()), e);
             }
-            System.setProperty(XMLOutputFactory.class.getName(), __XMLOutputFactory.class.getName());
+            System.setProperty(TransformerFactory.class.getName(), __TransformerFactory.class.getName());
         } finally {
             thread.setContextClassLoader(old);
         }
     }
 
     public static void changeDefaultFactory(ModuleIdentifier id, ModuleLoader loader) {
-        Class<? extends XMLOutputFactory> clazz = __RedirectedUtils.loadProvider(id, XMLOutputFactory.class, loader);
+        Class<? extends TransformerFactory> clazz = __RedirectedUtils.loadProvider(id, TransformerFactory.class, loader);
         if (clazz != null) {
             try {
                 DEFAULT_FACTORY = clazz.getConstructor();
@@ -86,12 +86,12 @@ public final class __XMLOutputFactory extends XMLOutputFactory {
     /**
      * Construct a new instance.
      */
-    public __XMLOutputFactory() {
-        Constructor<? extends XMLOutputFactory> factory = DEFAULT_FACTORY;
+    public __TransformerFactory() {
+        Constructor<? extends TransformerFactory> factory = DEFAULT_FACTORY;
         ClassLoader loader = Thread.currentThread().getContextClassLoader();
         try {
             if (loader != null) {
-                Class<? extends XMLOutputFactory> provider = __RedirectedUtils.loadProvider(XMLOutputFactory.class, loader);
+                Class<? extends TransformerFactory> provider = __RedirectedUtils.loadProvider(TransformerFactory.class, loader);
                 if (provider != null)
                     factory = provider.getConstructor();
             }
@@ -108,49 +108,58 @@ public final class __XMLOutputFactory extends XMLOutputFactory {
         }
     }
 
-    private final XMLOutputFactory actual;
+    private final TransformerFactory actual;
 
-    public XMLStreamWriter createXMLStreamWriter(final Writer stream) throws XMLStreamException {
-        return actual.createXMLStreamWriter(stream);
+    public Transformer newTransformer(Source source) throws TransformerConfigurationException {
+        return actual.newTransformer(source);
     }
 
-    public XMLStreamWriter createXMLStreamWriter(final OutputStream stream) throws XMLStreamException {
-        return actual.createXMLStreamWriter(stream);
+    public Transformer newTransformer() throws TransformerConfigurationException {
+        return actual.newTransformer();
     }
 
-    public XMLStreamWriter createXMLStreamWriter(final OutputStream stream, final String encoding) throws XMLStreamException {
-        return actual.createXMLStreamWriter(stream, encoding);
+    public Templates newTemplates(Source source) throws TransformerConfigurationException {
+        return actual.newTemplates(source);
     }
 
-    public XMLStreamWriter createXMLStreamWriter(final Result result) throws XMLStreamException {
-        return actual.createXMLStreamWriter(result);
+    public String toString() {
+        return actual.toString();
     }
 
-    public XMLEventWriter createXMLEventWriter(final Result result) throws XMLStreamException {
-        return actual.createXMLEventWriter(result);
+    public Source getAssociatedStylesheet(Source source, String media, String title, String charset)
+            throws TransformerConfigurationException {
+        return actual.getAssociatedStylesheet(source, media, title, charset);
     }
 
-    public XMLEventWriter createXMLEventWriter(final OutputStream stream) throws XMLStreamException {
-        return actual.createXMLEventWriter(stream);
+    public void setURIResolver(URIResolver resolver) {
+        actual.setURIResolver(resolver);
     }
 
-    public XMLEventWriter createXMLEventWriter(final OutputStream stream, final String encoding) throws XMLStreamException {
-        return actual.createXMLEventWriter(stream, encoding);
+    public URIResolver getURIResolver() {
+        return actual.getURIResolver();
     }
 
-    public XMLEventWriter createXMLEventWriter(final Writer stream) throws XMLStreamException {
-        return actual.createXMLEventWriter(stream);
+    public void setFeature(String name, boolean value) throws TransformerConfigurationException {
+        actual.setFeature(name, value);
     }
 
-    public void setProperty(final String name, final Object value) throws IllegalArgumentException {
-        actual.setProperty(name, value);
+    public boolean getFeature(String name) {
+        return actual.getFeature(name);
     }
 
-    public Object getProperty(final String name) throws IllegalArgumentException {
-        return actual.getProperty(name);
+    public void setAttribute(String name, Object value) {
+        actual.setAttribute(name, value);
     }
 
-    public boolean isPropertySupported(final String name) {
-        return actual.isPropertySupported(name);
+    public Object getAttribute(String name) {
+        return actual.getAttribute(name);
+    }
+
+    public void setErrorListener(ErrorListener listener) {
+        actual.setErrorListener(listener);
+    }
+
+    public ErrorListener getErrorListener() {
+        return actual.getErrorListener();
     }
 }
