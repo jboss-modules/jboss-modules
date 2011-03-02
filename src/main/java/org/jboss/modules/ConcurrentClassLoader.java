@@ -34,6 +34,7 @@ import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentMap;
 import sun.misc.Unsafe;
 
 /**
@@ -69,6 +70,23 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
      * An empty enumeration, for subclasses to use if desired.
      */
     protected static final Enumeration<URL> EMPTY_ENUMERATION = Collections.enumeration(Collections.<URL>emptySet());
+
+    final ConcurrentMap<Object, Object> localStorage = new UnlockedReadHashMap<Object, Object>();
+
+    /**
+     * Construct a new instance with the given parent class loader, which must be a concurrent class loader.
+     *
+     * @param parent the parent class loader
+     */
+    protected ConcurrentClassLoader(final ConcurrentClassLoader parent) {
+        super(parent);
+    }
+
+    /**
+     * Construct a new instance.
+     */
+    protected ConcurrentClassLoader() {
+    }
 
     /**
      * Loads the class with the specified binary name.  Equivalent to calling {@link #loadClass(String, boolean) loadClass(className, false)}.
