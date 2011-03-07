@@ -752,7 +752,7 @@ final class ModuleXmlParser {
                         case FILTER: parseFilterList(reader, filterBuilder); break;
                         default: throw unexpectedContent(reader);
                     }
-                    // not reached
+                    break;
                 }
                 default: {
                     throw unexpectedContent(reader);
