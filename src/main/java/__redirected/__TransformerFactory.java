@@ -32,9 +32,13 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.URIResolver;
+import javax.xml.transform.sax.SAXTransformerFactory;
+import javax.xml.transform.sax.TemplatesHandler;
+import javax.xml.transform.sax.TransformerHandler;
 
 import org.jboss.modules.ModuleIdentifier;
 import org.jboss.modules.ModuleLoader;
+import org.xml.sax.XMLFilter;
 
 /**
  * A redirected TransformerFactory
@@ -42,7 +46,7 @@ import org.jboss.modules.ModuleLoader;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  * @author Jason T. Greene
  */
-public final class __TransformerFactory extends TransformerFactory {
+public final class __TransformerFactory extends SAXTransformerFactory {
     private static final Constructor<? extends TransformerFactory> PLATFORM_FACTORY;
     private static volatile Constructor<? extends TransformerFactory> DEFAULT_FACTORY;
 
@@ -97,6 +101,8 @@ public final class __TransformerFactory extends TransformerFactory {
             }
 
             actual = factory.newInstance();
+            saxtual = (actual instanceof SAXTransformerFactory) ? (SAXTransformerFactory)actual : null;
+
         } catch (InstantiationException e) {
             throw __RedirectedUtils.wrapped(new InstantiationError(e.getMessage()), e);
         } catch (IllegalAccessException e) {
@@ -109,6 +115,7 @@ public final class __TransformerFactory extends TransformerFactory {
     }
 
     private final TransformerFactory actual;
+    private final SAXTransformerFactory saxtual; // Snicker
 
     public Transformer newTransformer(Source source) throws TransformerConfigurationException {
         return actual.newTransformer(source);
@@ -161,5 +168,41 @@ public final class __TransformerFactory extends TransformerFactory {
 
     public ErrorListener getErrorListener() {
         return actual.getErrorListener();
+    }
+
+    public TransformerHandler newTransformerHandler(Source src) throws TransformerConfigurationException {
+        if (saxtual == null)
+            throw new TransformerConfigurationException("Provider is not a SAXTransformerFactory");
+        return saxtual.newTransformerHandler();
+    }
+
+    public TransformerHandler newTransformerHandler(Templates templates) throws TransformerConfigurationException {
+        if (saxtual == null)
+            throw new TransformerConfigurationException("Provider is not a SAXTransformerFactory");
+        return saxtual.newTransformerHandler(templates);
+    }
+
+    public TransformerHandler newTransformerHandler() throws TransformerConfigurationException {
+        if (saxtual == null)
+            throw new TransformerConfigurationException("Provider is not a SAXTransformerFactory");
+        return saxtual.newTransformerHandler();
+    }
+
+    public TemplatesHandler newTemplatesHandler() throws TransformerConfigurationException {
+        if (saxtual == null)
+            throw new TransformerConfigurationException("Provider is not a SAXTransformerFactory");
+        return saxtual.newTemplatesHandler();
+    }
+
+    public XMLFilter newXMLFilter(Source src) throws TransformerConfigurationException {
+        if (saxtual == null)
+            throw new TransformerConfigurationException("Provider is not a SAXTransformerFactory");
+        return saxtual.newXMLFilter(src);
+    }
+
+    public XMLFilter newXMLFilter(Templates templates) throws TransformerConfigurationException {
+        if (saxtual == null)
+            throw new TransformerConfigurationException("Provider is not a SAXTransformerFactory");
+        return saxtual.newXMLFilter(templates);
     }
 }

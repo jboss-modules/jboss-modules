@@ -12,8 +12,11 @@ import javax.xml.stream.XMLEventFactory;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.events.DTD;
+import javax.xml.transform.ErrorListener;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.sax.SAXTransformerFactory;
+import javax.xml.transform.sax.TransformerHandler;
 
 import org.w3c.dom.Document;
 
@@ -59,6 +62,14 @@ public class JAXPCaller {
     public Transformer transformer() {
         try {
             return transformerFactory().newTransformer();
+        } catch (Exception e) {
+            throw new IllegalStateException();
+        }
+    }
+
+    public TransformerHandler transformerHandler() {
+        try {
+            return ((SAXTransformerFactory)transformerFactory()).newTransformerHandler();
         } catch (Exception e) {
             throw new IllegalStateException();
         }

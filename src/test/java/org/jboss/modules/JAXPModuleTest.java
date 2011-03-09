@@ -82,6 +82,9 @@ import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.URIResolver;
+import javax.xml.transform.sax.SAXTransformerFactory;
+import javax.xml.transform.sax.TemplatesHandler;
+import javax.xml.transform.sax.TransformerHandler;
 
 import org.jboss.modules.filter.PathFilter;
 import org.jboss.modules.filter.PathFilters;
@@ -93,14 +96,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
-import org.xml.sax.EntityResolver;
-import org.xml.sax.ErrorHandler;
-import org.xml.sax.InputSource;
-import org.xml.sax.Parser;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXNotRecognizedException;
-import org.xml.sax.SAXNotSupportedException;
-import org.xml.sax.XMLReader;
+import org.xml.sax.*;
 
 import __redirected.__DatatypeFactory;
 import __redirected.__DocumentBuilderFactory;
@@ -151,6 +147,7 @@ public class JAXPModuleTest extends AbstractModuleTestCase {
                 .addClass(FakeDocumentBuilder.class)
                 .addClass(FakeTransformerFactory.class)
                 .addClass(FakeTransformer.class)
+                .addClass(FakeTransformerHandler.class)
                 .addClass(FakeXMLEventFactory.class)
                 .addClass(FakeDTD.class)
                 .addClass(FakeXMLInputFactory.class)
@@ -195,6 +192,7 @@ public class JAXPModuleTest extends AbstractModuleTestCase {
             checkDom(clazz, false);
             checkSax(clazz, false);
             checkTransformer(clazz, false);
+            checkSAXTransformer(clazz, false);
             checkXmlEvent(clazz, false);
             checkXmlInput(clazz, false);
             checkXmlOutput(clazz, false);
@@ -216,6 +214,7 @@ public class JAXPModuleTest extends AbstractModuleTestCase {
             checkDom(clazz, true);
             checkSax(clazz, true);
             checkTransformer(clazz, true);
+            checkSAXTransformer(clazz, true);
             checkXmlEvent(clazz, true);
             checkXmlInput(clazz, true);
             checkXmlOutput(clazz, true);
@@ -236,6 +235,7 @@ public class JAXPModuleTest extends AbstractModuleTestCase {
             checkDom(clazz, true);
             checkSax(clazz, true);
             checkTransformer(clazz, true);
+            checkSAXTransformer(clazz, true);
             checkXmlEvent(clazz, true);
             checkXmlInput(clazz, true);
             checkXmlOutput(clazz, true);
@@ -270,6 +270,7 @@ public class JAXPModuleTest extends AbstractModuleTestCase {
             checkDom(clazz, true);
             checkSax(clazz, true);
             checkTransformer(clazz, true);
+            checkSAXTransformer(clazz, true);
             checkXmlEvent(clazz, true);
             checkXmlInput(clazz, true);
             checkXmlOutput(clazz, true);
@@ -321,6 +322,19 @@ public class JAXPModuleTest extends AbstractModuleTestCase {
             Assert.assertEquals(FakeTransformer.class.getName(), parser.getClass().getName());
         } else {
             Assert.assertSame(TransformerFactory.newInstance().newTransformer().getClass(), parser.getClass());
+        }
+    }
+
+    public void checkSAXTransformer(Class<?> clazz, boolean fake) throws Exception {
+        TransformerHandler transformerHandler = invokeMethod(clazz.newInstance(), "transformerHandler");
+        TransformerFactory factory = invokeMethod(clazz.newInstance(), "transformerFactory");
+
+        Assert.assertEquals(__TransformerFactory.class.getName(), factory.getClass().getName());
+
+        if (fake) {
+            Assert.assertEquals(FakeTransformerHandler.class.getName(), transformerHandler.getClass().getName());
+        } else {
+            Assert.assertSame(((SAXTransformerFactory) TransformerFactory.newInstance()).newTransformerHandler().getClass(), transformerHandler.getClass());
         }
     }
 
@@ -393,7 +407,7 @@ public class JAXPModuleTest extends AbstractModuleTestCase {
 
     public static class FakeSAXParser extends SAXParser {
         @SuppressWarnings("deprecation")
-        public Parser getParser() throws SAXException {
+        public org.xml.sax.Parser getParser() throws SAXException {
             return null;
         }
 
@@ -464,7 +478,7 @@ public class JAXPModuleTest extends AbstractModuleTestCase {
         }
     }
 
-    public static class FakeTransformerFactory extends TransformerFactory {
+    public static class FakeTransformerFactory extends SAXTransformerFactory {
         public Transformer newTransformer(Source source) throws TransformerConfigurationException {
             return new FakeTransformer();
         }
@@ -509,6 +523,108 @@ public class JAXPModuleTest extends AbstractModuleTestCase {
         public ErrorListener getErrorListener() {
             return null;
         }
+
+        public TransformerHandler newTransformerHandler(Source src) throws TransformerConfigurationException {
+            return null;
+        }
+
+        public TransformerHandler newTransformerHandler(Templates templates) throws TransformerConfigurationException {
+            return null;
+        }
+
+        public TransformerHandler newTransformerHandler() throws TransformerConfigurationException {
+            return new FakeTransformerHandler();
+        }
+
+        public TemplatesHandler newTemplatesHandler() throws TransformerConfigurationException {
+            return null;
+        }
+
+        public XMLFilter newXMLFilter(Source src) throws TransformerConfigurationException {
+            return null;
+        }
+
+        public XMLFilter newXMLFilter(Templates templates) throws TransformerConfigurationException {
+            return null;
+        }
+
+
+    }
+
+    private static class FakeTransformerHandler implements TransformerHandler {
+        public void setResult(Result result) throws IllegalArgumentException {
+        }
+
+        public void setSystemId(String systemID) {
+        }
+
+        public String getSystemId() {
+            return null;
+        }
+
+        public Transformer getTransformer() {
+            return null;
+        }
+
+        public void setDocumentLocator(Locator locator) {
+        }
+
+        public void startDocument() throws SAXException {
+        }
+
+        public void endDocument() throws SAXException {
+        }
+
+        public void startPrefixMapping(String prefix, String uri) throws SAXException {
+        }
+
+        public void endPrefixMapping(String prefix) throws SAXException {
+        }
+
+        public void startElement(String uri, String localName, String qName, Attributes atts) throws SAXException {
+        }
+
+        public void endElement(String uri, String localName, String qName) throws SAXException {
+        }
+
+        public void characters(char[] ch, int start, int length) throws SAXException {
+        }
+
+        public void ignorableWhitespace(char[] ch, int start, int length) throws SAXException {
+        }
+
+        public void processingInstruction(String target, String data) throws SAXException {
+        }
+
+        public void skippedEntity(String name) throws SAXException {
+        }
+
+        public void notationDecl(String name, String publicId, String systemId) throws SAXException {
+        }
+
+        public void unparsedEntityDecl(String name, String publicId, String systemId, String notationName) throws SAXException {
+        }
+
+        public void startDTD(String name, String publicId, String systemId) throws SAXException {
+        }
+
+        public void endDTD() throws SAXException {
+        }
+
+        public void startEntity(String name) throws SAXException {
+        }
+
+        public void endEntity(String name) throws SAXException {
+        }
+
+        public void startCDATA() throws SAXException {
+        }
+
+        public void endCDATA() throws SAXException {
+        }
+
+        public void comment(char[] ch, int start, int length) throws SAXException {
+        }
     }
 
     public static class FakeTransformer extends Transformer {
@@ -533,7 +649,7 @@ public class JAXPModuleTest extends AbstractModuleTestCase {
             return null;
         }
 
-        public void setOutputProperties(Properties oformat) {
+        public void setOutputProperties(Properties format) {
         }
 
         public Properties getOutputProperties() {
