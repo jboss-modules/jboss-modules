@@ -49,7 +49,15 @@ public final class __DatatypeFactory extends DatatypeFactory {
     static {
         Thread thread = Thread.currentThread();
         ClassLoader old = thread.getContextClassLoader();
-        thread.setContextClassLoader(null);
+
+        // Unfortunately we can not use null because of a stupid bug in the jdk JAXP factory finder.
+        // Lack of tccl causes the provider file discovery to fallback to the jaxp loader (bootclasspath)
+        // which is correct. However, after parsing it, it then disables the fallback for the loading of the class.
+        // Thus, the class can not be found.
+        //
+        // Work around the problem by using the System CL, although in the future we may want to just "inherit"
+        // the environment's TCCL
+        thread.setContextClassLoader(ClassLoader.getSystemClassLoader());
         try {
             DatatypeFactory factory = DatatypeFactory.newInstance();
             try {
@@ -59,7 +67,7 @@ public final class __DatatypeFactory extends DatatypeFactory {
             }
             System.setProperty(DatatypeFactory.class.getName(), __DatatypeFactory.class.getName());
         } catch (DatatypeConfigurationException e) {
-            throw __RedirectedUtils.wrapped(new NoClassDefFoundError(e.getMessage()), e);
+            throw new IllegalArgumentException("Problem configuring DatatypeFactory", e);
         } finally {
             thread.setContextClassLoader(old);
         }

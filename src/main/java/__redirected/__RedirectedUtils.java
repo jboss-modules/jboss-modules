@@ -59,6 +59,7 @@ public final class __RedirectedUtils {
         if (cause != null) {
             e.initCause(cause);
         }
+        e.setStackTrace(orig.getStackTrace());
         return e;
     }
 
