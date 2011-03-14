@@ -25,6 +25,7 @@ package org.jboss.modules;
 import java.io.File;
 import java.security.AccessController;
 import java.util.jar.JarFile;
+import org.jboss.modules.filter.PathFilter;
 
 /**
  * Static factory methods for various types of resource loaders.
@@ -65,5 +66,17 @@ public final class ResourceLoaders {
      */
     public static ResourceLoader createJarResourceLoader(final String name, final JarFile jarFile) {
         return new JarFileResourceLoader(name, jarFile);
+    }
+
+    /**
+     * Create a filtered view of a resource loader, which allows classes to be included or excluded on a name basis.
+     * The given filter is matched against the actual class or resource name, not the directory name.
+     *
+     * @param pathFilter the path filter to apply
+     * @param originalLoader the original loader to apply to
+     * @return the filtered resource loader
+     */
+    public static ResourceLoader createFilteredResourceLoader(final PathFilter pathFilter, final ResourceLoader originalLoader) {
+        return new FilteredResourceLoader(pathFilter, originalLoader);
     }
 }

@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2010, Red Hat, Inc., and individual contributors
+ * Copyright 2011, Red Hat, Inc., and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -23,18 +23,32 @@
 package org.jboss.modules.filter;
 
 /**
- * Filter used to determine whether a path should be included or excluded from imports and exports.
- *
- * @author John Bailey
+ * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public interface PathFilter {
+final class BooleanClassFilter implements ClassFilter {
 
-    /**
-     * Determine whether a path should be accepted.  The given name is a path separated
-     * by "{@code /}" characters.
-     *
-     * @param path the path to check
-     * @return true if the path should be accepted, false if not
-     */
-    boolean accept(String path);
+    private final boolean result;
+
+    private BooleanClassFilter(final boolean result) {
+        this.result = result;
+    }
+
+    public boolean accept(final String path) {
+        return result;
+    }
+
+    static final BooleanClassFilter TRUE = new BooleanClassFilter(true);
+    static final BooleanClassFilter FALSE = new BooleanClassFilter(false);
+
+    public int hashCode() {
+        return Boolean.valueOf(result).hashCode();
+    }
+
+    public boolean equals(final Object obj) {
+        return obj == this;
+    }
+
+    public String toString() {
+        return result ? "Accept" : "Reject";
+    }
 }
