@@ -53,6 +53,7 @@ public final class LocalModuleLoader extends ModuleLoader {
      * Construct a new instance.
      *
      * @param repoRoots the array of repository roots to look for modules
+     * @param pathFilter the path filter to apply to roots
      */
     public LocalModuleLoader(final File[] repoRoots, final PathFilter pathFilter) {
         this.repoRoots = repoRoots;
