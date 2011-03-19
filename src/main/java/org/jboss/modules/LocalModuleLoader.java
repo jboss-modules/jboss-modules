@@ -23,6 +23,8 @@
 package org.jboss.modules;
 
 import java.io.File;
+import org.jboss.modules.filter.PathFilter;
+import org.jboss.modules.filter.PathFilters;
 
 /**
  * A local filesystem-backed module loader.
@@ -33,6 +35,7 @@ import java.io.File;
 public final class LocalModuleLoader extends ModuleLoader {
 
     private final File[] repoRoots;
+    private final PathFilter pathFilter;
     private volatile ModuleLoader[] importLoaders = NO_LOADERS;
 
     private static final ModuleLoader[] NO_LOADERS = new ModuleLoader[0];
@@ -43,7 +46,17 @@ public final class LocalModuleLoader extends ModuleLoader {
      * @param repoRoots the array of repository roots to look for modules
      */
     public LocalModuleLoader(final File[] repoRoots) {
+        this(repoRoots, PathFilters.acceptAll());
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param repoRoots the array of repository roots to look for modules
+     */
+    public LocalModuleLoader(final File[] repoRoots, final PathFilter pathFilter) {
         this.repoRoots = repoRoots;
+        this.pathFilter = pathFilter;
     }
 
     /**
@@ -58,6 +71,7 @@ public final class LocalModuleLoader extends ModuleLoader {
         } else {
             repoRoots = getFiles(modulePath, 0, 0);
         }
+        pathFilter = PathFilters.acceptAll();
     }
 
     private static File[] getFiles(final String modulePath, final int stringIdx, final int arrayIdx) {
@@ -111,9 +125,11 @@ public final class LocalModuleLoader extends ModuleLoader {
 
     private File getModuleRoot(final ModuleIdentifier moduleIdentifier) {
         final String child = toPathString(moduleIdentifier);
-        for (File root : repoRoots) {
-            final File file = new File(root, child);
-            if (file.exists() && new File(file, "module.xml").exists()) return file;
+        if (pathFilter.accept(child)) {
+            for (File root : repoRoots) {
+                final File file = new File(root, child);
+                if (file.exists() && new File(file, "module.xml").exists()) return file;
+            }
         }
         return null;
     }
