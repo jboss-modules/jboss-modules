@@ -829,7 +829,15 @@ public final class Module {
                 final ModuleLoader moduleLoader = moduleDependency.getModuleLoader();
                 final ModuleIdentifier id = moduleDependency.getIdentifier();
 
-                module = moduleLoader.loadModule(id, visited);
+                try {
+                    module = moduleLoader.loadModule(id, visited);
+                } catch (ModuleLoadException ex) {
+                    if (moduleDependency.isOptional()) {
+                        continue;
+                    } else {
+                        throw ex;
+                    }
+                }
 
                 // Get the set that they export
                 final Map<String, List<LocalLoader>> pathsMap = module.getPaths(true);
@@ -883,7 +891,15 @@ public final class Module {
                 final ModuleLoader moduleLoader = moduleDependency.getModuleLoader();
                 final ModuleIdentifier id = moduleDependency.getIdentifier();
 
-                module = moduleLoader.loadModule(id, visited);
+                try {
+                    module = moduleLoader.loadModule(id, visited);
+                } catch (ModuleLoadException ex) {
+                    if (moduleDependency.isOptional()) {
+                        continue;
+                    } else {
+                        throw ex;
+                    }
+                }
 
                 // Get the set that they export
                 final Map<String, List<LocalLoader>> pathsMap = module.getPaths(true);
