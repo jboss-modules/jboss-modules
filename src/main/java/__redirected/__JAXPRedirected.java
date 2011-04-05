@@ -44,6 +44,7 @@ public class __JAXPRedirected {
         __SAXParserFactory.changeDefaultFactory(id, loader);
         __XMLEventFactory.changeDefaultFactory(id, loader);
         __TransformerFactory.changeDefaultFactory(id, loader);
+        __XPathFactory.changeDefaultFactory(id, loader);
         __XMLEventFactory.changeDefaultFactory(id, loader);
         __XMLInputFactory.changeDefaultFactory(id, loader);
         __XMLOutputFactory.changeDefaultFactory(id, loader);
@@ -59,6 +60,7 @@ public class __JAXPRedirected {
         __SAXParserFactory.restorePlatformFactory();
         __XMLEventFactory.restorePlatformFactory();
         __TransformerFactory.restorePlatformFactory();
+        __XPathFactory.restorePlatformFactory();
         __XMLEventFactory.restorePlatformFactory();
         __XMLInputFactory.restorePlatformFactory();
         __XMLOutputFactory.restorePlatformFactory();
@@ -73,6 +75,7 @@ public class __JAXPRedirected {
         __SAXParserFactory.init();
         __XMLEventFactory.init();
         __TransformerFactory.init();
+        __XPathFactory.init();
         __XMLEventFactory.init();
         __XMLInputFactory.init();
         __XMLOutputFactory.init();

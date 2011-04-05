@@ -85,7 +85,15 @@ import javax.xml.transform.URIResolver;
 import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.sax.TemplatesHandler;
 import javax.xml.transform.sax.TransformerHandler;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
+import javax.xml.xpath.XPathFactoryConfigurationException;
+import javax.xml.xpath.XPathFunctionResolver;
+import javax.xml.xpath.XPathVariableResolver;
 
+import __redirected.__XPathFactory;
 import org.jboss.modules.filter.PathFilter;
 import org.jboss.modules.filter.PathFilters;
 import org.jboss.modules.test.JAXPCaller;
@@ -141,21 +149,23 @@ public class JAXPModuleTest extends AbstractModuleTestCase {
         moduleWithContentBuilder = ModuleSpec.build(FAKE_JAXP);
         moduleWithContentBuilder.addResourceRoot(ResourceLoaderSpec.createResourceLoaderSpec(
                 TestResourceLoader.build()
-                .addClass(FakeSAXParserFactory.class)
-                .addClass(FakeSAXParser.class)
-                .addClass(FakeDocumentBuilderFactory.class)
-                .addClass(FakeDocumentBuilder.class)
-                .addClass(FakeTransformerFactory.class)
-                .addClass(FakeTransformer.class)
-                .addClass(FakeTransformerHandler.class)
-                .addClass(FakeXMLEventFactory.class)
-                .addClass(FakeDTD.class)
-                .addClass(FakeXMLInputFactory.class)
-                .addClass(FakeXMLOutputFactory.class)
-                .addClass(FakeDatatypeFactory.class)
-                .addClass(FakeDuration.class)
-                .addResources(getResource("test/modulecontentloader/jaxp"))
-                .create()
+                        .addClass(FakeSAXParserFactory.class)
+                        .addClass(FakeSAXParser.class)
+                        .addClass(FakeDocumentBuilderFactory.class)
+                        .addClass(FakeDocumentBuilder.class)
+                        .addClass(FakeTransformerFactory.class)
+                        .addClass(FakeTransformer.class)
+                        .addClass(FakeTransformerHandler.class)
+                        .addClass(FakeXMLEventFactory.class)
+                        .addClass(FakeDTD.class)
+                        .addClass(FakeXMLInputFactory.class)
+                        .addClass(FakeXMLOutputFactory.class)
+                        .addClass(FakeDatatypeFactory.class)
+                        .addClass(FakeDuration.class)
+                        .addClass(FakeXPathFactory.class)
+                        .addClass(FakeXPath.class)
+                        .addResources(getResource("test/modulecontentloader/jaxp"))
+                        .create()
         ));
         moduleWithContentBuilder.addDependency(DependencySpec.createModuleDependencySpec(jdkApiFilter, PathFilters.rejectAll(), Module.getBootModuleLoader(),  ModuleIdentifier.SYSTEM, false));
         moduleWithContentBuilder.addDependency(DependencySpec.createLocalDependencySpec());
@@ -193,6 +203,7 @@ public class JAXPModuleTest extends AbstractModuleTestCase {
             checkSax(clazz, false);
             checkTransformer(clazz, false);
             checkSAXTransformer(clazz, false);
+            checkXPath(clazz, false);
             checkXmlEvent(clazz, false);
             checkXmlInput(clazz, false);
             checkXmlOutput(clazz, false);
@@ -215,6 +226,7 @@ public class JAXPModuleTest extends AbstractModuleTestCase {
             checkSax(clazz, true);
             checkTransformer(clazz, true);
             checkSAXTransformer(clazz, true);
+            checkXPath(clazz, true);
             checkXmlEvent(clazz, true);
             checkXmlInput(clazz, true);
             checkXmlOutput(clazz, true);
@@ -236,6 +248,7 @@ public class JAXPModuleTest extends AbstractModuleTestCase {
             checkSax(clazz, true);
             checkTransformer(clazz, true);
             checkSAXTransformer(clazz, true);
+            checkXPath(clazz, true);
             checkXmlEvent(clazz, true);
             checkXmlInput(clazz, true);
             checkXmlOutput(clazz, true);
@@ -272,6 +285,7 @@ public class JAXPModuleTest extends AbstractModuleTestCase {
             checkTransformer(clazz, true);
             checkSAXTransformer(clazz, true);
             checkXmlEvent(clazz, true);
+            checkXPath(clazz, true);
             checkXmlInput(clazz, true);
             checkXmlOutput(clazz, true);
             checkDatatype(clazz, true);
@@ -322,6 +336,19 @@ public class JAXPModuleTest extends AbstractModuleTestCase {
             Assert.assertEquals(FakeTransformer.class.getName(), parser.getClass().getName());
         } else {
             Assert.assertSame(TransformerFactory.newInstance().newTransformer().getClass(), parser.getClass());
+        }
+    }
+
+    public void checkXPath(Class<?> clazz, boolean fake) throws Exception {
+        XPath parser = invokeMethod(clazz.newInstance(), "xpath");
+        XPathFactory factory = invokeMethod(clazz.newInstance(), "xpathFactory");
+
+        Assert.assertEquals(__XPathFactory.class.getName(), factory.getClass().getName());
+
+        if (fake) {
+            Assert.assertEquals(FakeXPath.class.getName(), parser.getClass().getName());
+        } else {
+            Assert.assertSame(XPathFactory.newInstance().newXPath().getClass(), parser.getClass());
         }
     }
 
@@ -1077,6 +1104,77 @@ public class JAXPModuleTest extends AbstractModuleTestCase {
 
         public int hashCode() {
             return 0;
+        }
+    }
+
+    public static class FakeXPathFactory extends XPathFactory {
+
+        public boolean isObjectModelSupported(String objectModel) {
+            return false;
+        }
+
+        public void setFeature(String name, boolean value) throws XPathFactoryConfigurationException {
+        }
+
+        public boolean getFeature(String name) throws XPathFactoryConfigurationException {
+            return false;
+        }
+
+        public void setXPathVariableResolver(XPathVariableResolver resolver) {
+        }
+
+        public void setXPathFunctionResolver(XPathFunctionResolver resolver) {
+        }
+
+        public XPath newXPath() {
+            return new FakeXPath();
+        }
+    }
+
+    public static class FakeXPath implements XPath {
+
+        public void reset() {
+        }
+
+        public void setXPathVariableResolver(XPathVariableResolver resolver) {
+        }
+
+        public XPathVariableResolver getXPathVariableResolver() {
+            return null;
+        }
+
+        public void setXPathFunctionResolver(XPathFunctionResolver resolver) {
+        }
+
+        public XPathFunctionResolver getXPathFunctionResolver() {
+            return null;
+        }
+
+        public void setNamespaceContext(NamespaceContext nsContext) {
+        }
+
+        public NamespaceContext getNamespaceContext() {
+            return null;
+        }
+
+        public XPathExpression compile(String expression) throws XPathExpressionException {
+            return null;
+        }
+
+        public Object evaluate(String expression, Object item, QName returnType) throws XPathExpressionException {
+            return null;
+        }
+
+        public String evaluate(String expression, Object item) throws XPathExpressionException {
+            return null;
+        }
+
+        public Object evaluate(String expression, InputSource source, QName returnType) throws XPathExpressionException {
+            return null;
+        }
+
+        public String evaluate(String expression, InputSource source) throws XPathExpressionException {
+            return null;
         }
     }
 }

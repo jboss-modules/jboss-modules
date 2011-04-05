@@ -17,6 +17,8 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.sax.TransformerHandler;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathFactory;
 
 import org.w3c.dom.Document;
 
@@ -50,6 +52,18 @@ public class JAXPCaller {
     public SAXParser saxParser() {
         try {
             return SAXParserFactory.newInstance().newSAXParser();
+        } catch (Exception e) {
+            throw new IllegalStateException();
+        }
+    }
+
+    public XPathFactory xpathFactory() {
+        return XPathFactory.newInstance();
+    }
+
+    public XPath xpath() {
+        try {
+            return XPathFactory.newInstance().newXPath();
         } catch (Exception e) {
             throw new IllegalStateException();
         }
