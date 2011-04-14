@@ -22,9 +22,10 @@
 
 package org.jboss.modules;
 
-import java.io.File;
 import org.jboss.modules.filter.PathFilter;
 import org.jboss.modules.filter.PathFilters;
+
+import java.io.File;
 
 /**
  * A local filesystem-backed module loader.
@@ -32,7 +33,7 @@ import org.jboss.modules.filter.PathFilters;
  * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class LocalModuleLoader extends ModuleLoader {
+public class LocalModuleLoader extends ModuleLoader {
 
     private final File[] repoRoots;
     private final PathFilter pathFilter;
@@ -144,7 +145,7 @@ public final class LocalModuleLoader extends ModuleLoader {
     }
 
     private ModuleSpec parseModuleInfoFile(final ModuleIdentifier moduleIdentifier, final File moduleRoot, final File moduleInfoFile) throws ModuleLoadException {
-        return ModuleXmlParser.parseModuleXml(moduleIdentifier, moduleRoot, moduleInfoFile);
+        return ModuleXmlParser.parseModuleXml(this, moduleIdentifier, moduleRoot, moduleInfoFile);
     }
 
     public String toString() {

@@ -22,8 +22,19 @@
 
 package org.jboss.modules;
 
-import static org.jboss.modules.management.ObjectProperties.property;
+import org.jboss.modules.log.ModuleLogger;
+import org.jboss.modules.management.DependencyInfo;
+import org.jboss.modules.management.ModuleInfo;
+import org.jboss.modules.management.ModuleLoaderMXBean;
+import org.jboss.modules.management.ObjectProperties;
+import org.jboss.modules.management.ResourceLoaderInfo;
+import org.jboss.modules.ref.Reaper;
+import org.jboss.modules.ref.Reference;
+import org.jboss.modules.ref.WeakReference;
 
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -40,19 +51,8 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.jboss.modules.log.ModuleLogger;
-import org.jboss.modules.management.DependencyInfo;
-import org.jboss.modules.management.ModuleInfo;
-import org.jboss.modules.management.ModuleLoaderMXBean;
-import org.jboss.modules.management.ObjectProperties;
-import org.jboss.modules.management.ResourceLoaderInfo;
-import org.jboss.modules.ref.Reaper;
-import org.jboss.modules.ref.Reference;
-import org.jboss.modules.ref.WeakReference;
 
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
+import static org.jboss.modules.management.ObjectProperties.property;
 
 /**
  * A repository for modules, from which a module may be loaded by identifier.  Module loaders may additionally
@@ -127,6 +127,10 @@ public abstract class ModuleLoader {
         } catch (SecurityException e) {
             return false;
         }
+    }
+
+    protected ModuleSpec.Builder createModuleSpecBuilder(ModuleIdentifier moduleIdentifier) {
+        return ModuleSpec.build(moduleIdentifier);
     }
 
     /**

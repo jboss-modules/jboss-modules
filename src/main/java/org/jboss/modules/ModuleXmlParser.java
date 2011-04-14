@@ -22,6 +22,10 @@
 
 package org.jboss.modules;
 
+import org.jboss.modules.filter.MultiplePathFilterBuilder;
+import org.jboss.modules.filter.PathFilter;
+import org.jboss.modules.filter.PathFilters;
+
 import javax.xml.namespace.QName;
 import javax.xml.stream.Location;
 import javax.xml.stream.XMLInputFactory;
@@ -41,9 +45,6 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarFile;
-import org.jboss.modules.filter.MultiplePathFilterBuilder;
-import org.jboss.modules.filter.PathFilter;
-import org.jboss.modules.filter.PathFilters;
 
 import static javax.xml.stream.XMLStreamConstants.ATTRIBUTE;
 import static javax.xml.stream.XMLStreamConstants.CDATA;
@@ -185,7 +186,7 @@ final class ModuleXmlParser {
         }
     }
 
-    static ModuleSpec parseModuleXml(final ModuleIdentifier moduleIdentifier, final File root, final File moduleInfoFile) throws ModuleLoadException {
+    static ModuleSpec parseModuleXml(final ModuleLoader owner, final ModuleIdentifier moduleIdentifier, final File root, final File moduleInfoFile) throws ModuleLoadException {
         final FileInputStream fis;
         try {
             fis = new FileInputStream(moduleInfoFile);
@@ -193,7 +194,7 @@ final class ModuleXmlParser {
             throw new ModuleLoadException("No module.xml file found at " + moduleInfoFile);
         }
         try {
-            return parseModuleXml(root, fis, moduleInfoFile, moduleIdentifier);
+            return parseModuleXml(owner, root, fis, moduleInfoFile, moduleIdentifier);
         } finally {
             safeClose(fis);
         }
@@ -221,14 +222,14 @@ final class ModuleXmlParser {
 
     private static final XMLInputFactory INPUT_FACTORY = XMLInputFactory.newInstance();
 
-    private static ModuleSpec parseModuleXml(final File root, InputStream source, final File moduleInfoFile, final ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
+    private static ModuleSpec parseModuleXml(final ModuleLoader owner, final File root, InputStream source, final File moduleInfoFile, final ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
         try {
             final XMLInputFactory inputFactory = INPUT_FACTORY;
             setIfSupported(inputFactory, XMLInputFactory.IS_VALIDATING, Boolean.FALSE);
             setIfSupported(inputFactory, XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
             final XMLStreamReader streamReader = inputFactory.createXMLStreamReader(source);
             try {
-                return parseDocument(root, streamReader, ModuleSpec.build(moduleIdentifier));
+                return parseDocument(root, streamReader, owner.createModuleSpecBuilder(moduleIdentifier));
             } finally {
                 safeClose(streamReader);
             }
