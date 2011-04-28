@@ -381,6 +381,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
                 }
                 newClass = defineClass(name, bytes, 0, bytes.length, classSpec.getCodeSource());
                 log.classDefined(name, module);
+                postDefine(classSpec, newClass);
             } catch (NoClassDefFoundError e) {
                 // Prepend the current class name, so that transitive class definition issues are clearly expressed
                 final LinkageError ne = new LinkageError("Failed to link " + name.replace('.', '/') + " (" + module + ")");
@@ -409,6 +410,16 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
             setClassAssertionStatus(name, setting == AssertionSetting.ENABLED);
         }
         return newClass;
+    }
+
+    /**
+     * A hook which is invoked after a class is defined.
+     *
+     * @param classSpec the class spec of the defined class
+     * @param definedClass the class that was defined
+     */
+    @SuppressWarnings("unused")
+    protected void postDefine(ClassSpec classSpec, Class<?> definedClass) {
     }
 
     /**
