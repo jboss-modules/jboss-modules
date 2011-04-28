@@ -53,7 +53,7 @@ final class ModularContentHandlerFactory implements ContentHandlerFactory {
             if (moduleId.length() > 0) {
                 try {
                     final ModuleIdentifier identifier = ModuleIdentifier.fromString(moduleId);
-                    final ServiceLoader<ContentHandlerFactory> loader = Module.getSystemModuleLoader().loadModule(identifier).loadService(ContentHandlerFactory.class);
+                    final ServiceLoader<ContentHandlerFactory> loader = Module.getBootModuleLoader().loadModule(identifier).loadService(ContentHandlerFactory.class);
                     for (ContentHandlerFactory factory : loader) {
                         final ContentHandler handler = factory.createContentHandler(mimeType);
                         if (handler != null) {
