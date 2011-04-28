@@ -136,4 +136,10 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <scm>
+        <connection>scm:git:git://github.com/wolfc/jboss-modules.git</connection>
+        <developerConnection>scm:git:git@github.com:wolfc/jboss-modules.git</developerConnection>
+        <url>http://github.com/wolfc/jboss-modules</url>
+    </scm>
 </project>
