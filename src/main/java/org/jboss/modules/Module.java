@@ -169,6 +169,8 @@ public final class Module {
     private static final RuntimePermission GET_SYSTEM_MODULE = new RuntimePermission("getSystemModule");
     private static final RuntimePermission GET_BOOT_MODULE_LOADER = new RuntimePermission("getBootModuleLoader");
     private static final RuntimePermission ACCESS_MODULE_LOGGER = new RuntimePermission("accessModuleLogger");
+    private static final RuntimePermission ADD_CONTENT_HANDLER_FACTORY = new RuntimePermission("addContentHandlerFactory");
+    private static final RuntimePermission ADD_URL_STREAM_HANDLER_FACTORY = new RuntimePermission("addURLStreamHandlerFactory");
 
     private static final AtomicReferenceFieldUpdater<Module, Paths<LocalLoader, Dependency>> pathsUpdater
             = unsafeCast(AtomicReferenceFieldUpdater.newUpdater(Module.class, Paths.class, "paths"));
@@ -743,7 +745,7 @@ public final class Module {
 
     /**
      * Get the logger used by the module system.
-     *
+     * <p>
      * If a security manager is present, then this method invokes the security manager's {@code checkPermission} method
      * with a <code>RuntimePermission("accessModuleLogger")</code> permission to verify access to the module logger. If
      * access is not granted, a {@code SecurityException} will be thrown.
@@ -760,7 +762,7 @@ public final class Module {
 
     /**
      * Change the logger used by the module system.
-     *
+     * <p>
      * If a security manager is present, then this method invokes the security manager's {@code checkPermission} method
      * with a <code>RuntimePermission("accessModuleLogger")</code> permission to verify access to the module logger. If
      * access is not granted, a {@code SecurityException} will be thrown.
@@ -786,6 +788,40 @@ public final class Module {
      */
     public static long getStartTime() {
         return StartTimeHolder.START_TIME;
+    }
+
+    /**
+     * Register an additional module which contains content handlers.
+     * <p>
+     * If a security manager is present, then this method invokes the security manager's {@code checkPermission} method
+     * with a <code>RuntimePermission("addContentHandlerFactory")</code> permission to verify access. If
+     * access is not granted, a {@code SecurityException} will be thrown.
+     *
+     * @param module the module to add
+     */
+    public static void registerContentHandlerFactoryModule(Module module) {
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(ADD_CONTENT_HANDLER_FACTORY);
+        }
+        ModularContentHandlerFactory.addHandlerModule(module);
+    }
+
+    /**
+     * Register an additional module which contains URL handlers.
+     * <p>
+     * If a security manager is present, then this method invokes the security manager's {@code checkPermission} method
+     * with a <code>RuntimePermission("addURLStreamHandlerFactory")</code> permission to verify access. If
+     * access is not granted, a {@code SecurityException} will be thrown.
+     *
+     * @param module the module to add
+     */
+    public static void registerURLStreamHandlerFactoryModule(Module module) {
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(ADD_URL_STREAM_HANDLER_FACTORY);
+        }
+        ModularContentHandlerFactory.addHandlerModule(module);
     }
 
     // Linking and resolution

@@ -26,48 +26,69 @@ import java.net.ContentHandler;
 import java.net.ContentHandlerFactory;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ServiceLoader;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 final class ModularContentHandlerFactory implements ContentHandlerFactory {
-    private static final PrivilegedAction<String> URL_MODULES_LIST_ACTION = new PropertyReadAction("jboss.content.handler.modules");
+    private static final PrivilegedAction<String> CONTENT_MODULES_LIST_ACTION = new PropertyReadAction("jboss.content.handler.modules");
 
-    public ContentHandler createContentHandler(final String mimeType) {
+    private static final List<Module> modules;
+
+    static {
+        CopyOnWriteArrayList<Module> list = new CopyOnWriteArrayList<Module>();
         final SecurityManager sm = System.getSecurityManager();
         final String urlModulesList;
         if (sm != null) {
-            urlModulesList = AccessController.doPrivileged(URL_MODULES_LIST_ACTION);
+            urlModulesList = AccessController.doPrivileged(CONTENT_MODULES_LIST_ACTION);
         } else {
-            urlModulesList = URL_MODULES_LIST_ACTION.run();
+            urlModulesList = CONTENT_MODULES_LIST_ACTION.run();
         }
-        if (urlModulesList == null) {
-            return null;
-        }
-        int f = 0;
-        int i;
-        do {
-            i = urlModulesList.indexOf('|', f);
-            final String moduleId = (i == -1 ? urlModulesList.substring(f) : urlModulesList.substring(f, i)).trim();
-            if (moduleId.length() > 0) {
-                try {
-                    final ModuleIdentifier identifier = ModuleIdentifier.fromString(moduleId);
-                    final ServiceLoader<ContentHandlerFactory> loader = Module.getBootModuleLoader().loadModule(identifier).loadService(ContentHandlerFactory.class);
-                    for (ContentHandlerFactory factory : loader) {
-                        final ContentHandler handler = factory.createContentHandler(mimeType);
-                        if (handler != null) {
-                            return handler;
-                        }
+        if (urlModulesList != null) {
+            final List<Module> moduleList = new ArrayList<Module>();
+            int f = 0;
+            int i;
+            do {
+                i = urlModulesList.indexOf('|', f);
+                final String moduleId = (i == -1 ? urlModulesList.substring(f) : urlModulesList.substring(f, i)).trim();
+                if (moduleId.length() > 0) {
+                    try {
+                        final ModuleIdentifier identifier = ModuleIdentifier.fromString(moduleId);
+                        Module module = Module.getBootModuleLoader().loadModule(identifier);
+                        moduleList.add(module);
+                    } catch (RuntimeException e) {
+                        // skip it
+                    } catch (ModuleLoadException e) {
+                        // skip it
                     }
-                } catch (RuntimeException e) {
-                    // skip it
-                } catch (ModuleLoadException e) {
-                    // skip it
                 }
+                f = i + 1;
+            } while (i != -1);
+            list.addAll(moduleList);
+        }
+        modules = list;
+    }
+
+    static void addHandlerModule(Module module) {
+        modules.add(module);
+    }
+
+    public ContentHandler createContentHandler(final String mimeType) {
+        for (Module module : modules) {
+            ServiceLoader<ContentHandlerFactory> loader = module.loadService(ContentHandlerFactory.class);
+            for (ContentHandlerFactory factory : loader) try {
+                final ContentHandler handler = factory.createContentHandler(mimeType);
+                if (handler != null) {
+                    return handler;
+                }
+            } catch (RuntimeException e) {
+                // ignored
             }
-            f = i + 1;
-        } while (i != -1);
+        }
         return null;
     }
 }
