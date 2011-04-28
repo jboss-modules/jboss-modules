@@ -68,6 +68,10 @@ import static javax.xml.stream.XMLStreamConstants.START_ELEMENT;
  */
 final class ModuleXmlParser {
 
+    interface ResourceRootFactory {
+        ResourceLoader createResourceLoader(final String rootPath, final String loaderPath, final String loaderName) throws IOException;
+    }
+
     private ModuleXmlParser() {
     }
 
@@ -193,7 +197,16 @@ final class ModuleXmlParser {
             throw new ModuleLoadException("No module.xml file found at " + moduleInfoFile);
         }
         try {
-            return parseModuleXml(root, fis, moduleInfoFile, moduleIdentifier);
+            return parseModuleXml(new ResourceRootFactory() {
+                    public ResourceLoader createResourceLoader(final String rootPath, final String loaderPath, final String loaderName) throws IOException {
+                        File file = new File(rootPath, loaderPath);
+                        if (file.isDirectory()) {
+                            return new FileResourceLoader(loaderName, file);
+                        } else {
+                            return new JarFileResourceLoader(loaderName, new JarFile(file));
+                        }
+                    }
+                }, root.getPath(), fis, moduleInfoFile.getPath(), moduleIdentifier);
         } finally {
             safeClose(fis);
         }
@@ -207,7 +220,7 @@ final class ModuleXmlParser {
             throw new IllegalArgumentException("No module-config.xml file found at " + moduleConfigFile);
         }
         try {
-            return parseModuleConfigXml(moduleConfigFile, fis);
+            return parseModuleConfigXml(moduleConfigFile.getPath(), fis);
         } finally {
             safeClose(fis);
         }
@@ -221,23 +234,23 @@ final class ModuleXmlParser {
 
     private static final XMLInputFactory INPUT_FACTORY = XMLInputFactory.newInstance();
 
-    private static ModuleSpec parseModuleXml(final File root, InputStream source, final File moduleInfoFile, final ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
+    static ModuleSpec parseModuleXml(final ResourceRootFactory factory, final String rootPath, InputStream source, final String moduleInfoFile, final ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
         try {
             final XMLInputFactory inputFactory = INPUT_FACTORY;
             setIfSupported(inputFactory, XMLInputFactory.IS_VALIDATING, Boolean.FALSE);
             setIfSupported(inputFactory, XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
             final XMLStreamReader streamReader = inputFactory.createXMLStreamReader(source);
             try {
-                return parseDocument(root, streamReader, ModuleSpec.build(moduleIdentifier));
+                return parseDocument(factory, rootPath, streamReader, ModuleSpec.build(moduleIdentifier));
             } finally {
                 safeClose(streamReader);
             }
         } catch (XMLStreamException e) {
-            throw new ModuleLoadException("Error loading module from " + moduleInfoFile.getPath(), e);
+            throw new ModuleLoadException("Error loading module from " + moduleInfoFile, e);
         }
     }
 
-    private static ModuleLoader parseModuleConfigXml(final File file, final InputStream source) {
+    private static ModuleLoader parseModuleConfigXml(final String configFilePath, final InputStream source) {
         try {
             final XMLInputFactory inputFactory = INPUT_FACTORY;
             setIfSupported(inputFactory, XMLInputFactory.IS_VALIDATING, Boolean.FALSE);
@@ -249,7 +262,7 @@ final class ModuleXmlParser {
                 safeClose(streamReader);
             }
         } catch (XMLStreamException e) {
-            throw new IllegalArgumentException("Error loading module configuration from " + file.getPath(), e);
+            throw new IllegalArgumentException("Error loading module configuration from " + configFilePath, e);
         }
     }
 
@@ -478,18 +491,18 @@ final class ModuleXmlParser {
         }
     }
 
-    private static ModuleSpec parseDocument(final File root, XMLStreamReader reader, ModuleSpec.Builder specBuilder) throws XMLStreamException {
+    private static ModuleSpec parseDocument(final ResourceRootFactory factory, final String rootPath, XMLStreamReader reader, ModuleSpec.Builder specBuilder) throws XMLStreamException {
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case START_DOCUMENT: {
-                    parseRootElement(root, reader, specBuilder);
+                    parseRootElement(factory, rootPath, reader, specBuilder);
                     return specBuilder.create();
                 }
                 case START_ELEMENT: {
                     if (Element.of(reader.getName()) != Element.MODULE) {
                         throw unexpectedContent(reader);
                     }
-                    parseModuleContents(root, reader, specBuilder);
+                    parseModuleContents(factory, rootPath, reader, specBuilder);
                     parseEndDocument(reader);
                     return specBuilder.create();
                 }
@@ -501,14 +514,14 @@ final class ModuleXmlParser {
         throw endOfDocument(reader.getLocation());
     }
 
-    private static void parseRootElement(final File root, final XMLStreamReader reader, final ModuleSpec.Builder specBuilder) throws XMLStreamException {
+    private static void parseRootElement(final ResourceRootFactory factory, final String rootPath, final XMLStreamReader reader, final ModuleSpec.Builder specBuilder) throws XMLStreamException {
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case START_ELEMENT: {
                     if (Element.of(reader.getName()) != Element.MODULE) {
                         throw unexpectedContent(reader);
                     }
-                    parseModuleContents(root, reader, specBuilder);
+                    parseModuleContents(factory, rootPath, reader, specBuilder);
                     parseEndDocument(reader);
                     return;
                 }
@@ -520,7 +533,7 @@ final class ModuleXmlParser {
         throw endOfDocument(reader.getLocation());
     }
 
-    private static void parseModuleContents(final File root, final XMLStreamReader reader, final ModuleSpec.Builder specBuilder) throws XMLStreamException {
+    private static void parseModuleContents(final ResourceRootFactory factory, final String rootPath, final XMLStreamReader reader, final ModuleSpec.Builder specBuilder) throws XMLStreamException {
         final int count = reader.getAttributeCount();
         String name = null;
         String slot = null;
@@ -559,7 +572,7 @@ final class ModuleXmlParser {
                         case EXPORTS:      parseFilterList(reader, exportsBuilder); break;
                         case DEPENDENCIES: parseDependencies(reader, specBuilder); break;
                         case MAIN_CLASS:   parseMainClass(reader, specBuilder); break;
-                        case RESOURCES:    parseResources(root, reader, specBuilder); break;
+                        case RESOURCES:    parseResources(factory, rootPath, reader, specBuilder); break;
                         default: throw unexpectedContent(reader);
                     }
                     break;
@@ -681,7 +694,7 @@ final class ModuleXmlParser {
         parseNoContent(reader);
     }
 
-    private static void parseResources(final File root, final XMLStreamReader reader, final ModuleSpec.Builder specBuilder) throws XMLStreamException {
+    private static void parseResources(final ResourceRootFactory factory, final String rootPath, final XMLStreamReader reader, final ModuleSpec.Builder specBuilder) throws XMLStreamException {
         // xsd:choice
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
@@ -691,7 +704,7 @@ final class ModuleXmlParser {
                 case START_ELEMENT: {
                     switch (Element.of(reader.getName())) {
                         case RESOURCE_ROOT: {
-                            parseResourceRoot(root, reader, specBuilder);
+                            parseResourceRoot(factory, rootPath, reader, specBuilder);
                             break;
                         }
                         default: throw unexpectedContent(reader);
@@ -706,7 +719,7 @@ final class ModuleXmlParser {
         throw endOfDocument(reader.getLocation());
     }
 
-    private static void parseResourceRoot(final File root, final XMLStreamReader reader, final ModuleSpec.Builder specBuilder) throws XMLStreamException {
+    private static void parseResourceRoot(final ResourceRootFactory factory, final String rootPath, final XMLStreamReader reader, final ModuleSpec.Builder specBuilder) throws XMLStreamException {
         String name = null;
         String path = null;
         final Set<Attribute> required = EnumSet.of(Attribute.PATH);
@@ -724,7 +737,6 @@ final class ModuleXmlParser {
             throw missingAttributes(reader.getLocation(), required);
         }
         if (name == null) name = path;
-        final File file = new File(root, path);
 
         final MultiplePathFilterBuilder filterBuilder = PathFilters.multiplePathFilterBuilder(true);
         final ResourceLoader resourceLoader;
@@ -733,14 +745,10 @@ final class ModuleXmlParser {
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case END_ELEMENT: {
-                    if (file.isDirectory()) {
-                        resourceLoader = new FileResourceLoader(name, file);
-                    } else {
-                        try {
-                            resourceLoader = new JarFileResourceLoader(name, new JarFile(file));
-                        } catch (IOException e) {
-                            throw new XMLStreamException("Invalid JAR file specified", reader.getLocation(), e);
-                        }
+                    try {
+                        resourceLoader = factory.createResourceLoader(rootPath, path, name);
+                    } catch (IOException e) {
+                        throw new XMLStreamException(String.format("Failed to add resource root '%s' at path '%s'", name, path), reader.getLocation(), e);
                     }
                     specBuilder.addResourceRoot(new ResourceLoaderSpec(resourceLoader, filterBuilder.create()));
                     return;

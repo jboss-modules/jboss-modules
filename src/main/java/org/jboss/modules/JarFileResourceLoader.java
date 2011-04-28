@@ -54,8 +54,13 @@ final class JarFileResourceLoader implements ResourceLoader {
     private final JarFile jarFile;
     private final String rootName;
     private final URL rootUrl;
+    private final String relativePath;
 
     JarFileResourceLoader(final String rootName, final JarFile jarFile) {
+        this(rootName, jarFile, null);
+    }
+
+    JarFileResourceLoader(final String rootName, final JarFile jarFile, final String relativePath) {
         if (jarFile == null) {
             throw new IllegalArgumentException("jarFile is null");
         }
@@ -64,8 +69,9 @@ final class JarFileResourceLoader implements ResourceLoader {
         }
         this.jarFile = jarFile;
         this.rootName = rootName;
+        this.relativePath = relativePath;
         try {
-            rootUrl = new URI("jar", "file:" + jarFile.getName() + "!/", null).toURL();
+            rootUrl = new URI("jar", "file:" + jarFile.getName() + (relativePath == null ? "!/" : "!/" + relativePath), null).toURL();
         } catch (URISyntaxException e) {
             throw new IllegalArgumentException("Invalid root file specified", e);
         } catch (MalformedURLException e) {
@@ -79,7 +85,7 @@ final class JarFileResourceLoader implements ResourceLoader {
 
     public ClassSpec getClassSpec(final String fileName) throws IOException {
         final ClassSpec spec = new ClassSpec();
-        final JarEntry entry = jarFile.getJarEntry(fileName);
+        final JarEntry entry = getJarEntry(fileName);
         if (entry == null) {
             // no such entry
             return null;
@@ -120,6 +126,10 @@ final class JarFileResourceLoader implements ResourceLoader {
         }
     }
 
+    private JarEntry getJarEntry(final String fileName) {
+        return relativePath == null ? jarFile.getJarEntry(fileName) : jarFile.getJarEntry(relativePath + "/" + fileName);
+    }
+
     private static void safeClose(final Closeable closeable) {
         if (closeable != null) try {
             closeable.close();
@@ -130,7 +140,22 @@ final class JarFileResourceLoader implements ResourceLoader {
 
     public PackageSpec getPackageSpec(final String name) throws IOException {
         final PackageSpec spec = new PackageSpec();
-        final Manifest manifest = jarFile.getManifest();
+        final Manifest manifest;
+        if (relativePath == null) {
+            manifest = jarFile.getManifest();
+        } else {
+            JarEntry jarEntry = getJarEntry("META-INF/MANIFEST.MF");
+            if (jarEntry == null) {
+                manifest = null;
+            } else {
+                InputStream inputStream = jarFile.getInputStream(jarEntry);
+                try {
+                    manifest = new Manifest(inputStream);
+                } finally {
+                    safeClose(inputStream);
+                }
+            }
+        }
         if (manifest == null) {
             return spec;
         }
@@ -164,11 +189,11 @@ final class JarFileResourceLoader implements ResourceLoader {
             String entryName = name;
             if(entryName.startsWith("/"))
                 entryName = entryName.substring(1);
-            final JarEntry entry = jarFile.getJarEntry(entryName);
+            final JarEntry entry = getJarEntry(entryName);
             if (entry == null) {
                 return null;
             }
-            return new JarEntryResource(jarFile, entry, new URI("jar", "file:" + jarFile.getName() + "!/" + entryName, null).toURL());
+            return new JarEntryResource(jarFile, entry, new URI("jar", "file:" + jarFile.getName() + "!/" + entry.getName(), null).toURL());
         } catch (MalformedURLException e) {
             // must be invalid...?  (todo: check this out)
             return null;
@@ -180,6 +205,7 @@ final class JarFileResourceLoader implements ResourceLoader {
 
     public Collection<String> getPaths() {
         final Collection<String> index = new LinkedHashSet<String>();
+        String relativePath = this.relativePath;
         // First check for an external index
         final JarFile jarFile = this.jarFile;
         final String jarFileName = jarFile.getName();
@@ -190,7 +216,14 @@ final class JarFileResourceLoader implements ResourceLoader {
                 try {
                     String s;
                     while ((s = r.readLine()) != null) {
-                        index.add(s.trim());
+                        String name = s.trim();
+                        if (relativePath == null) {
+                            index.add(name);
+                        } else {
+                            if (name.startsWith(relativePath + "/")) {
+                                index.add(name.substring(relativePath.length() + 1));
+                            }
+                        }
                     }
                     return index;
                 } finally {
@@ -214,9 +247,15 @@ final class JarFileResourceLoader implements ResourceLoader {
                 // invalid name, just skip...
                 continue;
             }
-            index.add(path);
+            if (relativePath == null) {
+                index.add(path);
+            } else {
+                if (path.startsWith(relativePath + "/")) {
+                    index.add(path.substring(relativePath.length() + 1));
+                }
+            }
         }
-        if (ResourceLoaders.WRITE_INDEXES) {
+        if (ResourceLoaders.WRITE_INDEXES && relativePath == null) {
             // Now try to write it
             boolean ok = false;
             try {

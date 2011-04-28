@@ -32,6 +32,7 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.logging.LogManager;
 
+import java.util.jar.JarFile;
 import org.jboss.modules.log.JDKModuleLogger;
 
 import __redirected.__JAXPRedirected;
@@ -75,6 +76,7 @@ public final class Main {
 
     private static void usage() {
         System.out.println("Usage: java [-jvmoptions...] -jar " + getJarName() + ".jar [-options...] <module-spec> [args...]\n");
+        System.out.println("       java [-jvmoptions...] -jar " + getJarName() + ".jar [-options...] -jar <jar-name> [args...]\n");
         System.out.println("where options include:");
         System.out.println("    -help         Display this message");
         System.out.println("    -modulepath <search path of directories>");
@@ -103,7 +105,8 @@ public final class Main {
         String[] moduleArgs = null;
         String modulePath = null;
         String configPath = null;
-        ModuleIdentifier moduleIdentifier = null;
+        boolean jar = false;
+        String moduleIdentifierOrJarName = null;
         ModuleIdentifier logManagerModuleIdentifier = null;
         ModuleIdentifier jaxpModuleIdentifier = null;
         for (int i = 0, argsLength = argsLen; i < argsLength; i++) {
@@ -142,6 +145,12 @@ public final class Main {
                         logManagerModuleIdentifier = ModuleIdentifier.fromString(args[++i]);
                     } else if ("-jaxpmodule".equals(arg)) {
                         jaxpModuleIdentifier = ModuleIdentifier.fromString(args[++i]);
+                    } else if ("-jar".equals(arg)) {
+                        if (jar) {
+                            System.err.println("-jar flag may only be specified once");
+                            System.exit(1);
+                        }
+                        jar = true;
                     } else {
                         System.err.printf("Invalid option '%s'\n", arg);
                         usage();
@@ -149,7 +158,7 @@ public final class Main {
                     }
                 } else {
                     // it's the module specification
-                    moduleIdentifier = ModuleIdentifier.fromString(arg);
+                    moduleIdentifierOrJarName = arg;
                     int cnt = argsLen - i - 1;
                     moduleArgs = new String[cnt];
                     System.arraycopy(args, i + 1, moduleArgs, 0, cnt);
@@ -162,16 +171,22 @@ public final class Main {
             }
         }
         // run the module
-        if (moduleIdentifier == null) {
-            System.err.println("No module specified");
+        if (moduleIdentifierOrJarName == null) {
+            System.err.println("No module or JAR specified");
             usage();
             System.exit(1);
         }
         final ModuleLoader loader;
-        if (configPath != null) {
+        final ModuleIdentifier moduleIdentifier;
+        if (jar) {
+            loader = new JarModuleLoader(DefaultBootModuleLoaderHolder.INSTANCE, new JarFile(moduleIdentifierOrJarName));
+            moduleIdentifier = ((JarModuleLoader)loader).getMyIdentifier();
+        } else if (configPath != null) {
             loader = ModuleXmlParser.parseModuleConfigXml(new File(configPath));
+            moduleIdentifier = ModuleIdentifier.fromString(moduleIdentifierOrJarName);
         } else {
             loader = DefaultBootModuleLoaderHolder.INSTANCE;
+            moduleIdentifier = ModuleIdentifier.fromString(moduleIdentifierOrJarName);
         }
         Module.initBootModuleLoader(loader);
         if (logManagerModuleIdentifier != null) {
