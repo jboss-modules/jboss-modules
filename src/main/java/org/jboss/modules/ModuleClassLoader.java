@@ -24,6 +24,8 @@ package org.jboss.modules;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.instrument.ClassFileTransformer;
+import java.lang.instrument.IllegalClassFormatException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.security.CodeSource;
@@ -63,6 +65,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
     static final ResourceLoaderSpec[] NO_RESOURCE_LOADERS = new ResourceLoaderSpec[0];
 
     private final Module module;
+    private final ClassFileTransformer transformer;
 
     private volatile Paths<ResourceLoader, ResourceLoaderSpec> paths;
 
@@ -104,6 +107,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         if (setting != AssertionSetting.INHERIT) {
             setDefaultAssertionStatus(setting == AssertionSetting.ENABLED);
         }
+        transformer = configuration.getTransformer();
     }
 
     /**
@@ -363,8 +367,18 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         }
         final Class<?> newClass;
         try {
-            final byte[] bytes = classSpec.getBytes();
+            byte[] bytes = classSpec.getBytes();
             try {
+                if (transformer != null) {
+                    try {
+                        // todo: support protection domain
+                        bytes = transformer.transform(this, name.replace('.', '/'), null, null, bytes);
+                    } catch (IllegalClassFormatException e) {
+                        ClassFormatError error = new ClassFormatError(e.getMessage());
+                        error.initCause(e);
+                        throw error;
+                    }
+                }
                 newClass = defineClass(name, bytes, 0, bytes.length, classSpec.getCodeSource());
                 log.classDefined(name, module);
             } catch (NoClassDefFoundError e) {
@@ -580,11 +594,13 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         private final Module module;
         private final AssertionSetting assertionSetting;
         private final ResourceLoaderSpec[] resourceLoaders;
+        private final ClassFileTransformer transformer;
 
-        Configuration(final Module module, final AssertionSetting assertionSetting, final ResourceLoaderSpec[] resourceLoaders) {
+        Configuration(final Module module, final AssertionSetting assertionSetting, final ResourceLoaderSpec[] resourceLoaders, final ClassFileTransformer transformer) {
             this.module = module;
             this.assertionSetting = assertionSetting;
             this.resourceLoaders = resourceLoaders;
+            this.transformer = transformer;
         }
 
         Module getModule() {
@@ -597,6 +613,10 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
 
         ResourceLoaderSpec[] getResourceLoaders() {
             return resourceLoaders;
+        }
+
+        ClassFileTransformer getTransformer() {
+            return transformer;
         }
     }
 }

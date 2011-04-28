@@ -22,6 +22,7 @@
 
 package org.jboss.modules;
 
+import java.lang.instrument.ClassFileTransformer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,8 +44,9 @@ public final class ModuleSpec {
     private final DependencySpec[] dependencies;
     private final LocalLoader fallbackLoader;
     private final ModuleClassLoaderFactory moduleClassLoaderFactory;
+    private final ClassFileTransformer classFileTransformer;
 
-    private ModuleSpec(final ModuleIdentifier moduleIdentifier, final String mainClass, final AssertionSetting assertionSetting, final ResourceLoaderSpec[] resourceLoaders, final DependencySpec[] dependencies, final LocalLoader fallbackLoader, final ModuleClassLoaderFactory moduleClassLoaderFactory) {
+    private ModuleSpec(final ModuleIdentifier moduleIdentifier, final String mainClass, final AssertionSetting assertionSetting, final ResourceLoaderSpec[] resourceLoaders, final DependencySpec[] dependencies, final LocalLoader fallbackLoader, final ModuleClassLoaderFactory moduleClassLoaderFactory, final ClassFileTransformer classFileTransformer) {
         this.moduleIdentifier = moduleIdentifier;
         this.mainClass = mainClass;
         this.assertionSetting = assertionSetting;
@@ -52,6 +54,7 @@ public final class ModuleSpec {
         this.dependencies = dependencies;
         this.fallbackLoader = fallbackLoader;
         this.moduleClassLoaderFactory = moduleClassLoaderFactory;
+        this.classFileTransformer = classFileTransformer;
     }
 
     /**
@@ -85,6 +88,10 @@ public final class ModuleSpec {
 
     ModuleClassLoaderFactory getModuleClassLoaderFactory() {
         return moduleClassLoaderFactory;
+    }
+
+    ClassFileTransformer getClassFileTransformer() {
+        return classFileTransformer;
     }
 
     /**
@@ -156,6 +163,14 @@ public final class ModuleSpec {
          * @return this builder
          */
         Builder setModuleClassLoaderFactory(ModuleClassLoaderFactory moduleClassLoaderFactory);
+
+        /**
+         * Set the class file transformer to use for this module.
+         *
+         * @param classFileTransformer the class file transformer
+         * @return this builder
+         */
+        Builder setClassFileTransformer(ClassFileTransformer classFileTransformer);
     }
 
 
@@ -173,6 +188,7 @@ public final class ModuleSpec {
             private final List<DependencySpec> dependencies = new ArrayList<DependencySpec>();
             private LocalLoader fallbackLoader;
             private ModuleClassLoaderFactory moduleClassLoaderFactory;
+            private ClassFileTransformer classFileTransformer;
 
             @Override
             public Builder setFallbackLoader(final LocalLoader fallbackLoader) {
@@ -210,9 +226,14 @@ public final class ModuleSpec {
                 return this;
             }
 
+            public Builder setClassFileTransformer(final ClassFileTransformer classFileTransformer) {
+                this.classFileTransformer = classFileTransformer;
+                return this;
+            }
+
             @Override
             public ModuleSpec create() {
-                return new ModuleSpec(moduleIdentifier, mainClass, assertionSetting, resourceLoaders.toArray(new ResourceLoaderSpec[resourceLoaders.size()]), dependencies.toArray(new DependencySpec[dependencies.size()]), fallbackLoader, moduleClassLoaderFactory);
+                return new ModuleSpec(moduleIdentifier, mainClass, assertionSetting, resourceLoaders.toArray(new ResourceLoaderSpec[resourceLoaders.size()]), dependencies.toArray(new DependencySpec[dependencies.size()]), fallbackLoader, moduleClassLoaderFactory, classFileTransformer);
             }
 
             @Override
