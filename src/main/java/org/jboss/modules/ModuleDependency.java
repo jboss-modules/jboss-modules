@@ -22,6 +22,7 @@
 
 package org.jboss.modules;
 
+import org.jboss.modules.filter.ClassFilter;
 import org.jboss.modules.filter.PathFilter;
 
 /**
@@ -34,6 +35,13 @@ final class ModuleDependency extends Dependency {
 
     ModuleDependency(final PathFilter exportFilter, final PathFilter importFilter, final ModuleLoader moduleLoader, final ModuleIdentifier identifier, final boolean optional) {
         super(exportFilter, importFilter);
+        this.moduleLoader = moduleLoader;
+        this.identifier = identifier;
+        this.optional = optional;
+    }
+
+    ModuleDependency(final PathFilter exportFilter, final PathFilter importFilter, final PathFilter resourceExportFilter, final PathFilter resourceImportFilter, final ClassFilter classExportFilter, final ClassFilter classImportFilter, final ModuleLoader moduleLoader, final ModuleIdentifier identifier, final boolean optional) {
+        super(exportFilter, importFilter, resourceExportFilter, resourceImportFilter, classExportFilter, classImportFilter);
         this.moduleLoader = moduleLoader;
         this.identifier = identifier;
         this.optional = optional;

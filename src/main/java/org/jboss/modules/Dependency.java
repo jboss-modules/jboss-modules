@@ -22,7 +22,10 @@
 
 package org.jboss.modules;
 
+import org.jboss.modules.filter.ClassFilter;
+import org.jboss.modules.filter.ClassFilters;
 import org.jboss.modules.filter.PathFilter;
+import org.jboss.modules.filter.PathFilters;
 
 /**
  * A dependency item.
@@ -34,10 +37,22 @@ abstract class Dependency {
 
     private final PathFilter exportFilter;
     private final PathFilter importFilter;
+    private final PathFilter resourceExportFilter;
+    private final PathFilter resourceImportFilter;
+    private final ClassFilter classExportFilter;
+    private final ClassFilter classImportFilter;
 
     Dependency(final PathFilter exportFilter, final PathFilter importFilter) {
+        this(exportFilter, importFilter, PathFilters.acceptAll(), PathFilters.acceptAll(), ClassFilters.acceptAll(), ClassFilters.acceptAll());
+    }
+
+    protected Dependency(final PathFilter exportFilter, final PathFilter importFilter, final PathFilter resourceExportFilter, final PathFilter resourceImportFilter, final ClassFilter classExportFilter, final ClassFilter classImportFilter) {
         this.exportFilter = exportFilter;
         this.importFilter = importFilter;
+        this.resourceExportFilter = resourceExportFilter;
+        this.resourceImportFilter = resourceImportFilter;
+        this.classExportFilter = classExportFilter;
+        this.classImportFilter = classImportFilter;
     }
 
     /**
@@ -58,5 +73,21 @@ abstract class Dependency {
      */
     final PathFilter getImportFilter() {
         return importFilter;
+    }
+
+    final PathFilter getResourceExportFilter() {
+        return resourceExportFilter;
+    }
+
+    final PathFilter getResourceImportFilter() {
+        return resourceImportFilter;
+    }
+
+    final ClassFilter getClassExportFilter() {
+        return classExportFilter;
+    }
+
+    final ClassFilter getClassImportFilter() {
+        return classImportFilter;
     }
 }

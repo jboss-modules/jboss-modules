@@ -23,6 +23,7 @@
 package org.jboss.modules;
 
 import java.util.Set;
+import org.jboss.modules.filter.ClassFilter;
 import org.jboss.modules.filter.PathFilter;
 
 /**
@@ -42,6 +43,12 @@ final class LocalDependency extends Dependency {
      */
     LocalDependency(final PathFilter exportFilter, final PathFilter importFilter, final LocalLoader localLoader, final Set<String> paths) {
         super(exportFilter, importFilter);
+        this.localLoader = localLoader;
+        this.paths = paths;
+    }
+
+    LocalDependency(final PathFilter exportFilter, final PathFilter importFilter, final PathFilter resourceExportFilter, final PathFilter resourceImportFilter, final ClassFilter classExportFilter, final ClassFilter classImportFilter, final LocalLoader localLoader, final Set<String> paths) {
+        super(exportFilter, importFilter, resourceExportFilter, resourceImportFilter, classExportFilter, classImportFilter);
         this.localLoader = localLoader;
         this.paths = paths;
     }

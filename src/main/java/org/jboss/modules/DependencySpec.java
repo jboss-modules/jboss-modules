@@ -23,6 +23,8 @@
 package org.jboss.modules;
 
 import java.util.Set;
+import org.jboss.modules.filter.ClassFilter;
+import org.jboss.modules.filter.ClassFilters;
 import org.jboss.modules.filter.PathFilter;
 import org.jboss.modules.filter.PathFilters;
 
@@ -40,10 +42,22 @@ public abstract class DependencySpec {
 
     final PathFilter importFilter;
     final PathFilter exportFilter;
+    final PathFilter resourceImportFilter;
+    final PathFilter resourceExportFilter;
+    final ClassFilter classImportFilter;
+    final ClassFilter classExportFilter;
 
     DependencySpec(final PathFilter importFilter, final PathFilter exportFilter) {
+        this(importFilter, exportFilter, PathFilters.acceptAll(), PathFilters.acceptAll(), ClassFilters.acceptAll(), ClassFilters.acceptAll());
+    }
+
+    DependencySpec(final PathFilter importFilter, final PathFilter exportFilter, final PathFilter resourceImportFilter, final PathFilter resourceExportFilter, final ClassFilter classImportFilter, final ClassFilter classExportFilter) {
         this.importFilter = importFilter;
         this.exportFilter = exportFilter;
+        this.resourceImportFilter = resourceImportFilter;
+        this.resourceExportFilter = resourceExportFilter;
+        this.classImportFilter = classImportFilter;
+        this.classExportFilter = classExportFilter;
     }
 
     abstract Dependency getDependency(final Module module);
@@ -118,6 +132,23 @@ public abstract class DependencySpec {
      * @return the dependency spec
      */
     public static DependencySpec createLocalDependencySpec(final PathFilter importFilter, final PathFilter exportFilter, final LocalLoader localLoader, final Set<String> loaderPaths) {
+        return createLocalDependencySpec(importFilter, exportFilter, PathFilters.acceptAll(), PathFilters.acceptAll(), ClassFilters.acceptAll(), ClassFilters.acceptAll(), localLoader, loaderPaths);
+    }
+
+    /**
+     * Create a dependency on the given local loader.
+     *
+     * @param importFilter the import filter to apply
+     * @param exportFilter the export filter to apply
+     * @param resourceImportFilter the resource import filter to apply
+     * @param resourceExportFilter the resource export filter to apply
+     * @param classImportFilter the class import filter to apply
+     * @param classExportFilter the class export filter to apply
+     * @param localLoader the local loader
+     * @param loaderPaths the set of paths that is exposed by the local loader
+     * @return the dependency spec
+     */
+    public static DependencySpec createLocalDependencySpec(final PathFilter importFilter, final PathFilter exportFilter, final PathFilter resourceImportFilter, final PathFilter resourceExportFilter, final ClassFilter classImportFilter, final ClassFilter classExportFilter, final LocalLoader localLoader, final Set<String> loaderPaths) {
         if (importFilter == null) {
             throw new IllegalArgumentException("importFilter is null");
         }
@@ -130,9 +161,21 @@ public abstract class DependencySpec {
         if (loaderPaths == null) {
             throw new IllegalArgumentException("loaderPaths is null");
         }
-        return new DependencySpec(importFilter, exportFilter) {
+        if (classImportFilter == null) {
+            throw new IllegalArgumentException("classImportFilter is null");
+        }
+        if (classExportFilter == null) {
+            throw new IllegalArgumentException("classExportFilter is null");
+        }
+        if (resourceImportFilter == null) {
+            throw new IllegalArgumentException("resourceImportFilter is null");
+        }
+        if (resourceExportFilter == null) {
+            throw new IllegalArgumentException("resourceExportFilter is null");
+        }
+        return new DependencySpec(importFilter, exportFilter, resourceImportFilter, resourceExportFilter, classImportFilter, classExportFilter) {
             Dependency getDependency(final Module module) {
-                return new LocalDependency(exportFilter, importFilter, localLoader, loaderPaths);
+                return new LocalDependency(exportFilter, importFilter, resourceExportFilter, resourceImportFilter, classExportFilter, classImportFilter, localLoader, loaderPaths);
             }
 
             public String toString() {
@@ -155,6 +198,7 @@ public abstract class DependencySpec {
      * Create a dependency on the given module.
      *
      * @param identifier the module identifier
+     * @param export {@code true} if the dependency should be exported by default
      * @return the dependency spec
      */
     public static DependencySpec createModuleDependencySpec(final ModuleIdentifier identifier, final boolean export) {
@@ -234,6 +278,24 @@ public abstract class DependencySpec {
      * @return the dependency spec
      */
     public static DependencySpec createModuleDependencySpec(final PathFilter importFilter, final PathFilter exportFilter, final ModuleLoader moduleLoader, final ModuleIdentifier identifier, final boolean optional) {
+        return createModuleDependencySpec(importFilter, exportFilter, PathFilters.acceptAll(), PathFilters.acceptAll(), ClassFilters.acceptAll(), ClassFilters.acceptAll(), moduleLoader, identifier, optional);
+    }
+
+    /**
+     * Create a dependency on the given module.
+     *
+     * @param importFilter the import filter to apply
+     * @param exportFilter the export filter to apply
+     * @param resourceImportFilter the resource import filter to apply
+     * @param resourceExportFilter the resource export filter to apply
+     * @param classImportFilter the class import filter to apply
+     * @param classExportFilter the class export filter to apply
+     * @param moduleLoader the specific module loader from which the module should be acquired
+     * @param identifier the module identifier
+     * @param optional {@code true} if the dependency is optional, {@code false} if it is mandatory
+     * @return the dependency spec
+     */
+    public static DependencySpec createModuleDependencySpec(final PathFilter importFilter, final PathFilter exportFilter, final PathFilter resourceImportFilter, final PathFilter resourceExportFilter, final ClassFilter classImportFilter, final ClassFilter classExportFilter, final ModuleLoader moduleLoader, final ModuleIdentifier identifier, final boolean optional) {
         if (importFilter == null) {
             throw new IllegalArgumentException("importFilter is null");
         }
@@ -243,10 +305,22 @@ public abstract class DependencySpec {
         if (identifier == null) {
             throw new IllegalArgumentException("identifier is null");
         }
-        return new DependencySpec(importFilter, exportFilter) {
+        if (classImportFilter == null) {
+            throw new IllegalArgumentException("classImportFilter is null");
+        }
+        if (classExportFilter == null) {
+            throw new IllegalArgumentException("classExportFilter is null");
+        }
+        if (resourceImportFilter == null) {
+            throw new IllegalArgumentException("resourceImportFilter is null");
+        }
+        if (resourceExportFilter == null) {
+            throw new IllegalArgumentException("resourceExportFilter is null");
+        }
+        return new DependencySpec(importFilter, exportFilter, resourceImportFilter, resourceExportFilter, classImportFilter, classExportFilter) {
             Dependency getDependency(final Module module) {
                 final ModuleLoader loader = moduleLoader;
-                return new ModuleDependency(exportFilter, importFilter, loader == null ? module.getModuleLoader() : loader, identifier, optional);
+                return new ModuleDependency(exportFilter, importFilter, resourceExportFilter, resourceImportFilter, classExportFilter, classImportFilter, loader == null ? module.getModuleLoader() : loader, identifier, optional);
             }
 
             public String toString() {

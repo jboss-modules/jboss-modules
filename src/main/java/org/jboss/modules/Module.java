@@ -35,6 +35,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
@@ -44,6 +45,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
+import org.jboss.modules.filter.ClassFilter;
+import org.jboss.modules.filter.ClassFilters;
 import org.jboss.modules.filter.PathFilter;
 import org.jboss.modules.filter.PathFilters;
 import org.jboss.modules.log.ModuleLogger;
@@ -846,14 +849,33 @@ public final class Module {
         for (Dependency dependency : dependencies) {
             final PathFilter exportFilter = dependency.getExportFilter();
             final PathFilter importFilter = dependency.getImportFilter();
+            final ClassFilter classExportFilter = dependency.getClassExportFilter();
+            final PathFilter resourceExportFilter = dependency.getResourceExportFilter();
             if (importFilter == PathFilters.rejectAll() || exportFilter == PathFilters.rejectAll()) {
                 // we do not export anything from this dependency
                 continue;
             }
+            final boolean skipFilters = classExportFilter == ClassFilters.acceptAll() && resourceExportFilter == PathFilters.acceptAll();
+            Map<LocalLoader, LocalLoader> filteredLoaders = null;
 
             if (dependency instanceof LocalDependency) {
                 final LocalDependency localDependency = (LocalDependency) dependency;
-                final LocalLoader localLoader = localDependency.getLocalLoader();
+                final LocalLoader localLoader;
+                final LocalLoader localDependencyLocalLoader = localDependency.getLocalLoader();
+                if (skipFilters) {
+                    // do not pay the cost if it can be avoided
+                    localLoader = localDependencyLocalLoader;
+                } else {
+                    if (filteredLoaders == null) {
+                        filteredLoaders = new IdentityHashMap<LocalLoader, LocalLoader>();
+                    }
+                    if (filteredLoaders.containsKey(localDependencyLocalLoader)) {
+                        localLoader = filteredLoaders.get(localDependencyLocalLoader);
+                    } else {
+                        localLoader = LocalLoaders.createFilteredLocalLoader(classExportFilter, resourceExportFilter, localDependencyLocalLoader);
+                        filteredLoaders.put(localDependencyLocalLoader, localLoader);
+                    }
+                }
                 for (String path : localDependency.getPaths()) {
                     if (importFilter.accept(path) && exportFilter.accept(path)) {
                         addToMapList(newMap, path, localLoader);
@@ -880,7 +902,23 @@ public final class Module {
                 for (String path : pathsMap.keySet()) {
                     // Check it against what we import and export
                     if (importFilter.accept(path) && exportFilter.accept(path)) {
-                        addToMapList(newMap, path, pathsMap.get(path));
+                        final List<LocalLoader> loaders = pathsMap.get(path);
+                        if (skipFilters) {
+                            addToMapList(newMap, path, loaders);
+                        } else {
+                            if (filteredLoaders == null) {
+                                filteredLoaders = new IdentityHashMap<LocalLoader, LocalLoader>();
+                            }
+                            for (LocalLoader loader : loaders) {
+                                if (filteredLoaders.containsKey(loader)) {
+                                    addToMapList(newMap, path, filteredLoaders.get(loader));
+                                } else {
+                                    LocalLoader filtered = LocalLoaders.createFilteredLocalLoader(classExportFilter, resourceExportFilter, loader);
+                                    addToMapList(newMap, path, filtered);
+                                    filteredLoaders.put(loader, filtered);
+                                }
+                            }
+                        }
                     }
                 }
             } else {
@@ -912,10 +950,28 @@ public final class Module {
                 // kind of a silly dependency, isn't it?
                 continue;
             }
+            final ClassFilter classImportFilter = dependency.getClassImportFilter();
+            final PathFilter resourceImportFilter = dependency.getResourceImportFilter();
+            final boolean skipFilters = classImportFilter == ClassFilters.acceptAll() && resourceImportFilter == PathFilters.acceptAll();
+            Map<LocalLoader, LocalLoader> filteredLoaders = null;
 
             if (dependency instanceof LocalDependency) {
                 final LocalDependency localDependency = (LocalDependency) dependency;
-                final LocalLoader localLoader = localDependency.getLocalLoader();
+                final LocalLoader localLoader;
+                LocalLoader localDependencyLocalLoader = localDependency.getLocalLoader();
+                if (skipFilters) {
+                    localLoader = localDependencyLocalLoader;
+                } else {
+                    if (filteredLoaders == null) {
+                        filteredLoaders = new IdentityHashMap<LocalLoader, LocalLoader>();
+                    }
+                    if (filteredLoaders.containsKey(localDependencyLocalLoader)) {
+                        localLoader = filteredLoaders.get(localDependencyLocalLoader);
+                    } else {
+                        localLoader = LocalLoaders.createFilteredLocalLoader(classImportFilter, resourceImportFilter, localDependencyLocalLoader);
+                        filteredLoaders.put(localDependencyLocalLoader, localLoader);
+                    }
+                }
                 for (String path : localDependency.getPaths()) {
                     if (importFilter.accept(path)) {
                         addToMapList(newMap, path, localLoader);
@@ -942,7 +998,23 @@ public final class Module {
                 for (String path : pathsMap.keySet()) {
                     // Check it against what we import
                     if (importFilter.accept(path)) {
-                        addToMapList(newMap, path, pathsMap.get(path));
+                        final List<LocalLoader> loaders = pathsMap.get(path);
+                        if (skipFilters) {
+                            addToMapList(newMap, path, loaders);
+                        } else {
+                            if (filteredLoaders == null) {
+                                filteredLoaders = new IdentityHashMap<LocalLoader, LocalLoader>();
+                            }
+                            for (LocalLoader loader : loaders) {
+                                if (filteredLoaders.containsKey(loader)) {
+                                    addToMapList(newMap, path, filteredLoaders.get(loader));
+                                } else {
+                                    LocalLoader filtered = LocalLoaders.createFilteredLocalLoader(classImportFilter, resourceImportFilter, loader);
+                                    addToMapList(newMap, path, filtered);
+                                    filteredLoaders.put(loader, filtered);
+                                }
+                            }
+                        }
                     }
                 }
             } else {
