@@ -100,6 +100,49 @@ public abstract class DependencySpec {
     }
 
     /**
+     * Create a dependency on the current module's local resources.  You should have at least one such dependency
+     * on any module which has its own resources.
+     *
+     * @param importFilter the import filter to apply
+     * @param exportFilter the export filter to apply
+     * @param resourceImportFilter the resource import filter to apply
+     * @param resourceExportFilter the resource export filter to apply
+     * @param classImportFilter the class import filter to apply
+     * @param classExportFilter the class export filter to apply
+     * @return the dependency spec
+     */
+    public static DependencySpec createLocalDependencySpec(final PathFilter importFilter, final PathFilter exportFilter, final PathFilter resourceImportFilter, final PathFilter resourceExportFilter, final ClassFilter classImportFilter, final ClassFilter classExportFilter) {
+        if (importFilter == null) {
+            throw new IllegalArgumentException("importFilter is null");
+        }
+        if (exportFilter == null) {
+            throw new IllegalArgumentException("exportFilter is null");
+        }
+        if (classImportFilter == null) {
+            throw new IllegalArgumentException("classImportFilter is null");
+        }
+        if (classExportFilter == null) {
+            throw new IllegalArgumentException("classExportFilter is null");
+        }
+        if (resourceImportFilter == null) {
+            throw new IllegalArgumentException("resourceImportFilter is null");
+        }
+        if (resourceExportFilter == null) {
+            throw new IllegalArgumentException("resourceExportFilter is null");
+        }
+        return new DependencySpec(importFilter, exportFilter, resourceImportFilter, resourceExportFilter, classImportFilter, classExportFilter) {
+            Dependency getDependency(final Module module) {
+                final ModuleClassLoader classLoader = module.getClassLoaderPrivate();
+                return new LocalDependency(exportFilter, importFilter, resourceExportFilter, resourceImportFilter, classExportFilter, classImportFilter, classLoader.getLocalLoader(), classLoader.getPaths());
+            }
+
+            public String toString() {
+                return "dependency on filtered local resources";
+            }
+        };
+    }
+
+    /**
      * Create a dependency on the given local loader.
      *
      * @param localLoader the local loader
