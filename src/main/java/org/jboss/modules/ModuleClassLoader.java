@@ -249,7 +249,19 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
             return null;
         }
 
+        try{
+            preDefine(classSpec, className);
+        }
+        catch (Throwable th) {
+            throw new ClassNotFoundException("Failed to preDefine class: " + className, th);
+        }
         final Class<?> clazz = defineClass(className, classSpec);
+        try{
+            postDefine(classSpec, clazz);
+        }
+        catch (Throwable th) {
+            throw new ClassNotFoundException("Failed to postDefine class: " + className, th);
+        }
         if (resolve) {
             resolveClass(clazz);
         }
@@ -381,7 +393,6 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
                 }
                 newClass = defineClass(name, bytes, 0, bytes.length, classSpec.getCodeSource());
                 log.classDefined(name, module);
-                postDefine(classSpec, newClass);
             } catch (NoClassDefFoundError e) {
                 // Prepend the current class name, so that transitive class definition issues are clearly expressed
                 final LinkageError ne = new LinkageError("Failed to link " + name.replace('.', '/') + " (" + module + ")");
@@ -413,12 +424,20 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
     }
 
     /**
+     * A hook which is invoked before a class is defined.
+     *
+     * @param classSpec the class spec of the defined class
+     * @param className the class to be defined
+     */
+    protected void preDefine(ClassSpec classSpec, String className) {
+    }
+
+    /**
      * A hook which is invoked after a class is defined.
      *
      * @param classSpec the class spec of the defined class
      * @param definedClass the class that was defined
      */
-    @SuppressWarnings("unused")
     protected void postDefine(ClassSpec classSpec, Class<?> definedClass) {
     }
 
