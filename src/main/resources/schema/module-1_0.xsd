@@ -151,8 +151,8 @@
                 A single module dependency expression.
             </documentation>
         </annotation>
-        <xsd:choice minOccurs="0" maxOccurs="unbounded">
-            <xsd:element name="exports" type="filterType">
+        <xsd:all minOccurs="0">
+            <xsd:element name="exports" type="filterType" minOccurs="0">
                 <annotation xmlns="http://www.w3.org/2001/XMLSchema">
                     <documentation>
                         A filter used to restrict what packages or directories from this dependency are re-exported by
@@ -163,7 +163,7 @@
                     </documentation>
                 </annotation>
             </xsd:element>
-            <xsd:element name="imports" type="filterType">
+            <xsd:element name="imports" type="filterType" minOccurs="0">
                 <annotation xmlns="http://www.w3.org/2001/XMLSchema">
                     <documentation>
                         A filter used to restrict what packages or directories from this dependency are visible to this
@@ -172,7 +172,7 @@
                     </documentation>
                 </annotation>
             </xsd:element>
-        </xsd:choice>
+        </xsd:all>
         <xsd:attribute name="name" type="moduleNameType" use="required">
             <annotation xmlns="http://www.w3.org/2001/XMLSchema">
                 <documentation>
