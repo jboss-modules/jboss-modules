@@ -63,6 +63,7 @@ import __redirected.__JAXPRedirected;
  * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
  * @author <a href="mailto:flavia.rainone@jboss.com">Flavia Rainone</a>
  * @author Jason T. Greene
+ * @author thomas.diesler@jboss.com
  *
  * @apiviz.landmark
 */
@@ -824,7 +825,7 @@ public final class Module {
         if (sm != null) {
             sm.checkPermission(ADD_URL_STREAM_HANDLER_FACTORY);
         }
-        ModularContentHandlerFactory.addHandlerModule(module);
+        ModularURLStreamHandlerFactory.addHandlerModule(module);
     }
 
     // Linking and resolution
