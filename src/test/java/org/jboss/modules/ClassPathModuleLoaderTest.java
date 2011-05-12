@@ -51,16 +51,4 @@ public class ClassPathModuleLoaderTest extends AbstractModuleTestCase {
         module.getClassLoader();
         assertNotNull(module);
     }
-
-    @Test
-    public void testWithSystemLoader() throws Exception {
-        final File repoRoot = getResource("test/repo");
-        final String classPath = null;
-        final String deps = "test.test,test.with-deps";
-        final String mainClass = "org.jboss.modules.test.TestClass";
-        final ModuleLoader moduleLoader = new ClassPathModuleLoader(new LocalModuleLoader(new File[] { repoRoot }), mainClass, classPath, deps);
-        Module module = moduleLoader.loadModule(ClassPathModuleLoader.IDENTIFIER);
-        module.getClassLoader();
-        assertNotNull(module);
-    }
 }
