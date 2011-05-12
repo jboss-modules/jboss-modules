@@ -56,24 +56,6 @@ public final class Main {
     private Main() {
     }
 
-    /**
-     * Get the name of the JBoss Modules JAR.
-     *
-     * @return the name
-     */
-    public static String getJarName() {
-        return "UNSET";
-    }
-
-    /**
-     * Get the version string of JBoss Modules.
-     *
-     * @return the version string
-     */
-    public static String getVersionString() {
-        return "TRUNK SNAPSHOT";
-    }
-
     private static void usage() {
         System.out.println("Usage: java [-jvmoptions...] -jar " + getJarName() + ".jar [-options...] <module-spec> [args...]");
         System.out.println("       java [-jvmoptions...] -jar " + getJarName() + ".jar [-options...] -jar <jar-name> [args...]");
@@ -333,5 +315,25 @@ public final class Main {
         System.err.printf(format, args);
         usage();
         System.exit(1);
+    }
+
+    // Make sure these methods appear _last_
+
+    /**
+     * Get the name of the JBoss Modules JAR.
+     *
+     * @return the name
+     */
+    public static String getJarName() {
+        return "UNSET";
+    }
+
+    /**
+     * Get the version string of JBoss Modules.
+     *
+     * @return the version string
+     */
+    public static String getVersionString() {
+        return "TRUNK SNAPSHOT";
     }
 }
