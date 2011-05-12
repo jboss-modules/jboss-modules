@@ -45,12 +45,13 @@ import java.util.logging.LogManager;
  */
 public final class Main {
 
-
     static {
         // Force initialization at the earliest possible point
         @SuppressWarnings("unused")
         long start = StartTimeHolder.START_TIME;
     }
+
+    private static final String[] NO_STRINGS = new String[0];
 
     private Main() {
     }
@@ -74,29 +75,34 @@ public final class Main {
     }
 
     private static void usage() {
-        System.out.println("Usage: java [-jvmoptions...] -jar " + getJarName() + ".jar [-options...] <module-spec> [args...]\n");
-        System.out.println("       java [-jvmoptions...] -jar " + getJarName() + ".jar [-options...] -jar <jar-name> [args...]\n");
-        System.out.println("where options include:");
+        System.out.println("Usage: java [-jvmoptions...] -jar " + getJarName() + ".jar [-options...] <module-spec> [args...]");
+        System.out.println("       java [-jvmoptions...] -jar " + getJarName() + ".jar [-options...] -jar <jar-name> [args...]");
+        System.out.println("       java [-jvmoptions...] -jar " + getJarName() + ".jar [-options...] -cp <class-path> <class-name> [args...]");
+        System.out.println("       java [-jvmoptions...] -jar " + getJarName() + ".jar [-options...] -class <class-name> [args...]");
+        System.out.println("where <module-spec> is a valid module specification string");
+        System.out.println("and options include:");
         System.out.println("    -help         Display this message");
         System.out.println("    -modulepath <search path of directories>");
         System.out.println("    -mp <search path of directories>");
         System.out.println("                  A list of directories, separated by '" + File.pathSeparator + "', where modules may be located");
         System.out.println("                  If not specified, the value of the \"module.path\" system property is used");
-        System.out.println("    -class <main-class>");
-        System.out.println("                  The main class.");
-        System.out.println("    -cp,-classpath <classpath>");
-        System.out.println("                  The classpath to use for the module.");
-        System.out.println("    -dep,-dependencies <dependencies>");
-        System.out.println("                  The dependencies required for the module.");
+        System.out.println("    -class        Specify that the final argument is a");
+        System.out.println("                  class to load from the class path; not compatible with -jar");
+        System.out.println("    -cp,-classpath <search path of archives or directories>");
+        System.out.println("                  A search path for class files; implies -class");
+        System.out.println("    -dep,-dependencies <module-spec>[,<module-spec>,...]");
+        System.out.println("                  A list of module dependencies to add to the class path;");
+        System.out.println("                  requires -class or -cp");
+        System.out.println("    -jar          Specify that the final argument is the name of a");
+        System.out.println("                  JAR file to run as a module; not compatible with -class");
         System.out.println("    -config <config-location>");
         System.out.println("                  The location of the module configuration.  Either -mp or -config");
         System.out.println("                  may be specified, but not both");
         System.out.println("    -logmodule <module-name>");
         System.out.println("                  The module to use to load the system logmanager");
         System.out.println("    -jaxpmodule <module-name>");
-        System.out.println("                  The default JAXP implementation to use of the JDK.");
+        System.out.println("                  The default JAXP implementation to use of the JDK");
         System.out.println("    -version      Print version and exit\n");
-        System.out.println("and module-spec is a valid module specification string");
     }
 
     /**
@@ -109,7 +115,7 @@ public final class Main {
     public static void main(String[] args) throws Throwable {
         final int argsLen = args.length;
         String deps = null;
-        String[] moduleArgs = null;
+        String[] moduleArgs = NO_STRINGS;
         String modulePath = null;
         String configPath = null;
         String classpath = null;
@@ -165,7 +171,8 @@ public final class Main {
                         jar = true;
                     } else if ("-cp".equals(arg) || "-classpath".equals(arg)) {
                         if (classpathDefined) {
-                            showErrorAndExit(false, "-cp or -classpath may only be specified once.");
+                            System.err.println("-cp or -classpath may only be specified once.");
+                            System.exit(1);
                         }
                         classpathDefined = true;
                         cpArgUsed = arg;
@@ -173,12 +180,16 @@ public final class Main {
                         AccessController.doPrivileged(new PropertyWriteAction("java.class.path", classpath));
                     } else if ("-dep".equals(arg) || "-dependencies".equals(arg)) {
                         if (deps != null) {
-                            showErrorAndExit(false, "-dep or -dependencies may only be specified once.");
+                            System.err.println("-dep or -dependencies may only be specified once.");
+                            System.exit(1);
                         }
                         depArgUsed = arg;
                         deps = args[++i];
                     } else if ("-class".equals(arg)) {
-                        // TODO - We are working here
+                        if (classDefined) {
+                            System.err.println("-class flag may only be specified once");
+                            System.exit(1);
+                        }
                         classDefined = true;
                         moduleIdentifierOrExeName = args[++i];
                     } else {
@@ -206,11 +217,11 @@ public final class Main {
 
         // Final argument check
         if (jar && classpathDefined) {
-            showErrorAndExit(true, "Both arguments -jar and %s cannot be specified.%n", cpArgUsed);
+            showErrorAndExit("Both arguments -jar and %s cannot be specified.%n", cpArgUsed);
         } else if (!classpathDefined && deps != null) {
-            showErrorAndExit(true, "Argument %s is not allowed if -cp or -classpath was not used.%n", depArgUsed);
+            showErrorAndExit("Argument %s is not allowed if -cp or -classpath was not used.%n", depArgUsed);
         } else if (classpathDefined && classDefined) {
-            showErrorAndExit(true, "Argument %s not allowed when -class has been specified.%n", cpArgUsed);
+            showErrorAndExit("Argument %s not allowed when -class has been specified.%n", cpArgUsed);
         }
 
         // run the module
@@ -220,18 +231,21 @@ public final class Main {
             System.exit(1);
         }
         final ModuleLoader loader;
+        final ModuleLoader environmentLoader;
+        if (configPath != null) {
+            environmentLoader = ModuleXmlParser.parseModuleConfigXml(new File(configPath));
+        } else {
+            environmentLoader = DefaultBootModuleLoaderHolder.INSTANCE;
+        }
         final ModuleIdentifier moduleIdentifier;
         if (jar) {
-            loader = new JarModuleLoader(DefaultBootModuleLoaderHolder.INSTANCE, new JarFile(moduleIdentifierOrExeName));
+            loader = new JarModuleLoader(environmentLoader, new JarFile(moduleIdentifierOrExeName));
             moduleIdentifier = ((JarModuleLoader) loader).getMyIdentifier();
-        } else if (configPath != null) {
-            loader = ModuleXmlParser.parseModuleConfigXml(new File(configPath));
-            moduleIdentifier = ModuleIdentifier.fromString(moduleIdentifierOrExeName);
         } else if (classpathDefined || classDefined) {
-            loader = new ClassPathModuleLoader(moduleIdentifierOrExeName, classpath, deps);
+            loader = new ClassPathModuleLoader(environmentLoader, moduleIdentifierOrExeName, classpath, deps);
             moduleIdentifier = ClassPathModuleLoader.IDENTIFIER;
         } else {
-            loader = DefaultBootModuleLoaderHolder.INSTANCE;
+            loader = environmentLoader;
             moduleIdentifier = ModuleIdentifier.fromString(moduleIdentifierOrExeName);
         }
         Module.initBootModuleLoader(loader);
@@ -319,21 +333,9 @@ public final class Main {
         }
     }
 
-    private static void showErrorAndExit(final boolean showUsage, final String message) {
-        System.err.println(message);
-        if (showUsage) {
-            usage();
-        }
-        System.exit(1);
-
-    }
-
-    private static void showErrorAndExit(final boolean showUsage, final String format, final Object... args) {
+    private static void showErrorAndExit(final String format, final Object... args) {
         System.err.printf(format, args);
-        if (showUsage) {
-            usage();
-        }
+        usage();
         System.exit(1);
-
     }
 }
