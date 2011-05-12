@@ -295,7 +295,8 @@ final class FileResourceLoader implements ResourceLoader {
     }
 
     private void buildIndex(final List<String> index, final File root, final String pathBase) {
-        for (File file : root.listFiles()) {
+        File[] files = root.listFiles();
+        if (files != null) for (File file : files) {
             if (file.isDirectory()) {
                 index.add(pathBase + file.getName());
                 buildIndex(index, file, pathBase + file.getName() + "/");
