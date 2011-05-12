@@ -191,18 +191,14 @@ public final class Main {
                             System.exit(1);
                         }
                         classDefined = true;
-                        moduleIdentifierOrExeName = args[++i];
                     } else {
                         System.err.printf("Invalid option '%s'\n", arg);
                         usage();
                         System.exit(1);
                     }
                 } else {
-                    // Check to see if already defined with -class
-                    if (!classDefined) {
-                        // it's the module specification
-                        moduleIdentifierOrExeName = arg;
-                    }
+                    // it's the module specification
+                    moduleIdentifierOrExeName = arg;
                     int cnt = argsLen - i - 1;
                     moduleArgs = new String[cnt];
                     System.arraycopy(args, i + 1, moduleArgs, 0, cnt);
