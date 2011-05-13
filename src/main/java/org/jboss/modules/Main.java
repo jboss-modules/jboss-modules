@@ -101,8 +101,6 @@ public final class Main {
         String modulePath = null;
         String configPath = null;
         String classpath = null;
-        String cpArgUsed = null;
-        String depArgUsed = null;
         boolean jar = false;
         boolean classpathDefined = false;
         boolean classDefined = false;
@@ -173,7 +171,6 @@ public final class Main {
                             System.exit(1);
                         }
                         classpathDefined = true;
-                        cpArgUsed = arg;
                         classpath = args[++i];
                         AccessController.doPrivileged(new PropertyWriteAction("java.class.path", classpath));
                     } else if ("-dep".equals(arg) || "-dependencies".equals(arg)) {
@@ -181,7 +178,6 @@ public final class Main {
                             System.err.println("-dep or -dependencies may only be specified once.");
                             System.exit(1);
                         }
-                        depArgUsed = arg;
                         deps = args[++i];
                     } else if ("-class".equals(arg)) {
                         if (classDefined) {
@@ -215,6 +211,11 @@ public final class Main {
                 usage();
                 System.exit(1);
             }
+        }
+
+        if (deps != null && ! classDefined && ! classpathDefined) {
+            System.err.println("-deps may only be specified when -cp/-classpath or -class is in use");
+            System.exit(1);
         }
 
         // run the module
@@ -324,12 +325,6 @@ public final class Main {
         } finally {
             Thread.currentThread().setContextClassLoader(classLoader);
         }
-    }
-
-    private static void showErrorAndExit(final String format, final Object... args) {
-        System.err.printf(format, args);
-        usage();
-        System.exit(1);
     }
 
     // Make sure these methods appear _last_
