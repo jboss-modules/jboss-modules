@@ -220,7 +220,13 @@ public final class Main {
 
         // run the module
         if (moduleIdentifierOrExeName == null) {
-            System.err.println("No module or JAR specified");
+            if (classDefined || classpathDefined) {
+                System.err.println("No class name specified");
+            } else if (jar) {
+                System.err.println("No JAR specified");
+            } else {
+                System.err.println("No module specified");
+            }
             usage();
             System.exit(1);
         }
