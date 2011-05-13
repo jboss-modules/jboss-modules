@@ -150,10 +150,26 @@ public final class Main {
                             System.err.println("-jar flag may only be specified once");
                             System.exit(1);
                         }
+                        if (classpathDefined) {
+                            System.err.println("-cp/-classpath may not be specified with -jar");
+                            System.exit(1);
+                        }
+                        if (classDefined) {
+                            System.err.println("-class may not be specified with -jar");
+                            System.exit(1);
+                        }
                         jar = true;
                     } else if ("-cp".equals(arg) || "-classpath".equals(arg)) {
                         if (classpathDefined) {
                             System.err.println("-cp or -classpath may only be specified once.");
+                            System.exit(1);
+                        }
+                        if (classDefined) {
+                            System.err.println("-class may not be specified with -cp/classpath");
+                            System.exit(1);
+                        }
+                        if (jar) {
+                            System.err.println("-cp/-classpath may not be specified with -jar");
                             System.exit(1);
                         }
                         classpathDefined = true;
@@ -170,6 +186,14 @@ public final class Main {
                     } else if ("-class".equals(arg)) {
                         if (classDefined) {
                             System.err.println("-class flag may only be specified once");
+                            System.exit(1);
+                        }
+                        if (classpathDefined) {
+                            System.err.println("-class may not be specified with -cp/classpath");
+                            System.exit(1);
+                        }
+                        if (jar) {
+                            System.err.println("-class may not be specified with -jar");
                             System.exit(1);
                         }
                         classDefined = true;
@@ -191,15 +215,6 @@ public final class Main {
                 usage();
                 System.exit(1);
             }
-        }
-
-        // Final argument check
-        if (jar && classpathDefined) {
-            showErrorAndExit("Both arguments -jar and %s cannot be specified.%n", cpArgUsed);
-        } else if (!classpathDefined && deps != null) {
-            showErrorAndExit("Argument %s is not allowed if -cp or -classpath was not used.%n", depArgUsed);
-        } else if (classpathDefined && classDefined) {
-            showErrorAndExit("Argument %s not allowed when -class has been specified.%n", cpArgUsed);
         }
 
         // run the module
