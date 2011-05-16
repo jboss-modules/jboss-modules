@@ -263,8 +263,14 @@ public final class Module {
             if (! Modifier.isStatic(modifiers)) {
                 throw new NoSuchMethodException("Main method is not static for " + this);
             }
-            // ignore the return value
-            mainMethod.invoke(null, new Object[] {args});
+            final ClassLoader previousClassLoader = Thread.currentThread().getContextClassLoader();
+            try {
+                Thread.currentThread().setContextClassLoader(moduleClassLoader);
+                // ignore the return value
+                mainMethod.invoke(null, new Object[] {args});
+            } finally {
+                Thread.currentThread().setContextClassLoader(previousClassLoader);
+            }
         } catch (IllegalAccessException e) {
             // unexpected; should be public
             throw new IllegalAccessError(e.getMessage());
