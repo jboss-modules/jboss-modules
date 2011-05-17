@@ -26,6 +26,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
+import java.net.URL;
 
 import static org.junit.Assert.assertNotNull;
 
@@ -50,5 +51,23 @@ public class ClassPathModuleLoaderTest extends AbstractModuleTestCase {
         Module module = moduleLoader.loadModule(ClassPathModuleLoader.IDENTIFIER);
         module.getClassLoader();
         assertNotNull(module);
+    }
+
+    /**
+     * I need to be able to load EJBContainerProvider from a dependency.
+     *
+     * @author <a href="mailto:cdewolf@redhat.com">Carlo de Wolf</a>
+     */
+    @Test
+    public void testService() throws Exception {
+        final File repoRoot = getResource("test/repo");
+        final String classPath = "./target/test-classes/test/repo";
+        final String deps = "test.service";
+        final String mainClass = null;
+        final ModuleLoader moduleLoader = new ClassPathModuleLoader(new LocalModuleLoader(new File[] { repoRoot }), mainClass, classPath, deps);
+        final Module module = moduleLoader.loadModule(ClassPathModuleLoader.IDENTIFIER);
+        final ClassLoader classLoader = module.getClassLoader();
+        final URL url = classLoader.getResource("META-INF/services/dummy");
+        assertNotNull(url);
     }
 }

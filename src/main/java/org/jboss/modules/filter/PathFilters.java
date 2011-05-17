@@ -162,6 +162,7 @@ public final class PathFilters {
     private static final PathFilter metaInfFilter;
     private static final PathFilter metaInfSubdirectoriesFilter;
     private static final PathFilter metaInfServicesFilter;
+    private static final PathFilter metaInfPlusSubdirectoriesFilter;
 
     static {
         final PathFilter metaInfChildren = PathFilters.isChildOf("META-INF");
@@ -172,16 +173,21 @@ public final class PathFilters {
         metaInfSubdirectoriesFilter = metaInfChildren;
         metaInfServicesFilter = metaInfServices;
 
-        final MultiplePathFilterBuilder builder = PathFilters.multiplePathFilterBuilder(true);
+        final MultiplePathFilterBuilder builder = multiplePathFilterBuilder(true);
         builder.addFilter(metaInfChildren, false);
         builder.addFilter(metaInf, false);
         defaultImportFilter = builder.create();
 
-        final MultiplePathFilterBuilder builder2 = PathFilters.multiplePathFilterBuilder(true);
+        final MultiplePathFilterBuilder builder2 = multiplePathFilterBuilder(true);
         builder2.addFilter(metaInfServices, true);
         builder2.addFilter(metaInfChildren, false);
         builder2.addFilter(metaInf, false);
         defaultImportFilterWithServices = builder2.create();
+
+        final MultiplePathFilterBuilder builder3 = multiplePathFilterBuilder(true);
+        builder2.addFilter(metaInfChildren, true);
+        builder3.addFilter(metaInf, false);
+        metaInfPlusSubdirectoriesFilter = builder3.create();
     }
 
     /**
@@ -228,5 +234,14 @@ public final class PathFilters {
      */
     public static PathFilter getMetaInfServicesFilter() {
         return metaInfServicesFilter;
+    }
+
+    /**
+     * Get a filter which matches all of {@code META-INF}'s subdirectories, but not {@code META-INF} itself.
+     *
+     * @return the filter
+     */
+    public static PathFilter getMetaInfPlusSubdirectoriesFilter() {
+        return metaInfPlusSubdirectoriesFilter;
     }
 }

@@ -22,6 +22,8 @@
 
 package org.jboss.modules;
 
+import org.jboss.modules.filter.PathFilters;
+
 import java.io.File;
 import java.security.AccessController;
 import java.util.jar.JarFile;
@@ -80,7 +82,12 @@ final class ClassPathModuleLoader extends ModuleLoader {
             dependencyEntry = dependencyEntry.trim();
             if (! dependencyEntry.isEmpty()) {
                 final ModuleIdentifier depModId = ModuleIdentifier.fromString(dependencyEntry);
-                final DependencySpec spec = DependencySpec.createModuleDependencySpec(depModId);
+                final DependencySpec spec = DependencySpec.createModuleDependencySpec(
+                        PathFilters.getMetaInfPlusSubdirectoriesFilter(),
+                        PathFilters.rejectAll(),
+                        delegateLoader,
+                        depModId,
+                        false);
                 builder.addDependency(spec);
             }
         }
