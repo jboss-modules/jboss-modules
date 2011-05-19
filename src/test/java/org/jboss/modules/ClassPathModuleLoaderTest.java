@@ -48,7 +48,7 @@ public class ClassPathModuleLoaderTest extends AbstractModuleTestCase {
         final String deps = "test.test,test.with-deps";
         final String mainClass = "org.jboss.modules.test.TestClass";
         final ModuleLoader moduleLoader = new ClassPathModuleLoader(new LocalModuleLoader(new File[] { repoRoot }), mainClass, classPath, deps);
-        Module module = moduleLoader.loadModule(ClassPathModuleLoader.IDENTIFIER);
+        Module module = moduleLoader.loadModule(ModuleIdentifier.CLASSPATH);
         module.getClassLoader();
         assertNotNull(module);
     }
@@ -65,7 +65,7 @@ public class ClassPathModuleLoaderTest extends AbstractModuleTestCase {
         final String deps = "test.service";
         final String mainClass = null;
         final ModuleLoader moduleLoader = new ClassPathModuleLoader(new LocalModuleLoader(new File[] { repoRoot }), mainClass, classPath, deps);
-        final Module module = moduleLoader.loadModule(ClassPathModuleLoader.IDENTIFIER);
+        final Module module = moduleLoader.loadModule(ModuleIdentifier.CLASSPATH);
         final ClassLoader classLoader = module.getClassLoader();
         final URL url = classLoader.getResource("META-INF/services/dummy");
         assertNotNull(url);
