@@ -162,7 +162,7 @@ public final class PathFilters {
     private static final PathFilter metaInfFilter;
     private static final PathFilter metaInfSubdirectoriesFilter;
     private static final PathFilter metaInfServicesFilter;
-    private static final PathFilter metaInfPlusSubdirectoriesFilter;
+    private static final PathFilter metaInfSubdirectoriesWithoutMetaInfFilter;
 
     static {
         final PathFilter metaInfChildren = PathFilters.isChildOf("META-INF");
@@ -187,7 +187,7 @@ public final class PathFilters {
         final MultiplePathFilterBuilder builder3 = multiplePathFilterBuilder(true);
         builder2.addFilter(metaInfChildren, true);
         builder3.addFilter(metaInf, false);
-        metaInfPlusSubdirectoriesFilter = builder3.create();
+        metaInfSubdirectoriesWithoutMetaInfFilter = builder3.create();
     }
 
     /**
@@ -241,7 +241,7 @@ public final class PathFilters {
      *
      * @return the filter
      */
-    public static PathFilter getMetaInfPlusSubdirectoriesFilter() {
-        return metaInfPlusSubdirectoriesFilter;
+    public static PathFilter getMetaInfSubdirectoriesWithoutMetaInfFilter() {
+        return metaInfSubdirectoriesWithoutMetaInfFilter;
     }
 }

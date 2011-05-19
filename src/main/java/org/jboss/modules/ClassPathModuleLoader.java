@@ -82,7 +82,7 @@ final class ClassPathModuleLoader extends ModuleLoader {
             if (! dependencyEntry.isEmpty()) {
                 final ModuleIdentifier depModId = ModuleIdentifier.fromString(dependencyEntry);
                 final DependencySpec spec = DependencySpec.createModuleDependencySpec(
-                        PathFilters.getMetaInfPlusSubdirectoriesFilter(),
+                        PathFilters.getMetaInfSubdirectoriesWithoutMetaInfFilter(),
                         PathFilters.rejectAll(),
                         delegateLoader,
                         depModId,
