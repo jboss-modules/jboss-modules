@@ -36,7 +36,6 @@ import java.util.jar.JarFile;
 final class ClassPathModuleLoader extends ModuleLoader {
 
     private static final String[] NO_STRINGS = new String[0];
-    protected static final ModuleIdentifier IDENTIFIER = ModuleIdentifier.fromString("classpath");
     private final ModuleLoader delegateLoader;
     private final String classPath;
     private final String dependencies;
@@ -61,7 +60,7 @@ final class ClassPathModuleLoader extends ModuleLoader {
     protected Module preloadModule(final ModuleIdentifier identifier) throws ModuleLoadException {
         if (identifier.equals(ModuleIdentifier.SYSTEM)) {
             return preloadModule(ModuleIdentifier.SYSTEM, SystemClassPathModuleLoader.getInstance());
-        } else if (identifier.equals(IDENTIFIER)) {
+        } else if (identifier.equals(ModuleIdentifier.CLASSPATH)) {
             return loadModuleLocal(identifier);
         } else if (delegateLoader != null) {
             return preloadModule(identifier, delegateLoader);

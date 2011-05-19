@@ -74,6 +74,11 @@ public final class ModuleIdentifier implements Serializable {
      */
     public static final ModuleIdentifier SYSTEM = new ModuleIdentifier("system", DEFAULT_SLOT);
 
+    /**
+     * The class path module (only present if booted from a class path).
+     */
+    public static final ModuleIdentifier CLASSPATH = new ModuleIdentifier("Classpath", DEFAULT_SLOT);
+
     private ModuleIdentifier(final String name, final String slot) {
         this.name = name;
         this.slot = slot;

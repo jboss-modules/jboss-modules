@@ -243,7 +243,7 @@ public final class Main {
             moduleIdentifier = ((JarModuleLoader) loader).getMyIdentifier();
         } else if (classpathDefined || classDefined) {
             loader = new ClassPathModuleLoader(environmentLoader, moduleIdentifierOrExeName, classpath, deps);
-            moduleIdentifier = ClassPathModuleLoader.IDENTIFIER;
+            moduleIdentifier = ModuleIdentifier.CLASSPATH;
         } else {
             loader = environmentLoader;
             moduleIdentifier = ModuleIdentifier.fromString(moduleIdentifierOrExeName);
