@@ -33,6 +33,7 @@ import java.security.SecureClassLoader;
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.Locale;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentMap;
 import sun.misc.Unsafe;
@@ -59,7 +60,7 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
         String locklessDefault = "false";
         try {
             Class.forName("sun.misc.Unsafe", false, null);
-            locklessDefault = "true";
+            locklessDefault = AccessController.doPrivileged(new PropertyReadAction("java.vm.name", "")).toUpperCase(Locale.US).contains("JROCKIT") ? "false" : "true";
         } catch (Throwable t) {
             // ignored
         }
