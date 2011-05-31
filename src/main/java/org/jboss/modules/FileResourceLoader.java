@@ -228,7 +228,7 @@ final class FileResourceLoader implements ResourceLoader {
 
     public Resource getResource(final String name) {
         try {
-            final File file = new File(root, name);
+            final File file = new File(root, PathUtils.canonicalize(name));
             if (! file.exists()) {
                 return null;
             }

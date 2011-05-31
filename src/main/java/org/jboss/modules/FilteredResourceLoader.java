@@ -41,7 +41,8 @@ final class FilteredResourceLoader implements ResourceLoader {
     }
 
     public ClassSpec getClassSpec(final String fileName) throws IOException {
-        return filter.accept(fileName) ? loader.getClassSpec(fileName) : null;
+        final String canonicalFileName = PathUtils.canonicalize(fileName);
+        return filter.accept(canonicalFileName) ? loader.getClassSpec(canonicalFileName) : null;
     }
 
     public PackageSpec getPackageSpec(final String name) throws IOException {
@@ -49,7 +50,8 @@ final class FilteredResourceLoader implements ResourceLoader {
     }
 
     public Resource getResource(final String name) {
-        return filter.accept(name) ? loader.getResource(name) : null;
+        final String canonicalFileName = PathUtils.canonicalize(name);
+        return filter.accept(canonicalFileName) ? loader.getResource(canonicalFileName) : null;
     }
 
     public String getLibrary(final String name) {

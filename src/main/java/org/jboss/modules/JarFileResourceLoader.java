@@ -69,9 +69,10 @@ final class JarFileResourceLoader implements ResourceLoader {
         }
         this.jarFile = jarFile;
         this.rootName = rootName;
-        this.relativePath = relativePath;
+        final String realPath = relativePath == null ? null : PathUtils.canonicalize(relativePath);
+        this.relativePath = realPath;
         try {
-            rootUrl = new URI("jar", "file:" + jarFile.getName() + (relativePath == null ? "!/" : "!/" + relativePath), null).toURL();
+            rootUrl = new URI("jar", "file:" + jarFile.getName() + (realPath == null ? "!/" : "!/" + realPath), null).toURL();
         } catch (URISyntaxException e) {
             throw new IllegalArgumentException("Invalid root file specified", e);
         } catch (MalformedURLException e) {
@@ -186,7 +187,7 @@ final class JarFileResourceLoader implements ResourceLoader {
     public Resource getResource(final String name) {
         try {
             final JarFile jarFile = this.jarFile;
-            String entryName = name;
+            String entryName = PathUtils.canonicalize(name);
             if(entryName.startsWith("/"))
                 entryName = entryName.substring(1);
             final JarEntry entry = getJarEntry(entryName);
