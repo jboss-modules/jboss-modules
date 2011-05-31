@@ -89,8 +89,7 @@ public abstract class DependencySpec {
         }
         return new DependencySpec(importFilter, exportFilter) {
             Dependency getDependency(final Module module) {
-                final ModuleClassLoader classLoader = module.getClassLoaderPrivate();
-                return new LocalDependency(exportFilter, importFilter, classLoader.getLocalLoader(), classLoader.getPaths());
+                return new ModuleClassLoaderDependency(exportFilter, importFilter, module.getClassLoaderPrivate());
             }
 
             public String toString() {
@@ -132,8 +131,7 @@ public abstract class DependencySpec {
         }
         return new DependencySpec(importFilter, exportFilter, resourceImportFilter, resourceExportFilter, classImportFilter, classExportFilter) {
             Dependency getDependency(final Module module) {
-                final ModuleClassLoader classLoader = module.getClassLoaderPrivate();
-                return new LocalDependency(exportFilter, importFilter, resourceExportFilter, resourceImportFilter, classExportFilter, classImportFilter, classLoader.getLocalLoader(), classLoader.getPaths());
+                return new ModuleClassLoaderDependency(exportFilter, importFilter, resourceExportFilter, resourceImportFilter, classExportFilter, classImportFilter, module.getClassLoaderPrivate());
             }
 
             public String toString() {

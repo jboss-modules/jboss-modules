@@ -888,6 +888,29 @@ public final class Module {
                         addToMapList(newMap, path, localLoader);
                     }
                 }
+            } else if (dependency instanceof ModuleClassLoaderDependency) {
+                final ModuleClassLoaderDependency moduleClassLoaderDependency = (ModuleClassLoaderDependency) dependency;
+                final LocalLoader localLoader;
+                final LocalLoader localDependencyLocalLoader = moduleClassLoaderDependency.getLocalLoader();
+                if (skipFilters) {
+                    // do not pay the cost if it can be avoided
+                    localLoader = localDependencyLocalLoader;
+                } else {
+                    if (filteredLoaders == null) {
+                        filteredLoaders = new IdentityHashMap<LocalLoader, LocalLoader>();
+                    }
+                    if (filteredLoaders.containsKey(localDependencyLocalLoader)) {
+                        localLoader = filteredLoaders.get(localDependencyLocalLoader);
+                    } else {
+                        localLoader = LocalLoaders.createFilteredLocalLoader(classExportFilter, resourceExportFilter, localDependencyLocalLoader);
+                        filteredLoaders.put(localDependencyLocalLoader, localLoader);
+                    }
+                }
+                for (String path : moduleClassLoaderDependency.getPaths()) {
+                    if (importFilter.accept(path) && exportFilter.accept(path)) {
+                        addToMapList(newMap, path, localLoader);
+                    }
+                }
             } else if (dependency instanceof ModuleDependency) {
                 final ModuleDependency moduleDependency = (ModuleDependency) dependency;
                 final Module module;
@@ -980,6 +1003,28 @@ public final class Module {
                     }
                 }
                 for (String path : localDependency.getPaths()) {
+                    if (importFilter.accept(path)) {
+                        addToMapList(newMap, path, localLoader);
+                    }
+                }
+            } else if (dependency instanceof ModuleClassLoaderDependency) {
+                final ModuleClassLoaderDependency moduleClassLoaderDependency = (ModuleClassLoaderDependency) dependency;
+                final LocalLoader localLoader;
+                LocalLoader localDependencyLocalLoader = moduleClassLoaderDependency.getLocalLoader();
+                if (skipFilters) {
+                    localLoader = localDependencyLocalLoader;
+                } else {
+                    if (filteredLoaders == null) {
+                        filteredLoaders = new IdentityHashMap<LocalLoader, LocalLoader>();
+                    }
+                    if (filteredLoaders.containsKey(localDependencyLocalLoader)) {
+                        localLoader = filteredLoaders.get(localDependencyLocalLoader);
+                    } else {
+                        localLoader = LocalLoaders.createFilteredLocalLoader(classImportFilter, resourceImportFilter, localDependencyLocalLoader);
+                        filteredLoaders.put(localDependencyLocalLoader, localLoader);
+                    }
+                }
+                for (String path : moduleClassLoaderDependency.getPaths()) {
                     if (importFilter.accept(path)) {
                         addToMapList(newMap, path, localLoader);
                     }

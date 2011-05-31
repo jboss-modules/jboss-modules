@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2010, Red Hat, Inc., and individual contributors
+ * Copyright 2011, Red Hat, Inc., and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -29,25 +29,28 @@ import org.jboss.modules.filter.PathFilter;
 /**
 * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
 */
-final class LocalDependency extends Dependency {
-    private final LocalLoader localLoader;
-    private final Set<String> paths;
+final class ModuleClassLoaderDependency extends Dependency {
+    private final ModuleClassLoader moduleClassLoader;
 
-    LocalDependency(final PathFilter exportFilter, final PathFilter importFilter, final PathFilter resourceExportFilter, final PathFilter resourceImportFilter, final ClassFilter classExportFilter, final ClassFilter classImportFilter, final LocalLoader localLoader, final Set<String> paths) {
+    ModuleClassLoaderDependency(final PathFilter exportFilter, final PathFilter importFilter, final ModuleClassLoader moduleClassLoader) {
+        super(exportFilter, importFilter);
+        this.moduleClassLoader = moduleClassLoader;
+    }
+
+    ModuleClassLoaderDependency(final PathFilter exportFilter, final PathFilter importFilter, final PathFilter resourceExportFilter, final PathFilter resourceImportFilter, final ClassFilter classExportFilter, final ClassFilter classImportFilter, final ModuleClassLoader moduleClassLoader) {
         super(exportFilter, importFilter, resourceExportFilter, resourceImportFilter, classExportFilter, classImportFilter);
-        this.localLoader = localLoader;
-        this.paths = paths;
+        this.moduleClassLoader = moduleClassLoader;
     }
 
     LocalLoader getLocalLoader() {
-        return localLoader;
+        return moduleClassLoader.getLocalLoader();
     }
 
     Set<String> getPaths() {
-        return paths;
+        return moduleClassLoader.getPaths();
     }
 
     public String toString() {
-        return "dependency on " + localLoader;
+        return "dependency on " + moduleClassLoader;
     }
 }
