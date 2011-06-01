@@ -130,6 +130,26 @@ public abstract class ModuleLoader {
     }
 
     /**
+     * Get the module loader for a class.
+     *
+     * @param clazz the class
+     * @return the module loader
+     */
+    public static ModuleLoader forClass(Class<?> clazz) {
+        return Module.forClass(clazz).getModuleLoader();
+    }
+
+    /**
+     * Get the module loader for a class loader.
+     *
+     * @param classLoader the class loader
+     * @return the module loader
+     */
+    public static ModuleLoader forClassLoader(ClassLoader classLoader) {
+        return Module.forClassLoader(classLoader, true).getModuleLoader();
+    }
+
+    /**
      * Get the string representation of this module loader.
      *
      * @return the string representation
@@ -390,6 +410,7 @@ public abstract class ModuleLoader {
      *
      * @param module the module to update and relink
      * @param dependencies the new dependency list
+     * @throws ModuleLoadException
      */
     protected void setAndRelinkDependencies(Module module, List<DependencySpec> dependencies) throws ModuleLoadException {
         if (!canRedefine)
