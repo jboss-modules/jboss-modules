@@ -27,13 +27,17 @@ import org.junit.Test;
 
 import java.io.File;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Enumeration;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 /**
  * Test to verify the functionality of the ClassPathModuleLoader.
  *
  * @author @author <a href="mailto:jperkins@redhat.com">James R. Perkins</a>
+ * @author Scott Stark (sstark@redhat.com)
  */
 public class ClassPathModuleLoaderTest extends AbstractModuleTestCase {
 
@@ -69,5 +73,27 @@ public class ClassPathModuleLoaderTest extends AbstractModuleTestCase {
         final ClassLoader classLoader = module.getClassLoader();
         final URL url = classLoader.getResource("META-INF/services/dummy");
         assertNotNull(url);
+    }
+
+    /**
+     * Validate that dependent module META-INF/services/* content is seen
+     * @throws Exception
+     */
+    @Test
+    public void testMultipleServices() throws Exception {
+        final File repoRoot = getResource("test/repo");
+        final String classPath = "./target/test-classes/test/repo";
+        final String deps = "test.jaxrs";
+        final String mainClass = null;
+        final ModuleLoader moduleLoader = new ClassPathModuleLoader(new LocalModuleLoader(new File[] { repoRoot }), mainClass, classPath, deps);
+        final Module module = moduleLoader.loadModule(ModuleIdentifier.CLASSPATH);
+        final ClassLoader classLoader = module.getClassLoader();
+        final Enumeration<URL> services = classLoader.getResources("META-INF/services/javax.ws.rs.ext.Providers");
+        assertNotNull(services);
+        ArrayList<URL> found = new ArrayList<URL>();
+        while(services.hasMoreElements()) {
+            found.add(services.nextElement());
+        }
+        assertEquals("Found 2 services of type javax.ws.rs.ext.Providers", 2, found.size());
     }
 }
