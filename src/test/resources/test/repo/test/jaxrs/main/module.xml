@@ -29,7 +29,7 @@
     </resources>
 
     <dependencies>
-      <module name="test.jaxrs-jaxb-provider" services="import" />
+      <module name="test.jaxrs-jaxb-provider" services="export" />
     </dependencies>
 </module>
 
