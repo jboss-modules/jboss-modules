@@ -22,17 +22,7 @@
 
 package org.jboss.modules;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.ByteArrayOutputStream;
-import java.io.Closeable;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -41,7 +31,6 @@ import java.security.CodeSource;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.LinkedHashSet;
-import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -50,7 +39,7 @@ import java.util.jar.Manifest;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-final class JarFileResourceLoader implements ResourceLoader {
+final class JarFileResourceLoader extends AbstractResourceLoader {
     private final JarFile jarFile;
     private final String rootName;
     private final URL rootUrl;
@@ -140,7 +129,6 @@ final class JarFileResourceLoader implements ResourceLoader {
     }
 
     public PackageSpec getPackageSpec(final String name) throws IOException {
-        final PackageSpec spec = new PackageSpec();
         final Manifest manifest;
         if (relativePath == null) {
             manifest = jarFile.getManifest();
@@ -157,26 +145,7 @@ final class JarFileResourceLoader implements ResourceLoader {
                 }
             }
         }
-        if (manifest == null) {
-            return spec;
-        }
-        final Attributes mainAttribute = manifest.getMainAttributes();
-        final Attributes entryAttribute = manifest.getAttributes(name);
-        spec.setSpecTitle(getDefinedAttribute(Attributes.Name.SPECIFICATION_TITLE, entryAttribute, mainAttribute));
-        spec.setSpecVersion(getDefinedAttribute(Attributes.Name.SPECIFICATION_VERSION, entryAttribute, mainAttribute));
-        spec.setSpecVendor(getDefinedAttribute(Attributes.Name.SPECIFICATION_VENDOR, entryAttribute, mainAttribute));
-        spec.setImplTitle(getDefinedAttribute(Attributes.Name.IMPLEMENTATION_TITLE, entryAttribute, mainAttribute));
-        spec.setImplVersion(getDefinedAttribute(Attributes.Name.IMPLEMENTATION_VERSION, entryAttribute, mainAttribute));
-        spec.setImplVendor(getDefinedAttribute(Attributes.Name.IMPLEMENTATION_VENDOR, entryAttribute, mainAttribute));
-        if (Boolean.parseBoolean(getDefinedAttribute(Attributes.Name.SEALED, entryAttribute, mainAttribute))) {
-            spec.setSealBase(rootUrl);
-        }
-        return spec;
-    }
-
-    private static String getDefinedAttribute(Attributes.Name name, Attributes entryAttribute, Attributes mainAttribute) {
-        final String value = entryAttribute == null ? null : entryAttribute.getValue(name);
-        return value == null ? mainAttribute == null ? null : mainAttribute.getValue(name) : value;
+        return getPackageSpec(name, manifest, rootUrl);
     }
 
     public String getLibrary(final String name) {

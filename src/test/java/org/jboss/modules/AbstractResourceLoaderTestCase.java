@@ -22,21 +22,16 @@
 
 package org.jboss.modules;
 
-import static org.jboss.modules.util.Util.readBytes;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
-import java.net.URL;
-import java.util.Collection;
-
 import org.jboss.modules.filter.PathFilter;
 import org.jboss.modules.filter.PathFilters;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.net.URL;
+import java.util.Collection;
+
+import static org.jboss.modules.util.Util.readBytes;
+import static org.junit.Assert.*;
 
 
 /**
@@ -105,7 +100,7 @@ public abstract class AbstractResourceLoaderTestCase extends AbstractModuleTestC
 
     @Test
     public void testGetPackageSpec() throws Exception {
-        PackageSpec spec = loader.getPackageSpec("org/jboss/modules/test");
+        PackageSpec spec = loader.getPackageSpec("org.jboss.modules.test");
         assertNotNull(spec);
 
         assertEquals("JBoss Modules Test Classes", spec.getSpecTitle());
@@ -118,10 +113,10 @@ public abstract class AbstractResourceLoaderTestCase extends AbstractModuleTestC
 
     @Test
     public void testMissingPackageSpec() throws Exception {
-        PackageSpec spec = loader.getPackageSpec("org/jboss/modules/bogus");
+        PackageSpec spec = loader.getPackageSpec("org.jboss.modules.bogus");
         assertNotNull(spec);
 
-        assertNull(spec.getSpecTitle());
+        assertEquals("MODULES-89", spec.getSpecTitle());
         assertNull(spec.getSpecVersion());
         assertNull(spec.getSpecVendor());
         assertNull(spec.getImplTitle());

@@ -1,6 +1,7 @@
 Manifest-Version: 1.0
+Specification-Title: MODULES-89
 
-Name: org/jboss/modules/test
+Name: org/jboss/modules/test/
 Specification-Title: JBoss Modules Test Classes
 Specification-Version: 0.1
 Specification-Vendor: JBoss

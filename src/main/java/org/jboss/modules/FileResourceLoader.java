@@ -47,7 +47,7 @@ import java.util.jar.Manifest;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-final class FileResourceLoader implements ResourceLoader {
+final class FileResourceLoader extends AbstractResourceLoader {
     private static final String ARCH_NAME;
 
     static {
@@ -197,23 +197,7 @@ final class FileResourceLoader implements ResourceLoader {
     }
 
     public PackageSpec getPackageSpec(final String name) throws IOException {
-        final PackageSpec spec = new PackageSpec();
-        final Manifest manifest = this.manifest;
-        if (manifest == null) {
-            return spec;
-        }
-        final Attributes mainAttribute = manifest.getAttributes(name);
-        final Attributes entryAttribute = manifest.getAttributes(name);
-        spec.setSpecTitle(getDefinedAttribute(Attributes.Name.SPECIFICATION_TITLE, entryAttribute, mainAttribute));
-        spec.setSpecVersion(getDefinedAttribute(Attributes.Name.SPECIFICATION_VERSION, entryAttribute, mainAttribute));
-        spec.setSpecVendor(getDefinedAttribute(Attributes.Name.SPECIFICATION_VENDOR, entryAttribute, mainAttribute));
-        spec.setImplTitle(getDefinedAttribute(Attributes.Name.IMPLEMENTATION_TITLE, entryAttribute, mainAttribute));
-        spec.setImplVersion(getDefinedAttribute(Attributes.Name.IMPLEMENTATION_VERSION, entryAttribute, mainAttribute));
-        spec.setImplVendor(getDefinedAttribute(Attributes.Name.IMPLEMENTATION_VENDOR, entryAttribute, mainAttribute));
-        if (Boolean.parseBoolean(getDefinedAttribute(Attributes.Name.SEALED, entryAttribute, mainAttribute))) {
-            spec.setSealBase(root.toURI().toURL());
-        }
-        return spec;
+        return getPackageSpec(name, this.manifest, root.toURI().toURL());
     }
 
     private static String getDefinedAttribute(Attributes.Name name, Attributes entryAttribute, Attributes mainAttribute) {
