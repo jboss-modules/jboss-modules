@@ -22,18 +22,6 @@
 
 package org.jboss.modules;
 
-import static org.jboss.modules.util.Util.toList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.net.URL;
-import java.util.Enumeration;
-import java.util.List;
-
 import org.jboss.modules.filter.MultiplePathFilterBuilder;
 import org.jboss.modules.filter.PathFilters;
 import org.jboss.modules.test.ImportedClass;
@@ -43,6 +31,13 @@ import org.jboss.modules.util.TestModuleLoader;
 import org.jboss.modules.util.TestResourceLoader;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.net.URL;
+import java.util.Enumeration;
+import java.util.List;
+
+import static org.jboss.modules.util.Util.toList;
+import static org.junit.Assert.*;
 
 /**
  * Test to verify module functionality.
@@ -390,5 +385,16 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
         Enumeration<URL> resUrls = classLoader.getResources("nested/nested.txt");
         List<URL> resUrlList = toList(resUrls);
         assertTrue(resUrlList.isEmpty());
+    }
+
+    @Test
+    public void testManifest() throws Exception {
+        final Module testModule = moduleLoader.loadModule(MODULE_WITH_CONTENT_ID);
+        final ModuleClassLoader classLoader = testModule.getClassLoader();
+
+        final Class<?> testClass = classLoader.loadClass("org.jboss.modules.test.TestClass");
+        System.out.println(testClass.getClassLoader());
+        final Package pkg = testClass.getPackage();
+        assertEquals("JBoss Modules Test Classes", pkg.getSpecificationTitle());
     }
 }

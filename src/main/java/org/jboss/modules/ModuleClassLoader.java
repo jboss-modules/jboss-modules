@@ -22,6 +22,9 @@
 
 package org.jboss.modules;
 
+import org.jboss.modules.filter.PathFilter;
+import org.jboss.modules.log.ModuleLogger;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.instrument.ClassFileTransformer;
@@ -30,16 +33,8 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.security.CodeSource;
 import java.security.PermissionCollection;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
-import org.jboss.modules.filter.PathFilter;
-import org.jboss.modules.log.ModuleLogger;
 
 /**
  * A module classloader.  Instances of this class implement the complete view of classes and resources available in a
@@ -101,6 +96,8 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
      * @param configuration the module class loader configuration to use
      */
     protected ModuleClassLoader(final Configuration configuration) {
+        // the ModuleClassLoader must live in complete isolation
+        super(null);
         module = configuration.getModule();
         paths = new Paths<ResourceLoader, ResourceLoaderSpec>(configuration.getResourceLoaders(), Collections.<String, List<ResourceLoader>>emptyMap(), Collections.<String, List<ResourceLoader>>emptyMap());
         final AssertionSetting setting = configuration.getAssertionSetting();
@@ -358,7 +355,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
                         PackageSpec spec = null;
                         for (ResourceLoader loader : loaders) {
                             try {
-                                spec = loader.getPackageSpec(name);
+                                spec = loader.getPackageSpec(packageName);
                                 if (spec != null) {
                                     break;
                                 }

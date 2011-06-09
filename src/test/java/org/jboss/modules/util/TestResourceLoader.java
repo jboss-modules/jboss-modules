@@ -22,8 +22,10 @@
 
 package org.jboss.modules.util;
 
-import static junit.framework.Assert.assertTrue;
-import static org.jboss.modules.util.Util.getClassBytes;
+import org.jboss.modules.AbstractResourceLoader;
+import org.jboss.modules.ClassSpec;
+import org.jboss.modules.PackageSpec;
+import org.jboss.modules.Resource;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -39,10 +41,8 @@ import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
-import org.jboss.modules.ClassSpec;
-import org.jboss.modules.PackageSpec;
-import org.jboss.modules.Resource;
-import org.jboss.modules.ResourceLoader;
+import static junit.framework.Assert.assertTrue;
+import static org.jboss.modules.util.Util.getClassBytes;
 
 /**
  * A test resource loader that simple retrieves resources frm maps.  This allows tests to build
@@ -50,7 +50,7 @@ import org.jboss.modules.ResourceLoader;
  *
  * @author John E. Bailey
  */
-public class TestResourceLoader implements ResourceLoader {
+public class TestResourceLoader extends AbstractResourceLoader {
     private final Map<String, ClassSpec> classSpecs = new HashMap<String, ClassSpec>();
     private final Map<String, Resource> resources = new HashMap<String, Resource>();
     private final Set<String> paths = new HashSet<String>();
@@ -74,20 +74,7 @@ public class TestResourceLoader implements ResourceLoader {
 
     @Override
     public PackageSpec getPackageSpec(final String name) throws IOException {
-        final PackageSpec spec = new PackageSpec();
-        final Manifest manifest = getManifest();
-        if (manifest == null) {
-            return spec;
-        }
-        final Attributes mainAttribute = manifest.getMainAttributes();
-        final Attributes entryAttribute = manifest.getAttributes(name);
-        spec.setSpecTitle(getDefinedAttribute(Attributes.Name.SPECIFICATION_TITLE, entryAttribute, mainAttribute));
-        spec.setSpecVersion(getDefinedAttribute(Attributes.Name.SPECIFICATION_VERSION, entryAttribute, mainAttribute));
-        spec.setSpecVendor(getDefinedAttribute(Attributes.Name.SPECIFICATION_VENDOR, entryAttribute, mainAttribute));
-        spec.setImplTitle(getDefinedAttribute(Attributes.Name.IMPLEMENTATION_TITLE, entryAttribute, mainAttribute));
-        spec.setImplVersion(getDefinedAttribute(Attributes.Name.IMPLEMENTATION_VERSION, entryAttribute, mainAttribute));
-        spec.setImplVendor(getDefinedAttribute(Attributes.Name.IMPLEMENTATION_VENDOR, entryAttribute, mainAttribute));
-        return spec;
+        return getPackageSpec(name, getManifest(), null);
     }
 
     private Manifest getManifest() throws IOException {
