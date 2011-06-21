@@ -71,7 +71,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader {
         final String realPath = relativePath == null ? null : PathUtils.canonicalize(relativePath);
         this.relativePath = realPath;
         try {
-            rootUrl = new URI("jar", "file:" + jarFile.getName() + (realPath == null ? "!/" : "!/" + realPath), null).toURL();
+            rootUrl = new URI("jar", new File(jarFile.getName()).toURI().toString() + (realPath == null ? "!/" : "!/" + realPath), null).toURL();
         } catch (URISyntaxException e) {
             throw new IllegalArgumentException("Invalid root file specified", e);
         } catch (MalformedURLException e) {
