@@ -112,12 +112,7 @@ final class SystemLocalLoader implements LocalLoader {
                                 final String name = entry.getName();
                                 final int lastSlash = name.lastIndexOf('/');
                                 if (lastSlash != -1) {
-                                    final String dirName = name.substring(0, lastSlash);
-                                    if (dirName.equals("META-INF")) {
-                                        // skip non-exported META-INF
-                                        continue;
-                                    }
-                                    pathSet.add(dirName);
+                                    pathSet.add(name.substring(0, lastSlash));
                                 }
                             }
                         } finally {
@@ -134,10 +129,6 @@ final class SystemLocalLoader implements LocalLoader {
 
     private static void processDirectory0(final Set<String> pathSet, final File file) {
         for (File entry : file.listFiles()) {
-            if (entry.getName().equals("META-INF")) {
-                // skip non-exported META-INF
-                continue;
-            }
             if (entry.isDirectory()) {
                 processDirectory1(pathSet, entry, file.getPath());
             } else {
