@@ -258,12 +258,16 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         catch (Throwable th) {
             throw new ClassNotFoundException("Failed to preDefine class: " + className, th);
         }
-        final Class<?> clazz = defineClass(className, classSpec);
-        try{
-            postDefine(classSpec, clazz);
-        }
-        catch (Throwable th) {
-            throw new ClassNotFoundException("Failed to postDefine class: " + className, th);
+        Class<?> clazz = null;
+        try {
+            clazz = defineClass(className, classSpec);
+        } finally {
+            try{
+                postDefine(classSpec, clazz);
+            }
+            catch (Throwable th) {
+                throw new ClassNotFoundException("Failed to postDefine class: " + className, th);
+            }
         }
         if (resolve) {
             resolveClass(clazz);
