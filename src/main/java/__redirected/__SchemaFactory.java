@@ -22,26 +22,33 @@
 
 package __redirected;
 
-import org.jboss.modules.ModuleIdentifier;
-import org.jboss.modules.ModuleLoader;
-
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathFactory;
-import javax.xml.xpath.XPathFactoryConfigurationException;
-import javax.xml.xpath.XPathFunctionResolver;
-import javax.xml.xpath.XPathVariableResolver;
+import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URL;
 import java.util.List;
 
+import javax.xml.XMLConstants;
+import javax.xml.transform.Source;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
+
+import org.jboss.modules.ModuleIdentifier;
+import org.jboss.modules.ModuleLoader;
+import org.w3c.dom.ls.LSResourceResolver;
+import org.xml.sax.ErrorHandler;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXNotRecognizedException;
+import org.xml.sax.SAXNotSupportedException;
+
 /**
- * A redirected XPathFactory
+ * A redirected SchemaFactory
  *
  * @author Jason T. Greene
  */
-public final class __XPathFactory extends XPathFactory {
-    private static final Constructor<? extends XPathFactory> PLATFORM_FACTORY;
-    private static volatile Constructor<? extends XPathFactory> DEFAULT_FACTORY;
+public final class __SchemaFactory extends SchemaFactory {
+    private static final Constructor<? extends SchemaFactory> PLATFORM_FACTORY;
+    private static volatile Constructor<? extends SchemaFactory> DEFAULT_FACTORY;
 
     static {
         Thread thread = Thread.currentThread();
@@ -56,20 +63,20 @@ public final class __XPathFactory extends XPathFactory {
         // the environment's TCCL
         thread.setContextClassLoader(ClassLoader.getSystemClassLoader());
         try {
-            XPathFactory factory = XPathFactory.newInstance();
+            SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
             try {
                 DEFAULT_FACTORY = PLATFORM_FACTORY = factory.getClass().getConstructor();
             } catch (NoSuchMethodException e) {
                 throw __RedirectedUtils.wrapped(new NoSuchMethodError(e.getMessage()), e);
             }
-            System.setProperty(XPathFactory.class.getName() + ":" + XPathFactory.DEFAULT_OBJECT_MODEL_URI, __XPathFactory.class.getName());
+            System.setProperty(SchemaFactory.class.getName() + ":" + XMLConstants.W3C_XML_SCHEMA_NS_URI, __SchemaFactory.class.getName());
         } finally {
             thread.setContextClassLoader(old);
         }
     }
 
     public static void changeDefaultFactory(ModuleIdentifier id, ModuleLoader loader) {
-        Class<? extends XPathFactory> clazz = __RedirectedUtils.loadProvider(id, XPathFactory.class, loader);
+        Class<? extends SchemaFactory> clazz = __RedirectedUtils.loadProvider(id, SchemaFactory.class, loader);
         if (clazz != null) {
             try {
                 DEFAULT_FACTORY = clazz.getConstructor();
@@ -91,16 +98,16 @@ public final class __XPathFactory extends XPathFactory {
     /**
      * Construct a new instance.
      */
-    public __XPathFactory() {
-        Constructor<? extends XPathFactory> factory = DEFAULT_FACTORY;
+    public __SchemaFactory() {
+        Constructor<? extends SchemaFactory> factory = DEFAULT_FACTORY;
         ClassLoader loader = Thread.currentThread().getContextClassLoader();
-        XPathFactory foundInstance = null;
+        SchemaFactory foundInstance = null;
         try {
             if (loader != null) {
-                List<Class<? extends XPathFactory>> providers = __RedirectedUtils.loadProviders(XPathFactory.class, loader);
-                for (Class<? extends XPathFactory> provider : providers) {
-                    XPathFactory instance = provider.newInstance();
-                    if (instance.isObjectModelSupported(XPathFactory.DEFAULT_OBJECT_MODEL_URI)) {
+                List<Class<? extends SchemaFactory>> providers = __RedirectedUtils.loadProviders(SchemaFactory.class, loader);
+                for (Class<? extends SchemaFactory> provider : providers) {
+                    SchemaFactory instance = provider.newInstance();
+                    if (instance.isSchemaLanguageSupported(XMLConstants.W3C_XML_SCHEMA_NS_URI)) {
                         foundInstance = instance;
                         break;
                     }
@@ -118,29 +125,62 @@ public final class __XPathFactory extends XPathFactory {
         }
     }
 
-    private final XPathFactory actual;
 
-    public boolean isObjectModelSupported(String objectModel) {
-        return actual.isObjectModelSupported(objectModel);
+    private final SchemaFactory actual;
+
+    public boolean isSchemaLanguageSupported(String objectModel) {
+        return actual.isSchemaLanguageSupported(objectModel);
     }
 
-    public void setFeature(String name, boolean value) throws XPathFactoryConfigurationException {
-        actual.setFeature(name, value);
-    }
-
-    public boolean getFeature(String name) throws XPathFactoryConfigurationException {
+    public boolean getFeature(String name) throws SAXNotRecognizedException, SAXNotSupportedException {
         return actual.getFeature(name);
     }
 
-    public void setXPathVariableResolver(XPathVariableResolver resolver) {
-        actual.setXPathVariableResolver(resolver);
+    public void setFeature(String name, boolean value) throws SAXNotSupportedException, SAXNotRecognizedException {
+        actual.setFeature(name, value);
     }
 
-    public void setXPathFunctionResolver(XPathFunctionResolver resolver) {
-        actual.setXPathFunctionResolver(resolver);
+    public void setProperty(String name, Object object) throws SAXNotRecognizedException, SAXNotSupportedException {
+        actual.setProperty(name, object);
     }
 
-    public XPath newXPath() {
-        return actual.newXPath();
+    public Object getProperty(String name) throws SAXNotRecognizedException, SAXNotSupportedException {
+        return actual.getProperty(name);
+    }
+
+    public void setErrorHandler(ErrorHandler errorHandler) {
+        actual.setErrorHandler(errorHandler);
+    }
+
+    public ErrorHandler getErrorHandler() {
+        return actual.getErrorHandler();
+    }
+
+    public void setResourceResolver(LSResourceResolver resourceResolver) {
+        actual.setResourceResolver(resourceResolver);
+    }
+
+    public LSResourceResolver getResourceResolver() {
+        return actual.getResourceResolver();
+    }
+
+    public Schema newSchema(Source schema) throws SAXException {
+        return actual.newSchema(schema);
+    }
+
+    public Schema newSchema(File schema) throws SAXException {
+        return actual.newSchema(schema);
+    }
+
+    public Schema newSchema(URL schema) throws SAXException {
+        return actual.newSchema(schema);
+    }
+
+    public Schema newSchema(Source[] schemas) throws SAXException {
+        return actual.newSchema(schemas);
+    }
+
+    public Schema newSchema() throws SAXException {
+        return actual.newSchema();
     }
 }

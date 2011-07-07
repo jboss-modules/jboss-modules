@@ -49,6 +49,8 @@ public class __JAXPRedirected {
         __XMLInputFactory.changeDefaultFactory(id, loader);
         __XMLOutputFactory.changeDefaultFactory(id, loader);
         __DatatypeFactory.changeDefaultFactory(id, loader);
+        __SchemaFactory.changeDefaultFactory(id, loader);
+        __XMLReaderFactory.changeDefaultFactory(id, loader);
     }
 
     /**
@@ -65,6 +67,9 @@ public class __JAXPRedirected {
         __XMLInputFactory.restorePlatformFactory();
         __XMLOutputFactory.restorePlatformFactory();
         __DatatypeFactory.restorePlatformFactory();
+        __SchemaFactory.restorePlatformFactory();
+        __XMLReaderFactory.restorePlatformFactory();
+
     }
 
     /**
@@ -80,5 +85,7 @@ public class __JAXPRedirected {
         __XMLInputFactory.init();
         __XMLOutputFactory.init();
         __DatatypeFactory.init();
+        __SchemaFactory.init();
+        __XMLReaderFactory.init();
     }
 }
