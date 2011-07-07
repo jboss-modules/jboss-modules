@@ -27,6 +27,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.UndeclaredThrowableException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 import org.jboss.modules.Module;
 import org.jboss.modules.ModuleClassLoader;
@@ -64,6 +68,10 @@ public final class __RedirectedUtils {
     }
 
     static <T> Class<? extends T> loadProvider(ModuleIdentifier id, Class<T> intf, ModuleLoader moduleLoader) {
+        return loadProvider(id, intf, moduleLoader, null);
+    }
+
+    static <T> Class<? extends T> loadProvider(ModuleIdentifier id, Class<T> intf, ModuleLoader moduleLoader, String name) {
         Module module;
         try {
             module = moduleLoader.loadModule(id);
@@ -73,39 +81,83 @@ public final class __RedirectedUtils {
         }
 
         ModuleClassLoader classLoader = module.getClassLoader();
-        return loadProvider(intf, classLoader);
+        return loadProvider(intf, classLoader, name);
     }
 
-     static <T> Class<? extends T> loadProvider(Class<T> intf, ClassLoader classLoader) {
-        String name = findProviderClassName(intf, classLoader);
+    static <T> Class<? extends T> loadProvider(Class<T> intf, ClassLoader classLoader) {
+        return loadProvider(intf, classLoader, null);
+    }
 
-        if (name == null) {
-            Module.getModuleLogger().providerUnloadable(name, classLoader);
+    static <T> Class<? extends T> loadProvider(Class<T> intf, ClassLoader classLoader, String name) {
+        List<String> names = findProviderClassNames(intf, classLoader, name);
+
+
+        if (names.size() < 1) {
+            Module.getModuleLogger().providerUnloadable("Not found", classLoader);
             return null;
         }
+
+        String clazzName = names.get(0);
 
         Class<? extends T> clazz = null;
         try {
             @SuppressWarnings("unchecked")
-            Class<? extends T> t = (Class<? extends T>) classLoader.loadClass(name);
+            Class<? extends T> t = (Class<? extends T>) classLoader.loadClass(clazzName);
             clazz = t;
         } catch (ClassNotFoundException ignore) {
         }
 
         if (clazz == null || !intf.isAssignableFrom(clazz)) {
-            Module.getModuleLogger().providerUnloadable(name, classLoader);
+            Module.getModuleLogger().providerUnloadable(clazzName, classLoader);
             return null;
         }
 
         return clazz;
     }
 
-     static <T> String findProviderClassName(Class<T> intf, ClassLoader loader) {
-        final InputStream stream = loader.getResourceAsStream("META-INF/services/" + intf.getName());
-        if (stream == null)
-            return null;
+    static <T> List<Class<? extends T>> loadProviders(Class<T> intf, ClassLoader classLoader) {
+        return loadProviders(intf, classLoader, null);
+    }
 
-        String name = null;
+    static <T> List<Class<? extends T>> loadProviders(Class<T> intf, ClassLoader classLoader, String name) {
+        List<String> names = findProviderClassNames(intf, classLoader, name);
+
+        if (names.size() < 1) {
+            Module.getModuleLogger().providerUnloadable("Not found", classLoader);
+            return Collections.emptyList();
+        }
+
+        List<Class<? extends T>> classes = new ArrayList<Class<? extends T>>();
+
+        for (String className : names) {
+            Class<? extends T> clazz = null;
+            try {
+                @SuppressWarnings("unchecked")
+                Class<? extends T> t = (Class<? extends T>) classLoader.loadClass(className);
+                clazz = t;
+            } catch (ClassNotFoundException ignore) {
+            }
+
+            if (clazz == null || !intf.isAssignableFrom(clazz)) {
+                Module.getModuleLogger().providerUnloadable(className, classLoader);
+            } else {
+                classes.add(clazz);
+            }
+        }
+
+        return classes;
+    }
+
+    static <T> List<String> findProviderClassNames(Class<T> intf, ClassLoader loader, String name) {
+        if (name == null)
+            name = intf.getName();
+
+        final InputStream stream = loader.getResourceAsStream("META-INF/services/" + name);
+        if (stream == null)
+            return Collections.emptyList();
+
+
+        List<String> list = new ArrayList<String>();
         try {
             final BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
 
@@ -118,8 +170,8 @@ public final class __RedirectedUtils {
                 line = line.trim();
                 if (line.length() == 0)
                     continue;
-                name = line;
-                break;
+
+                list.add(line);
             }
         } finally {
             try {
@@ -127,7 +179,7 @@ public final class __RedirectedUtils {
             } catch (IOException ignored) {
             }
         }
-        return name;
+        return list;
     }
 
     private static String readLine(final BufferedReader reader) {

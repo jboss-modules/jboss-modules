@@ -36,6 +36,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 
+import javax.xml.XMLConstants;
 import javax.xml.datatype.DatatypeConstants.Field;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.Duration;
@@ -85,6 +86,10 @@ import javax.xml.transform.URIResolver;
 import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.sax.TemplatesHandler;
 import javax.xml.transform.sax.TransformerHandler;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
+import javax.xml.validation.Validator;
+import javax.xml.validation.ValidatorHandler;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
@@ -93,6 +98,8 @@ import javax.xml.xpath.XPathFactoryConfigurationException;
 import javax.xml.xpath.XPathFunctionResolver;
 import javax.xml.xpath.XPathVariableResolver;
 
+import __redirected.__SchemaFactory;
+import __redirected.__XMLReaderFactory;
 import __redirected.__XPathFactory;
 import org.jboss.modules.filter.PathFilter;
 import org.jboss.modules.filter.PathFilters;
@@ -104,6 +111,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
+import org.w3c.dom.ls.LSResourceResolver;
 import org.xml.sax.*;
 
 import __redirected.__DatatypeFactory;
@@ -114,6 +122,8 @@ import __redirected.__TransformerFactory;
 import __redirected.__XMLEventFactory;
 import __redirected.__XMLInputFactory;
 import __redirected.__XMLOutputFactory;
+import org.xml.sax.helpers.XMLReaderFactory;
+import sun.tools.javap.Constants;
 
 /**
  * Tests JAXP, including all of the possible ways to trigger redirection
@@ -132,7 +142,8 @@ public class JAXPModuleTest extends AbstractModuleTestCase {
     @Before
     public void setupModuleLoader() throws Exception {
         jdkApiFilter = PathFilters.any(PathFilters.match("javax/**"),
-                       PathFilters.match("org/w3c/**"));
+                       PathFilters.match("org/w3c/**"),
+                       PathFilters.match("org/xml/**"));
         moduleLoader = new TestModuleLoader();
 
         ModuleSpec.Builder moduleWithContentBuilder = ModuleSpec.build(ModuleIdentifier.fromString("test-jaxp"));
@@ -164,6 +175,9 @@ public class JAXPModuleTest extends AbstractModuleTestCase {
                         .addClass(FakeDuration.class)
                         .addClass(FakeXPathFactory.class)
                         .addClass(FakeXPath.class)
+                        .addClass(FakeSchemaFactory.class)
+                        .addClass(FakeSchema.class)
+                        .addClass(FakeXMLReader.class)
                         .addResources(getResource("test/modulecontentloader/jaxp"))
                         .create()
         ));
@@ -208,6 +222,8 @@ public class JAXPModuleTest extends AbstractModuleTestCase {
             checkXmlInput(clazz, false);
             checkXmlOutput(clazz, false);
             checkDatatype(clazz, false);
+            checkSchema(clazz, false);
+            checkXMLReader(clazz, false);
         } finally {
             Thread.currentThread().setContextClassLoader(old);
         }
@@ -231,6 +247,8 @@ public class JAXPModuleTest extends AbstractModuleTestCase {
             checkXmlInput(clazz, true);
             checkXmlOutput(clazz, true);
             checkDatatype(clazz, true);
+            checkSchema(clazz, true);
+            checkXMLReader(clazz, true);
         } finally {
             Thread.currentThread().setContextClassLoader(old);
             __JAXPRedirected.restorePlatformFactory();
@@ -253,7 +271,8 @@ public class JAXPModuleTest extends AbstractModuleTestCase {
             checkXmlInput(clazz, true);
             checkXmlOutput(clazz, true);
             checkDatatype(clazz, true);
-
+            checkSchema(clazz, true);
+            checkXMLReader(clazz, true);
         } finally {
             Thread.currentThread().setContextClassLoader(old);
         }
@@ -289,7 +308,8 @@ public class JAXPModuleTest extends AbstractModuleTestCase {
             checkXmlInput(clazz, true);
             checkXmlOutput(clazz, true);
             checkDatatype(clazz, true);
-
+            checkSchema(clazz, true);
+            checkXMLReader(clazz, true);
         } finally {
             field.set(null, oldMl);
             Thread.currentThread().setContextClassLoader(old);
@@ -349,6 +369,38 @@ public class JAXPModuleTest extends AbstractModuleTestCase {
             Assert.assertEquals(FakeXPath.class.getName(), parser.getClass().getName());
         } else {
             Assert.assertSame(XPathFactory.newInstance().newXPath().getClass(), parser.getClass());
+        }
+    }
+
+    public void checkSchema(Class<?> clazz, boolean fake) throws Exception {
+        Schema parser = invokeMethod(clazz.newInstance(), "schema");
+        SchemaFactory factory = invokeMethod(clazz.newInstance(), "schemaFactory");
+
+        Assert.assertEquals(__SchemaFactory.class.getName(), factory.getClass().getName());
+
+        if (fake) {
+            Assert.assertEquals(FakeSchema.class.getName(), parser.getClass().getName());
+        } else {
+            Assert.assertSame(SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema().getClass(), parser.getClass());
+        }
+    }
+
+    public void checkXMLReader(Class<?> clazz, boolean fake) throws Exception {
+        XMLReader parser = invokeMethod(clazz.newInstance(), "xmlReader");
+
+        Assert.assertEquals(__XMLReaderFactory.class.getName(), parser.getClass().getName());
+
+
+        Object test = null;
+        try {
+            test = parser.getProperty("test");
+        } catch (Exception ignore) {
+        }
+
+        if (fake) {
+            Assert.assertEquals("fake-fake-fake", test);
+        } else {
+            Assert.assertFalse("fake-fake-fake".equals(test));
         }
     }
 
@@ -1110,7 +1162,7 @@ public class JAXPModuleTest extends AbstractModuleTestCase {
     public static class FakeXPathFactory extends XPathFactory {
 
         public boolean isObjectModelSupported(String objectModel) {
-            return false;
+            return XPathFactory.DEFAULT_OBJECT_MODEL_URI.equals(objectModel);
         }
 
         public void setFeature(String name, boolean value) throws XPathFactoryConfigurationException {
@@ -1175,6 +1227,94 @@ public class JAXPModuleTest extends AbstractModuleTestCase {
 
         public String evaluate(String expression, InputSource source) throws XPathExpressionException {
             return null;
+        }
+    }
+
+    public static class FakeSchemaFactory extends SchemaFactory {
+        public boolean isSchemaLanguageSupported(String schemaLanguage) {
+            return XMLConstants.W3C_XML_SCHEMA_NS_URI.equals(schemaLanguage);
+        }
+
+        public void setErrorHandler(ErrorHandler errorHandler) {
+        }
+
+        public ErrorHandler getErrorHandler() {
+            return null;
+        }
+
+        public void setResourceResolver(LSResourceResolver resourceResolver) {
+        }
+
+        public LSResourceResolver getResourceResolver() {
+            return null;
+        }
+
+        public Schema newSchema(Source[] schemas) throws SAXException {
+            return null;
+        }
+
+        public Schema newSchema() throws SAXException {
+            return new FakeSchema();
+        }
+    }
+
+    public static class FakeSchema extends Schema {
+        public Validator newValidator() {
+            return null;
+        }
+
+        public ValidatorHandler newValidatorHandler() {
+            return null;
+        }
+    }
+
+    public static class FakeXMLReader implements XMLReader {
+        public boolean getFeature(String name) throws SAXNotRecognizedException, SAXNotSupportedException {
+            return false;
+        }
+
+        public void setFeature(String name, boolean value) throws SAXNotRecognizedException, SAXNotSupportedException {
+        }
+
+        public Object getProperty(String name) throws SAXNotRecognizedException, SAXNotSupportedException {
+            return "fake-fake-fake";
+        }
+
+        public void setProperty(String name, Object value) throws SAXNotRecognizedException, SAXNotSupportedException {
+        }
+
+        public void setEntityResolver(EntityResolver resolver) {
+        }
+
+        public EntityResolver getEntityResolver() {
+            return null;
+        }
+
+        public void setDTDHandler(DTDHandler handler) {
+        }
+
+        public DTDHandler getDTDHandler() {
+            return null;
+        }
+
+        public void setContentHandler(ContentHandler handler) {
+        }
+
+        public ContentHandler getContentHandler() {
+            return null;
+        }
+
+        public void setErrorHandler(ErrorHandler handler) {
+        }
+
+        public ErrorHandler getErrorHandler() {
+            return null;
+        }
+
+        public void parse(InputSource input) throws IOException, SAXException {
+        }
+
+        public void parse(String systemId) throws IOException, SAXException {
         }
     }
 }

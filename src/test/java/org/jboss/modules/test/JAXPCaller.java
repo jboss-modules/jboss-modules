@@ -1,5 +1,6 @@
 package org.jboss.modules.test;
 
+import javax.xml.XMLConstants;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.Duration;
@@ -17,10 +18,15 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.sax.TransformerHandler;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathFactory;
 
 import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
+import org.xml.sax.helpers.XMLReaderFactory;
 
 public class JAXPCaller {
 
@@ -41,6 +47,26 @@ public class JAXPCaller {
         try {
             return DocumentBuilderFactory.newInstance().newDocumentBuilder();
         } catch (ParserConfigurationException e) {
+            throw new IllegalStateException();
+        }
+    }
+
+    public SchemaFactory schemaFactory() {
+        return SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+    }
+
+    public Schema schema() {
+        try {
+            return SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema();
+        } catch (SAXException e) {
+            throw new IllegalStateException();
+        }
+    }
+
+    public XMLReader xmlReader() {
+        try {
+            return XMLReaderFactory.createXMLReader();
+        } catch (SAXException e) {
             throw new IllegalStateException();
         }
     }
