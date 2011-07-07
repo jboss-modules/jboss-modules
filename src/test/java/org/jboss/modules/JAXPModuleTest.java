@@ -101,6 +101,15 @@ import javax.xml.xpath.XPathVariableResolver;
 import __redirected.__SchemaFactory;
 import __redirected.__XMLReaderFactory;
 import __redirected.__XPathFactory;
+import __redirected.__DatatypeFactory;
+import __redirected.__DocumentBuilderFactory;
+import __redirected.__JAXPRedirected;
+import __redirected.__SAXParserFactory;
+import __redirected.__TransformerFactory;
+import __redirected.__XMLEventFactory;
+import __redirected.__XMLInputFactory;
+import __redirected.__XMLOutputFactory;
+
 import org.jboss.modules.filter.PathFilter;
 import org.jboss.modules.filter.PathFilters;
 import org.jboss.modules.test.JAXPCaller;
@@ -112,18 +121,18 @@ import org.junit.Test;
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
 import org.w3c.dom.ls.LSResourceResolver;
-import org.xml.sax.*;
-
-import __redirected.__DatatypeFactory;
-import __redirected.__DocumentBuilderFactory;
-import __redirected.__JAXPRedirected;
-import __redirected.__SAXParserFactory;
-import __redirected.__TransformerFactory;
-import __redirected.__XMLEventFactory;
-import __redirected.__XMLInputFactory;
-import __redirected.__XMLOutputFactory;
-import org.xml.sax.helpers.XMLReaderFactory;
-import sun.tools.javap.Constants;
+import org.xml.sax.Attributes;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.DTDHandler;
+import org.xml.sax.EntityResolver;
+import org.xml.sax.ErrorHandler;
+import org.xml.sax.InputSource;
+import org.xml.sax.Locator;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXNotRecognizedException;
+import org.xml.sax.SAXNotSupportedException;
+import org.xml.sax.XMLFilter;
+import org.xml.sax.XMLReader;
 
 /**
  * Tests JAXP, including all of the possible ways to trigger redirection
