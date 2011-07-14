@@ -65,7 +65,11 @@ final class SystemLocalLoader implements LocalLoader {
     public List<Resource> loadResourceLocal(final String name) {
         final Enumeration<URL> urls;
         try {
-            urls = SYSTEM_CL.getResources(name);
+            if (SYSTEM_CL == null) {
+                urls = ClassLoader.getSystemResources(name);
+            } else {
+                urls = SYSTEM_CL.getResources(name);
+            }
         } catch (IOException e) {
             return Collections.emptyList();
         }
