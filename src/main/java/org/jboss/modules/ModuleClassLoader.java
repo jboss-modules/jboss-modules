@@ -102,8 +102,6 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
      * @param configuration the module class loader configuration to use
      */
     protected ModuleClassLoader(final Configuration configuration) {
-        // the ModuleClassLoader must live in complete isolation
-        super(null);
         module = configuration.getModule();
         paths = new Paths<ResourceLoader, ResourceLoaderSpec>(configuration.getResourceLoaders(), Collections.<String, List<ResourceLoader>>emptyMap(), Collections.<String, List<ResourceLoader>>emptyMap());
         final AssertionSetting setting = configuration.getAssertionSetting();

@@ -77,18 +77,20 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
     final ConcurrentMap<Object, Object> localStorage = new UnlockedReadHashMap<Object, Object>();
 
     /**
-     * Construct a new instance with the given parent class loader, which must be a concurrent class loader.
+     * Construct a new instance with the given parent class loader, which must be a concurrent class loader, or {@code null}
+     * to create a root concurrent class loader.
      *
      * @param parent the parent class loader
      */
     protected ConcurrentClassLoader(final ConcurrentClassLoader parent) {
-        super(parent);
+        super(parent == null ? ConcurrentClassLoader.class.getClassLoader() : parent);
     }
 
     /**
-     * Construct a new instance.
+     * Construct a new instance, using our class loader as the parent.
      */
     protected ConcurrentClassLoader() {
+        super(ConcurrentClassLoader.class.getClassLoader());
     }
 
     /**
