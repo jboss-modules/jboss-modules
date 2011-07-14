@@ -50,6 +50,8 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
 
     private static final boolean LOCKLESS;
 
+    private static final ClassLoader definingLoader = ConcurrentClassLoader.class.getClassLoader();
+
     static {
         /*
          This resolves a know deadlock that can occur if one thread is in the process of defining a package as part of
@@ -172,7 +174,9 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
     public final URL getResource(final String name) {
         for (String s : Module.systemPaths) {
             if (name.startsWith(s)) {
-                return super.getResource(name);
+                // Whatever loads jboss-modules.jar should have it's classes accessible.
+                // This could even be the bootclasspath, in which case CL is null, and we prefer the system CL
+                return definingLoader != null ? definingLoader.getResource(name) : ClassLoader.getSystemResource(name);
             }
         }
         return findResource(name, false);
@@ -190,7 +194,7 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
     public final Enumeration<URL> getResources(final String name) throws IOException {
         for (String s : Module.systemPaths) {
             if (name.startsWith(s)) {
-                return super.getResources(name);
+                return definingLoader != null ? definingLoader.getResources(name) : ClassLoader.getSystemResources(name);
             }
         }
         return findResources(name, false);
@@ -273,7 +277,7 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
     public final InputStream getResourceAsStream(final String name) {
         for (String s : Module.systemPaths) {
             if (name.startsWith(s)) {
-                return super.getResourceAsStream(name);
+                return definingLoader != null ? definingLoader.getResourceAsStream(name) : ClassLoader.getSystemResourceAsStream(name);
             }
         }
         return findResourceAsStream(name, false);
@@ -300,8 +304,7 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
         }
         for (String s : Module.systemPackages) {
             if (className.startsWith(s)) {
-                // always delegate to system
-                return findSystemClass(className);
+                return definingLoader != null ? definingLoader.loadClass(className) : findSystemClass(className);
             }
         }
         return performLoadClassChecked(className, exportsOnly, resolve);
