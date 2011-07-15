@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2010, Red Hat, Inc., and individual contributors
+ * Copyright 2011, Red Hat, Inc., and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -26,9 +26,12 @@ package org.jboss.modules;
  * The module loader for the system/application class path module.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @deprecated the system module will be removed in 1.1 in favor of a system dependency type.
  */
+@Deprecated
 public final class SystemClassPathModuleLoader extends ModuleLoader {
 
+    @Deprecated
     static final SystemClassPathModuleLoader INSTANCE = new SystemClassPathModuleLoader();
 
     /**
@@ -42,7 +45,9 @@ public final class SystemClassPathModuleLoader extends ModuleLoader {
      * Get the system module loader.
      *
      * @return the system module loader
+     * @deprecated the system module will be removed in 1.1 in favor of a system dependency type.
      */
+    @Deprecated
     public static SystemClassPathModuleLoader getInstance() {
         return INSTANCE;
     }

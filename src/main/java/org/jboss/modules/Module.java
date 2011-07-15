@@ -224,7 +224,9 @@ public final class Module {
      * Get the system module.
      *
      * @return the system module
+     * @deprecated the system module will be removed in 1.1 in favor of a new dependency type.
      */
+    @Deprecated
     public static Module getSystemModule() {
         final SecurityManager sm = System.getSecurityManager();
         if (sm != null) {

@@ -71,7 +71,9 @@ public final class ModuleIdentifier implements Serializable {
 
     /**
      * The system module.
+     * @deprecated the system module will be removed in 1.1 in favor of a system dependency type.
      */
+    @Deprecated
     public static final ModuleIdentifier SYSTEM = new ModuleIdentifier("system", DEFAULT_SLOT);
 
     /**
