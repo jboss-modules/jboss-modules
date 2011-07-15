@@ -109,6 +109,8 @@ public final class Module {
         }
         systemPackages = list.toArray(list.toArray(new String[list.size()]));
         final ListIterator<String> iterator = list.listIterator();
+        // http://youtrack.jetbrains.net/issue/IDEA-72097
+        //noinspection WhileLoopReplaceableByForEach
         while (iterator.hasNext()) {
             iterator.set(iterator.next().replace('.', '/'));
         }
