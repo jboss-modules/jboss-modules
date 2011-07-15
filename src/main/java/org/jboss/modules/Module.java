@@ -52,8 +52,6 @@ import org.jboss.modules.filter.PathFilters;
 import org.jboss.modules.log.ModuleLogger;
 import org.jboss.modules.log.NoopModuleLogger;
 
-import __redirected.__JAXPRedirected;
-
 /**
  * A module is a unit of classes and other resources, along with the specification of what is imported and exported
  * by this module from and to other modules.  Modules are created by {@link ModuleLoader}s which build modules from
@@ -84,9 +82,6 @@ public final class Module {
                 } catch (Throwable t) {
                     // todo log a warning or something
                 }
-
-                __JAXPRedirected.initAll();
-
                 return null;
             }
         });
@@ -1073,8 +1068,6 @@ public final class Module {
                 throw new IllegalArgumentException("Invalid dependency " + dependency + " encountered");
             }
         }
-
-        addToMapList(newMap, "__redirected", SystemLocalLoader.getInstance());
 
         // Final optimizing step
         removeDuplicatesFromLists(newMap.values());

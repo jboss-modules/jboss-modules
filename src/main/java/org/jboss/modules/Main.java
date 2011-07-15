@@ -22,7 +22,6 @@
 
 package org.jboss.modules;
 
-import __redirected.__JAXPRedirected;
 import org.jboss.modules.log.JDKModuleLogger;
 
 import java.io.BufferedReader;
@@ -82,8 +81,6 @@ public final class Main {
         System.out.println("                  may be specified, but not both");
         System.out.println("    -logmodule <module-name>");
         System.out.println("                  The module to use to load the system logmanager");
-        System.out.println("    -jaxpmodule <module-name>");
-        System.out.println("                  The default JAXP implementation to use of the JDK");
         System.out.println("    -version      Print version and exit\n");
     }
 
@@ -106,7 +103,6 @@ public final class Main {
         boolean classDefined = false;
         String moduleIdentifierOrExeName = null;
         ModuleIdentifier logManagerModuleIdentifier = null;
-        ModuleIdentifier jaxpModuleIdentifier = null;
         for (int i = 0, argsLength = argsLen; i < argsLength; i++) {
             final String arg = args[i];
             try {
@@ -141,8 +137,6 @@ public final class Main {
                         configPath = args[++i];
                     } else if ("-logmodule".equals(arg)) {
                         logManagerModuleIdentifier = ModuleIdentifier.fromString(args[++i]);
-                    } else if ("-jaxpmodule".equals(arg)) {
-                        jaxpModuleIdentifier = ModuleIdentifier.fromString(args[++i]);
                     } else if ("-jar".equals(arg)) {
                         if (jar) {
                             System.err.println("-jar flag may only be specified once");
@@ -293,9 +287,6 @@ public final class Main {
                 System.err.println("WARNING: No log manager service descriptor found in specified logmodule " + logManagerModuleIdentifier);
             }
         }
-        if (jaxpModuleIdentifier != null)
-            __JAXPRedirected.changeAll(jaxpModuleIdentifier, Module.getBootModuleLoader());
-
         final Module module;
         try {
             module = loader.loadModule(moduleIdentifier);
