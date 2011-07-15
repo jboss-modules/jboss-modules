@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2010, Red Hat, Inc., and individual contributors
+ * Copyright 2011, Red Hat, Inc., and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -24,77 +24,39 @@ package org.jboss.modules;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.security.AccessController;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Enumeration;
-import java.util.List;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 /**
+ * A utility class which maintains the set of JDK paths.  Makes certain assumptions about the disposition of the
+ * class loader used to load JBoss Modules; thus this class should only be used when booted up via the "-jar" or "-cp"
+ * switches.
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-final class SystemLocalLoader implements LocalLoader {
+final class JDKPaths {
+    static final Set<String> JDK;
 
-    private final Set<String> pathSet;
-
-    private SystemLocalLoader() {
+    static {
         final Set<String> pathSet = new FastCopyHashSet<String>(1024);
         final Set<String> jarSet = new FastCopyHashSet<String>(1024);
         final String sunBootClassPath = AccessController.doPrivileged(new PropertyReadAction("sun.boot.class.path"));
         final String javaClassPath = AccessController.doPrivileged(new PropertyReadAction("java.class.path"));
         processClassPathItem(sunBootClassPath, jarSet, pathSet);
         processClassPathItem(javaClassPath, jarSet, pathSet);
-        this.pathSet = pathSet;
+        pathSet.add("org/jboss/modules");
+        pathSet.add("org/jboss/modules/filter");
+        pathSet.add("org/jboss/modules/log");
+        pathSet.add("org/jboss/modules/management");
+        pathSet.add("org/jboss/modules/ref");
+        JDK = pathSet;
     }
 
-    // Public members
-
-    public Class<?> loadClassLocal(final String name, final boolean resolve) {
-        final ClassLoader scl = SYSTEM_CL;
-        try {
-            return Class.forName(name, resolve, scl);
-        } catch (ClassNotFoundException e) {
-            return null;
-        }
+    private JDKPaths() {
     }
-
-    public List<Resource> loadResourceLocal(final String name) {
-        final Enumeration<URL> urls;
-        try {
-            if (SYSTEM_CL == null) {
-                urls = ClassLoader.getSystemResources(name);
-            } else {
-                urls = SYSTEM_CL.getResources(name);
-            }
-        } catch (IOException e) {
-            return Collections.emptyList();
-        }
-        final List<Resource> list = new ArrayList<Resource>();
-        while (urls.hasMoreElements()) {
-            list.add(new URLResource(urls.nextElement()));
-        }
-        return list;
-    }
-
-    // Nonpublic API
-
-    static SystemLocalLoader getInstance() {
-        return INSTANCE;
-    }
-
-    Set<String> getPathSet() {
-        return pathSet;
-    }
-
-    // Private members
-
-    private static final SystemLocalLoader INSTANCE = new SystemLocalLoader();
-
-    private static final ClassLoader SYSTEM_CL = SystemLocalLoader.class.getClassLoader();
 
     private static void processClassPathItem(final String classPath, final Set<String> jarSet, final Set<String> pathSet) {
         if (classPath == null) return;

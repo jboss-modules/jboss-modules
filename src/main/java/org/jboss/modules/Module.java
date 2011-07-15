@@ -218,19 +218,6 @@ public final class Module {
     }
 
     /**
-     * Get the system module.
-     *
-     * @return the system module
-     */
-    public static Module getSystemModule() {
-        final SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
-            sm.checkPermission(GET_SYSTEM_MODULE);
-        }
-        return SystemModuleHolder.SYSTEM;
-    }
-
-    /**
      * Get an exported resource from a specific root in this module.
      *
      * @param rootPath the module root to search
@@ -376,8 +363,6 @@ public final class Module {
     public static Module forClassLoader(ClassLoader cl, boolean search) {
         if (cl instanceof ModuleClassLoader) {
             return ((ModuleClassLoader) cl).getModule();
-        } else if (cl == null || cl == ClassLoader.getSystemClassLoader()) {
-            return getSystemModule();
         } else if (search) {
             return forClassLoader(cl.getParent(), true);
         } else {
@@ -428,12 +413,13 @@ public final class Module {
      * Gets the current module loader. The current module loader is the
      * loader of the module from the calling class. Note that this method
      * must crawl the stack to determine this, so other mechanisms are more
-     * efficient
+     * efficient.
      *
-     * @return the current module loader
+     * @return the current module loader, or {@code null} if this method is called outside of a module
      */
     public static ModuleLoader getCallerModuleLoader() {
-        return getCallerModule().getModuleLoader();
+        Module callerModule = getCallerModule();
+        return callerModule == null ? null : callerModule.getModuleLoader();
     }
 
     /**
@@ -1168,19 +1154,28 @@ public final class Module {
         return mainClassName;
     }
 
-    private static final class SystemModuleHolder {
+    Package getPackage(final String name) {
+        List<LocalLoader> loaders = getPaths(false).get(name.replace('.', '/'));
+        if (loaders != null) for (LocalLoader localLoader : loaders) {
+            Package pkg = localLoader.loadPackageLocal(name);
+            if (pkg != null) return pkg;
+        }
+        return null;
+    }
 
-        private static final Module SYSTEM;
-
-        static {
-            try {
-                SYSTEM = SystemClassPathModuleLoader.getInstance().loadModule(ModuleIdentifier.SYSTEM);
-            } catch (ModuleLoadException e) {
-                throw e.toError();
+    Package[] getPackages() {
+        final ArrayList<Package> packages = new ArrayList<Package>();
+        final Map<String, List<LocalLoader>> allPaths = getPaths(false);
+        next: for (String path : allPaths.keySet()) {
+            String packageName = path.replace('/', '.');
+            for (LocalLoader loader : allPaths.get(path)) {
+                Package pkg = loader.loadPackageLocal(packageName);
+                if (pkg != null) {
+                    packages.add(pkg);
+                }
+                continue next;
             }
         }
-
-        private SystemModuleHolder() {
-        }
+        return packages.toArray(new Package[packages.size()]);
     }
 }

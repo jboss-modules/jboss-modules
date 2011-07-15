@@ -45,6 +45,14 @@ public interface LocalLoader {
     Class<?> loadClassLocal(String name, boolean resolve);
 
     /**
+     * Load a package which is locally defined by this loader.
+     *
+     * @param name the package name
+     * @return the package, or {@code null} if there is no local package with this name
+     */
+    Package loadPackageLocal(String name);
+
+    /**
      * Load a resource which is locally defined by this loader.  The given name is a path separated
      * by "{@code /}" characters.
      *

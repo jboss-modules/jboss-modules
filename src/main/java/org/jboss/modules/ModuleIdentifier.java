@@ -70,11 +70,6 @@ public final class ModuleIdentifier implements Serializable {
     }
 
     /**
-     * The system module.
-     */
-    public static final ModuleIdentifier SYSTEM = new ModuleIdentifier("system", DEFAULT_SLOT);
-
-    /**
      * The class path module (only present if booted from a class path).
      */
     public static final ModuleIdentifier CLASSPATH = new ModuleIdentifier("Classpath", DEFAULT_SLOT);

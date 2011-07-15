@@ -28,9 +28,13 @@ import java.lang.reflect.Field;
 import java.net.URL;
 import java.security.AccessControlContext;
 import java.security.AccessController;
+import java.security.CodeSource;
+import java.security.PermissionCollection;
 import java.security.PrivilegedExceptionAction;
 import java.security.SecureClassLoader;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Locale;
@@ -51,6 +55,8 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
     private static final boolean LOCKLESS;
 
     private static final ClassLoader definingLoader = ConcurrentClassLoader.class.getClassLoader();
+
+    private static final ThreadLocal<Boolean> GET_PACKAGE_SUPPRESSOR = new ThreadLocal<Boolean>();
 
     static {
         /*
@@ -361,6 +367,85 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
         }
         // no deadlock risk!  Either the lock isn't held, or we're inside the class loader thread.
         return findClass(className, exportsOnly, resolve);
+    }
+
+    private final UnlockedReadHashMap<String, Package> packages = new UnlockedReadHashMap<String, Package>(64);
+
+    /**
+     * Load a package which is visible to this class loader.
+     *
+     * @param name the package name
+     * @return the package, or {@code null} if no such package is visible to this class loader
+     */
+    protected final Package getPackage(final String name) {
+        if (GET_PACKAGE_SUPPRESSOR.get() == Boolean.TRUE) {
+            return null;
+        }
+        return getPackageByName(name);
+    }
+
+    /**
+     * Perform the actual work to load a package which is visible to this class loader.  By default, uses a simple
+     * parent-first delegation strategy.
+     *
+     * @param name the package name
+     * @return the package, or {@code null} if no such package is visible to this class loader
+     */
+    protected Package getPackageByName(final String name) {
+        final Package parentPackage = super.getPackage(name);
+        return parentPackage == null ? findLoadedPackage(name) : parentPackage;
+    }
+
+    /**
+     * Get all defined packages which are visible to this class loader.
+     *
+     * @return the packages
+     */
+    protected Package[] getPackages() {
+        ArrayList<Package> list = new ArrayList<Package>();
+        list.addAll(packages.values());
+        list.addAll(Arrays.asList(super.getPackages()));
+        return list.toArray(new Package[list.size()]);
+    }
+
+    /**
+     * Load a package from this class loader only.
+     *
+     * @param name the package name
+     * @return the package or {@code null} if no such package is defined by this class loader
+     */
+    protected final Package findLoadedPackage(final String name) {
+        return packages.get(name);
+    }
+
+    /**
+     * Defines a package by name in this <tt>ConcurrentClassLoader</tt>.
+     *
+     * @param name the package name
+     * @param specTitle the specification title
+     * @param specVersion the specification version
+     * @param specVendor the specification vendor
+     * @param implTitle the implementation title
+     * @param implVersion the implementation version
+     * @param implVendor the implementation vendor
+     * @param sealBase if not {@code null}, then this package is sealed with respect to the given code source URL
+     *
+     * @return the newly defined package, or the existing one if one was already defined
+     */
+    protected Package definePackage(final String name, final String specTitle, final String specVersion, final String specVendor, final String implTitle, final String implVersion, final String implVendor, final URL sealBase) throws IllegalArgumentException {
+        ThreadLocal<Boolean> suppressor = GET_PACKAGE_SUPPRESSOR;
+        suppressor.set(Boolean.TRUE);
+        try {
+            Package existing = packages.get(name);
+            if (existing != null) {
+                return existing;
+            }
+            Package pkg = super.definePackage(name, specTitle, specVersion, specVendor, implTitle, implVersion, implVendor, sealBase);
+            existing = packages.putIfAbsent(name, pkg);
+            return existing != null ? existing : pkg;
+        } finally {
+            suppressor.remove();
+        }
     }
 
     static final class LoaderThreadHolder {

@@ -58,9 +58,7 @@ final class ClassPathModuleLoader extends ModuleLoader {
 
     @Override
     protected Module preloadModule(final ModuleIdentifier identifier) throws ModuleLoadException {
-        if (identifier.equals(ModuleIdentifier.SYSTEM)) {
-            return preloadModule(ModuleIdentifier.SYSTEM, SystemClassPathModuleLoader.getInstance());
-        } else if (identifier.equals(ModuleIdentifier.CLASSPATH)) {
+        if (identifier.equals(ModuleIdentifier.CLASSPATH)) {
             return loadModuleLocal(identifier);
         } else if (delegateLoader != null) {
             return preloadModule(identifier, delegateLoader);
@@ -90,7 +88,7 @@ final class ClassPathModuleLoader extends ModuleLoader {
                 builder.addDependency(spec);
             }
         }
-        builder.addDependency(DependencySpec.createModuleDependencySpec(ModuleIdentifier.SYSTEM));
+        builder.addDependency(DependencySpec.createSystemDependencySpec(JDKPaths.JDK));
         builder.addDependency(DependencySpec.createLocalDependencySpec());
         return builder.create();
     }

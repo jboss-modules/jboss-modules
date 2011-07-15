@@ -141,6 +141,75 @@ public abstract class DependencySpec {
     }
 
     /**
+     * Create a system dependency.
+     *
+     * @param loaderPaths the set of paths to use from the system class loader
+     * @return the dependency spec
+     */
+    public static DependencySpec createSystemDependencySpec(final Set<String> loaderPaths) {
+        return createLocalDependencySpec(ClassLoaderLocalLoader.SYSTEM, loaderPaths);
+    }
+
+    /**
+     * Create a system dependency.
+     *
+     * @param loaderPaths the set of paths to use from the system class loader
+     * @param export {@code true} if this is a fully re-exported dependency, {@code false} if it should not be exported
+     * @return the dependency spec
+     */
+    public static DependencySpec createSystemDependencySpec(final Set<String> loaderPaths, boolean export) {
+        return createLocalDependencySpec(ClassLoaderLocalLoader.SYSTEM, loaderPaths, export);
+    }
+
+    /**
+     * Create a system dependency.
+     *
+     * @param importFilter the import filter to apply
+     * @param exportFilter the export filter to apply
+     * @param loaderPaths the set of paths to use from the system class loader
+     * @return the dependency spec
+     */
+    public static DependencySpec createSystemDependencySpec(final PathFilter importFilter, final PathFilter exportFilter, final Set<String> loaderPaths) {
+        return createLocalDependencySpec(importFilter, exportFilter, ClassLoaderLocalLoader.SYSTEM, loaderPaths);
+    }
+
+    /**
+     * Create a dependency on the given class loader.
+     *
+     * @param classLoader the class loader
+     * @param loaderPaths the set of paths to use from this class loader
+     * @return the dependency spec
+     */
+    public static DependencySpec createClassLoaderDependencySpec(final ClassLoader classLoader, final Set<String> loaderPaths) {
+        return createLocalDependencySpec(new ClassLoaderLocalLoader(classLoader), loaderPaths);
+    }
+
+    /**
+     * Create a dependency on the given class loader.
+     *
+     * @param classLoader the class loader
+     * @param loaderPaths the set of paths to use from this class loader
+     * @param export {@code true} if this is a fully re-exported dependency, {@code false} if it should not be exported
+     * @return the dependency spec
+     */
+    public static DependencySpec createClassLoaderDependencySpec(final ClassLoader classLoader, final Set<String> loaderPaths, boolean export) {
+        return createLocalDependencySpec(new ClassLoaderLocalLoader(classLoader), loaderPaths, export);
+    }
+
+    /**
+     * Create a dependency on the given class loader.
+     *
+     * @param importFilter the import filter to apply
+     * @param exportFilter the export filter to apply
+     * @param classLoader the class loader
+     * @param loaderPaths the set of paths to use from this class loader
+     * @return the dependency spec
+     */
+    public static DependencySpec createClassLoaderDependencySpec(final PathFilter importFilter, final PathFilter exportFilter, final ClassLoader classLoader, final Set<String> loaderPaths) {
+        return createLocalDependencySpec(importFilter, exportFilter, PathFilters.acceptAll(), PathFilters.acceptAll(), ClassFilters.acceptAll(), ClassFilters.acceptAll(), new ClassLoaderLocalLoader(classLoader), loaderPaths);
+    }
+
+    /**
      * Create a dependency on the given local loader.
      *
      * @param localLoader the local loader

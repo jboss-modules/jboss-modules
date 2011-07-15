@@ -34,6 +34,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -54,6 +55,7 @@ import static javax.xml.stream.XMLStreamConstants.END_DOCUMENT;
 import static javax.xml.stream.XMLStreamConstants.END_ELEMENT;
 import static javax.xml.stream.XMLStreamConstants.ENTITY_DECLARATION;
 import static javax.xml.stream.XMLStreamConstants.ENTITY_REFERENCE;
+import static javax.xml.stream.XMLStreamConstants.NAMESPACE;
 import static javax.xml.stream.XMLStreamConstants.NOTATION_DECLARATION;
 import static javax.xml.stream.XMLStreamConstants.PROCESSING_INSTRUCTION;
 import static javax.xml.stream.XMLStreamConstants.SPACE;
@@ -75,7 +77,26 @@ final class ModuleXmlParser {
     private ModuleXmlParser() {
     }
 
-    private static final String NAMESPACE = "urn:jboss:module:1.0";
+    enum Namespace {
+        UNKNOWN,
+        MODULE_1_0,
+        MODULE_1_1,
+        ;
+
+        private static final Map<String, Namespace> namespaces;
+
+        static {
+            Map<String, Namespace> namespacesMap = new HashMap<String, Namespace>();
+            namespacesMap.put("urn:jboss:module:1.0", MODULE_1_0);
+            namespacesMap.put("urn:jboss:module:1.1", MODULE_1_1);
+            namespaces = namespacesMap;
+        }
+
+        static Namespace of(QName qName) {
+            Namespace namespace = namespaces.get(qName.getNamespaceURI());
+            return namespace == null ? UNKNOWN : namespace;
+        }
+    }
 
     enum Element {
         MODULE,
@@ -95,36 +116,44 @@ final class ModuleXmlParser {
         LOADER,
         MODULE_PATH,
         IMPORT,
+        SYSTEM,
+        PATHS,
 
         // default unknown element
         UNKNOWN;
 
-        private static final Map<QName, Element> elements;
+        private static final Map<String, Element> elements;
 
         static {
-            Map<QName, Element> elementsMap = new HashMap<QName, Element>();
-            elementsMap.put(new QName(NAMESPACE, "module"), Element.MODULE);
-            elementsMap.put(new QName(NAMESPACE, "dependencies"), Element.DEPENDENCIES);
-            elementsMap.put(new QName(NAMESPACE, "resources"), Element.RESOURCES);
-            elementsMap.put(new QName(NAMESPACE, "main-class"), Element.MAIN_CLASS);
-            elementsMap.put(new QName(NAMESPACE, "resource-root"), Element.RESOURCE_ROOT);
-            elementsMap.put(new QName(NAMESPACE, "path"), Element.PATH);
-            elementsMap.put(new QName(NAMESPACE, "exports"), Element.EXPORTS);
-            elementsMap.put(new QName(NAMESPACE, "imports"), Element.IMPORTS);
-            elementsMap.put(new QName(NAMESPACE, "include"), Element.INCLUDE);
-            elementsMap.put(new QName(NAMESPACE, "exclude"), Element.EXCLUDE);
-            elementsMap.put(new QName(NAMESPACE, "include-set"), Element.INCLUDE_SET);
-            elementsMap.put(new QName(NAMESPACE, "exclude-set"), Element.EXCLUDE_SET);
-            elementsMap.put(new QName(NAMESPACE, "filter"), Element.FILTER);
-            elementsMap.put(new QName(NAMESPACE, "configuration"), Element.CONFIGURATION);
-            elementsMap.put(new QName(NAMESPACE, "loader"), Element.LOADER);
-            elementsMap.put(new QName(NAMESPACE, "module-path"), Element.MODULE_PATH);
-            elementsMap.put(new QName(NAMESPACE, "import"), Element.IMPORT);
+            Map<String, Element> elementsMap = new HashMap<String, Element>();
+            elementsMap.put("module", Element.MODULE);
+            elementsMap.put("dependencies", Element.DEPENDENCIES);
+            elementsMap.put("resources", Element.RESOURCES);
+            elementsMap.put("main-class", Element.MAIN_CLASS);
+            elementsMap.put("resource-root", Element.RESOURCE_ROOT);
+            elementsMap.put("path", Element.PATH);
+            elementsMap.put("exports", Element.EXPORTS);
+            elementsMap.put("imports", Element.IMPORTS);
+            elementsMap.put("include", Element.INCLUDE);
+            elementsMap.put("exclude", Element.EXCLUDE);
+            elementsMap.put("include-set", Element.INCLUDE_SET);
+            elementsMap.put("exclude-set", Element.EXCLUDE_SET);
+            elementsMap.put("filter", Element.FILTER);
+            elementsMap.put("configuration", Element.CONFIGURATION);
+            elementsMap.put("loader", Element.LOADER);
+            elementsMap.put("module-path", Element.MODULE_PATH);
+            elementsMap.put("import", Element.IMPORT);
+            elementsMap.put("system", Element.SYSTEM);
+            elementsMap.put("paths", Element.PATHS);
             elements = elementsMap;
         }
 
         static Element of(QName qName) {
-            final Element element = elements.get(qName);
+            Namespace namespace = Namespace.of(qName);
+            if (namespace == Namespace.UNKNOWN) {
+                return UNKNOWN;
+            }
+            final Element element = elements.get(qName.getLocalPart());
             return element == null ? UNKNOWN : element;
         }
     }
@@ -294,7 +323,7 @@ final class ModuleXmlParser {
             case END_ELEMENT: kind = "element end"; break;
             case ENTITY_DECLARATION: kind = "entity declaration"; break;
             case ENTITY_REFERENCE: kind = "entity ref"; break;
-            case XMLStreamConstants.NAMESPACE: kind = "namespace"; break;
+            case NAMESPACE: kind = "namespace"; break;
             case NOTATION_DECLARATION: kind = "notation declaration"; break;
             case PROCESSING_INSTRUCTION: kind = "processing instruction"; break;
             case SPACE: kind = "whitespace"; break;
@@ -595,6 +624,7 @@ final class ModuleXmlParser {
                 case START_ELEMENT: {
                     switch (Element.of(reader.getName())) {
                         case MODULE: parseModuleDependency(reader, specBuilder); break;
+                        case SYSTEM: parseSystemDependency(reader, specBuilder); break;
                         default: throw unexpectedContent(reader);
                     }
                     break;
@@ -669,6 +699,49 @@ final class ModuleXmlParser {
                 }
                 default: {
                     throw unexpectedContent(reader);
+                }
+            }
+        }
+    }
+
+    private static void parseSystemDependency(final XMLStreamReader reader, final ModuleSpec.Builder specBuilder) throws XMLStreamException {
+        boolean export = false;
+        final int count = reader.getAttributeCount();
+        for (int i = 0; i < count; i ++) {
+            final Attribute attribute = Attribute.of(reader.getAttributeName(i));
+            switch (attribute) {
+                case EXPORT:  export = Boolean.parseBoolean(reader.getAttributeValue(i)); break;
+                default: throw unexpectedContent(reader);
+            }
+        }
+        Set<String> paths = Collections.emptySet();
+        final MultiplePathFilterBuilder exportBuilder = PathFilters.multiplePathFilterBuilder(export);
+        while (reader.hasNext()) {
+            switch (reader.nextTag()) {
+                case END_ELEMENT: {
+                    if (export) {
+                        // If re-exported, add META-INF/** -> false at the end of the list (require explicit override)
+                        exportBuilder.addFilter(PathFilters.getMetaInfSubdirectoriesFilter(), false);
+                        exportBuilder.addFilter(PathFilters.getMetaInfFilter(), false);
+                    }
+                    final PathFilter exportFilter = exportBuilder.create();
+                    specBuilder.addDependency(DependencySpec.createSystemDependencySpec(PathFilters.getDefaultImportFilter(), exportFilter, paths));
+                    return;
+                }
+                case START_ELEMENT: {
+                    switch (Element.of(reader.getName())) {
+                        case PATHS: {
+                            paths = parseSet(reader);
+                            break;
+                        }
+                        case EXPORTS: {
+                            parseFilterList(reader, exportBuilder);
+                            break;
+                        }
+                        default: {
+                            throw unexpectedContent(reader);
+                        }
+                    }
                 }
             }
         }
@@ -825,14 +898,13 @@ final class ModuleXmlParser {
         parseNoContent(reader);
     }
 
-    private static void parseSet(final XMLStreamReader reader, final boolean include, final MultiplePathFilterBuilder builder) throws XMLStreamException {
+    private static Set<String> parseSet(final XMLStreamReader reader) throws XMLStreamException {
         final Set<String> set = new FastCopyHashSet<String>();
         // xsd:choice
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case END_ELEMENT: {
-                    builder.addFilter(PathFilters.in(set), include);
-                    return;
+                    return set;
                 }
                 case START_ELEMENT: {
                     switch (Element.of(reader.getName())) {
@@ -841,6 +913,11 @@ final class ModuleXmlParser {
                 }
             }
         }
+        return set;
+    }
+
+    private static void parseSet(final XMLStreamReader reader, final boolean include, final MultiplePathFilterBuilder builder) throws XMLStreamException {
+        builder.addFilter(PathFilters.in(parseSet(reader)), include);
     }
 
     private static void parsePathName(final XMLStreamReader reader, final Set<String> set) throws XMLStreamException {

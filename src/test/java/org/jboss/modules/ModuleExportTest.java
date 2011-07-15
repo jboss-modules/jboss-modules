@@ -151,11 +151,9 @@ public class ModuleExportTest extends AbstractModuleTestCase {
         Module moduleC = moduleLoader.loadModule(MODULE_C);
 
         assertEquals(4, allPaths.size());
-        int redirectHit = 0;
+
         for(Map.Entry<String, List<LocalLoader>> entry : allPaths.entrySet()) {
             assertEquals(1, entry.getValue().size());
-            if (entry.getValue().get(0).equals(SystemLocalLoader.getInstance()) && redirectHit++ == 0)
-                continue;
             assertEquals(moduleC.getClassLoaderPrivate().getLocalLoader(), entry.getValue().get(0));
         }
     }

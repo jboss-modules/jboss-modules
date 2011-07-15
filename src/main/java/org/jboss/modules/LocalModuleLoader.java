@@ -91,9 +91,6 @@ public final class LocalModuleLoader extends ModuleLoader {
     /** {@inheritDoc} */
     @Override
     protected Module preloadModule(final ModuleIdentifier identifier) throws ModuleLoadException {
-        if (identifier.equals(ModuleIdentifier.SYSTEM)) {
-            return preloadModule(ModuleIdentifier.SYSTEM, SystemClassPathModuleLoader.getInstance());
-        }
         Module module = super.preloadModule(identifier);
         if (module == null) {
             for (ModuleLoader loader : importLoaders) {

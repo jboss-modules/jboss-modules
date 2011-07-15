@@ -53,9 +53,7 @@ final class JarModuleLoader extends ModuleLoader {
     }
 
     protected Module preloadModule(final ModuleIdentifier identifier) throws ModuleLoadException {
-        if (identifier.equals(ModuleIdentifier.SYSTEM)) {
-            return preloadModule(ModuleIdentifier.SYSTEM, SystemClassPathModuleLoader.getInstance());
-        } else if (identifier.equals(myIdentifier)) {
+        if (identifier.equals(myIdentifier)) {
             return loadModuleLocal(identifier);
         } else {
             Module module = loadModuleLocal(identifier);
@@ -145,7 +143,7 @@ final class JarModuleLoader extends ModuleLoader {
                     builder.addDependency(DependencySpec.createModuleDependencySpec(ModuleIdentifier.fromString(moduleName), export, optional));
                 }
             }
-            builder.addDependency(DependencySpec.createModuleDependencySpec(ModuleIdentifier.SYSTEM));
+            builder.addDependency(DependencySpec.createSystemDependencySpec(JDKPaths.JDK));
             builder.addDependency(DependencySpec.createLocalDependencySpec());
             return builder.create();
         } else {

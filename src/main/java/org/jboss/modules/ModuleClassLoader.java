@@ -79,6 +79,10 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
             }
         }
 
+        public Package loadPackageLocal(final String name) {
+            return findLoadedPackage(name);
+        }
+
         public List<Resource> loadResourceLocal(final String name) {
             return ModuleClassLoader.this.loadResourceLocal(name);
         }
@@ -343,7 +347,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
             // there's a package name; get the Package for it
             final String packageName = name.substring(0, lastIdx);
             synchronized (this) {
-                final Package pkg = getPackage(packageName);
+                final Package pkg = findLoadedPackage(packageName);
                 if (pkg != null) {
                     // Package is defined already
                     if (pkg.isSealed() && ! pkg.isSealed(classSpec.getCodeSource().getLocation())) {
@@ -430,6 +434,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
      * @param classSpec the class spec of the defined class
      * @param className the class to be defined
      */
+    @SuppressWarnings("unused")
     protected void preDefine(ClassSpec classSpec, String className) {
     }
 
@@ -439,6 +444,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
      * @param classSpec the class spec of the defined class
      * @param definedClass the class that was defined
      */
+    @SuppressWarnings("unused")
     protected void postDefine(ClassSpec classSpec, Class<?> definedClass) {
     }
 
@@ -548,14 +554,18 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
 
     /** {@inheritDoc} */
     @Override
-    protected final Package getPackage(final String name) {
-        return super.getPackage(name);
+    protected final Package getPackageByName(final String name) {
+        Package loaded = findLoadedPackage(name);
+        if (loaded != null) {
+            return loaded;
+        }
+        return module.getPackage(name);
     }
 
     /** {@inheritDoc} */
     @Override
     protected final Package[] getPackages() {
-        return super.getPackages();
+        return module.getPackages();
     }
 
     /** {@inheritDoc} */

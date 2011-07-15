@@ -36,7 +36,7 @@ class FilteredLocalLoader implements LocalLoader {
     private final LocalLoader originalLoader;
     private final PathFilter resourcePathFilter;
 
-    public FilteredLocalLoader(final ClassFilter classFilter, final PathFilter resourcePathFilter, final LocalLoader originalLoader) {
+    FilteredLocalLoader(final ClassFilter classFilter, final PathFilter resourcePathFilter, final LocalLoader originalLoader) {
         this.classFilter = classFilter;
         this.originalLoader = originalLoader;
         this.resourcePathFilter = resourcePathFilter;
@@ -44,6 +44,10 @@ class FilteredLocalLoader implements LocalLoader {
 
     public Class<?> loadClassLocal(final String name, final boolean resolve) {
         return classFilter.accept(name) ? originalLoader.loadClassLocal(name, resolve) : null;
+    }
+
+    public Package loadPackageLocal(final String name) {
+        return resourcePathFilter.accept(name.replace('.', '/')) ? originalLoader.loadPackageLocal(name) : null;
     }
 
     public List<Resource> loadResourceLocal(final String name) {
