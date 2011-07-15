@@ -52,7 +52,7 @@ public class LocalModuleLoaderTest extends AbstractModuleTestCase {
 
     @Test
     public void testCurrent() throws Exception {
-        ModuleLoader loader = Module.getCurrentModuleLoader();
+        ModuleLoader loader = Module.getCallerModuleLoader();
         System.out.println(loader);
     }
 

@@ -307,14 +307,6 @@ public final class Module {
     }
 
     /**
-     * @deprecated use {@link #loadServiceFromCallerModuleLoader(ModuleIdentifier, Class)} instead.
-     */
-    @Deprecated
-    public static <S> ServiceLoader<S> loadServiceFromCurrent(ModuleIdentifier identifier, Class<S> serviceType) throws ModuleLoadException {
-        return getCallerModuleLoader().loadModule(identifier).loadService(serviceType);
-    }
-
-    /**
      * Get the class loader for a module.  The class loader can be used to access non-exported classes and
      * resources of the module.
      * <p>
@@ -395,16 +387,6 @@ public final class Module {
         return loader;
     }
 
-    /**
-     * @deprecated Use {@link #getBootModuleLoader()}.  This method will be removed.
-     *
-     * @return the boot module loader
-     */
-    @Deprecated
-    public static ModuleLoader getSystemModuleLoader() {
-        return getBootModuleLoader();
-    }
-
     static void initBootModuleLoader(ModuleLoader loader) {
         BOOT_MODULE_LOADER.set(loader);
     }
@@ -420,14 +402,6 @@ public final class Module {
     public static ModuleLoader getCallerModuleLoader() {
         Module callerModule = getCallerModule();
         return callerModule == null ? null : callerModule.getModuleLoader();
-    }
-
-    /**
-     * @deprecated use {@link #getCallerModuleLoader()} instead.
-     */
-    @Deprecated
-    public static ModuleLoader getCurrentModuleLoader() {
-        return getCallerModuleLoader();
     }
 
     /**
@@ -455,14 +429,6 @@ public final class Module {
     }
 
     /**
-     * @deprecated use {@link #getModuleFromCallerModuleLoader(ModuleIdentifier)} instead.
-     */
-    @Deprecated
-    public static Module getModuleFromCurrentLoader(final ModuleIdentifier identifier) throws ModuleLoadException {
-        return getModuleFromCallerModuleLoader(identifier);
-    }
-
-    /**
      * Get the caller's module. The caller's module is the module containing the method that calls this
      * method. Note that this method crawls the stack so other ways of obtaining the
      * module are more efficient.
@@ -471,14 +437,6 @@ public final class Module {
      */
     public static Module getCallerModule() {
         return forClass(CallerContext.getCallingClass());
-    }
-
-    /**
-     * @deprecated use {@link #getCallerModule()} instead.
-     */
-    @Deprecated
-    public static Module getCurrentModule() {
-        return getCallerModule();
     }
 
     /**
@@ -510,15 +468,6 @@ public final class Module {
     }
 
     /**
-     * @deprecated use {@link #loadClassFromBootModuleLoader(ModuleIdentifier, String)} instead.
-     */
-    @Deprecated
-    public static Class<?> loadClassFromSystemLoader(final ModuleIdentifier moduleIdentifier, final String className)
-            throws ModuleLoadException, ClassNotFoundException {
-        return loadClassFromBootModuleLoader(moduleIdentifier, className);
-    }
-
-    /**
      * Load a class from a module in the caller's module loader.
      *
      * @see #getCallerModuleLoader()
@@ -531,15 +480,6 @@ public final class Module {
      * @throws ClassNotFoundException if the class could not be loaded
      */
     public static Class<?> loadClassFromCallerModuleLoader(final ModuleIdentifier moduleIdentifier, final String className)
-            throws ModuleLoadException, ClassNotFoundException {
-        return Class.forName(className, true, getModuleFromCallerModuleLoader(moduleIdentifier).getClassLoader());
-    }
-
-    /**
-     * @deprecated use {@link #loadClassFromCallerModuleLoader(ModuleIdentifier, String)} instead.
-     */
-    @Deprecated
-    public static Class<?> loadClassFromCurrentLoader(final ModuleIdentifier moduleIdentifier, final String className)
             throws ModuleLoadException, ClassNotFoundException {
         return Class.forName(className, true, getModuleFromCallerModuleLoader(moduleIdentifier).getClassLoader());
     }
