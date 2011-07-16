@@ -488,7 +488,7 @@ public abstract class ModuleLoader {
         public String dumpAllModuleInformation() {
             final StringBuilder b = new StringBuilder();
             for (String name : queryLoadedModuleNames()) {
-                dumpModuleInformation(name);
+                b.append(dumpModuleInformation(name));
             }
             return b.toString();
         }
