@@ -463,10 +463,10 @@ public abstract class ModuleLoader {
         }
     };
 
-    private static final class MXBeanImpl implements ModuleLoaderMXBean {
+    static final class MXBeanImpl implements ModuleLoaderMXBean {
         private final Reference<ModuleLoader, ObjectName> reference;
 
-        public MXBeanImpl(final ModuleLoader moduleLoader, final ObjectName objectName) {
+        MXBeanImpl(final ModuleLoader moduleLoader, final ObjectName objectName) {
             reference = new WeakReference<ModuleLoader, ObjectName>(moduleLoader, objectName, reaper);
         }
 
