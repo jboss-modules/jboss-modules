@@ -410,7 +410,7 @@ public abstract class ModuleLoader {
      *
      * @param module the module to update and relink
      * @param dependencies the new dependency list
-     * @throws ModuleLoadException
+     * @throws ModuleLoadException if relinking failed
      */
     protected void setAndRelinkDependencies(Module module, List<DependencySpec> dependencies) throws ModuleLoadException {
         if (!canRedefine)
