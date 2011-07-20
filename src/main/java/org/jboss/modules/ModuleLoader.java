@@ -220,7 +220,8 @@ public abstract class ModuleLoader {
 
     /**
      * Try to load a module from this module loader.  Returns {@code null} if the module is not found.  The returned
-     * module may not yet be resolved.
+     * module may not yet be resolved.  The returned module may have a different name than the given identifier if
+     * the identifier is an alias for another module.
      *
      * @param identifier the module identifier
      * @return the module
@@ -250,7 +251,21 @@ public abstract class ModuleLoader {
             if (! moduleSpec.getModuleIdentifier().equals(identifier)) {
                 throw new ModuleLoadException("Module loader found a module with the wrong name");
             }
-            final Module module = defineModule(moduleSpec, newFuture);
+            final Module module;
+            if ( moduleSpec instanceof AliasModuleSpec) {
+                final ModuleIdentifier aliasTarget = ((AliasModuleSpec) moduleSpec).getAliasTarget();
+                try {
+                    newFuture.setModule(module = loadModuleLocal(aliasTarget));
+                } catch (RuntimeException e) {
+                    log.trace(e, "Failed to load module %s (alias for %s)", identifier, aliasTarget);
+                    throw e;
+                } catch (Error e) {
+                    log.trace(e, "Failed to load module %s (alias for %s)", identifier, aliasTarget);
+                    throw e;
+                }
+            } else {
+                module = defineModule((ConcreteModuleSpec) moduleSpec, newFuture);
+            }
             log.trace("Loaded module %s from %s", identifier, this);
             ok = true;
             return module;
@@ -329,7 +344,7 @@ public abstract class ModuleLoader {
      * @return The defined Module
      * @throws ModuleLoadException If any dependent modules can not be loaded
      */
-    private Module defineModule(ModuleSpec moduleSpec, final FutureModule futureModule) throws ModuleLoadException {
+    private Module defineModule(final ConcreteModuleSpec moduleSpec, final FutureModule futureModule) throws ModuleLoadException {
 
         final ModuleLogger log = Module.log;
         final ModuleIdentifier moduleIdentifier = moduleSpec.getModuleIdentifier();

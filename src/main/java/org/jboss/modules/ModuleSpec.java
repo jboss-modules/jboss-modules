@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2010, Red Hat, Inc., and individual contributors
+ * Copyright 2011, Red Hat, Inc., and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -26,153 +26,20 @@ import java.lang.instrument.ClassFileTransformer;
 import java.util.ArrayList;
 import java.util.List;
 
-
 /**
  * A {@code Module} specification which is used by a {@code ModuleLoader} to define new modules.
  *
  * @apiviz.exclude
  *
- * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class ModuleSpec {
+public abstract class ModuleSpec {
 
     private final ModuleIdentifier moduleIdentifier;
-    private final String mainClass;
-    private final AssertionSetting assertionSetting;
-    private final ResourceLoaderSpec[] resourceLoaders;
-    private final DependencySpec[] dependencies;
-    private final LocalLoader fallbackLoader;
-    private final ModuleClassLoaderFactory moduleClassLoaderFactory;
-    private final ClassFileTransformer classFileTransformer;
 
-    private ModuleSpec(final ModuleIdentifier moduleIdentifier, final String mainClass, final AssertionSetting assertionSetting, final ResourceLoaderSpec[] resourceLoaders, final DependencySpec[] dependencies, final LocalLoader fallbackLoader, final ModuleClassLoaderFactory moduleClassLoaderFactory, final ClassFileTransformer classFileTransformer) {
+    ModuleSpec(final ModuleIdentifier moduleIdentifier) {
         this.moduleIdentifier = moduleIdentifier;
-        this.mainClass = mainClass;
-        this.assertionSetting = assertionSetting;
-        this.resourceLoaders = resourceLoaders;
-        this.dependencies = dependencies;
-        this.fallbackLoader = fallbackLoader;
-        this.moduleClassLoaderFactory = moduleClassLoaderFactory;
-        this.classFileTransformer = classFileTransformer;
     }
-
-    /**
-     * Get the module identifier for the module which is specified by this object.
-     *
-     * @return the module identifier
-     */
-    public ModuleIdentifier getModuleIdentifier() {
-        return moduleIdentifier;
-    }
-
-    String getMainClass() {
-        return mainClass;
-    }
-
-    AssertionSetting getAssertionSetting() {
-        return assertionSetting;
-    }
-
-    ResourceLoaderSpec[] getResourceLoaders() {
-        return resourceLoaders;
-    }
-
-    DependencySpec[] getDependencies() {
-        return dependencies;
-    }
-
-    LocalLoader getFallbackLoader() {
-        return fallbackLoader;
-    }
-
-    ModuleClassLoaderFactory getModuleClassLoaderFactory() {
-        return moduleClassLoaderFactory;
-    }
-
-    ClassFileTransformer getClassFileTransformer() {
-        return classFileTransformer;
-    }
-
-    /**
-     * A builder for new module specifications.
-     *
-     * @apiviz.exclude
-     */
-    public interface Builder {
-
-        /**
-         * Set the main class for this module, or {@code null} for none.
-         *
-         * @param mainClass the main class name
-         * @return this builder
-         */
-        Builder setMainClass(String mainClass);
-
-        /**
-         * Set the default assertion setting for this module.
-         *
-         * @param assertionSetting the assertion setting
-         * @return this builder
-         */
-        Builder setAssertionSetting(AssertionSetting assertionSetting);
-
-        /**
-         * Add a dependency specification.
-         *
-         * @param dependencySpec the dependency specification
-         * @return this builder
-         */
-        Builder addDependency(DependencySpec dependencySpec);
-
-        /**
-         * Add a local resource root, from which this module will load class definitions and resources.
-         *
-         * @param resourceLoader the resource loader for the root
-         * @return this builder
-         */
-        Builder addResourceRoot(ResourceLoaderSpec resourceLoader);
-
-        /**
-         * Create the module specification from this builder.
-         *
-         * @return the module specification
-         */
-        ModuleSpec create();
-
-        /**
-         * Get the identifier of the module being defined by this builder.
-         *
-         * @return the module identifier
-         */
-        ModuleIdentifier getIdentifier();
-
-        /**
-         * Sets a "fall-back" loader that will attempt to load a class if all other mechanisms
-         * are unsuccessful.
-         *
-         * @param fallbackLoader the fall-back loader
-         * @return this builder
-         */
-        Builder setFallbackLoader(final LocalLoader fallbackLoader);
-
-        /**
-         * Set the module class loader factory to use to create the module class loader for this module.
-         *
-         * @param moduleClassLoaderFactory the factory
-         * @return this builder
-         */
-        Builder setModuleClassLoaderFactory(ModuleClassLoaderFactory moduleClassLoaderFactory);
-
-        /**
-         * Set the class file transformer to use for this module.
-         *
-         * @param classFileTransformer the class file transformer
-         * @return this builder
-         */
-        Builder setClassFileTransformer(ClassFileTransformer classFileTransformer);
-    }
-
 
     /**
      * Get a builder for a new module specification.
@@ -181,6 +48,9 @@ public final class ModuleSpec {
      * @return the builder
      */
     public static Builder build(final ModuleIdentifier moduleIdentifier) {
+        if (moduleIdentifier == null) {
+            throw new IllegalArgumentException("moduleIdentifier is null");
+        }
         return new Builder() {
             private String mainClass;
             private AssertionSetting assertionSetting = AssertionSetting.INHERIT;
@@ -233,7 +103,7 @@ public final class ModuleSpec {
 
             @Override
             public ModuleSpec create() {
-                return new ModuleSpec(moduleIdentifier, mainClass, assertionSetting, resourceLoaders.toArray(new ResourceLoaderSpec[resourceLoaders.size()]), dependencies.toArray(new DependencySpec[dependencies.size()]), fallbackLoader, moduleClassLoaderFactory, classFileTransformer);
+                return new ConcreteModuleSpec(moduleIdentifier, mainClass, assertionSetting, resourceLoaders.toArray(new ResourceLoaderSpec[resourceLoaders.size()]), dependencies.toArray(new DependencySpec[dependencies.size()]), fallbackLoader, moduleClassLoaderFactory, classFileTransformer);
             }
 
             @Override
@@ -243,5 +113,147 @@ public final class ModuleSpec {
         };
     }
 
+    /**
+     * Get a builder for a new module alias specification.
+     *
+     * @param moduleIdentifier the module identifier
+     * @param aliasTarget the alias target identifier
+     * @return the builder
+     */
+    public static AliasBuilder buildAlias(final ModuleIdentifier moduleIdentifier, final ModuleIdentifier aliasTarget) {
+        if (moduleIdentifier == null) {
+            throw new IllegalArgumentException("moduleIdentifier is null");
+        }
+        if (aliasTarget == null) {
+            throw new IllegalArgumentException("aliasTarget is null");
+        }
+        return new AliasBuilder() {
+            public ModuleSpec create() {
+                return new AliasModuleSpec(moduleIdentifier, aliasTarget);
+            }
 
+            public ModuleIdentifier getIdentifier() {
+                return moduleIdentifier;
+            }
+
+            public ModuleIdentifier getAliasTarget() {
+                return aliasTarget;
+            }
+        };
+    }
+
+    /**
+     * Get the module identifier for the module which is specified by this object.
+     *
+     * @return the module identifier
+     */
+    public ModuleIdentifier getModuleIdentifier() {
+        return moduleIdentifier;
+    }
+
+    /**
+     * A builder for new concrete module specifications.
+     *
+     * @apiviz.exclude
+     */
+    public interface Builder {
+
+        /**
+         * Set the main class for this module, or {@code null} for none.
+         *
+         * @param mainClass the main class name
+         * @return this builder
+         */
+        ModuleSpec.Builder setMainClass(String mainClass);
+
+        /**
+         * Set the default assertion setting for this module.
+         *
+         * @param assertionSetting the assertion setting
+         * @return this builder
+         */
+        ModuleSpec.Builder setAssertionSetting(AssertionSetting assertionSetting);
+
+        /**
+         * Add a dependency specification.
+         *
+         * @param dependencySpec the dependency specification
+         * @return this builder
+         */
+        ModuleSpec.Builder addDependency(DependencySpec dependencySpec);
+
+        /**
+         * Add a local resource root, from which this module will load class definitions and resources.
+         *
+         * @param resourceLoader the resource loader for the root
+         * @return this builder
+         */
+        ModuleSpec.Builder addResourceRoot(ResourceLoaderSpec resourceLoader);
+
+        /**
+         * Create the module specification from this builder.
+         *
+         * @return the module specification
+         */
+        ModuleSpec create();
+
+        /**
+         * Get the identifier of the module being defined by this builder.
+         *
+         * @return the module identifier
+         */
+        ModuleIdentifier getIdentifier();
+
+        /**
+         * Sets a "fall-back" loader that will attempt to load a class if all other mechanisms
+         * are unsuccessful.
+         *
+         * @param fallbackLoader the fall-back loader
+         * @return this builder
+         */
+        ModuleSpec.Builder setFallbackLoader(final LocalLoader fallbackLoader);
+
+        /**
+         * Set the module class loader factory to use to create the module class loader for this module.
+         *
+         * @param moduleClassLoaderFactory the factory
+         * @return this builder
+         */
+        ModuleSpec.Builder setModuleClassLoaderFactory(ModuleClassLoaderFactory moduleClassLoaderFactory);
+
+        /**
+         * Set the class file transformer to use for this module.
+         *
+         * @param classFileTransformer the class file transformer
+         * @return this builder
+         */
+        ModuleSpec.Builder setClassFileTransformer(ClassFileTransformer classFileTransformer);
+    }
+
+    /**
+     * A builder for new alias module specifications.
+     */
+    public interface AliasBuilder {
+
+        /**
+         * Create the module specification from this builder.
+         *
+         * @return the module specification
+         */
+        ModuleSpec create();
+
+        /**
+         * Get the identifier of the module being defined by this builder.
+         *
+         * @return the module identifier
+         */
+        ModuleIdentifier getIdentifier();
+
+        /**
+         * Get the identifier of the module being referenced by this builder.
+         *
+         * @return the module identifier
+         */
+        ModuleIdentifier getAliasTarget();
+    }
 }

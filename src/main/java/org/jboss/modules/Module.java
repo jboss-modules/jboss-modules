@@ -167,7 +167,6 @@ public final class Module {
     private static final Dependency[] NO_DEPENDENCIES = new Dependency[0];
 
     private static final RuntimePermission GET_CLASS_LOADER = new RuntimePermission("getClassLoader");
-    private static final RuntimePermission GET_SYSTEM_MODULE = new RuntimePermission("getSystemModule");
     private static final RuntimePermission GET_BOOT_MODULE_LOADER = new RuntimePermission("getBootModuleLoader");
     private static final RuntimePermission ACCESS_MODULE_LOGGER = new RuntimePermission("accessModuleLogger");
     private static final RuntimePermission ADD_CONTENT_HANDLER_FACTORY = new RuntimePermission("addContentHandlerFactory");
@@ -188,7 +187,7 @@ public final class Module {
      * @param moduleLoader the module loader
      * @param myKey the key to keep a strong reference to
      */
-    Module(final ModuleSpec spec, final ModuleLoader moduleLoader, final Object myKey) {
+    Module(final ConcreteModuleSpec spec, final ModuleLoader moduleLoader, final Object myKey) {
         this.moduleLoader = moduleLoader;
         this.myKey = myKey;
 
