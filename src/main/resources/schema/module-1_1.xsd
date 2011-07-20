@@ -47,6 +47,15 @@
         </annotation>
     </xsd:element>
 
+    <!-- Root element -->
+    <xsd:element name="module-alias" type="moduleAliasType">
+        <annotation xmlns="http://www.w3.org/2001/XMLSchema">
+            <documentation>
+                Root element for a module alias declaration.
+            </documentation>
+        </annotation>
+    </xsd:element>
+
     <xsd:complexType name="moduleType">
         <xsd:annotation>
             <xsd:documentation>
@@ -502,5 +511,35 @@
             <xsd:pattern value="[-0-9a-zA-Z_]+"/>
         </xsd:restriction>
     </xsd:simpleType>
-</xsd:schema>
 
+    <xsd:complexType name="moduleAliasType">
+        <xsd:attribute name="name" type="moduleNameType" use="required">
+            <annotation xmlns="http://www.w3.org/2001/XMLSchema">
+                <documentation>
+                    The name of this module alias (required).
+                </documentation>
+            </annotation>
+        </xsd:attribute>
+        <xsd:attribute name="slot" type="moduleSlotType" use="optional">
+            <annotation xmlns="http://www.w3.org/2001/XMLSchema">
+                <documentation>
+                    The version slot of this module alias (optional).
+                </documentation>
+            </annotation>
+        </xsd:attribute>
+        <xsd:attribute name="target-name" type="moduleNameType" use="required">
+            <annotation xmlns="http://www.w3.org/2001/XMLSchema">
+                <documentation>
+                    The name of the module to which this alias refers (required).
+                </documentation>
+            </annotation>
+        </xsd:attribute>
+        <xsd:attribute name="target-slot" type="moduleSlotType" use="optional">
+            <annotation xmlns="http://www.w3.org/2001/XMLSchema">
+                <documentation>
+                    The version slot of the module to which this alias refers (optional).
+                </documentation>
+            </annotation>
+        </xsd:attribute>
+    </xsd:complexType>
+</xsd:schema>

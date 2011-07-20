@@ -25,7 +25,6 @@ package org.jboss.modules;
 import javax.xml.namespace.QName;
 import javax.xml.stream.Location;
 import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import java.io.Closeable;
@@ -118,6 +117,7 @@ final class ModuleXmlParser {
         IMPORT,
         SYSTEM,
         PATHS,
+        MODULE_ALIAS,
 
         // default unknown element
         UNKNOWN;
@@ -145,6 +145,7 @@ final class ModuleXmlParser {
             elementsMap.put("import", Element.IMPORT);
             elementsMap.put("system", Element.SYSTEM);
             elementsMap.put("paths", Element.PATHS);
+            elementsMap.put("module-alias", Element.MODULE_ALIAS);
             elements = elementsMap;
         }
 
@@ -166,6 +167,8 @@ final class ModuleXmlParser {
         PATH,
         OPTIONAL,
         DEFAULT_LOADER,
+        TARGET_NAME,
+        TARGET_SLOT,
 
         // default unknown attribute
         UNKNOWN;
@@ -181,6 +184,8 @@ final class ModuleXmlParser {
             attributesMap.put(new QName("path"), PATH);
             attributesMap.put(new QName("optional"), OPTIONAL);
             attributesMap.put(new QName("default-loader"), DEFAULT_LOADER);
+            attributesMap.put(new QName("target-name"), TARGET_NAME);
+            attributesMap.put(new QName("target-slot"), TARGET_SLOT);
             attributes = attributesMap;
         }
 
@@ -270,7 +275,7 @@ final class ModuleXmlParser {
             setIfSupported(inputFactory, XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
             final XMLStreamReader streamReader = inputFactory.createXMLStreamReader(source);
             try {
-                return parseDocument(factory, rootPath, streamReader, ModuleSpec.build(moduleIdentifier));
+                return parseDocument(factory, rootPath, streamReader, moduleIdentifier);
             } finally {
                 safeClose(streamReader);
             }
@@ -520,20 +525,30 @@ final class ModuleXmlParser {
         }
     }
 
-    private static ModuleSpec parseDocument(final ResourceRootFactory factory, final String rootPath, XMLStreamReader reader, ModuleSpec.Builder specBuilder) throws XMLStreamException {
+    private static ModuleSpec parseDocument(final ResourceRootFactory factory, final String rootPath, XMLStreamReader reader, final ModuleIdentifier moduleIdentifier) throws XMLStreamException {
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case START_DOCUMENT: {
-                    parseRootElement(factory, rootPath, reader, specBuilder);
-                    return specBuilder.create();
+                    return parseRootElement(factory, rootPath, reader, moduleIdentifier);
                 }
                 case START_ELEMENT: {
-                    if (Element.of(reader.getName()) != Element.MODULE) {
-                        throw unexpectedContent(reader);
+                    final Element element = Element.of(reader.getName());
+                    switch (element) {
+                        case MODULE: {
+                            final ModuleSpec.Builder specBuilder = ModuleSpec.build(moduleIdentifier);
+                            parseModuleContents(factory, rootPath, reader, specBuilder);
+                            parseEndDocument(reader);
+                            return specBuilder.create();
+                        }
+                        case MODULE_ALIAS: {
+                            final ModuleSpec moduleSpec = parseModuleAliasContents(reader, moduleIdentifier);
+                            parseEndDocument(reader);
+                            return moduleSpec;
+                        }
+                        default: {
+                            throw unexpectedContent(reader);
+                        }
                     }
-                    parseModuleContents(factory, rootPath, reader, specBuilder);
-                    parseEndDocument(reader);
-                    return specBuilder.create();
                 }
                 default: {
                     throw unexpectedContent(reader);
@@ -543,16 +558,64 @@ final class ModuleXmlParser {
         throw endOfDocument(reader.getLocation());
     }
 
-    private static void parseRootElement(final ResourceRootFactory factory, final String rootPath, final XMLStreamReader reader, final ModuleSpec.Builder specBuilder) throws XMLStreamException {
+    private static ModuleSpec parseRootElement(final ResourceRootFactory factory, final String rootPath, final XMLStreamReader reader, final ModuleIdentifier moduleIdentifier) throws XMLStreamException {
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case START_ELEMENT: {
-                    if (Element.of(reader.getName()) != Element.MODULE) {
-                        throw unexpectedContent(reader);
+                    final Element element = Element.of(reader.getName());
+                    switch (element) {
+                        case MODULE: {
+                            final ModuleSpec.Builder specBuilder = ModuleSpec.build(moduleIdentifier);
+                            parseModuleContents(factory, rootPath, reader, specBuilder);
+                            parseEndDocument(reader);
+                            return specBuilder.create();
+                        }
+                        case MODULE_ALIAS: {
+                            final ModuleSpec moduleSpec = parseModuleAliasContents(reader, moduleIdentifier);
+                            parseEndDocument(reader);
+                            return moduleSpec;
+                        }
+                        default: {
+                            throw unexpectedContent(reader);
+                        }
                     }
-                    parseModuleContents(factory, rootPath, reader, specBuilder);
-                    parseEndDocument(reader);
-                    return;
+                }
+                default: {
+                    throw unexpectedContent(reader);
+                }
+            }
+        }
+        throw endOfDocument(reader.getLocation());
+    }
+
+    private static ModuleSpec parseModuleAliasContents(final XMLStreamReader reader, final ModuleIdentifier moduleIdentifier) throws XMLStreamException {
+        final int count = reader.getAttributeCount();
+        String name = null;
+        String slot = null;
+        String targetName = null;
+        String targetSlot = null;
+        final Set<Attribute> required = EnumSet.of(Attribute.NAME, Attribute.TARGET_NAME);
+        for (int i = 0; i < count; i ++) {
+            final Attribute attribute = Attribute.of(reader.getAttributeName(i));
+            required.remove(attribute);
+            switch (attribute) {
+                case NAME:    name = reader.getAttributeValue(i); break;
+                case SLOT:    slot = reader.getAttributeValue(i); break;
+                case TARGET_NAME: targetName = reader.getAttributeValue(i); break;
+                case TARGET_SLOT: targetSlot = reader.getAttributeValue(i); break;
+                default: throw unexpectedContent(reader);
+            }
+        }
+        if (! required.isEmpty()) {
+            throw missingAttributes(reader.getLocation(), required);
+        }
+        if (! moduleIdentifier.equals(ModuleIdentifier.create(name, slot))) {
+            throw invalidModuleName(reader.getLocation(), moduleIdentifier);
+        }
+        while (reader.hasNext()) {
+            switch (reader.nextTag()) {
+                case END_ELEMENT: {
+                    return ModuleSpec.buildAlias(moduleIdentifier, ModuleIdentifier.create(targetName, targetSlot)).create();
                 }
                 default: {
                     throw unexpectedContent(reader);
