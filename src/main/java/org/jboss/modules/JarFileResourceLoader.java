@@ -192,24 +192,16 @@ final class JarFileResourceLoader extends AbstractResourceLoader {
         final File indexFile = new File(jarFileName + ".index");
         if (indexFile.exists()) {
             try {
-                final BufferedReader r = new BufferedReader(new InputStreamReader(new FileInputStream(indexFile)));
-                try {
-                    String s;
-                    while ((s = r.readLine()) != null) {
-                        String name = s.trim();
-                        if (relativePath == null) {
-                            index.add(name);
-                        } else {
-                            if (name.startsWith(relativePath + "/")) {
-                                index.add(name.substring(relativePath.length() + 1));
-                            }
-                        }
-                    }
-                    return index;
-                } finally {
-                    // if exception is thrown, undo index creation
-                    r.close();
-                }
+                return readIndex(new FileInputStream(indexFile), index, relativePath);
+            } catch (IOException e) {
+                index.clear();
+            }
+        }
+        // Next check for an internal index
+        JarEntry listEntry = jarFile.getJarEntry("META-INF/PATHS.LIST");
+        if (listEntry != null) {
+            try {
+                return readIndex(jarFile.getInputStream(listEntry), index, relativePath);
             } catch (IOException e) {
                 index.clear();
             }
@@ -264,5 +256,26 @@ final class JarFileResourceLoader extends AbstractResourceLoader {
             }
         }
         return index;
+    }
+
+    private static Collection<String> readIndex(final InputStream stream, final Collection<String> index, final String relativePath) throws IOException {
+        final BufferedReader r = new BufferedReader(new InputStreamReader(stream));
+        try {
+            String s;
+            while ((s = r.readLine()) != null) {
+                String name = s.trim();
+                if (relativePath == null) {
+                    index.add(name);
+                } else {
+                    if (name.startsWith(relativePath + "/")) {
+                        index.add(name.substring(relativePath.length() + 1));
+                    }
+                }
+            }
+            return index;
+        } finally {
+            // if exception is thrown, undo index creation
+            r.close();
+        }
     }
 }
