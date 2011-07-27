@@ -170,7 +170,7 @@ public abstract class DependencySpec {
      * @return the dependency spec
      */
     public static DependencySpec createSystemDependencySpec(final PathFilter importFilter, final PathFilter exportFilter, final Set<String> loaderPaths) {
-        return createLocalDependencySpec(importFilter, exportFilter, ClassLoaderLocalLoader.SYSTEM, loaderPaths);
+        return createLocalDependencySpec(importFilter, exportFilter, ClassLoaderLocalLoader.SYSTEM, loaderPaths != null ? loaderPaths : JDKPaths.JDK);
     }
 
     /**
