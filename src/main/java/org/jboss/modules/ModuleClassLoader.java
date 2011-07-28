@@ -29,7 +29,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
-import java.lang.reflect.Method;
 import java.net.URL;
 import java.security.CodeSource;
 import java.security.PermissionCollection;
@@ -56,10 +55,8 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
 
     static {
         try {
-            final Method method = ClassLoader.class.getMethod("registerAsParallelCapable");
-            method.invoke(null);
-        } catch (Exception e) {
-            // ignore
+            REGISTER_AS_PARALLEL_CAPABLE_METHOD.invoke(null);
+        } catch (Throwable ignored) {
         }
     }
 
@@ -165,6 +162,25 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
      */
     LocalLoader getLocalLoader() {
         return localLoader;
+    }
+
+    private static final ThreadLocal<Object> OBJ = new ThreadLocal<Object>() {
+        protected Object initialValue() {
+            return new Object();
+        }
+    };
+
+    /**
+     * Get the lock to use for class loading operations.  Our implementation is lockless,
+     * so return a per-thread object which will never contend.  Applies
+     * to JDK 1.7 only.
+     *
+     * @param className the class name
+     * @return the current thread
+     */
+    @SuppressWarnings("unused")
+    protected final Object getClassLoadingLock(String className) {
+        return OBJ.get();
     }
 
     /** {@inheritDoc} */

@@ -25,11 +25,10 @@ package org.jboss.modules;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.security.AccessControlContext;
 import java.security.AccessController;
-import java.security.CodeSource;
-import java.security.PermissionCollection;
 import java.security.PrivilegedExceptionAction;
 import java.security.SecureClassLoader;
 import java.util.ArrayDeque;
@@ -52,6 +51,13 @@ import sun.misc.Unsafe;
  */
 public abstract class ConcurrentClassLoader extends SecureClassLoader {
 
+    /**
+     * A holder for the {@code Method} object of the JDK 7 {@code registerAsParallelCapable}.  Due to the way
+     * that JDK 7 parallelism works, if this field is non-{@code null}, any subclass of this class should invoke this
+     * {@code Method} in its static initializer to ensure that the class loader is properly registered.
+     */
+    protected static final Method REGISTER_AS_PARALLEL_CAPABLE_METHOD;
+
     private static final boolean LOCKLESS;
 
     private static final ClassLoader definingLoader = ConcurrentClassLoader.class.getClassLoader();
@@ -73,6 +79,12 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
             // ignored
         }
         LOCKLESS = Boolean.parseBoolean(AccessController.doPrivileged(new PropertyReadAction("jboss.modules.lockless", locklessDefault)));
+        Method method = null;
+        try {
+            method = ClassLoader.class.getDeclaredMethod("registerAsParallelCapable");
+            if (method != null) method.invoke(null);
+        } catch (Throwable ignored) {}
+        REGISTER_AS_PARALLEL_CAPABLE_METHOD = method;
     }
 
     /**
