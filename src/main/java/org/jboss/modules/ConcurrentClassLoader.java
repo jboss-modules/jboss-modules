@@ -448,7 +448,12 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
                     if (intr) Thread.currentThread().interrupt();
                 }
 
-                return req.result;
+                final Class<?> result = req.result;
+                if (result == null) {
+                    final String message = req.message;
+                    throw new ClassNotFoundException(message == null ? className : message);
+                }
+                return result;
             }
         }
         // no deadlock risk!  Either the lock isn't held, or we're inside the class loader thread.
@@ -558,6 +563,7 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
         private final ConcurrentClassLoader requester;
         private final AccessControlContext context;
         Class<?> result;
+        String message;
         private boolean exportsOnly;
 
         boolean done;
@@ -602,8 +608,10 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
                                         return loader.performLoadClassChecked(localRequest.className, localRequest.exportsOnly, localRequest.resolve);
                                     }
                                 }, request.context);
-                            } else {
+                            } else try {
                                 result = loader.performLoadClassChecked(request.className, request.exportsOnly, request.resolve);
+                            } catch (ClassNotFoundException e) {
+                                request.message = e.getMessage();
                             }
                         } finally {
                             // no matter what, the requester MUST be notified
