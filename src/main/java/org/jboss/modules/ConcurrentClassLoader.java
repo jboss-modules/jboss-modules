@@ -42,7 +42,6 @@ import java.util.Locale;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentMap;
 import sun.misc.Unsafe;
-import sun.reflect.generics.tree.ByteSignature;
 
 /**
  * A classloader which can delegate to multiple other classloaders without risk of deadlock.  A concurrent class loader
