@@ -35,17 +35,17 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 
-import static org.junit.Assert.fail;
-
 /**
  * Test case to verify the concurrent classloader base correctly handles common concurrency issues with classloading..
  *
  * @author John E. Bailey
  */
 public class ConcurrentClassLoaderTest {
+    volatile Throwable threadOneProblem;
+    volatile Throwable threadTwoProblem;
 
     @Test
-    public void testClassLoadingDeadlockAvoidance() throws Exception {
+    public void testClassLoadingDeadlockAvoidance() throws Throwable {
         /*
             Uncomment the following lines to demonstrate a deadlock that occurs with normal classloader delegation
          */
@@ -62,8 +62,8 @@ public class ConcurrentClassLoaderTest {
                 try {
                     latch.await();
                     classLoaderOne.loadClass(ClassA.class.getName());
-                } catch(Exception e) {
-                    fail(e.getMessage());
+                } catch (Throwable t) {
+                    threadOneProblem = t;
                 }
             }
         });
@@ -73,8 +73,8 @@ public class ConcurrentClassLoaderTest {
                 try {
                     latch.await();
                     classLoaderTwo.loadClass(ClassC.class.getName());
-                } catch(Exception e) {
-                    fail(e.getMessage());
+                } catch (Throwable t) {
+                    threadTwoProblem = t;
                 }
             }
         });
@@ -85,6 +85,9 @@ public class ConcurrentClassLoaderTest {
 
         threadOne.join();
         threadTwo.join();
+
+        if (threadOneProblem != null) throw threadOneProblem;
+        if (threadTwoProblem != null) throw threadTwoProblem;
     }
 
     private static final class TestConcurrentClassLoader extends ConcurrentClassLoader {
