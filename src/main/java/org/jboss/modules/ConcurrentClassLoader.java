@@ -509,7 +509,8 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
     }
 
     /**
-     * Defines a package by name in this <tt>ConcurrentClassLoader</tt>.
+     * Defines a package by name in this <tt>ConcurrentClassLoader</tt>.  If the package was already defined, the
+     * existing package is returned instead.
      *
      * @param name the package name
      * @param specTitle the specification title
