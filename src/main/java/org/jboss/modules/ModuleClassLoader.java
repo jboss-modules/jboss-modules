@@ -345,15 +345,8 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
             // there's a package name; get the Package for it
             final String packageName = name.substring(0, lastIdx);
             synchronized (this) {
-                final Package pkg = getPackage(packageName);
-                if (pkg != null) {
-                    // Package is defined already
-                    if (pkg.isSealed() && ! pkg.isSealed(classSpec.getCodeSource().getLocation())) {
-                        log.trace("Detected a sealing violation (attempt to define class %s in sealed package %s in %s)", name, packageName, module);
-                        // use the same message as the JDK
-                        throw new SecurityException("sealing violation: package " + packageName + " is sealed");
-                    }
-                } else {
+                Package pkg = getPackage(packageName);
+                if (pkg == null) {
                     final Map<String, List<ResourceLoader>> paths = this.paths.getAllPaths();
                     final String path = Module.pathOf(name);
                     final List<ResourceLoader> loaders = paths.get(path);
@@ -370,13 +363,18 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
                             }
                         }
                         if (spec != null) {
-                            definePackage(packageName, spec);
+                            pkg = definePackage(packageName, spec);
                         } else {
-                            definePackage(packageName, null);
+                            pkg = definePackage(packageName, null);
                         }
                     } else {
-                        definePackage(packageName, null);
+                        pkg = definePackage(packageName, null);
                     }
+                }
+                if (pkg.isSealed() && ! pkg.isSealed(classSpec.getCodeSource().getLocation())) {
+                    log.trace("Detected a sealing violation (attempt to define class %s in sealed package %s in %s)", name, packageName, module);
+                    // use the same message as the JDK
+                    throw new SecurityException("sealing violation: package " + packageName + " is sealed");
                 }
             }
         }
