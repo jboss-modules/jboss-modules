@@ -29,7 +29,9 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.security.AccessControlContext;
 import java.security.AccessController;
+import java.security.CodeSource;
 import java.security.PrivilegedExceptionAction;
+import java.security.ProtectionDomain;
 import java.security.SecureClassLoader;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -40,6 +42,7 @@ import java.util.Locale;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentMap;
 import sun.misc.Unsafe;
+import sun.reflect.generics.tree.ByteSignature;
 
 /**
  * A classloader which can delegate to multiple other classloaders without risk of deadlock.  A concurrent class loader
@@ -161,6 +164,9 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
     /**
      * Find a class, possibly delegating to other loader(s).  This method should <b>never</b> synchronize across a
      * delegation method call of any sort.  The default implementation always throws {@code ClassNotFoundException}.
+     * <p>
+     * If a class is to be defined by this method, it should be done via one of the atomic {@code defineOrLoadClass}
+     * methods rather than {@code defineClass()} in order to avoid spurious exceptions.
      *
      * @param className the class name
      * @param exportsOnly {@code true} if only exported classes should be considered
@@ -170,6 +176,74 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
      */
     protected Class<?> findClass(final String className, final boolean exportsOnly, final boolean resolve) throws ClassNotFoundException {
         throw new ClassNotFoundException(className);
+    }
+
+    /**
+     * Atomically define or load the named class.  If the class is already defined, the existing class is returned.
+     *
+     * @param className the class name to define or load
+     * @param bytes the bytes to use to define the class
+     * @param off the offset into the byte array at which the class bytes begin
+     * @param len the number of bytes in the class
+     * @return the class
+     */
+    protected final Class<?> defineOrLoadClass(final String className, final byte[] bytes, int off, int len) {
+        try {
+            final Class<?> definedClass = defineClass(className, bytes, off, len);
+            return definedClass;
+        } catch (LinkageError e) {
+            final Class<?> loadedClass = findLoadedClass(className);
+            if (loadedClass != null) {
+                return loadedClass;
+            }
+            throw e;
+        }
+    }
+
+    /**
+     * Atomically define or load the named class.  If the class is already defined, the existing class is returned.
+     *
+     * @param className the class name to define or load
+     * @param bytes the bytes to use to define the class
+     * @param off the offset into the byte array at which the class bytes begin
+     * @param len the number of bytes in the class
+     * @param codeSource the code source for the defined class
+     * @return the class
+     */
+    protected final Class<?> defineOrLoadClass(final String className, final byte[] bytes, int off, int len, CodeSource codeSource) {
+        try {
+            final Class<?> definedClass = defineClass(className, bytes, off, len, codeSource);
+            return definedClass;
+        } catch (LinkageError e) {
+            final Class<?> loadedClass = findLoadedClass(className);
+            if (loadedClass != null) {
+                return loadedClass;
+            }
+            throw e;
+        }
+    }
+
+    /**
+     * Atomically define or load the named class.  If the class is already defined, the existing class is returned.
+     *
+     * @param className the class name to define or load
+     * @param bytes the bytes to use to define the class
+     * @param off the offset into the byte array at which the class bytes begin
+     * @param len the number of bytes in the class
+     * @param protectionDomain the protection domain for the defined class
+     * @return the class
+     */
+    protected final Class<?> defineOrLoadClass(final String className, final byte[] bytes, int off, int len, ProtectionDomain protectionDomain) {
+        try {
+            final Class<?> definedClass = defineClass(className, bytes, off, len, protectionDomain);
+            return definedClass;
+        } catch (LinkageError e) {
+            final Class<?> loadedClass = findLoadedClass(className);
+            if (loadedClass != null) {
+                return loadedClass;
+            }
+            throw e;
+        }
     }
 
     /**

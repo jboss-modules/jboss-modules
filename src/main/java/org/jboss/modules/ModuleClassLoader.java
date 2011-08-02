@@ -412,23 +412,13 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
                         throw error;
                     }
                 }
-                newClass = defineClass(name, bytes, 0, bytes.length, classSpec.getCodeSource());
+                newClass = defineOrLoadClass(name, bytes, 0, bytes.length, classSpec.getCodeSource());
                 log.classDefined(name, module);
             } catch (NoClassDefFoundError e) {
                 // Prepend the current class name, so that transitive class definition issues are clearly expressed
                 final LinkageError ne = new LinkageError("Failed to link " + name.replace('.', '/') + " (" + module + ")");
                 ne.initCause(e);
                 throw ne;
-            } catch (LinkageError e) {
-                // make sure it wasn't a duplicate definition
-                log.trace(e, "Encountered linkage error; attempting to recover");
-                final Class<?> loadedClass = findLoadedClass(name);
-                if (loadedClass != null) {
-                    // ditch the class spec and return the loaded class
-                    return loadedClass;
-                }
-                // no recovery possible; propagate
-                throw e;
             }
         } catch (Error e) {
             log.classDefineFailed(e, name, module);
