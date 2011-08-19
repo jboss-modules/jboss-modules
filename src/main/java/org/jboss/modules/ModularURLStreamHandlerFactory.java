@@ -29,6 +29,7 @@ import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ServiceLoader;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -40,6 +41,12 @@ final class ModularURLStreamHandlerFactory implements URLStreamHandlerFactory {
     private static final PrivilegedAction<String> URL_MODULES_LIST_ACTION = new PropertyReadAction("jboss.protocol.handler.modules");
 
     private static final List<Module> modules;
+
+    private static final ThreadLocal<Set<String>> reentered = new ThreadLocal<Set<String>>() {
+        protected Set<String> initialValue() {
+            return new FastCopyHashSet<String>();
+        }
+    };
 
     static {
         CopyOnWriteArrayList<Module> list = new CopyOnWriteArrayList<Module>();
@@ -80,16 +87,21 @@ final class ModularURLStreamHandlerFactory implements URLStreamHandlerFactory {
     }
 
     public URLStreamHandler createURLStreamHandler(final String protocol) {
-        for (Module module : modules) {
-            ServiceLoader<URLStreamHandlerFactory> loader = module.loadService(URLStreamHandlerFactory.class);
-            for (URLStreamHandlerFactory factory : loader) try {
-                final URLStreamHandler handler = factory.createURLStreamHandler(protocol);
-                if (handler != null) {
-                    return handler;
+        final Set<String> set = reentered.get();
+        if (set.add(protocol)) try {
+            for (Module module : modules) {
+                ServiceLoader<URLStreamHandlerFactory> loader = module.loadService(URLStreamHandlerFactory.class);
+                for (URLStreamHandlerFactory factory : loader) try {
+                    final URLStreamHandler handler = factory.createURLStreamHandler(protocol);
+                    if (handler != null) {
+                        return handler;
+                    }
+                } catch (RuntimeException e) {
+                    // ignored
                 }
-            } catch (RuntimeException e) {
-                // ignored
             }
+        } finally {
+            set.remove(protocol);
         }
         return null;
     }
