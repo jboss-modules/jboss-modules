@@ -22,18 +22,19 @@
 
 package org.jboss.modules;
 
-import org.jboss.modules.log.JDKModuleLogger;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.jar.JarFile;
 import java.util.logging.LogManager;
+
+import org.jboss.modules.log.JDKModuleLogger;
 
 /**
  * The main entry point of JBoss Modules when run as a JAR on the command line.
@@ -81,6 +82,8 @@ public final class Main {
         System.out.println("                  may be specified, but not both");
         System.out.println("    -logmodule <module-name>");
         System.out.println("                  The module to use to load the system logmanager");
+        System.out.println("    -mbeanserverbuildermodule <module-name>");
+        System.out.println("                  The module to use to load the mbean server builder");
         System.out.println("    -version      Print version and exit\n");
     }
 
@@ -103,6 +106,7 @@ public final class Main {
         boolean classDefined = false;
         String moduleIdentifierOrExeName = null;
         ModuleIdentifier logManagerModuleIdentifier = null;
+        ModuleIdentifier mbeanServerBuilderModuleIdentifier = null;
         for (int i = 0, argsLength = argsLen; i < argsLength; i++) {
             final String arg = args[i];
             try {
@@ -137,6 +141,8 @@ public final class Main {
                         configPath = args[++i];
                     } else if ("-logmodule".equals(arg)) {
                         logManagerModuleIdentifier = ModuleIdentifier.fromString(args[++i]);
+                    } else if ("-mbeanserverbuildermodule".equals(arg)) {
+                        mbeanServerBuilderModuleIdentifier = ModuleIdentifier.fromString(args[++i]);
                     } else if ("-jar".equals(arg)) {
                         if (jar) {
                             System.err.println("-jar flag may only be specified once");
@@ -245,46 +251,39 @@ public final class Main {
         Module.initBootModuleLoader(loader);
         if (logManagerModuleIdentifier != null) {
             final ModuleClassLoader classLoader = loader.loadModule(logManagerModuleIdentifier).getClassLoaderPrivate();
-            final InputStream stream = classLoader.getResourceAsStream("META-INF/services/java.util.logging.LogManager");
-            if (stream != null) {
+            String name = getServiceName(classLoader, "java.util.logging.LogManager");
+
+            if (name != null) {
+                System.setProperty("java.util.logging.manager", name);
+                final ClassLoader old = setContextClassLoader(classLoader);
                 try {
-                    final BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
-                    String name = null;
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        final int i = line.indexOf('#');
-                        if (i != -1) {
-                            line = line.substring(0, i);
-                        }
-                        line = line.trim();
-                        if (line.length() == 0) continue;
-                        name = line;
-                        break;
-                    }
-                    if (name != null) {
-                        System.setProperty("java.util.logging.manager", name);
-                        final ClassLoader old = setContextClassLoader(classLoader);
-                        try {
-                            if (LogManager.getLogManager().getClass() == LogManager.class) {
-                                System.err.println("WARNING: Failed to load the specified logmodule " + logManagerModuleIdentifier);
-                            } else {
-                                Module.setModuleLogger(new JDKModuleLogger());
-                            }
-                        } finally {
-                            setContextClassLoader(old);
-                        }
+                    if (LogManager.getLogManager().getClass() == LogManager.class) {
+                        System.err.println("WARNING: Failed to load the specified logmodule " + logManagerModuleIdentifier);
                     } else {
-                        System.err.println("WARNING: No log manager services defined in specified logmodule " + logManagerModuleIdentifier);
+                        Module.setModuleLogger(new JDKModuleLogger());
                     }
                 } finally {
-                    try {
-                        stream.close();
-                    } catch (IOException ignored) {
-                        // ignore
-                    }
+                    setContextClassLoader(old);
                 }
             } else {
                 System.err.println("WARNING: No log manager service descriptor found in specified logmodule " + logManagerModuleIdentifier);
+            }
+        }
+        if (mbeanServerBuilderModuleIdentifier != null) {
+            final ModuleClassLoader classLoader = loader.loadModule(mbeanServerBuilderModuleIdentifier).getClassLoaderPrivate();
+            String name = getServiceName(classLoader, "javax.management.MBeanServerBuilder");
+
+            if (name != null) {
+                System.setProperty("javax.management.builder.initial", name);
+                final ClassLoader old = setContextClassLoader(classLoader);
+                try {
+                    //Initialize the platform mbean server
+                    ManagementFactory.getPlatformMBeanServer();
+                } finally {
+                    setContextClassLoader(old);
+                }
+            } else {
+                System.err.println("WARNING: No mbeanserver service descriptor found in specified mbeanserverbuildermodule " + mbeanServerBuilderModuleIdentifier);
             }
         }
         final Module module;
@@ -302,6 +301,33 @@ public final class Main {
             throw e.getCause();
         }
         return;
+    }
+
+    private static String getServiceName(ClassLoader classLoader, String className) throws IOException {
+        final InputStream stream = classLoader.getResourceAsStream("META-INF/services/" + className);
+        if (stream != null) {
+            try {
+                final BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    final int i = line.indexOf('#');
+                    if (i != -1) {
+                        line = line.substring(0, i);
+                    }
+                    line = line.trim();
+                    if (line.length() == 0) continue;
+                    return line;
+                }
+
+            } finally {
+                try {
+                    stream.close();
+                } catch (IOException ignored) {
+                    // ignore
+                }
+            }
+        }
+        return null;
     }
 
     private static ClassLoader setContextClassLoader(final ClassLoader classLoader) {
