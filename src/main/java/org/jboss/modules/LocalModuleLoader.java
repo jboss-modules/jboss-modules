@@ -118,7 +118,7 @@ public final class LocalModuleLoader extends ModuleLoader {
     protected ModuleSpec findModule(final ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
         final File moduleRoot = getModuleRoot(moduleIdentifier);
         if (moduleRoot == null)
-            throw new ModuleNotFoundException("Module " + moduleIdentifier + " is not found");
+            throw new ModuleNotFoundException("Module " + moduleIdentifier + " is not found in " + this);
 
         final File moduleXml = new File(moduleRoot, "module.xml");
         return parseModuleInfoFile(moduleIdentifier, moduleRoot, moduleXml);
