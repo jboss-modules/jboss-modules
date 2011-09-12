@@ -456,6 +456,14 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
             }
         }
         // no deadlock risk!  Either the lock isn't held, or we're inside the class loader thread.
+        if (className.charAt(0) == '[') {
+            // Use Class.forName to load the array type
+            final Class<?> array = Class.forName(className, false, this);
+            if (resolve) {
+                resolveClass(array);
+            }
+            return array;
+        }
         return findClass(className, exportsOnly, resolve);
     }
 
