@@ -46,8 +46,10 @@ final class SystemLocalLoader implements LocalLoader {
         final Set<String> jarSet = new FastCopyHashSet<String>(1024);
         final String sunBootClassPath = AccessController.doPrivileged(new PropertyReadAction("sun.boot.class.path"));
         final String javaClassPath = AccessController.doPrivileged(new PropertyReadAction("java.class.path"));
+        final String extDirs = AccessController.doPrivileged(new PropertyReadAction("java.ext.dirs"));
         processClassPathItem(sunBootClassPath, jarSet, pathSet);
         processClassPathItem(javaClassPath, jarSet, pathSet);
+        processClassPathItem(extDirs, jarSet, pathSet);
         this.pathSet = pathSet;
     }
 
@@ -103,28 +105,36 @@ final class SystemLocalLoader implements LocalLoader {
                 if (file.isDirectory()) {
                     processDirectory0(pathSet, file);
                 } else {
-                    try {
-                        final ZipFile zipFile = new ZipFile(file);
-                        try {
-                            final Enumeration<? extends ZipEntry> entries = zipFile.entries();
-                            while (entries.hasMoreElements()) {
-                                final ZipEntry entry = entries.nextElement();
-                                final String name = entry.getName();
-                                final int lastSlash = name.lastIndexOf('/');
-                                if (lastSlash != -1) {
-                                    pathSet.add(name.substring(0, lastSlash));
-                                }
-                            }
-                        } finally {
-                            zipFile.close();
-                        }
-                    } catch (IOException ex) {
-                        // ignore
-                    }
+                    processZip(pathSet, file);
                 }
             }
             s = e + 1;
         } while (e != -1);
+    }
+
+    /**
+     * @param pathSet
+     * @param file
+     */
+    private static void processZip(Set<String> pathSet, File file) {
+        try {
+            final ZipFile zipFile = new ZipFile(file);
+            try {
+                final Enumeration<? extends ZipEntry> entries = zipFile.entries();
+                while (entries.hasMoreElements()) {
+                    final ZipEntry entry = entries.nextElement();
+                    final String name = entry.getName();
+                    final int lastSlash = name.lastIndexOf('/');
+                    if (lastSlash != -1) {
+                        pathSet.add(name.substring(0, lastSlash));
+                    }
+                }
+            } finally {
+                zipFile.close();
+            }
+        } catch (IOException ex) {
+            // ignore
+        }
     }
 
     private static void processDirectory0(final Set<String> pathSet, final File file) {
@@ -132,8 +142,12 @@ final class SystemLocalLoader implements LocalLoader {
             if (entry.isDirectory()) {
                 processDirectory1(pathSet, entry, file.getPath());
             } else {
-                final String parent = entry.getParent();
-                if (parent != null) pathSet.add(parent);
+                if (entry.getName().endsWith(".jar"))
+                    processZip(pathSet, entry);
+                else {
+                    final String parent = entry.getParent();
+                    if (parent != null) pathSet.add(parent);
+                }
             }
         }
     }
@@ -143,13 +157,17 @@ final class SystemLocalLoader implements LocalLoader {
             if (entry.isDirectory()) {
                 processDirectory1(pathSet, entry, pathBase);
             } else {
-                String packagePath = entry.getParent();
-                if (packagePath != null) {
-                    packagePath = packagePath.substring(pathBase.length()).replace('\\', '/');;
-                    if(packagePath.startsWith("/")) {
-                        packagePath = packagePath.substring(1);
+                if (entry.getName().endsWith(".jar"))
+                    processZip(pathSet, entry);
+                else {
+                    String packagePath = entry.getParent();
+                    if (packagePath != null) {
+                        packagePath = packagePath.substring(pathBase.length()).replace('\\', '/');;
+                        if(packagePath.startsWith("/")) {
+                            packagePath = packagePath.substring(1);
+                        }
+                        pathSet.add(packagePath);
                     }
-                    pathSet.add(packagePath);
                 }
             }
         }
