@@ -22,6 +22,7 @@
 
 package org.jboss.modules;
 
+import java.lang.reflect.Method;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -43,6 +44,9 @@ public class ClassPathModuleLoaderTest extends AbstractModuleTestCase {
 
     @BeforeClass
     public static void beforeClass() throws Exception {
+        final Method method = ModuleLoader.class.getDeclaredMethod("installMBeanServer");
+        method.setAccessible(true);
+        method.invoke(null);
     }
 
     @Test

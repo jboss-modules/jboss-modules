@@ -464,6 +464,10 @@ class FastCopyHashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable, Se
         return hashCode;
     }
 
+    public Object[] getRawArray() {
+        return table;
+    }
+
     private class KeyIterator implements Iterator<E> {
 
         private int next = 0;

@@ -141,7 +141,7 @@ public class ModuleExportTest extends AbstractModuleTestCase {
         Module module = moduleLoader.loadModule(MODULE_A);
         module.getClassLoader().loadClass(ImportedClass.class.getName());
 
-        final Field pathsField = Module.class.getDeclaredField("paths");
+        final Field pathsField = Module.class.getDeclaredField("linkage");
         pathsField.setAccessible(true);
         final Object paths = pathsField.get(module);
         final Field allPathsField = paths.getClass().getDeclaredField("allPaths");

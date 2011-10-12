@@ -169,15 +169,11 @@ public abstract class ModuleLoader {
      * @throws ModuleLoadException if the Module can not be loaded
      */
     public final Module loadModule(ModuleIdentifier identifier) throws ModuleLoadException {
-        return loadModule(identifier, new FastCopyHashSet<Module>());
-    }
-
-    final Module loadModule(ModuleIdentifier identifier, Set<Module> visited) throws ModuleLoadException {
         final Module module = preloadModule(identifier);
         if (module == null) {
             throw new ModuleNotFoundException(identifier.toString());
         }
-        module.linkExportsIfNeeded(visited);
+        module.relinkIfNecessary();
         return module;
     }
 
@@ -351,7 +347,7 @@ public abstract class ModuleLoader {
 
         final Module module = new Module(moduleSpec, this, futureModule);
         module.getClassLoaderPrivate().recalculate();
-        module.initializeDependencies(Arrays.asList(moduleSpec.getDependencies()));
+        module.setDependencies(Arrays.asList(moduleSpec.getDependencies()));
         log.moduleDefined(moduleIdentifier, this);
         try {
             futureModule.setModule(module);
@@ -432,6 +428,7 @@ public abstract class ModuleLoader {
             throw new SecurityException("Module redefinition requires canRedefineModule permission");
 
         module.setDependencies(dependencies);
+        module.relinkIfNecessary();
     }
 
     private static final class FutureModule {
@@ -655,7 +652,7 @@ public abstract class ModuleLoader {
             final Module module = loadModule(name, loader);
             final Map<String, List<LocalLoader>> paths;
             try {
-                paths = module.getPaths(exports);
+                paths = module.getPathsUnchecked(exports);
             } catch (ModuleLoadError e) {
                 throw new IllegalArgumentException("Error loading module " + name + ": " + e.toString());
             }

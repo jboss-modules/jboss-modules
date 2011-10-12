@@ -95,7 +95,7 @@ final class ClassPathModuleLoader extends ModuleLoader {
 
     @Override
     public String toString() {
-        return "Class path module loader";
+        return "Class path module loader for path '" + classPath + "'";
     }
 
     /**

@@ -31,22 +31,16 @@ import java.net.URLConnection;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
-import org.jboss.modules.filter.ClassFilter;
-import org.jboss.modules.filter.ClassFilters;
 import org.jboss.modules.filter.PathFilter;
 import org.jboss.modules.filter.PathFilters;
 import org.jboss.modules.log.ModuleLogger;
@@ -158,27 +152,17 @@ public final class Module {
     // mutable properties
 
     /**
-     * The complete collection of all paths.  Initially, the paths are uninitialized.
+     * The linkage state.
      */
-    private volatile Paths<LocalLoader, Dependency> paths = Paths.none();
+    private volatile Linkage linkage = Linkage.NONE;
 
     // private constants
-
-    private static final Dependency[] NO_DEPENDENCIES = new Dependency[0];
 
     private static final RuntimePermission GET_CLASS_LOADER = new RuntimePermission("getClassLoader");
     private static final RuntimePermission GET_BOOT_MODULE_LOADER = new RuntimePermission("getBootModuleLoader");
     private static final RuntimePermission ACCESS_MODULE_LOGGER = new RuntimePermission("accessModuleLogger");
     private static final RuntimePermission ADD_CONTENT_HANDLER_FACTORY = new RuntimePermission("addContentHandlerFactory");
     private static final RuntimePermission ADD_URL_STREAM_HANDLER_FACTORY = new RuntimePermission("addURLStreamHandlerFactory");
-
-    private static final AtomicReferenceFieldUpdater<Module, Paths<LocalLoader, Dependency>> pathsUpdater
-            = unsafeCast(AtomicReferenceFieldUpdater.newUpdater(Module.class, Paths.class, "paths"));
-
-    @SuppressWarnings({ "unchecked" })
-    private static <A, B> AtomicReferenceFieldUpdater<A, B> unsafeCast(AtomicReferenceFieldUpdater<?, ?> updater) {
-        return (AtomicReferenceFieldUpdater<A, B>) updater;
-    }
 
     /**
      * Construct a new instance from a module specification.
@@ -209,7 +193,7 @@ public final class Module {
     }
 
     Dependency[] getDependencies() {
-        return paths.getSourceList(NO_DEPENDENCIES);
+        return linkage.getSourceList();
     }
 
     ModuleClassLoader getClassLoaderPrivate() {
@@ -329,7 +313,7 @@ public final class Module {
      * @return the paths that are exported by this module
      */
     public Set<String> getExportedPaths() {
-        return Collections.unmodifiableSet(getPaths(true).keySet());
+        return Collections.unmodifiableSet(getPathsUnchecked(true).keySet());
     }
 
     /**
@@ -502,7 +486,7 @@ public final class Module {
             }
         }
         final String path = pathOfClass(className);
-        final Map<String, List<LocalLoader>> paths = getPaths(exportsOnly);
+        final Map<String, List<LocalLoader>> paths = getPathsUnchecked(exportsOnly);
         final List<LocalLoader> loaders = paths.get(path);
         if (loaders != null) {
             Class<?> clazz;
@@ -535,7 +519,7 @@ public final class Module {
         }
         log.trace("Attempting to find resource %s in %s", name, this);
         final String path = pathOf(name);
-        final Map<String, List<LocalLoader>> paths = getPaths(exportsOnly);
+        final Map<String, List<LocalLoader>> paths = getPathsUnchecked(exportsOnly);
         final List<LocalLoader> loaders = paths.get(path);
         if (loaders != null) {
             for (LocalLoader loader : loaders) {
@@ -574,7 +558,7 @@ public final class Module {
         }
         log.trace("Attempting to find all resources %s in %s", name, this);
         final String path = pathOf(name);
-        final Map<String, List<LocalLoader>> paths = getPaths(exportsOnly);
+        final Map<String, List<LocalLoader>> paths = getPathsUnchecked(exportsOnly);
         final List<LocalLoader> loaders = paths.get(path);
 
         final List<URL> list = new ArrayList<URL>();
@@ -758,89 +742,41 @@ public final class Module {
 
     // Linking and resolution
 
-    Paths<LocalLoader, Dependency> linkExports(final Paths<LocalLoader, Dependency> paths) throws ModuleLoadException {
-        return linkExports(paths, new FastCopyHashSet<Module>());
-    }
+    static final class Visited {
+        private final Module module;
+        private final FastCopyHashSet<PathFilter> filters;
+        private final int hashCode;
 
-    Paths<LocalLoader, Dependency> linkExports(final Paths<LocalLoader, Dependency> paths, Set<Module> visited) throws ModuleLoadException {
-        return linkExports(paths, paths.getSourceList(NO_DEPENDENCIES), visited);
-    }
-
-    Paths<LocalLoader, Dependency> linkExports(final Paths<LocalLoader, Dependency> paths, final Dependency[] dependencies, final Set<Module> visited) throws ModuleLoadException {
-
-        if (! visited.add(this)) {
-            throw new ModuleLoadException("Circular export path in " + identifier);
+        Visited(final Module module, final FastCopyHashSet<PathFilter> filters) {
+            this.module = module;
+            this.filters = filters;
+            hashCode = filters.hashCode() * 13 + module.hashCode();
         }
 
-        final Map<String, List<LocalLoader>> newMap = new HashMap<String, List<LocalLoader>>();
+        public int hashCode() {
+            return hashCode;
+        }
 
-        // Iterate dependencies and get their export paths.
+        public boolean equals(Object other) {
+            return other instanceof Visited && equals((Visited)other);
+        }
+
+        public boolean equals(Visited other) {
+            return this == other || other != null && module == other.module && filters.equals(other.filters);
+        }
+    }
+
+    void addPaths(Dependency[] dependencies, Map<String, List<LocalLoader>> map) throws ModuleLoadException {
+        final Set<Visited> visited = new FastCopyHashSet<Visited>();
         for (Dependency dependency : dependencies) {
-            final PathFilter exportFilter = dependency.getExportFilter();
-            final PathFilter importFilter = dependency.getImportFilter();
-            final ClassFilter classExportFilter = dependency.getClassExportFilter();
-            final PathFilter resourceExportFilter = dependency.getResourceExportFilter();
-            if (importFilter == PathFilters.rejectAll() || exportFilter == PathFilters.rejectAll()) {
-                // we do not export anything from this dependency
-                continue;
-            }
-            final boolean skipFilters = classExportFilter == ClassFilters.acceptAll() && resourceExportFilter == PathFilters.acceptAll();
-            Map<LocalLoader, LocalLoader> filteredLoaders = null;
-
-            if (dependency instanceof LocalDependency) {
-                final LocalDependency localDependency = (LocalDependency) dependency;
-                final LocalLoader localLoader;
-                final LocalLoader localDependencyLocalLoader = localDependency.getLocalLoader();
-                if (skipFilters) {
-                    // do not pay the cost if it can be avoided
-                    localLoader = localDependencyLocalLoader;
-                } else {
-                    if (filteredLoaders == null) {
-                        filteredLoaders = new IdentityHashMap<LocalLoader, LocalLoader>();
-                    }
-                    if (filteredLoaders.containsKey(localDependencyLocalLoader)) {
-                        localLoader = filteredLoaders.get(localDependencyLocalLoader);
-                    } else {
-                        localLoader = LocalLoaders.createFilteredLocalLoader(classExportFilter, resourceExportFilter, localDependencyLocalLoader);
-                        filteredLoaders.put(localDependencyLocalLoader, localLoader);
-                    }
-                }
-                for (String path : localDependency.getPaths()) {
-                    if (importFilter.accept(path) && exportFilter.accept(path)) {
-                        addToMapList(newMap, path, localLoader);
-                    }
-                }
-            } else if (dependency instanceof ModuleClassLoaderDependency) {
-                final ModuleClassLoaderDependency moduleClassLoaderDependency = (ModuleClassLoaderDependency) dependency;
-                final LocalLoader localLoader;
-                final LocalLoader localDependencyLocalLoader = moduleClassLoaderDependency.getLocalLoader();
-                if (skipFilters) {
-                    // do not pay the cost if it can be avoided
-                    localLoader = localDependencyLocalLoader;
-                } else {
-                    if (filteredLoaders == null) {
-                        filteredLoaders = new IdentityHashMap<LocalLoader, LocalLoader>();
-                    }
-                    if (filteredLoaders.containsKey(localDependencyLocalLoader)) {
-                        localLoader = filteredLoaders.get(localDependencyLocalLoader);
-                    } else {
-                        localLoader = LocalLoaders.createFilteredLocalLoader(classExportFilter, resourceExportFilter, localDependencyLocalLoader);
-                        filteredLoaders.put(localDependencyLocalLoader, localLoader);
-                    }
-                }
-                for (String path : moduleClassLoaderDependency.getPaths()) {
-                    if (importFilter.accept(path) && exportFilter.accept(path)) {
-                        addToMapList(newMap, path, localLoader);
-                    }
-                }
-            } else if (dependency instanceof ModuleDependency) {
+            if (dependency instanceof ModuleDependency) {
                 final ModuleDependency moduleDependency = (ModuleDependency) dependency;
-                final Module module;
                 final ModuleLoader moduleLoader = moduleDependency.getModuleLoader();
                 final ModuleIdentifier id = moduleDependency.getIdentifier();
+                final Module module;
 
                 try {
-                    module = moduleLoader.loadModule(id, visited);
+                    module = moduleLoader.preloadModule(id);
                 } catch (ModuleLoadException ex) {
                     if (moduleDependency.isOptional()) {
                         continue;
@@ -848,117 +784,71 @@ public final class Module {
                         throw ex;
                     }
                 }
+                if (module == null) {
+                    if (!moduleDependency.isOptional()) {
+                        throw new ModuleNotFoundException(id.toString());
+                    }
+                    continue;
+                }
 
-                // Get the set that they export
-                final Map<String, List<LocalLoader>> pathsMap = module.getPaths(true);
-                for (String path : pathsMap.keySet()) {
-                    // Check it against what we import and export
-                    if (importFilter.accept(path) && exportFilter.accept(path)) {
-                        final List<LocalLoader> loaders = pathsMap.get(path);
-                        if (skipFilters) {
-                            addToMapList(newMap, path, loaders);
-                        } else {
-                            if (filteredLoaders == null) {
-                                filteredLoaders = new IdentityHashMap<LocalLoader, LocalLoader>();
-                            }
-                            for (LocalLoader loader : loaders) {
-                                if (filteredLoaders.containsKey(loader)) {
-                                    addToMapList(newMap, path, filteredLoaders.get(loader));
-                                } else {
-                                    LocalLoader filtered = LocalLoaders.createFilteredLocalLoader(classExportFilter, resourceExportFilter, loader);
-                                    addToMapList(newMap, path, filtered);
-                                    filteredLoaders.put(loader, filtered);
-                                }
-                            }
+                final PathFilter importFilter = dependency.getImportFilter();
+                final FastCopyHashSet<PathFilter> filterStack = new FastCopyHashSet<PathFilter>();
+                filterStack.add(importFilter);
+                module.addExportedPaths(module.getDependencies(), map, filterStack, visited);
+            } else if (dependency instanceof ModuleClassLoaderDependency) {
+                final ModuleClassLoaderDependency classLoaderDependency = (ModuleClassLoaderDependency) dependency;
+                final LocalLoader localLoader = classLoaderDependency.getLocalLoader();
+                final PathFilter importFilter = classLoaderDependency.getImportFilter();
+                final Set<String> paths = classLoaderDependency.getPaths();
+                for (String path : paths) {
+                    if (importFilter.accept(path)) {
+                        List<LocalLoader> list = map.get(path);
+                        if (list == null) {
+                            map.put(path, list = new ArrayList<LocalLoader>());
+                            list.add(localLoader);
+                        } else if (! list.contains(localLoader)) {
+                            list.add(localLoader);
                         }
                     }
                 }
-            } else {
-                throw new IllegalArgumentException("Invalid dependency " + dependency + " encountered");
+            } else if (dependency instanceof LocalDependency) {
+                final LocalDependency localDependency = (LocalDependency) dependency;
+                final LocalLoader localLoader = localDependency.getLocalLoader();
+                final PathFilter importFilter = localDependency.getImportFilter();
+                final Set<String> paths = localDependency.getPaths();
+                for (String path : paths) {
+                    if (importFilter.accept(path)) {
+                        List<LocalLoader> list = map.get(path);
+                        if (list == null) {
+                            map.put(path, list = new ArrayList<LocalLoader>());
+                            list.add(localLoader);
+                        } else if (! list.contains(localLoader)) {
+                            list.add(localLoader);
+                        }
+                    }
+                }
             }
+            // else unknown dep type so just skip
         }
-
-        // Final optimizing step
-        removeDuplicatesFromLists(newMap.values());
-
-        final Paths<LocalLoader, Dependency> newPaths = new Paths<LocalLoader, Dependency>(dependencies, null, newMap);
-        pathsUpdater.compareAndSet(this, paths, newPaths);
-        visited.remove(this);
-        return newPaths;
     }
 
-    private void linkImports(final Paths<LocalLoader, Dependency> paths) throws ModuleLoadException {
-        final Set<Module> visited = new FastCopyHashSet<Module>();
-        visited.add(this);
-        final Map<String, List<LocalLoader>> newMap = new HashMap<String, List<LocalLoader>>();
+    void addExportedPaths(Dependency[] dependencies, Map<String, List<LocalLoader>> map) throws ModuleLoadException {
+        addExportedPaths(dependencies, map, new FastCopyHashSet<PathFilter>(), new FastCopyHashSet<Visited>());
+    }
 
-        final Dependency[] dependencies = paths.getSourceList(NO_DEPENDENCIES);
-
-        // Iterate dependencies and get their export paths.
+    void addExportedPaths(Dependency[] dependencies, Map<String, List<LocalLoader>> map, FastCopyHashSet<PathFilter> filterStack, Set<Visited> visited) throws ModuleLoadException {
+        if (!visited.add(new Visited(this, filterStack))) {
+            return;
+        }
         for (Dependency dependency : dependencies) {
-            final PathFilter importFilter = dependency.getImportFilter();
-            if (importFilter == PathFilters.rejectAll()) {
-                // we do not import anything from this dependency
-                // kind of a silly dependency, isn't it?
-                continue;
-            }
-            final ClassFilter classImportFilter = dependency.getClassImportFilter();
-            final PathFilter resourceImportFilter = dependency.getResourceImportFilter();
-            final boolean skipFilters = classImportFilter == ClassFilters.acceptAll() && resourceImportFilter == PathFilters.acceptAll();
-            Map<LocalLoader, LocalLoader> filteredLoaders = null;
-
-            if (dependency instanceof LocalDependency) {
-                final LocalDependency localDependency = (LocalDependency) dependency;
-                final LocalLoader localLoader;
-                LocalLoader localDependencyLocalLoader = localDependency.getLocalLoader();
-                if (skipFilters) {
-                    localLoader = localDependencyLocalLoader;
-                } else {
-                    if (filteredLoaders == null) {
-                        filteredLoaders = new IdentityHashMap<LocalLoader, LocalLoader>();
-                    }
-                    if (filteredLoaders.containsKey(localDependencyLocalLoader)) {
-                        localLoader = filteredLoaders.get(localDependencyLocalLoader);
-                    } else {
-                        localLoader = LocalLoaders.createFilteredLocalLoader(classImportFilter, resourceImportFilter, localDependencyLocalLoader);
-                        filteredLoaders.put(localDependencyLocalLoader, localLoader);
-                    }
-                }
-                for (String path : localDependency.getPaths()) {
-                    if (importFilter.accept(path)) {
-                        addToMapList(newMap, path, localLoader);
-                    }
-                }
-            } else if (dependency instanceof ModuleClassLoaderDependency) {
-                final ModuleClassLoaderDependency moduleClassLoaderDependency = (ModuleClassLoaderDependency) dependency;
-                final LocalLoader localLoader;
-                LocalLoader localDependencyLocalLoader = moduleClassLoaderDependency.getLocalLoader();
-                if (skipFilters) {
-                    localLoader = localDependencyLocalLoader;
-                } else {
-                    if (filteredLoaders == null) {
-                        filteredLoaders = new IdentityHashMap<LocalLoader, LocalLoader>();
-                    }
-                    if (filteredLoaders.containsKey(localDependencyLocalLoader)) {
-                        localLoader = filteredLoaders.get(localDependencyLocalLoader);
-                    } else {
-                        localLoader = LocalLoaders.createFilteredLocalLoader(classImportFilter, resourceImportFilter, localDependencyLocalLoader);
-                        filteredLoaders.put(localDependencyLocalLoader, localLoader);
-                    }
-                }
-                for (String path : moduleClassLoaderDependency.getPaths()) {
-                    if (importFilter.accept(path)) {
-                        addToMapList(newMap, path, localLoader);
-                    }
-                }
-            } else if (dependency instanceof ModuleDependency) {
+            if (dependency instanceof ModuleDependency) {
                 final ModuleDependency moduleDependency = (ModuleDependency) dependency;
-                final Module module;
                 final ModuleLoader moduleLoader = moduleDependency.getModuleLoader();
                 final ModuleIdentifier id = moduleDependency.getIdentifier();
+                final Module module;
 
                 try {
-                    module = moduleLoader.loadModule(id, visited);
+                    module = moduleLoader.preloadModule(id);
                 } catch (ModuleLoadException ex) {
                     if (moduleDependency.isOptional()) {
                         continue;
@@ -966,117 +856,154 @@ public final class Module {
                         throw ex;
                     }
                 }
+                if (module == null) {
+                    if (!moduleDependency.isOptional()) {
+                        throw new ModuleNotFoundException(id.toString());
+                    }
+                    continue;
+                }
 
-                // Get the set that they export
-                final Map<String, List<LocalLoader>> pathsMap = module.getPaths(true);
-                for (String path : pathsMap.keySet()) {
-                    // Check it against what we import
-                    if (importFilter.accept(path)) {
-                        final List<LocalLoader> loaders = pathsMap.get(path);
-                        if (skipFilters) {
-                            addToMapList(newMap, path, loaders);
-                        } else {
-                            if (filteredLoaders == null) {
-                                filteredLoaders = new IdentityHashMap<LocalLoader, LocalLoader>();
-                            }
-                            for (LocalLoader loader : loaders) {
-                                if (filteredLoaders.containsKey(loader)) {
-                                    addToMapList(newMap, path, filteredLoaders.get(loader));
-                                } else {
-                                    LocalLoader filtered = LocalLoaders.createFilteredLocalLoader(classImportFilter, resourceImportFilter, loader);
-                                    addToMapList(newMap, path, filtered);
-                                    filteredLoaders.put(loader, filtered);
-                                }
-                            }
+                final PathFilter exportFilter = dependency.getExportFilter();
+                if (exportFilter != PathFilters.rejectAll()) {
+                    final PathFilter importFilter = dependency.getImportFilter();
+                    if (filterStack.contains(importFilter) && filterStack.contains(exportFilter)) {
+                        module.addExportedPaths(module.getDependencies(), map, filterStack, visited);
+                    } else {
+                        final FastCopyHashSet<PathFilter> clone = filterStack.clone();
+                        clone.add(importFilter);
+                        clone.add(exportFilter);
+                        module.addExportedPaths(module.getDependencies(), map, clone, visited);
+                    }
+                }
+            } else if (dependency instanceof ModuleClassLoaderDependency) {
+                final ModuleClassLoaderDependency classLoaderDependency = (ModuleClassLoaderDependency) dependency;
+                final LocalLoader localLoader = classLoaderDependency.getLocalLoader();
+                final Set<String> paths = classLoaderDependency.getPaths();
+                for (String path : paths) {
+                    boolean accept = true;
+                    for (Object filter : filterStack.getRawArray()) {
+                        if (filter != null && ! ((PathFilter)filter).accept(path)) {
+                            accept = false; break;
+                        }
+                    }
+                    if (accept && classLoaderDependency.getImportFilter().accept(path) && classLoaderDependency.getExportFilter().accept(path)) {
+                        List<LocalLoader> list = map.get(path);
+                        if (list == null) {
+                            map.put(path, list = new ArrayList<LocalLoader>(1));
+                            list.add(localLoader);
+                        } else if (! list.contains(localLoader)) {
+                            list.add(localLoader);
                         }
                     }
                 }
-            } else {
-                throw new IllegalArgumentException("Invalid dependency " + dependency + " encountered");
-            }
-        }
-
-        // Final optimizing step
-        removeDuplicatesFromLists(newMap.values());
-
-        final Paths<LocalLoader, Dependency> newPaths = new Paths<LocalLoader, Dependency>(dependencies, newMap, paths.getExportedPaths());
-        pathsUpdater.compareAndSet(this, paths, newPaths);
-    }
-
-    Map<String, List<LocalLoader>> getPaths(final boolean exportsOnly) {
-        final Paths<LocalLoader, Dependency> paths = this.paths;
-        Map<String, List<LocalLoader>> map = paths.getPaths(exportsOnly);
-        if (map != null) {
-            return map;
-        }
-        if (exportsOnly) {
-            try {
-                linkExports(paths);
-            } catch (ModuleLoadException e) {
-                log.trace(e, "Failed to link exports for %s", this);
-                throw e.toError();
-            }
-        } else {
-            try {
-                linkImports(paths);
-            } catch (ModuleLoadException e) {
-                log.trace(e, "Failed to link imports for %s", this);
-                throw e.toError();
-            }
-        }
-        return getPaths(exportsOnly);
-    }
-
-    private static <K, V> void addToMapList(Map<K, List<V>> map, K key, V item) {
-        List<V> list = map.get(key);
-        if (list == null) {
-            list = new ArrayList<V>();
-            map.put(key, list);
-        }
-        list.add(item);
-    }
-
-    private static <K, V> void addToMapList(Map<K, List<V>> map, K key, List<V> items) {
-        List<V> list = map.get(key);
-        if (list == null) {
-            list = new ArrayList<V>();
-            map.put(key, list);
-        }
-        list.addAll(items);
-    }
-
-    private static <E> void removeDuplicatesFromLists(Collection<List<E>> lists) {
-        Set<E> set = new IdentityHashSet<E>(128);
-        for (List<E> list: lists) {
-            if (list.size() <= 1) {
-                continue;
-            }
-            for (Iterator<E> iterator = list.iterator(); iterator.hasNext();) {
-                if (!set.add(iterator.next())) {
-                    iterator.remove();
+            } else if (dependency instanceof LocalDependency) {
+                final LocalDependency localDependency = (LocalDependency) dependency;
+                final LocalLoader localLoader = localDependency.getLocalLoader();
+                final Set<String> paths = localDependency.getPaths();
+                for (String path : paths) {
+                    boolean accept = true;
+                    for (Object filter : filterStack.getRawArray()) {
+                        if (filter != null && ! ((PathFilter)filter).accept(path)) {
+                            accept = false; break;
+                        }
+                    }
+                    if (accept && localDependency.getImportFilter().accept(path) && localDependency.getExportFilter().accept(path)) {
+                        List<LocalLoader> list = map.get(path);
+                        if (list == null) {
+                            map.put(path, list = new ArrayList<LocalLoader>(1));
+                            list.add(localLoader);
+                        } else if (! list.contains(localLoader)) {
+                            list.add(localLoader);
+                        }
+                    }
                 }
             }
-            set.clear();
+            // else unknown dep type so just skip
         }
     }
 
-    void linkExportsIfNeeded(final Set<Module> visited) throws ModuleLoadException {
-        final Paths<LocalLoader, Dependency> paths = this.paths;
-        if (paths.getExportedPaths() == null) {
-            linkExports(paths, visited);
+    Map<String, List<LocalLoader>> getPaths(final boolean exports) throws ModuleLoadException {
+        Linkage linkage = this.linkage;
+        Linkage.State state = linkage.getState();
+        if (state == Linkage.State.LINKED) {
+            return linkage.getPaths(exports);
         }
+        // slow path loop
+        boolean intr = false;
+        try {
+            for (;;) {
+                synchronized (this) {
+                    linkage = this.linkage;
+                    state = linkage.getState();
+                    while (state == Linkage.State.LINKING || state == Linkage.State.NEW) try {
+                        wait();
+                        linkage = this.linkage;
+                        state = linkage.getState();
+                    } catch (InterruptedException e) {
+                        intr = true;
+                    }
+                    if (state == Linkage.State.LINKED) {
+                        return linkage.getPaths(exports);
+                    }
+                    this.linkage = linkage = new Linkage(linkage.getSourceList(), Linkage.State.LINKING);
+                    // fall out and link
+                }
+                link(linkage);
+            }
+        } finally {
+            if (intr) {
+                Thread.currentThread().interrupt();
+            }
+        }
+    }
+
+    Map<String, List<LocalLoader>> getPathsUnchecked(final boolean export) {
+        try {
+            return getPaths(export);
+        } catch (ModuleLoadException e) {
+            throw e.toError();
+        }
+    }
+
+    void link(final Linkage linkage) throws ModuleLoadException {
+        final HashMap<String, List<LocalLoader>> importsMap = new HashMap<String, List<LocalLoader>>();
+        final HashMap<String, List<LocalLoader>> exportsMap = new HashMap<String, List<LocalLoader>>();
+        final Dependency[] dependencies = linkage.getSourceList();
+        addPaths(dependencies, importsMap);
+        addExportedPaths(dependencies, exportsMap);
+        synchronized (this) {
+            if (this.linkage == linkage) {
+                this.linkage = new Linkage(this.linkage.getSourceList(), Linkage.State.LINKED, importsMap, exportsMap);
+                notifyAll();
+            }
+            // else all our efforts were just wasted since someone changed the deps in the meantime
+        }
+    }
+
+    void relinkIfNecessary() throws ModuleLoadException {
+        Linkage linkage = this.linkage;
+        if (linkage.getState() != Linkage.State.UNLINKED) {
+            return;
+        }
+        synchronized (this) {
+            linkage = this.linkage;
+            if (linkage.getState() != Linkage.State.UNLINKED) {
+                return;
+            }
+            this.linkage = linkage = new Linkage(linkage.getSourceList(), Linkage.State.LINKING);
+        }
+        link(linkage);
     }
 
     void relink() throws ModuleLoadException {
-        linkImports(linkExports(paths));
-    }
-
-    void initializeDependencies(final List<DependencySpec> dependencySpecs) throws ModuleLoadException {
-        paths = new Paths<LocalLoader, Dependency>(calculateDependencies(dependencySpecs), null, null);
+        link(linkage);
     }
 
     void setDependencies(final List<DependencySpec> dependencySpecs) throws ModuleLoadException {
-        linkExports(paths, calculateDependencies(dependencySpecs), new FastCopyHashSet<Module>());
+        synchronized (this) {
+            linkage = new Linkage(calculateDependencies(dependencySpecs), Linkage.State.UNLINKED, null, null);
+            notifyAll();
+        }
     }
 
     private Dependency[] calculateDependencies(final List<DependencySpec> dependencySpecs) {
@@ -1094,7 +1021,7 @@ public final class Module {
     }
 
     Package getPackage(final String name) {
-        List<LocalLoader> loaders = getPaths(false).get(name.replace('.', '/'));
+        List<LocalLoader> loaders = getPathsUnchecked(false).get(name.replace('.', '/'));
         if (loaders != null) for (LocalLoader localLoader : loaders) {
             Package pkg = localLoader.loadPackageLocal(name);
             if (pkg != null) return pkg;
@@ -1104,7 +1031,7 @@ public final class Module {
 
     Package[] getPackages() {
         final ArrayList<Package> packages = new ArrayList<Package>();
-        final Map<String, List<LocalLoader>> allPaths = getPaths(false);
+        final Map<String, List<LocalLoader>> allPaths = getPathsUnchecked(false);
         next: for (String path : allPaths.keySet()) {
             String packageName = path.replace('/', '.');
             for (LocalLoader loader : allPaths.get(path)) {
