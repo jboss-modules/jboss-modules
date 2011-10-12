@@ -73,14 +73,23 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
          the Package.pkgs lock and one holds the Classloader lock.
         */
         Package.getPackages();
-        String locklessDefault = "false";
-        try {
-            Class.forName("sun.misc.Unsafe", false, null);
-            locklessDefault = AccessController.doPrivileged(new PropertyReadAction("java.vm.name", "")).toUpperCase(Locale.US).contains("JROCKIT") ? "false" : "true";
-        } catch (Throwable t) {
-            // ignored
+        // Determine whether to run in lockless mode
+        boolean locklessDefault = false;
+        if (AccessController.doPrivileged(new PropertyReadAction("java.specification.version", "1.6")).equals("1.6")) {
+            // For 1.6, we require Unsafe to perform lockless stuff
+            try {
+                Class.forName("sun.misc.Unsafe", false, null);
+                locklessDefault = true;
+            } catch (Throwable t) {
+                // ignored
+            }
         }
-        LOCKLESS = Boolean.parseBoolean(AccessController.doPrivileged(new PropertyReadAction("jboss.modules.lockless", locklessDefault)));
+        // Make sure we're not running JRockit, which doesn't like lockless mode
+        if (AccessController.doPrivileged(new PropertyReadAction("java.vm.name", "")).toUpperCase(Locale.US).contains("JROCKIT")) {
+            locklessDefault = false;
+        }
+        // But the user is always right, so if they override, respect it
+        LOCKLESS = Boolean.parseBoolean(AccessController.doPrivileged(new PropertyReadAction("jboss.modules.lockless", Boolean.toString(locklessDefault))));
         Method method = null;
         try {
             method = ClassLoader.class.getDeclaredMethod("registerAsParallelCapable");
@@ -93,6 +102,15 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
      * An empty enumeration, for subclasses to use if desired.
      */
     protected static final Enumeration<URL> EMPTY_ENUMERATION = Collections.enumeration(Collections.<URL>emptySet());
+
+    /**
+     * The thread-local lock for JDK7 lockless behavior.
+     */
+    private static final ThreadLocal<Object> OBJ = new ThreadLocal<Object>() {
+        protected Object initialValue() {
+            return new Object();
+        }
+    };
 
     final ConcurrentMap<Object, Object> localStorage = new UnlockedReadHashMap<Object, Object>();
 
@@ -545,6 +563,18 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
         } finally {
             suppressor.remove();
         }
+    }
+
+    /**
+     * Get the lock to use for class loading operations.  Applies to JDK 1.7 only.
+     *
+     * @param className the class name
+     * @return the current thread
+     */
+    @SuppressWarnings("unused")
+    protected final Object getClassLoadingLock(String className) {
+        // todo: change 'this' to 'super.getClassLoadingLock(className)'
+        return LOCKLESS ? OBJ.get() : this;
     }
 
     static final class LoaderThreadHolder {

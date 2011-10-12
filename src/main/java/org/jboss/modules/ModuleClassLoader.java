@@ -164,25 +164,6 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         return localLoader;
     }
 
-    private static final ThreadLocal<Object> OBJ = new ThreadLocal<Object>() {
-        protected Object initialValue() {
-            return new Object();
-        }
-    };
-
-    /**
-     * Get the lock to use for class loading operations.  Our implementation is lockless,
-     * so return a per-thread object which will never contend.  Applies
-     * to JDK 1.7 only.
-     *
-     * @param className the class name
-     * @return the current thread
-     */
-    @SuppressWarnings("unused")
-    protected final Object getClassLoadingLock(String className) {
-        return OBJ.get();
-    }
-
     /** {@inheritDoc} */
     @Override
     protected final Class<?> findClass(String className, boolean exportsOnly, final boolean resolve) throws ClassNotFoundException {
