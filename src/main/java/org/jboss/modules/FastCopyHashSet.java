@@ -25,6 +25,7 @@ package org.jboss.modules;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.AbstractSet;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
@@ -93,6 +94,11 @@ class FastCopyHashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable, Se
      */
     private transient int modCount;
 
+    /**
+     * Accumulated hash code
+     */
+    private transient int hashCode;
+
     public FastCopyHashSet(int initialCapacity, float loadFactor) {
         if (initialCapacity < 0)
             throw new IllegalArgumentException("Can not have a negative size table!");
@@ -114,6 +120,7 @@ class FastCopyHashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable, Se
             loadFactor = fast.loadFactor;
             size = fast.size;
             threshold = fast.threshold;
+            hashCode = fast.hashCode;
         } else {
             loadFactor = DEFAULT_LOAD_FACTOR;
             init(set.size(), loadFactor);
@@ -214,6 +221,7 @@ class FastCopyHashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable, Se
 
         modCount++;
         table[index] = key;
+        hashCode += key.hashCode();
         if (++size >= threshold)
             resize(length);
 
@@ -275,6 +283,7 @@ class FastCopyHashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable, Se
 
             if (key.equals(e)) {
                 table[index] = null;
+                hashCode -= hash;
                 relocate(index);
                 modCount++;
                 size--;
@@ -318,7 +327,7 @@ class FastCopyHashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable, Se
         for (int i = 0; i < table.length; i++)
             table[i] = null;
 
-        size = 0;
+        size = hashCode = 0;
     }
 
     @SuppressWarnings("unchecked")
@@ -408,6 +417,51 @@ class FastCopyHashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable, Se
                 s.writeObject(e);
             }
         }
+    }
+
+    public boolean containsAll(final Collection<?> c) {
+        final E[] table = this.table;
+        for (E e : table) {
+            if (e != null) {
+                if (! c.contains(e)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    @SuppressWarnings("NonFinalFieldReferenceInEquals")
+    public boolean equals(final Object o) {
+        if (o == this)
+            return true;
+
+        if (! (o instanceof Set))
+            return false;
+        if (o instanceof FastCopyHashSet) {
+            final FastCopyHashSet<?> set = (FastCopyHashSet<?>) o;
+            if (hashCode != set.hashCode) {
+                return false;
+            }
+            if (table.length == set.table.length) {
+                return Arrays.equals(table, set.table);
+            }
+        }
+        Set<?> set = (Set<?>) o;
+        if (set.size() != size())
+            return false;
+        try {
+            return containsAll(set);
+        } catch (ClassCastException unused)   {
+            return false;
+        } catch (NullPointerException unused) {
+            return false;
+        }
+    }
+
+    @SuppressWarnings("NonFinalFieldReferencedInHashCode")
+    public int hashCode() {
+        return hashCode;
     }
 
     private class KeyIterator implements Iterator<E> {
