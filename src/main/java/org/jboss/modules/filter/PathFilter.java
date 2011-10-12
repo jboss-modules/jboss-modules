@@ -37,4 +37,20 @@ public interface PathFilter {
      * @return true if the path should be accepted, false if not
      */
     boolean accept(String path);
+
+    /**
+     * Calculate a unique hash code for this path filter.  Equal path filters must yield identical hash codes.
+     *
+     * @return the hash code
+     */
+    int hashCode();
+
+    /**
+     * Determine whether this filter is equal to another.  Filters must implement meaningful (non-identity) equality
+     * semantics.
+     *
+     * @param other the other object
+     * @return {@code true} if this filter is the same
+     */
+    boolean equals(Object other);
 }

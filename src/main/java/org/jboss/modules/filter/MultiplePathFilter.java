@@ -22,6 +22,8 @@
 
 package org.jboss.modules.filter;
 
+import java.util.Arrays;
+
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
@@ -29,11 +31,13 @@ final class MultiplePathFilter implements PathFilter {
     private final PathFilter[] filters;
     private final boolean[] includeFlag;
     private final boolean defaultVal;
+    private final int hashCode;
 
     MultiplePathFilter(final PathFilter[] filters, final boolean[] includeFlag, final boolean defaultVal) {
         this.filters = filters;
         this.includeFlag = includeFlag;
         this.defaultVal = defaultVal;
+        hashCode = Boolean.valueOf(defaultVal).hashCode() * 13 + (Arrays.hashCode(includeFlag) * 13 + (Arrays.hashCode(filters)));
     }
 
     public boolean accept(final String path) {
@@ -58,5 +62,17 @@ final class MultiplePathFilter implements PathFilter {
         builder.append("default ").append(defaultVal ? "accept" : "reject");
         builder.append('}');
         return builder.toString();
+    }
+
+    public int hashCode() {
+        return hashCode;
+    }
+
+    public boolean equals(Object other) {
+        return other instanceof MultiplePathFilter && equals((MultiplePathFilter)other);
+    }
+
+    public boolean equals(MultiplePathFilter other) {
+        return this == other || other != null && Arrays.equals(filters, other.filters) && Arrays.equals(includeFlag, other.includeFlag) && defaultVal == other.defaultVal;
     }
 }
