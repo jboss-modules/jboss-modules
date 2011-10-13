@@ -55,6 +55,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader {
     private final String rootName;
     private final URL rootUrl;
     private final String relativePath;
+    private final File fileOfJar;
 
     JarFileResourceLoader(final String rootName, final JarFile jarFile) {
         this(rootName, jarFile, null);
@@ -67,12 +68,13 @@ final class JarFileResourceLoader extends AbstractResourceLoader {
         if (rootName == null) {
             throw new IllegalArgumentException("rootName is null");
         }
+        fileOfJar = new File(jarFile.getName());
         this.jarFile = jarFile;
         this.rootName = rootName;
         final String realPath = relativePath == null ? null : PathUtils.canonicalize(relativePath);
         this.relativePath = realPath;
         try {
-            rootUrl = new URI("jar", new File(jarFile.getName()).toURI().toString() + (realPath == null ? "!/" : "!/" + realPath), null).toURL();
+            rootUrl = new URI("jar", fileOfJar.toURI().toString() + (realPath == null ? "!/" : "!/" + realPath), null).toURL();
         } catch (URISyntaxException e) {
             throw new IllegalArgumentException("Invalid root file specified", e);
         } catch (MalformedURLException e) {
@@ -191,9 +193,11 @@ final class JarFileResourceLoader extends AbstractResourceLoader {
         // First check for an external index
         final JarFile jarFile = this.jarFile;
         final String jarFileName = jarFile.getName();
+        final long jarModified = fileOfJar.lastModified();
         final File indexFile = new File(jarFileName + ".index");
         if (indexFile.exists()) {
-            try {
+            final long indexModified = indexFile.lastModified();
+            if (indexModified != 0L && jarModified != 0L && indexModified >= jarModified) try {
                 return readIndex(new FileInputStream(indexFile), index, relativePath);
             } catch (IOException e) {
                 index.clear();
@@ -202,10 +206,15 @@ final class JarFileResourceLoader extends AbstractResourceLoader {
         // Next check for an internal index
         JarEntry listEntry = jarFile.getJarEntry("META-INF/PATHS.LIST");
         if (listEntry != null) {
-            try {
-                return readIndex(jarFile.getInputStream(listEntry), index, relativePath);
-            } catch (IOException e) {
-                index.clear();
+            if (jarModified != 0L) {
+                final long entryTime = listEntry.getTime();
+                if (entryTime == -1L || entryTime >= jarModified) {
+                    try {
+                        return readIndex(jarFile.getInputStream(listEntry), index, relativePath);
+                    } catch (IOException e) {
+                        index.clear();
+                    }
+                }
             }
         }
         // Next just read the JAR
