@@ -34,6 +34,7 @@ import java.security.PrivilegedAction;
 import java.util.jar.JarFile;
 import java.util.logging.LogManager;
 
+import java.util.jar.Manifest;
 import org.jboss.modules.log.JDKModuleLogger;
 
 /**
@@ -113,7 +114,7 @@ public final class Main {
                 if (arg.charAt(0) == '-') {
                     // it's an option
                     if ("-version".equals(arg)) {
-                        System.out.println("Module loader " + getVersionString());
+                        System.out.println("JBoss Modules version " + getVersionString());
                         return;
                     } else if ("-help".equals(arg)) {
                         usage();
@@ -350,7 +351,24 @@ public final class Main {
         }
     }
 
-    // Make sure these methods appear _last_
+    private static final String JAR_NAME;
+    private static final String VERSION_STRING;
+
+    static {
+        final InputStream stream = Main.class.getResourceAsStream("/META-INF/MANIFEST.MF");
+        try {
+        final Manifest manifest = new Manifest(stream);
+        JAR_NAME = manifest.getMainAttributes().getValue("Jar-Name");
+        VERSION_STRING = manifest.getMainAttributes().getValue("Jar-Version");
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        } finally {
+            try {
+                stream.close();
+            } catch (IOException ignored) {
+            }
+        }
+    }
 
     /**
      * Get the name of the JBoss Modules JAR.
@@ -358,7 +376,7 @@ public final class Main {
      * @return the name
      */
     public static String getJarName() {
-        return "UNSET";
+        return JAR_NAME;
     }
 
     /**
@@ -367,6 +385,6 @@ public final class Main {
      * @return the version string
      */
     public static String getVersionString() {
-        return "TRUNK SNAPSHOT";
+        return VERSION_STRING;
     }
 }

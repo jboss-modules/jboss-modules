@@ -71,6 +71,10 @@
                         <manifest>
                             <mainClass>org.jboss.modules.Main</mainClass>
                         </manifest>
+                        <manifestEntries>
+                            <Jar-Version>${project.version}</Jar-Version>
+                            <Jar-Name>${project.artifactId}</Jar-Name>
+                        </manifestEntries>
                     </archive>
                 </configuration>
             </plugin>
@@ -78,43 +82,6 @@
             <!-- Source -->
             <plugin>
                 <artifactId>maven-source-plugin</artifactId>
-            </plugin>
-
-            <!-- Bytecode plugin for version string in Main -->
-            <plugin>
-                <groupId>org.jboss.maven.plugins</groupId>
-                <artifactId>maven-injection-plugin</artifactId>
-                <version>1.0.2</version>
-                <executions>
-                    <execution>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>bytecode</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <bytecodeInjections>
-                        <bytecodeInjection>
-                            <expression>${project.version}</expression>
-                            <targetMembers>
-                                <methodBodyReturn>
-                                    <className>org.jboss.modules.Main</className>
-                                    <methodName>getVersionString</methodName>
-                                </methodBodyReturn>
-                            </targetMembers>
-                        </bytecodeInjection>
-                        <bytecodeInjection>
-                            <expression>${project.artifactId}</expression>
-                            <targetMembers>
-                                <methodBodyReturn>
-                                    <className>org.jboss.modules.Main</className>
-                                    <methodName>getJarName</methodName>
-                                </methodBodyReturn>
-                            </targetMembers>
-                        </bytecodeInjection>
-                    </bytecodeInjections>
-                </configuration>
             </plugin>
 
             <!-- Javadoc -->
