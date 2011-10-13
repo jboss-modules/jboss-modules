@@ -40,6 +40,7 @@ import java.net.URL;
 import java.security.CodeSource;
 import java.util.Collection;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -184,7 +185,8 @@ final class JarFileResourceLoader extends AbstractResourceLoader {
     }
 
     public Collection<String> getPaths() {
-        final Collection<String> index = new LinkedHashSet<String>();
+        final Collection<String> index = new HashSet<String>();
+        index.add("");
         String relativePath = this.relativePath;
         // First check for an external index
         final JarFile jarFile = this.jarFile;
