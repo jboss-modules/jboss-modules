@@ -47,6 +47,20 @@ public interface ModuleLoaderMXBean {
     long getLinkTime();
 
     /**
+     * Get the estimated CPU time (in nanoseconds) spent loading modules into this loader.
+     *
+     * @return the estimated time in nanoseconds
+     */
+    long getLoadTime();
+
+    /**
+     * Get the estimated CPU time (in nanoseconds) spent defining classes for this loader.
+     *
+     * @return the estimated time in nanoseconds
+     */
+    long getClassDefineTime();
+
+    /**
      * Get the number of times that dependencies of a module from this loader have been scanned.
      *
      * @return the count

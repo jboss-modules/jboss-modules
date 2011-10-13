@@ -392,7 +392,9 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
                         throw error;
                     }
                 }
+                final long start = Metrics.getCurrentCPUTime();
                 newClass = defineOrLoadClass(name, bytes, 0, bytes.length, classSpec.getCodeSource());
+                module.getModuleLoader().addClassLoadTime(Metrics.getCurrentCPUTime() - start);
                 log.classDefined(name, module);
             } catch (NoClassDefFoundError e) {
                 // Prepend the current class name, so that transitive class definition issues are clearly expressed

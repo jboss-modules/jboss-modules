@@ -85,9 +85,16 @@ public abstract class ModuleLoader {
     @SuppressWarnings("unused")
     private volatile long linkTime;
     @SuppressWarnings("unused")
+    private volatile long loadTime;
+    @SuppressWarnings("unused")
+    private volatile long classLoadTime;
+    @SuppressWarnings("unused")
     private volatile int scanCount;
 
     private static final AtomicLongFieldUpdater<ModuleLoader> linkTimeUpdater = AtomicLongFieldUpdater.newUpdater(ModuleLoader.class, "linkTime");
+    private static final AtomicLongFieldUpdater<ModuleLoader> loadTimeUpdater = AtomicLongFieldUpdater.newUpdater(ModuleLoader.class, "loadTime");
+    private static final AtomicLongFieldUpdater<ModuleLoader> classLoadTimeUpdater = AtomicLongFieldUpdater.newUpdater(ModuleLoader.class, "classLoadTime");
+
     private static final AtomicIntegerFieldUpdater<ModuleLoader> scanCountUpdater = AtomicIntegerFieldUpdater.newUpdater(ModuleLoader.class, "scanCount");
 
     // Bypass security check for classes in this package
@@ -249,7 +256,9 @@ public abstract class ModuleLoader {
         try {
             final ModuleLogger log = Module.log;
             log.trace("Locally loading module %s from %s", identifier, this);
+            final long startTime = Metrics.getCurrentCPUTime();
             final ModuleSpec moduleSpec = findModule(identifier);
+            loadTimeUpdater.addAndGet(this, Metrics.getCurrentCPUTime() - startTime);
             if (moduleSpec == null) {
                 log.trace("Module %s not found from %s", identifier, this);
                 return null;
@@ -445,6 +454,10 @@ public abstract class ModuleLoader {
         linkTimeUpdater.addAndGet(this, amount);
     }
 
+    void addClassLoadTime(final long time) {
+        classLoadTimeUpdater.addAndGet(this, time);
+    }
+
     void incScanCount() {
         scanCountUpdater.getAndIncrement(this);
     }
@@ -506,6 +519,14 @@ public abstract class ModuleLoader {
 
         public long getLinkTime() {
             return getModuleLoader().linkTime;
+        }
+
+        public long getLoadTime() {
+            return getModuleLoader().loadTime;
+        }
+
+        public long getClassDefineTime() {
+            return getModuleLoader().classLoadTime;
         }
 
         public int getScanCount() {

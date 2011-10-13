@@ -27,6 +27,8 @@ import javax.xml.stream.Location;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
+
+import java.io.BufferedInputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
@@ -240,7 +242,7 @@ final class ModuleXmlParser {
                             return new JarFileResourceLoader(loaderName, new JarFile(file));
                         }
                     }
-                }, root.getPath(), fis, moduleInfoFile.getPath(), moduleIdentifier);
+                }, root.getPath(), new BufferedInputStream(fis), moduleInfoFile.getPath(), moduleIdentifier);
         } finally {
             safeClose(fis);
         }

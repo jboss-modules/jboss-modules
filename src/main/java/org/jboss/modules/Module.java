@@ -767,7 +767,7 @@ public final class Module {
     }
 
     void addPaths(Dependency[] dependencies, Map<String, List<LocalLoader>> map) throws ModuleLoadException {
-        final Set<Visited> visited = new FastCopyHashSet<Visited>();
+        final Set<Visited> visited = new FastCopyHashSet<Visited>(16);
         moduleLoader.incScanCount();
         for (Dependency dependency : dependencies) {
             if (dependency instanceof ModuleDependency) {
@@ -793,7 +793,7 @@ public final class Module {
                 }
 
                 final PathFilter importFilter = dependency.getImportFilter();
-                final FastCopyHashSet<PathFilter> filterStack = new FastCopyHashSet<PathFilter>();
+                final FastCopyHashSet<PathFilter> filterStack = new FastCopyHashSet<PathFilter>(8);
                 filterStack.add(importFilter);
                 module.addExportedPaths(module.getDependencies(), map, filterStack, visited);
             } else if (dependency instanceof ModuleClassLoaderDependency) {
@@ -971,19 +971,19 @@ public final class Module {
         final HashMap<String, List<LocalLoader>> importsMap = new HashMap<String, List<LocalLoader>>();
         final HashMap<String, List<LocalLoader>> exportsMap = new HashMap<String, List<LocalLoader>>();
         final Dependency[] dependencies = linkage.getSourceList();
-        final long start = System.nanoTime();
+        final long start = Metrics.getCurrentCPUTime();
         try {
             addPaths(dependencies, importsMap);
             addExportedPaths(dependencies, exportsMap);
             synchronized (this) {
                 if (this.linkage == linkage) {
-                    this.linkage = new Linkage(this.linkage.getSourceList(), Linkage.State.LINKED, importsMap, exportsMap);
+                    this.linkage = new Linkage(linkage.getSourceList(), Linkage.State.LINKED, importsMap, exportsMap);
                     notifyAll();
                 }
                 // else all our efforts were just wasted since someone changed the deps in the meantime
             }
         } finally {
-            moduleLoader.addLinkTime(System.nanoTime() - start);
+            moduleLoader.addLinkTime(Metrics.getCurrentCPUTime() - start);
         }
     }
 
