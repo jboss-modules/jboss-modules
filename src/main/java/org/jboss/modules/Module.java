@@ -768,6 +768,7 @@ public final class Module {
 
     void addPaths(Dependency[] dependencies, Map<String, List<LocalLoader>> map) throws ModuleLoadException {
         final Set<Visited> visited = new FastCopyHashSet<Visited>();
+        moduleLoader.incScanCount();
         for (Dependency dependency : dependencies) {
             if (dependency instanceof ModuleDependency) {
                 final ModuleDependency moduleDependency = (ModuleDependency) dependency;
@@ -840,6 +841,7 @@ public final class Module {
         if (!visited.add(new Visited(this, filterStack))) {
             return;
         }
+        moduleLoader.incScanCount();
         for (Dependency dependency : dependencies) {
             if (dependency instanceof ModuleDependency) {
                 final ModuleDependency moduleDependency = (ModuleDependency) dependency;
@@ -969,14 +971,19 @@ public final class Module {
         final HashMap<String, List<LocalLoader>> importsMap = new HashMap<String, List<LocalLoader>>();
         final HashMap<String, List<LocalLoader>> exportsMap = new HashMap<String, List<LocalLoader>>();
         final Dependency[] dependencies = linkage.getSourceList();
-        addPaths(dependencies, importsMap);
-        addExportedPaths(dependencies, exportsMap);
-        synchronized (this) {
-            if (this.linkage == linkage) {
-                this.linkage = new Linkage(this.linkage.getSourceList(), Linkage.State.LINKED, importsMap, exportsMap);
-                notifyAll();
+        final long start = System.nanoTime();
+        try {
+            addPaths(dependencies, importsMap);
+            addExportedPaths(dependencies, exportsMap);
+            synchronized (this) {
+                if (this.linkage == linkage) {
+                    this.linkage = new Linkage(this.linkage.getSourceList(), Linkage.State.LINKED, importsMap, exportsMap);
+                    notifyAll();
+                }
+                // else all our efforts were just wasted since someone changed the deps in the meantime
             }
-            // else all our efforts were just wasted since someone changed the deps in the meantime
+        } finally {
+            moduleLoader.addLinkTime(System.nanoTime() - start);
         }
     }
 

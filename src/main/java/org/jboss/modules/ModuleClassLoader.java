@@ -213,7 +213,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
             return loadedClass;
         }
 
-        final Map<String, List<ResourceLoader>> paths = this.paths.getPaths(false);
+        final Map<String, List<ResourceLoader>> paths = this.paths.getAllPaths();
 
         log.trace("Loading class %s locally from %s", className, module);
 
@@ -279,7 +279,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
      */
     Resource loadResourceLocal(final String root, final String name) {
 
-        final Map<String, List<ResourceLoader>> paths = this.paths.getPaths(false);
+        final Map<String, List<ResourceLoader>> paths = this.paths.getAllPaths();
 
         final String path = Module.pathOf(name);
 
@@ -305,7 +305,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
      * @return the list of resources
      */
     List<Resource> loadResourceLocal(final String name) {
-        final Map<String, List<ResourceLoader>> paths = this.paths.getPaths(false);
+        final Map<String, List<ResourceLoader>> paths = this.paths.getAllPaths();
 
         final String path = Module.pathOf(name);
 

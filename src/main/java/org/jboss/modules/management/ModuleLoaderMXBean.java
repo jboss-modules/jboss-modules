@@ -33,6 +33,27 @@ import java.util.SortedMap;
 public interface ModuleLoaderMXBean {
 
     /**
+     * Get a description of this module loader.
+     *
+     * @return a description of this module loader
+     */
+    String getDescription();
+
+    /**
+     * Get the estimated CPU time (in nanoseconds) spent linking in the life of this module loader.
+     *
+     * @return the estimated time in nanoseconds
+     */
+    long getLinkTime();
+
+    /**
+     * Get the number of times that dependencies of a module from this loader have been scanned.
+     *
+     * @return the count
+     */
+    int getScanCount();
+
+    /**
      * Get the number of modules currently loaded.
      *
      * @return the loaded module count

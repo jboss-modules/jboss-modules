@@ -40,6 +40,8 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import org.jboss.modules.log.ModuleLogger;
 import org.jboss.modules.management.DependencyInfo;
 import org.jboss.modules.management.ModuleInfo;
@@ -79,6 +81,14 @@ public abstract class ModuleLoader {
 
     private final boolean canRedefine;
     private final ModuleLoaderMXBean mxBean;
+
+    @SuppressWarnings("unused")
+    private volatile long linkTime;
+    @SuppressWarnings("unused")
+    private volatile int scanCount;
+
+    private static final AtomicLongFieldUpdater<ModuleLoader> linkTimeUpdater = AtomicLongFieldUpdater.newUpdater(ModuleLoader.class, "linkTime");
+    private static final AtomicIntegerFieldUpdater<ModuleLoader> scanCountUpdater = AtomicIntegerFieldUpdater.newUpdater(ModuleLoader.class, "scanCount");
 
     // Bypass security check for classes in this package
     ModuleLoader(boolean canRedefine, boolean skipRegister) {
@@ -431,6 +441,14 @@ public abstract class ModuleLoader {
         module.relinkIfNecessary();
     }
 
+    void addLinkTime(long amount) {
+        linkTimeUpdater.addAndGet(this, amount);
+    }
+
+    void incScanCount() {
+        scanCountUpdater.getAndIncrement(this);
+    }
+
     private static final class FutureModule {
         private static final Object NOT_FOUND = new Object();
 
@@ -480,6 +498,18 @@ public abstract class ModuleLoader {
 
         MXBeanImpl(final ModuleLoader moduleLoader, final ObjectName objectName) {
             reference = new WeakReference<ModuleLoader, ObjectName>(moduleLoader, objectName, reaper);
+        }
+
+        public String getDescription() {
+            return getModuleLoader().toString();
+        }
+
+        public long getLinkTime() {
+            return getModuleLoader().linkTime;
+        }
+
+        public int getScanCount() {
+            return getModuleLoader().scanCount;
         }
 
         public int getLoadedModuleCount() {
