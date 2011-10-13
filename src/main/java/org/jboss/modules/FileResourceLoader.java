@@ -40,7 +40,7 @@ import java.security.CodeSource;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.jar.Attributes;
+import java.util.Locale;
 import java.util.jar.Manifest;
 
 /**
@@ -57,11 +57,11 @@ final class FileResourceLoader extends AbstractResourceLoader {
         final String sysName;
         final String sysArch;
         if (sm != null) {
-            sysName = AccessController.doPrivileged(osNameReadAction).toUpperCase();
-            sysArch = AccessController.doPrivileged(osArchReadAction).toUpperCase();
+            sysName = AccessController.doPrivileged(osNameReadAction).toUpperCase(Locale.US);
+            sysArch = AccessController.doPrivileged(osArchReadAction).toUpperCase(Locale.US);
         } else {
-            sysName = osNameReadAction.run().toUpperCase();
-            sysArch = osArchReadAction.run().toUpperCase();
+            sysName = osNameReadAction.run().toUpperCase(Locale.US);
+            sysArch = osArchReadAction.run().toUpperCase(Locale.US);
         }
         final String realName;
         final String realArch;
@@ -197,12 +197,7 @@ final class FileResourceLoader extends AbstractResourceLoader {
     }
 
     public PackageSpec getPackageSpec(final String name) throws IOException {
-        return getPackageSpec(name, this.manifest, root.toURI().toURL());
-    }
-
-    private static String getDefinedAttribute(Attributes.Name name, Attributes entryAttribute, Attributes mainAttribute) {
-        final String value = entryAttribute == null ? null : entryAttribute.getValue(name);
-        return value == null ? mainAttribute == null ? null : mainAttribute.getValue(name) : value;
+        return getPackageSpec(name, manifest, root.toURI().toURL());
     }
 
     public String getLibrary(final String name) {
