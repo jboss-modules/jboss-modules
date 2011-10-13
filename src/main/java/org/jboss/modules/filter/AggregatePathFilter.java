@@ -33,6 +33,7 @@ import java.util.Arrays;
 final class AggregatePathFilter implements PathFilter {
     private final PathFilter[] delegates;
     private final boolean any;
+    private final int hashCode;
 
     /**
      * Construct a new instance.
@@ -43,6 +44,7 @@ final class AggregatePathFilter implements PathFilter {
     AggregatePathFilter(final boolean any, final PathFilter... delegates) {
         this.any = any;
         this.delegates = delegates;
+        hashCode = Boolean.valueOf(any).hashCode() ^ Arrays.hashCode(delegates);
     }
 
     /** {@inheritDoc} */
@@ -58,7 +60,7 @@ final class AggregatePathFilter implements PathFilter {
 
 
     public int hashCode() {
-        return Boolean.valueOf(any).hashCode() ^ Arrays.hashCode(delegates);
+        return hashCode;
     }
 
     public boolean equals(final Object obj) {

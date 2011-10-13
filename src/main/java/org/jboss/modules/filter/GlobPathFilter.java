@@ -117,7 +117,7 @@ final class GlobPathFilter implements PathFilter {
     }
 
     public int hashCode() {
-        return glob.hashCode();
+        return glob.hashCode() + 13;
     }
 
     public boolean equals(final Object obj) {

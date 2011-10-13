@@ -67,7 +67,7 @@ class FastCopyHashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable, Se
     /**
      * 50%
      */
-    private static final float DEFAULT_LOAD_FACTOR = 0x0.6p0f;
+    private static final float DEFAULT_LOAD_FACTOR = 0x0.5p0f;
 
     /**
      * The open-addressed table

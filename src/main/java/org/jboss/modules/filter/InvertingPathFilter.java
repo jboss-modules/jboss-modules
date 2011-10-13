@@ -48,7 +48,7 @@ final class InvertingPathFilter implements PathFilter {
     }
 
     public int hashCode() {
-        return 47 * delegate.hashCode();
+        return 47 + delegate.hashCode();
     }
 
     public boolean equals(final Object obj) {

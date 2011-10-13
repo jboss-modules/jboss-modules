@@ -53,6 +53,6 @@ final class EqualsPathFilter implements PathFilter {
     }
 
     public int hashCode() {
-        return path.hashCode();
+        return path.hashCode() + 7;
     }
 }

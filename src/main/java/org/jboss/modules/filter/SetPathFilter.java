@@ -31,9 +31,11 @@ import java.util.Set;
 final class SetPathFilter implements PathFilter {
 
     private final Set<String> paths;
+    private final int hashCode;
 
     SetPathFilter(final Set<String> paths) {
         this.paths = paths;
+        hashCode = paths.hashCode();
     }
 
     public boolean accept(final String path) {
@@ -64,6 +66,6 @@ final class SetPathFilter implements PathFilter {
     }
 
     public int hashCode() {
-        return paths.hashCode();
+        return hashCode;
     }
 }
