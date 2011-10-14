@@ -845,10 +845,6 @@ public final class Module {
         return subtract;
     }
 
-    void addExportedPaths(Dependency[] dependencies, Map<String, List<LocalLoader>> map) throws ModuleLoadException {
-        addExportedPaths(dependencies, map, new FastCopyHashSet<PathFilter>(), new FastCopyHashSet<Visited>());
-    }
-
     long addExportedPaths(Dependency[] dependencies, Map<String, List<LocalLoader>> map, FastCopyHashSet<PathFilter> filterStack, Set<Visited> visited) throws ModuleLoadException {
         if (!visited.add(new Visited(this, filterStack))) {
             return 0L;
