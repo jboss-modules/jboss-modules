@@ -53,6 +53,7 @@ import static org.junit.Assert.fail;
 public class ModuleClassLoaderTest extends AbstractModuleTestCase {
 
     private static final ModuleIdentifier MODULE_WITH_CONTENT_ID = ModuleIdentifier.fromString("test-with-content");
+    private static final ModuleIdentifier MODULE_WITH_RESOURCE_ID = ModuleIdentifier.fromString("test-with-resource");
     private static final ModuleIdentifier MODULE_TO_IMPORT_ID = ModuleIdentifier.fromString("test-to-import");
     private static final ModuleIdentifier MODULE_WITH_EXPORT_ID = ModuleIdentifier.fromString("test-with-export");
     private static final ModuleIdentifier MODULE_WITH_DOUBLE_EXPORT_ID = ModuleIdentifier.fromString("test-with-double-export");
@@ -77,6 +78,17 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
         moduleWithContentBuilder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_TO_IMPORT_ID));
         moduleWithContentBuilder.addDependency(DependencySpec.createLocalDependencySpec());
         moduleLoader.addModuleSpec(moduleWithContentBuilder.create());
+
+        final ModuleSpec.Builder moduleWithResourceBuilder = ModuleSpec.build(MODULE_WITH_RESOURCE_ID);
+        moduleWithResourceBuilder.addResourceRoot(ResourceLoaderSpec.createResourceLoaderSpec(
+                TestResourceLoader.build()
+                .addClass(TestClass.class)
+                .addResources(getResource("class-resources"))
+                .create()
+        ));
+        moduleWithResourceBuilder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_TO_IMPORT_ID));
+        moduleWithResourceBuilder.addDependency(DependencySpec.createLocalDependencySpec());
+        moduleLoader.addModuleSpec(moduleWithResourceBuilder.create());
 
         final ModuleSpec.Builder moduleToImportBuilder = ModuleSpec.build(MODULE_TO_IMPORT_ID);
         moduleToImportBuilder.addResourceRoot(ResourceLoaderSpec.createResourceLoaderSpec(
@@ -136,6 +148,25 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
             Class<?> testClass = classLoader.loadClass("org.jboss.modules.test.TestClass");
             assertNotNull(testClass);
         } catch (ClassNotFoundException e) {
+            fail("Should have loaded local class");
+        }
+    }
+
+    @Test
+    public void testResourceLoad() throws Exception {
+        final Module testModule = moduleLoader.loadModule(MODULE_WITH_RESOURCE_ID);
+        final ModuleClassLoader classLoader = testModule.getClassLoader();
+
+        try {
+            Class<?> testClass = classLoader.loadClass("org.jboss.modules.test.TestClass");
+            // direct
+            assertNotNull(testClass.getResource("/file1.txt")); // translates to /file1.txt
+            assertNotNull(testClass.getResource("file2.txt")); // translates to /org/jboss/modules/test/file2.txt
+            // relative
+            assertNotNull(testClass.getResource("../../../../file1.txt")); // should translate to /file1.txt
+            assertNotNull(testClass.getResource("test/../file2.txt")); // should translate to /org/jboss/modules/test/file2.txt
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
             fail("Should have loaded local class");
         }
     }
