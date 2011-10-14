@@ -22,6 +22,8 @@
 
 package org.jboss.modules;
 
+import __redirected.__JAXPRedirected;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -85,6 +87,8 @@ public final class Main {
         System.out.println("                  The module to use to load the system logmanager");
         System.out.println("    -mbeanserverbuildermodule <module-name>");
         System.out.println("                  The module to use to load the mbean server builder");
+        System.out.println("    -jaxpmodule <module-name>");
+        System.out.println("                  The default JAXP implementation to use of the JDK");
         System.out.println("    -version      Print version and exit\n");
     }
 
@@ -108,6 +112,7 @@ public final class Main {
         String moduleIdentifierOrExeName = null;
         ModuleIdentifier logManagerModuleIdentifier = null;
         ModuleIdentifier mbeanServerBuilderModuleIdentifier = null;
+        ModuleIdentifier jaxpModuleIdentifier = null;
         for (int i = 0, argsLength = argsLen; i < argsLength; i++) {
             final String arg = args[i];
             try {
@@ -144,6 +149,8 @@ public final class Main {
                         logManagerModuleIdentifier = ModuleIdentifier.fromString(args[++i]);
                     } else if ("-mbeanserverbuildermodule".equals(arg)) {
                         mbeanServerBuilderModuleIdentifier = ModuleIdentifier.fromString(args[++i]);
+                    } else if ("-jaxpmodule".equals(arg)) {
+                        jaxpModuleIdentifier = ModuleIdentifier.fromString(args[++i]);
                     } else if ("-jar".equals(arg)) {
                         if (jar) {
                             System.err.println("-jar flag may only be specified once");
@@ -287,6 +294,9 @@ public final class Main {
                 System.err.println("WARNING: No mbeanserver service descriptor found in specified mbeanserverbuildermodule " + mbeanServerBuilderModuleIdentifier);
             }
         }
+        if (jaxpModuleIdentifier != null)
+            __JAXPRedirected.changeAll(jaxpModuleIdentifier, Module.getBootModuleLoader());
+
         final Module module;
         try {
             module = loader.loadModule(moduleIdentifier);
