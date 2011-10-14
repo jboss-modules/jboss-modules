@@ -246,20 +246,28 @@ final class FileResourceLoader extends AbstractResourceLoader {
             // Now try to write it
             boolean ok = false;
             try {
-                final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(indexFile)));
+                final FileOutputStream fos = new FileOutputStream(indexFile);
                 try {
-                    for (String name : index) {
-                        writer.write(name);
-                        writer.write('\n');
-                    }
-                    writer.close();
-                    ok = true;
-                } finally {
+                    final OutputStreamWriter osw = new OutputStreamWriter(fos);
                     try {
-                        writer.close();
-                    } catch (IOException e) {
-                        // ignored
+                        final BufferedWriter writer = new BufferedWriter(osw);
+                        try {
+                            for (String name : index) {
+                                writer.write(name);
+                                writer.write('\n');
+                            }
+                            writer.close();
+                            osw.close();
+                            fos.close();
+                            ok = true;
+                        } finally {
+                            safeClose(writer);
+                        }
+                    } finally {
+                        safeClose(osw);
                     }
+                } finally {
+                    safeClose(fos);
                 }
             } catch (IOException e) {
                 // failed, ignore
