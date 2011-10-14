@@ -325,6 +325,21 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         return list.isEmpty() ? Collections.<Resource>emptyList() : list;
     }
 
+    private Class<?> doDefineOrLoadClass(final String className, final byte[] bytes, int off, int len, CodeSource codeSource) {
+        try {
+            final Class<?> definedClass = defineClass(className, bytes, off, len, codeSource);
+            module.getModuleLoader().incClassCount();
+            return definedClass;
+        } catch (LinkageError e) {
+            final Class<?> loadedClass = findLoadedClass(className);
+            if (loadedClass != null) {
+                module.getModuleLoader().incRaceCount();
+                return loadedClass;
+            }
+            throw e;
+        }
+    }
+
     /**
      * Define a class from a class name and class spec.  Also defines any enclosing {@link Package} instances,
      * and performs any sealed-package checks.
@@ -393,7 +408,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
                     }
                 }
                 final long start = Metrics.getCurrentCPUTime();
-                newClass = defineOrLoadClass(name, bytes, 0, bytes.length, classSpec.getCodeSource());
+                newClass = doDefineOrLoadClass(name, bytes, 0, bytes.length, classSpec.getCodeSource());
                 module.getModuleLoader().addClassLoadTime(Metrics.getCurrentCPUTime() - start);
                 log.classDefined(name, module);
             } catch (NoClassDefFoundError e) {

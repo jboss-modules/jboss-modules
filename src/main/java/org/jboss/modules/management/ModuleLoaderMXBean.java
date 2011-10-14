@@ -75,6 +75,20 @@ public interface ModuleLoaderMXBean {
     int getLoadedModuleCount();
 
     /**
+     * Get the number of times a class was defined by two threads at once.
+     *
+     * @return the race count
+     */
+    int getRaceCount();
+
+    /**
+     * Get the number of classes defined in this module loader.
+     *
+     * @return the number of classes defined in this module loader
+     */
+    int getClassCount();
+
+    /**
      * Obtain a list of the current module names.
      *
      * @return the module names

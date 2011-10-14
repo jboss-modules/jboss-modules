@@ -24,14 +24,23 @@ package org.jboss.modules;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
+import java.security.AccessController;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 final class Metrics {
+    static final boolean ENABLED;
     static final ThreadMXBean THREAD_MX_BEAN = ManagementFactory.getThreadMXBean();
 
+    private Metrics() {
+    }
+
     static long getCurrentCPUTime() {
-        return false ? THREAD_MX_BEAN.getCurrentThreadCpuTime() : System.nanoTime();
+        return ENABLED ? false ? THREAD_MX_BEAN.getCurrentThreadCpuTime() : System.nanoTime() : 0L;
+    }
+
+    static {
+        ENABLED = Boolean.parseBoolean(AccessController.doPrivileged(new PropertyReadAction("jboss.modules.metrics", "false")));
     }
 }

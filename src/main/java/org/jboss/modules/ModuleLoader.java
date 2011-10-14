@@ -82,20 +82,25 @@ public abstract class ModuleLoader {
     private final boolean canRedefine;
     private final ModuleLoaderMXBean mxBean;
 
-    @SuppressWarnings("unused")
+    @SuppressWarnings({"unused", "VolatileLongOrDoubleField"})
     private volatile long linkTime;
-    @SuppressWarnings("unused")
+    @SuppressWarnings({"unused", "VolatileLongOrDoubleField"})
     private volatile long loadTime;
-    @SuppressWarnings("unused")
+    @SuppressWarnings({"unused", "VolatileLongOrDoubleField"})
     private volatile long classLoadTime;
     @SuppressWarnings("unused")
     private volatile int scanCount;
+    @SuppressWarnings("unused")
+    private volatile int raceCount;
+    @SuppressWarnings("unused")
+    private volatile int classCount;
 
     private static final AtomicLongFieldUpdater<ModuleLoader> linkTimeUpdater = AtomicLongFieldUpdater.newUpdater(ModuleLoader.class, "linkTime");
     private static final AtomicLongFieldUpdater<ModuleLoader> loadTimeUpdater = AtomicLongFieldUpdater.newUpdater(ModuleLoader.class, "loadTime");
     private static final AtomicLongFieldUpdater<ModuleLoader> classLoadTimeUpdater = AtomicLongFieldUpdater.newUpdater(ModuleLoader.class, "classLoadTime");
-
     private static final AtomicIntegerFieldUpdater<ModuleLoader> scanCountUpdater = AtomicIntegerFieldUpdater.newUpdater(ModuleLoader.class, "scanCount");
+    private static final AtomicIntegerFieldUpdater<ModuleLoader> raceCountUpdater = AtomicIntegerFieldUpdater.newUpdater(ModuleLoader.class, "raceCount");
+    private static final AtomicIntegerFieldUpdater<ModuleLoader> classCountUpdater = AtomicIntegerFieldUpdater.newUpdater(ModuleLoader.class, "classCount");
 
     // Bypass security check for classes in this package
     ModuleLoader(boolean canRedefine, boolean skipRegister) {
@@ -451,15 +456,23 @@ public abstract class ModuleLoader {
     }
 
     void addLinkTime(long amount) {
-        linkTimeUpdater.addAndGet(this, amount);
+        if (amount != 0L) linkTimeUpdater.addAndGet(this, amount);
     }
 
     void addClassLoadTime(final long time) {
-        classLoadTimeUpdater.addAndGet(this, time);
+        if (time != 0L) classLoadTimeUpdater.addAndGet(this, time);
     }
 
     void incScanCount() {
-        scanCountUpdater.getAndIncrement(this);
+        if (Metrics.ENABLED) scanCountUpdater.getAndIncrement(this);
+    }
+
+    void incRaceCount() {
+        if (Metrics.ENABLED) raceCountUpdater.getAndIncrement(this);
+    }
+
+    void incClassCount() {
+        if (Metrics.ENABLED) classCountUpdater.getAndIncrement(this);
     }
 
     private static final class FutureModule {
@@ -535,6 +548,14 @@ public abstract class ModuleLoader {
 
         public int getLoadedModuleCount() {
             return getModuleLoader().moduleMap.size();
+        }
+
+        public int getRaceCount() {
+            return getModuleLoader().raceCount;
+        }
+
+        public int getClassCount() {
+            return getModuleLoader().classCount;
         }
 
         public List<String> queryLoadedModuleNames() {
