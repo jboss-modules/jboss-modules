@@ -772,8 +772,8 @@ public final class Module {
         }
     }
 
-    void addPaths(Dependency[] dependencies, Map<String, List<LocalLoader>> map) throws ModuleLoadException {
-        final Set<Visited> visited = new FastCopyHashSet<Visited>(16);
+    long addPaths(Dependency[] dependencies, Map<String, List<LocalLoader>> map, FastCopyHashSet<PathFilter> filterStack, Set<Visited> visited) throws ModuleLoadException {
+        long subtract = 0L;
         moduleLoader.incScanCount();
         for (Dependency dependency : dependencies) {
             if (dependency instanceof ModuleDependency) {
@@ -783,7 +783,12 @@ public final class Module {
                 final Module module;
 
                 try {
-                    module = moduleLoader.preloadModule(id);
+                    long pauseStart = Metrics.getCurrentCPUTime();
+                    try {
+                        module = moduleLoader.preloadModule(id);
+                    } finally {
+                        subtract += Metrics.getCurrentCPUTime() - pauseStart;
+                    }
                 } catch (ModuleLoadException ex) {
                     if (moduleDependency.isOptional()) {
                         continue;
@@ -799,9 +804,9 @@ public final class Module {
                 }
 
                 final PathFilter importFilter = dependency.getImportFilter();
-                final FastCopyHashSet<PathFilter> filterStack = new FastCopyHashSet<PathFilter>(8);
                 filterStack.add(importFilter);
-                module.addExportedPaths(module.getDependencies(), map, filterStack, visited);
+                subtract += module.addExportedPaths(module.getDependencies(), map, filterStack, visited);
+                filterStack.remove(importFilter);
             } else if (dependency instanceof ModuleClassLoaderDependency) {
                 final ModuleClassLoaderDependency classLoaderDependency = (ModuleClassLoaderDependency) dependency;
                 final LocalLoader localLoader = classLoaderDependency.getLocalLoader();
@@ -837,16 +842,18 @@ public final class Module {
             }
             // else unknown dep type so just skip
         }
+        return subtract;
     }
 
     void addExportedPaths(Dependency[] dependencies, Map<String, List<LocalLoader>> map) throws ModuleLoadException {
         addExportedPaths(dependencies, map, new FastCopyHashSet<PathFilter>(), new FastCopyHashSet<Visited>());
     }
 
-    void addExportedPaths(Dependency[] dependencies, Map<String, List<LocalLoader>> map, FastCopyHashSet<PathFilter> filterStack, Set<Visited> visited) throws ModuleLoadException {
+    long addExportedPaths(Dependency[] dependencies, Map<String, List<LocalLoader>> map, FastCopyHashSet<PathFilter> filterStack, Set<Visited> visited) throws ModuleLoadException {
         if (!visited.add(new Visited(this, filterStack))) {
-            return;
+            return 0L;
         }
+        long subtract = 0L;
         moduleLoader.incScanCount();
         for (Dependency dependency : dependencies) {
             final PathFilter exportFilter = dependency.getExportFilter();
@@ -859,7 +866,12 @@ public final class Module {
                     final Module module;
 
                     try {
-                        module = moduleLoader.preloadModule(id);
+                        long pauseStart = Metrics.getCurrentCPUTime();
+                        try {
+                            module = moduleLoader.preloadModule(id);
+                        } finally {
+                            subtract += Metrics.getCurrentCPUTime() - pauseStart;
+                        }
                     } catch (ModuleLoadException ex) {
                         if (moduleDependency.isOptional()) {
                             continue;
@@ -876,12 +888,12 @@ public final class Module {
 
                     final PathFilter importFilter = dependency.getImportFilter();
                     if (filterStack.contains(importFilter) && filterStack.contains(exportFilter)) {
-                        module.addExportedPaths(module.getDependencies(), map, filterStack, visited);
+                        subtract += module.addExportedPaths(module.getDependencies(), map, filterStack, visited);
                     } else {
                         final FastCopyHashSet<PathFilter> clone = filterStack.clone();
                         clone.add(importFilter);
                         clone.add(exportFilter);
-                        module.addExportedPaths(module.getDependencies(), map, clone, visited);
+                        subtract += module.addExportedPaths(module.getDependencies(), map, clone, visited);
                     }
                 } else if (dependency instanceof ModuleClassLoaderDependency) {
                     final ModuleClassLoaderDependency classLoaderDependency = (ModuleClassLoaderDependency) dependency;
@@ -929,6 +941,7 @@ public final class Module {
                 // else unknown dep type so just skip
             }
         }
+        return subtract;
     }
 
     Map<String, List<LocalLoader>> getPaths(final boolean exports) throws ModuleLoadException {
@@ -979,9 +992,12 @@ public final class Module {
         final HashMap<String, List<LocalLoader>> exportsMap = new HashMap<String, List<LocalLoader>>();
         final Dependency[] dependencies = linkage.getSourceList();
         final long start = Metrics.getCurrentCPUTime();
+        long subtractTime = 0L;
         try {
-            addPaths(dependencies, importsMap);
-            addExportedPaths(dependencies, exportsMap);
+            final Set<Visited> visited = new FastCopyHashSet<Visited>(16);
+            final FastCopyHashSet<PathFilter> filterStack = new FastCopyHashSet<PathFilter>(8);
+            subtractTime += addPaths(dependencies, importsMap, filterStack, visited);
+            subtractTime += addExportedPaths(dependencies, exportsMap, filterStack, visited);
             synchronized (this) {
                 if (this.linkage == linkage) {
                     this.linkage = new Linkage(linkage.getSourceList(), Linkage.State.LINKED, importsMap, exportsMap);
@@ -990,7 +1006,7 @@ public final class Module {
                 // else all our efforts were just wasted since someone changed the deps in the meantime
             }
         } finally {
-            moduleLoader.addLinkTime(Metrics.getCurrentCPUTime() - start);
+            moduleLoader.addLinkTime(Metrics.getCurrentCPUTime() - start - subtractTime);
         }
     }
 
