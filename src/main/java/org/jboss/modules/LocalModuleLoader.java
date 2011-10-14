@@ -113,27 +113,21 @@ public final class LocalModuleLoader extends ModuleLoader {
     /** {@inheritDoc} */
     @Override
     protected ModuleSpec findModule(final ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
-        final File moduleRoot = getModuleRoot(moduleIdentifier);
-        if (moduleRoot == null)
-            throw new ModuleNotFoundException("Module " + moduleIdentifier + " is not found in " + this);
-
-        final File moduleXml = new File(moduleRoot, "module.xml");
-        return parseModuleInfoFile(moduleIdentifier, moduleRoot, moduleXml);
-    }
-
-    private File getModuleRoot(final ModuleIdentifier moduleIdentifier) {
         final String child = toPathString(moduleIdentifier);
         if (pathFilter.accept(child)) {
             for (File root : repoRoots) {
                 final File file = new File(root, child);
-                if (file.exists() && new File(file, "module.xml").exists()) return file;
+                final File moduleXml = new File(file, "module.xml");
+                if (moduleXml.exists()) {
+                    return parseModuleInfoFile(moduleIdentifier, file, moduleXml);
+                }
             }
         }
-        return null;
+        throw new ModuleNotFoundException("Module " + moduleIdentifier + " is not found in " + this);
     }
 
     private static String toPathString(ModuleIdentifier moduleIdentifier) {
-        final StringBuilder builder = new StringBuilder();
+        final StringBuilder builder = new StringBuilder(40);
         builder.append(moduleIdentifier.getName().replace('.', File.separatorChar));
         builder.append(File.separatorChar).append(moduleIdentifier.getSlot());
         builder.append(File.separatorChar);
