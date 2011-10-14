@@ -849,30 +849,31 @@ public final class Module {
         }
         moduleLoader.incScanCount();
         for (Dependency dependency : dependencies) {
-            if (dependency instanceof ModuleDependency) {
-                final ModuleDependency moduleDependency = (ModuleDependency) dependency;
-                final ModuleLoader moduleLoader = moduleDependency.getModuleLoader();
-                final ModuleIdentifier id = moduleDependency.getIdentifier();
-                final Module module;
+            final PathFilter exportFilter = dependency.getExportFilter();
+            // skip non-exported dependencies altogether
+            if (exportFilter != PathFilters.rejectAll()) {
+                if (dependency instanceof ModuleDependency) {
+                    final ModuleDependency moduleDependency = (ModuleDependency) dependency;
+                    final ModuleLoader moduleLoader = moduleDependency.getModuleLoader();
+                    final ModuleIdentifier id = moduleDependency.getIdentifier();
+                    final Module module;
 
-                try {
-                    module = moduleLoader.preloadModule(id);
-                } catch (ModuleLoadException ex) {
-                    if (moduleDependency.isOptional()) {
+                    try {
+                        module = moduleLoader.preloadModule(id);
+                    } catch (ModuleLoadException ex) {
+                        if (moduleDependency.isOptional()) {
+                            continue;
+                        } else {
+                            throw ex;
+                        }
+                    }
+                    if (module == null) {
+                        if (!moduleDependency.isOptional()) {
+                            throw new ModuleNotFoundException(id.toString());
+                        }
                         continue;
-                    } else {
-                        throw ex;
                     }
-                }
-                if (module == null) {
-                    if (!moduleDependency.isOptional()) {
-                        throw new ModuleNotFoundException(id.toString());
-                    }
-                    continue;
-                }
 
-                final PathFilter exportFilter = dependency.getExportFilter();
-                if (exportFilter != PathFilters.rejectAll()) {
                     final PathFilter importFilter = dependency.getImportFilter();
                     if (filterStack.contains(importFilter) && filterStack.contains(exportFilter)) {
                         module.addExportedPaths(module.getDependencies(), map, filterStack, visited);
@@ -882,51 +883,51 @@ public final class Module {
                         clone.add(exportFilter);
                         module.addExportedPaths(module.getDependencies(), map, clone, visited);
                     }
+                } else if (dependency instanceof ModuleClassLoaderDependency) {
+                    final ModuleClassLoaderDependency classLoaderDependency = (ModuleClassLoaderDependency) dependency;
+                    final LocalLoader localLoader = classLoaderDependency.getLocalLoader();
+                    final Set<String> paths = classLoaderDependency.getPaths();
+                    for (String path : paths) {
+                        boolean accept = true;
+                        for (Object filter : filterStack.getRawArray()) {
+                            if (filter != null && ! ((PathFilter)filter).accept(path)) {
+                                accept = false; break;
+                            }
+                        }
+                        if (accept && classLoaderDependency.getImportFilter().accept(path) && classLoaderDependency.getExportFilter().accept(path)) {
+                            List<LocalLoader> list = map.get(path);
+                            if (list == null) {
+                                map.put(path, list = new ArrayList<LocalLoader>(1));
+                                list.add(localLoader);
+                            } else if (! list.contains(localLoader)) {
+                                list.add(localLoader);
+                            }
+                        }
+                    }
+                } else if (dependency instanceof LocalDependency) {
+                    final LocalDependency localDependency = (LocalDependency) dependency;
+                    final LocalLoader localLoader = localDependency.getLocalLoader();
+                    final Set<String> paths = localDependency.getPaths();
+                    for (String path : paths) {
+                        boolean accept = true;
+                        for (Object filter : filterStack.getRawArray()) {
+                            if (filter != null && ! ((PathFilter)filter).accept(path)) {
+                                accept = false; break;
+                            }
+                        }
+                        if (accept && localDependency.getImportFilter().accept(path) && localDependency.getExportFilter().accept(path)) {
+                            List<LocalLoader> list = map.get(path);
+                            if (list == null) {
+                                map.put(path, list = new ArrayList<LocalLoader>(1));
+                                list.add(localLoader);
+                            } else if (! list.contains(localLoader)) {
+                                list.add(localLoader);
+                            }
+                        }
+                    }
                 }
-            } else if (dependency instanceof ModuleClassLoaderDependency) {
-                final ModuleClassLoaderDependency classLoaderDependency = (ModuleClassLoaderDependency) dependency;
-                final LocalLoader localLoader = classLoaderDependency.getLocalLoader();
-                final Set<String> paths = classLoaderDependency.getPaths();
-                for (String path : paths) {
-                    boolean accept = true;
-                    for (Object filter : filterStack.getRawArray()) {
-                        if (filter != null && ! ((PathFilter)filter).accept(path)) {
-                            accept = false; break;
-                        }
-                    }
-                    if (accept && classLoaderDependency.getImportFilter().accept(path) && classLoaderDependency.getExportFilter().accept(path)) {
-                        List<LocalLoader> list = map.get(path);
-                        if (list == null) {
-                            map.put(path, list = new ArrayList<LocalLoader>(1));
-                            list.add(localLoader);
-                        } else if (! list.contains(localLoader)) {
-                            list.add(localLoader);
-                        }
-                    }
-                }
-            } else if (dependency instanceof LocalDependency) {
-                final LocalDependency localDependency = (LocalDependency) dependency;
-                final LocalLoader localLoader = localDependency.getLocalLoader();
-                final Set<String> paths = localDependency.getPaths();
-                for (String path : paths) {
-                    boolean accept = true;
-                    for (Object filter : filterStack.getRawArray()) {
-                        if (filter != null && ! ((PathFilter)filter).accept(path)) {
-                            accept = false; break;
-                        }
-                    }
-                    if (accept && localDependency.getImportFilter().accept(path) && localDependency.getExportFilter().accept(path)) {
-                        List<LocalLoader> list = map.get(path);
-                        if (list == null) {
-                            map.put(path, list = new ArrayList<LocalLoader>(1));
-                            list.add(localLoader);
-                        } else if (! list.contains(localLoader)) {
-                            list.add(localLoader);
-                        }
-                    }
-                }
+                // else unknown dep type so just skip
             }
-            // else unknown dep type so just skip
         }
     }
 
