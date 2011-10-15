@@ -608,18 +608,19 @@ public final class Module {
      * @return the resource URL, or {@code null} if not found
      */
     URL getResource(final String name, final boolean exportsOnly) {
+        final String canonPath = PathUtils.canonicalize(name);
         for (String s : Module.systemPaths) {
-            if (name.startsWith(s)) {
-                return moduleClassLoader.getResource(name);
+            if (canonPath.startsWith(s)) {
+                return moduleClassLoader.getResource(canonPath);
             }
         }
-        log.trace("Attempting to find resource %s in %s", name, this);
-        final String path = pathOf(name);
+        log.trace("Attempting to find resource %s in %s", canonPath, this);
+        final String path = pathOf(canonPath);
         final Map<String, List<LocalLoader>> paths = getPaths(exportsOnly);
         final List<LocalLoader> loaders = paths.get(path);
         if (loaders != null) {
             for (LocalLoader loader : loaders) {
-                final List<Resource> resourceList = loader.loadResourceLocal(name);
+                final List<Resource> resourceList = loader.loadResourceLocal(canonPath);
                 for (Resource resource : resourceList) {
                     return resource.getURL();
                 }
@@ -627,7 +628,7 @@ public final class Module {
         }
         final LocalLoader fallbackLoader = this.fallbackLoader;
         if (fallbackLoader != null) {
-            final List<Resource> resourceList = fallbackLoader.loadResourceLocal(name);
+            final List<Resource> resourceList = fallbackLoader.loadResourceLocal(canonPath);
             for (Resource resource : resourceList) {
                 return resource.getURL();
             }
@@ -643,24 +644,25 @@ public final class Module {
      * @return the enumeration of all the matching resource URLs (may be empty)
      */
     Enumeration<URL> getResources(final String name, final boolean exportsOnly) {
+        final String canonPath = PathUtils.canonicalize(name);
         for (String s : Module.systemPaths) {
-            if (name.startsWith(s)) {
+            if (canonPath.startsWith(s)) {
                 try {
-                    return moduleClassLoader.getResources(name);
+                    return moduleClassLoader.getResources(canonPath);
                 } catch (IOException e) {
                     return ConcurrentClassLoader.EMPTY_ENUMERATION;
                 }
             }
         }
-        log.trace("Attempting to find all resources %s in %s", name, this);
-        final String path = pathOf(name);
+        log.trace("Attempting to find all resources %s in %s", canonPath, this);
+        final String path = pathOf(canonPath);
         final Map<String, List<LocalLoader>> paths = getPaths(exportsOnly);
         final List<LocalLoader> loaders = paths.get(path);
 
         final List<URL> list = new ArrayList<URL>();
         if (loaders != null) {
             for (LocalLoader loader : loaders) {
-                final List<Resource> resourceList = loader.loadResourceLocal(name);
+                final List<Resource> resourceList = loader.loadResourceLocal(canonPath);
                 for (Resource resource : resourceList) {
                     list.add(resource.getURL());
                 }
@@ -668,7 +670,7 @@ public final class Module {
         }
         final LocalLoader fallbackLoader = this.fallbackLoader;
         if (fallbackLoader != null) {
-            final List<Resource> resourceList = fallbackLoader.loadResourceLocal(name);
+            final List<Resource> resourceList = fallbackLoader.loadResourceLocal(canonPath);
             for (Resource resource : resourceList) {
                 list.add(resource.getURL());
             }
