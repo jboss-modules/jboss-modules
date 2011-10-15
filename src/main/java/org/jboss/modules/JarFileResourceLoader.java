@@ -166,13 +166,12 @@ final class JarFileResourceLoader extends AbstractResourceLoader {
         return null;
     }
 
-    public Resource getResource(final String name) {
+    public Resource getResource(String name) {
         try {
             final JarFile jarFile = this.jarFile;
-            String entryName = PathUtils.canonicalize(name);
-            if(entryName.startsWith("/"))
-                entryName = entryName.substring(1);
-            final JarEntry entry = getJarEntry(entryName);
+            if(name.startsWith("/"))
+                name = name.substring(1);
+            final JarEntry entry = getJarEntry(name);
             if (entry == null) {
                 return null;
             }

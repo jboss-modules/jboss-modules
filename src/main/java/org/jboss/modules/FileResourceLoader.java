@@ -207,7 +207,7 @@ final class FileResourceLoader extends AbstractResourceLoader {
 
     public Resource getResource(final String name) {
         try {
-            final File file = new File(root, PathUtils.canonicalize(name));
+            final File file = new File(root, name);
             if (! file.exists()) {
                 return null;
             }
