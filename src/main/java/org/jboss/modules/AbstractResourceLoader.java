@@ -50,7 +50,7 @@ public abstract class AbstractResourceLoader implements ResourceLoader {
     protected static PackageSpec getPackageSpec(final String name, final Manifest manifest, final URL rootUrl) {
         final PackageSpec spec = new PackageSpec();
         if (manifest == null) {
-            return spec;
+            return null;
         }
         final Attributes mainAttribute = manifest.getMainAttributes();
         final String path = name.replace('.', '/').concat("/");
