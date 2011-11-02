@@ -48,6 +48,8 @@ import org.jboss.modules.log.NoopModuleLogger;
 
 import __redirected.__JAXPRedirected;
 
+import static org.jboss.modules.Linkage.State.*;
+
 /**
  * A module is a unit of classes and other resources, along with the specification of what is imported and exported
  * by this module from and to other modules.  Modules are created by {@link ModuleLoader}s which build modules from
@@ -945,7 +947,7 @@ public final class Module {
     Map<String, List<LocalLoader>> getPaths(final boolean exports) throws ModuleLoadException {
         Linkage linkage = this.linkage;
         Linkage.State state = linkage.getState();
-        if (state == Linkage.State.LINKED) {
+        if (state.compareTo(exports ? LINKED_EXPORTS : LINKED) >= 0) {
             return linkage.getPaths(exports);
         }
         // slow path loop
@@ -955,20 +957,24 @@ public final class Module {
                 synchronized (this) {
                     linkage = this.linkage;
                     state = linkage.getState();
-                    while (state == Linkage.State.LINKING || state == Linkage.State.NEW) try {
+                    while (state == (exports ? LINKING_EXPORTS : LINKING) || state == NEW) try {
                         wait();
                         linkage = this.linkage;
                         state = linkage.getState();
                     } catch (InterruptedException e) {
                         intr = true;
                     }
-                    if (state == Linkage.State.LINKED) {
+                    if (state == (exports ? LINKED_EXPORTS : LINKED)) {
                         return linkage.getPaths(exports);
                     }
-                    this.linkage = linkage = new Linkage(linkage.getSourceList(), Linkage.State.LINKING);
+                    this.linkage = linkage = new Linkage(linkage.getSourceList(), exports ? LINKING_EXPORTS : LINKING);
                     // fall out and link
                 }
-                link(linkage);
+                if (exports) {
+                    linkExports(linkage);
+                } else {
+                    link(linkage);
+                }
             }
         } finally {
             if (intr) {
@@ -985,9 +991,8 @@ public final class Module {
         }
     }
 
-    void link(final Linkage linkage) throws ModuleLoadException {
+    boolean link(final Linkage linkage) throws ModuleLoadException {
         final HashMap<String, List<LocalLoader>> importsMap = new HashMap<String, List<LocalLoader>>();
-        final HashMap<String, List<LocalLoader>> exportsMap = new HashMap<String, List<LocalLoader>>();
         final Dependency[] dependencies = linkage.getSourceList();
         final long start = Metrics.getCurrentCPUTime();
         long subtractTime = 0L;
@@ -995,30 +1000,54 @@ public final class Module {
             final Set<Visited> visited = new FastCopyHashSet<Visited>(16);
             final FastCopyHashSet<PathFilter> filterStack = new FastCopyHashSet<PathFilter>(8);
             subtractTime += addPaths(dependencies, importsMap, filterStack, visited);
-            subtractTime += addExportedPaths(dependencies, exportsMap, filterStack, visited);
             synchronized (this) {
                 if (this.linkage == linkage) {
-                    this.linkage = new Linkage(linkage.getSourceList(), Linkage.State.LINKED, importsMap, exportsMap);
+                    this.linkage = new Linkage(linkage.getSourceList(), LINKED, importsMap, null);
                     notifyAll();
+                    return true;
                 }
                 // else all our efforts were just wasted since someone changed the deps in the meantime
+                return false;
             }
         } finally {
             moduleLoader.addLinkTime(Metrics.getCurrentCPUTime() - start - subtractTime);
         }
     }
 
-    void relinkIfNecessary() throws ModuleLoadException {
+    boolean linkExports(final Linkage linkage) throws ModuleLoadException {
+        final HashMap<String, List<LocalLoader>> exportsMap = new HashMap<String, List<LocalLoader>>();
+        final Dependency[] dependencies = linkage.getSourceList();
+        final long start = Metrics.getCurrentCPUTime();
+        long subtractTime = 0L;
+        try {
+            final Set<Visited> visited = new FastCopyHashSet<Visited>(16);
+            final FastCopyHashSet<PathFilter> filterStack = new FastCopyHashSet<PathFilter>(8);
+            subtractTime += addExportedPaths(dependencies, exportsMap, filterStack, visited);
+            synchronized (this) {
+                if (this.linkage == linkage) {
+                    this.linkage = new Linkage(linkage.getSourceList(), LINKED_EXPORTS, linkage.getAllPaths(), exportsMap);
+                    notifyAll();
+                    return true;
+                }
+                // else all our efforts were just wasted since someone changed the deps in the meantime
+                return false;
+            }
+        } finally {
+            moduleLoader.addLinkTime(Metrics.getCurrentCPUTime() - start - subtractTime);
+        }
+    }
+
+    void linkIfNecessary() throws ModuleLoadException {
         Linkage linkage = this.linkage;
-        if (linkage.getState() != Linkage.State.UNLINKED) {
+        if (linkage.getState().compareTo(LINKING) >= 0) {
             return;
         }
         synchronized (this) {
             linkage = this.linkage;
-            if (linkage.getState() != Linkage.State.UNLINKED) {
+            if (linkage.getState().compareTo(LINKING) >= 0) {
                 return;
             }
-            this.linkage = linkage = new Linkage(linkage.getSourceList(), Linkage.State.LINKING);
+            this.linkage = linkage = new Linkage(linkage.getSourceList(), LINKING);
         }
         link(linkage);
     }
