@@ -366,10 +366,12 @@ public final class Main {
 
     static {
         final InputStream stream = Main.class.getResourceAsStream("/META-INF/MANIFEST.MF");
-        try {
-        final Manifest manifest = new Manifest(stream);
-        JAR_NAME = manifest.getMainAttributes().getValue("Jar-Name");
-        VERSION_STRING = manifest.getMainAttributes().getValue("Jar-Version");
+        String jarName = "(unknown)";
+        String versionString = "(unknown)";
+        if (stream != null) try {
+            final Manifest manifest = new Manifest(stream);
+            jarName = manifest.getMainAttributes().getValue("Jar-Name");
+            versionString = manifest.getMainAttributes().getValue("Jar-Version");
         } catch (IOException e) {
             throw new IllegalStateException(e);
         } finally {
@@ -378,6 +380,8 @@ public final class Main {
             } catch (IOException ignored) {
             }
         }
+        JAR_NAME = jarName;
+        VERSION_STRING = versionString;
     }
 
     /**
