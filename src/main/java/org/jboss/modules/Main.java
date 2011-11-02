@@ -31,8 +31,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URL;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.Enumeration;
+import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.logging.LogManager;
 
@@ -365,20 +368,26 @@ public final class Main {
     private static final String VERSION_STRING;
 
     static {
-        final InputStream stream = Main.class.getResourceAsStream("/META-INF/MANIFEST.MF");
+        final Enumeration<URL> resources;
         String jarName = "(unknown)";
         String versionString = "(unknown)";
-        if (stream != null) try {
-            final Manifest manifest = new Manifest(stream);
-            jarName = manifest.getMainAttributes().getValue("Jar-Name");
-            versionString = manifest.getMainAttributes().getValue("Jar-Version");
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        } finally {
-            try {
-                stream.close();
-            } catch (IOException ignored) {
+        try {
+            resources = Main.class.getClassLoader().getResources("META-INF/MANIFEST.MF");
+            while (resources.hasMoreElements()) {
+                final URL url = resources.nextElement();
+                final InputStream stream = url.openStream();
+                if (stream != null) try {
+                    final Manifest manifest = new Manifest(stream);
+                    final Attributes mainAttributes = manifest.getMainAttributes();
+                    if (mainAttributes != null && "JBoss Modules".equals(mainAttributes.getValue("Specification-Title"))) {
+                        jarName = mainAttributes.getValue("Jar-Name");
+                        versionString = mainAttributes.getValue("Jar-Version");
+                    }
+                } finally {
+                    try { stream.close(); } catch (Throwable ignored) {}
+                }
             }
+        } catch (IOException ignored) {
         }
         JAR_NAME = jarName;
         VERSION_STRING = versionString;
