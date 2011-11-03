@@ -195,7 +195,7 @@ public abstract class ModuleLoader {
         if (module == null) {
             throw new ModuleNotFoundException(identifier.toString());
         }
-        module.linkIfNecessary();
+        module.relinkIfNecessary();
         return module;
     }
 
@@ -452,7 +452,7 @@ public abstract class ModuleLoader {
             throw new SecurityException("Module redefinition requires canRedefineModule permission");
 
         module.setDependencies(dependencies);
-        module.linkIfNecessary();
+        module.relinkIfNecessary();
     }
 
     void addLinkTime(long amount) {

@@ -40,8 +40,6 @@ final class Linkage {
         UNLINKED,
         LINKING,
         LINKED,
-        LINKING_EXPORTS,
-        LINKED_EXPORTS,
         ;
     }
 
