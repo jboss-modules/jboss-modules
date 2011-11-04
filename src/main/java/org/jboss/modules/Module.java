@@ -39,8 +39,10 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import org.jboss.modules.filter.PathFilter;
 import org.jboss.modules.filter.PathFilters;
 import org.jboss.modules.log.ModuleLogger;
@@ -169,6 +171,10 @@ public final class Module {
     private static final RuntimePermission ACCESS_MODULE_LOGGER = new RuntimePermission("accessModuleLogger");
     private static final RuntimePermission ADD_CONTENT_HANDLER_FACTORY = new RuntimePermission("addContentHandlerFactory");
     private static final RuntimePermission ADD_URL_STREAM_HANDLER_FACTORY = new RuntimePermission("addURLStreamHandlerFactory");
+
+    private volatile ConcurrentMap<Object, Object> moduleLocalMap = null;
+
+    private static final AtomicReferenceFieldUpdater<Module, ConcurrentMap> moduleLocalMapUpdater = AtomicReferenceFieldUpdater.newUpdater(Module.class, ConcurrentMap.class, "moduleLocalMap");
 
     /**
      * Construct a new instance from a module specification.
@@ -1071,5 +1077,54 @@ public final class Module {
             }
         }
         return packages.toArray(new Package[packages.size()]);
+    }
+
+    // Module-local support
+
+    boolean containsModuleLocal(final Object key) {
+        final ConcurrentMap<Object, Object> map = moduleLocalMap;
+        return map != null && map.containsKey(key);
+    }
+
+    <T> T getModuleLocal(final ModuleLocal<T> key) {
+        final ConcurrentMap<Object, Object> map = moduleLocalMap;
+        return map == null ? null : (T) map.get(key);
+    }
+
+    <T> T putModuleLocal(final ModuleLocal.Ref key, T value) {
+        return (T) getMapForPut().put(key, value);
+    }
+
+    <T> T putModuleLocalIfAbsent(final ModuleLocal.Ref key, T value) {
+        return (T) getMapForPut().putIfAbsent(key, value);
+    }
+
+    <T> T removeModuleLocal(final Object key) {
+        final ConcurrentMap<Object, Object> map = moduleLocalMap;
+        return map == null ? null : (T) map.remove(key);
+    }
+
+    boolean removeModuleLocal(final Object key, Object expectedValue) {
+        final ConcurrentMap<Object, Object> map = moduleLocalMap;
+        return map != null && map.remove(key, expectedValue);
+    }
+
+    <T> T replaceModuleLocal(final ModuleLocal<T> key, T newValue) {
+        final ConcurrentMap<Object, Object> map = moduleLocalMap;
+        return map == null ? null : (T) map.replace(key, newValue);
+    }
+
+    <T> boolean replaceModuleLocal(final ModuleLocal<T> key, T expectedValue, T updateValue) {
+        final ConcurrentMap<Object, Object> map = moduleLocalMap;
+        return map != null && map.replace(key, expectedValue, updateValue);
+    }
+
+    private ConcurrentMap<Object, Object> getMapForPut() {
+        ConcurrentMap<Object, Object> map;
+        do {
+            map = moduleLocalMap;
+            if (map != null) return map;
+        } while (! moduleLocalMapUpdater.compareAndSet(this, null, map = new UnlockedReadHashMap<Object, Object>()));
+        return map;
     }
 }
