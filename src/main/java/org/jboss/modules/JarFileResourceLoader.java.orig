@@ -40,7 +40,7 @@ import java.net.URL;
 import java.security.CodeSource;
 import java.util.Collection;
 import java.util.Enumeration;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -54,7 +54,6 @@ final class JarFileResourceLoader extends AbstractResourceLoader {
     private final String rootName;
     private final URL rootUrl;
     private final String relativePath;
-    private final File fileOfJar;
 
     JarFileResourceLoader(final String rootName, final JarFile jarFile) {
         this(rootName, jarFile, null);
@@ -67,13 +66,12 @@ final class JarFileResourceLoader extends AbstractResourceLoader {
         if (rootName == null) {
             throw new IllegalArgumentException("rootName is null");
         }
-        fileOfJar = new File(jarFile.getName());
         this.jarFile = jarFile;
         this.rootName = rootName;
         final String realPath = relativePath == null ? null : PathUtils.canonicalize(relativePath);
         this.relativePath = realPath;
         try {
-            rootUrl = new URI("jar", fileOfJar.toURI().toString() + (realPath == null ? "!/" : "!/" + realPath), null).toURL();
+            rootUrl = new URI("jar", new File(jarFile.getName()).toURI().toString() + (realPath == null ? "!/" : "!/" + realPath), null).toURL();
         } catch (URISyntaxException e) {
             throw new IllegalArgumentException("Invalid root file specified", e);
         } catch (MalformedURLException e) {
@@ -174,8 +172,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader {
             if (entry == null) {
                 return null;
             }
-            String jarFilePath = new File(jarFile.getName()).toURI().toString();
-            return new JarEntryResource(jarFile, entry, new URI("jar", jarFilePath + "!/" + entry.getName(), null).toURL());
+            return new JarEntryResource(jarFile, entry, new URI("jar", "file:" + jarFile.getName() + "!/" + entry.getName(), null).toURL());
         } catch (MalformedURLException e) {
             // must be invalid...?  (todo: check this out)
             return null;
@@ -186,34 +183,34 @@ final class JarFileResourceLoader extends AbstractResourceLoader {
     }
 
     public Collection<String> getPaths() {
-        final Collection<String> index = new HashSet<String>();
-        index.add("");
+        final Collection<String> index = new LinkedHashSet<String>();
         String relativePath = this.relativePath;
         // First check for an external index
         final JarFile jarFile = this.jarFile;
         final String jarFileName = jarFile.getName();
-        final long jarModified = fileOfJar.lastModified();
         final File indexFile = new File(jarFileName + ".index");
         if (indexFile.exists()) {
-            final long indexModified = indexFile.lastModified();
-            if (indexModified != 0L && jarModified != 0L && indexModified >= jarModified) try {
-                return readIndex(new FileInputStream(indexFile), index, relativePath);
+            try {
+                final BufferedReader r = new BufferedReader(new InputStreamReader(new FileInputStream(indexFile)));
+                try {
+                    String s;
+                    while ((s = r.readLine()) != null) {
+                        String name = s.trim();
+                        if (relativePath == null) {
+                            index.add(name);
+                        } else {
+                            if (name.startsWith(relativePath + "/")) {
+                                index.add(name.substring(relativePath.length() + 1));
+                            }
+                        }
+                    }
+                    return index;
+                } finally {
+                    // if exception is thrown, undo index creation
+                    r.close();
+                }
             } catch (IOException e) {
                 index.clear();
-            }
-        }
-        // Next check for an internal index
-        JarEntry listEntry = jarFile.getJarEntry("META-INF/PATHS.LIST");
-        if (listEntry != null) {
-            if (jarModified != 0L) {
-                final long entryTime = listEntry.getTime();
-                if (entryTime == -1L || entryTime >= jarModified) {
-                    try {
-                        return readIndex(jarFile.getInputStream(listEntry), index, relativePath);
-                    } catch (IOException e) {
-                        index.clear();
-                    }
-                }
             }
         }
         // Next just read the JAR
@@ -266,26 +263,5 @@ final class JarFileResourceLoader extends AbstractResourceLoader {
             }
         }
         return index;
-    }
-
-    private static Collection<String> readIndex(final InputStream stream, final Collection<String> index, final String relativePath) throws IOException {
-        final BufferedReader r = new BufferedReader(new InputStreamReader(stream));
-        try {
-            String s;
-            while ((s = r.readLine()) != null) {
-                String name = s.trim();
-                if (relativePath == null) {
-                    index.add(name);
-                } else {
-                    if (name.startsWith(relativePath + "/")) {
-                        index.add(name.substring(relativePath.length() + 1));
-                    }
-                }
-            }
-            return index;
-        } finally {
-            // if exception is thrown, undo index creation
-            r.close();
-        }
     }
 }
