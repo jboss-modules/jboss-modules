@@ -34,100 +34,25 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.security.AccessController;
 import java.security.CodeSigner;
 import java.security.CodeSource;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Locale;
 import java.util.jar.Manifest;
 
 /**
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-final class FileResourceLoader extends AbstractResourceLoader {
-    private static final String ARCH_NAME;
-
-    static {
-        final PropertyReadAction osNameReadAction = new PropertyReadAction("os.name");
-        final PropertyReadAction osArchReadAction = new PropertyReadAction("os.arch");
-        final SecurityManager sm = System.getSecurityManager();
-        final String sysName;
-        final String sysArch;
-        if (sm != null) {
-            sysName = AccessController.doPrivileged(osNameReadAction).toUpperCase(Locale.US);
-            sysArch = AccessController.doPrivileged(osArchReadAction).toUpperCase(Locale.US);
-        } else {
-            sysName = osNameReadAction.run().toUpperCase(Locale.US);
-            sysArch = osArchReadAction.run().toUpperCase(Locale.US);
-        }
-        final String realName;
-        final String realArch;
-        if (sysName.startsWith("LINUX")) {
-            realName = "linux";
-        } else if (sysName.startsWith("MAC OS")) {
-            realName = "macosx";
-        } else if (sysName.startsWith("WINDOWS")) {
-            realName = "win";
-        } else if (sysName.startsWith("OS/2")) {
-            realName = "os2";
-        } else if (sysName.startsWith("SOLARIS") || sysName.startsWith("SUNOS")) {
-            realName = "solaris";
-        } else if (sysName.startsWith("MPE/IX")) {
-            realName = "mpeix";
-        } else if (sysName.startsWith("HP-UX")) {
-            realName = "hpux";
-        } else if (sysName.startsWith("AIX")) {
-            realName = "aix";
-        } else if (sysName.startsWith("OS/390")) {
-            realName = "os390";
-        } else if (sysName.startsWith("FREEBSD")) {
-            realName = "freebsd";
-        } else if (sysName.startsWith("IRIX")) {
-            realName = "irix";
-        } else if (sysName.startsWith("DIGITAL UNIX")) {
-            realName = "digitalunix";
-        } else if (sysName.startsWith("OSF1")) {
-            realName = "osf1";
-        } else if (sysName.startsWith("OPENVMS")) {
-            realName = "openvms";
-        } else {
-            realName = "unknown";
-        }
-        if (sysArch.startsWith("SPARCV9") || sysArch.startsWith("SPARC64")) {
-            realArch = "sparcv9";
-        } else if (sysArch.startsWith("SPARC")) {
-            realArch = "sparc";
-        } else if (sysArch.startsWith("X86_64") || sysArch.startsWith("AMD64")) {
-            realArch = "x86_64";
-        } else if (sysArch.startsWith("I386") || sysArch.startsWith("I586") || sysArch.startsWith("I686") || sysArch.startsWith("X86")) {
-            realArch = "i686";
-        } else if (sysArch.startsWith("PPC64")) {
-            realArch = "ppc64";
-        } else if (sysArch.startsWith("PPC") || sysArch.startsWith("POWER")) {
-            realArch = "ppc";
-        } else if (sysArch.startsWith("ARM")) {
-            realArch = "arm";
-        } else if (sysArch.startsWith("PA_RISC") || sysArch.startsWith("PA-RISC")) {
-            realArch = "parisc";
-        } else if (sysArch.startsWith("ALPHA")) {
-            realArch = "alpha";
-        } else if (sysArch.startsWith("MIPS")) {
-            realArch = "mips";
-        } else {
-            realArch = "unknown";
-        }
-        ARCH_NAME = realName + "-" + realArch;
-    }
+final class FileResourceLoader extends NativeLibraryResourceLoader {
 
     private final String rootName;
-    private final File root;
     private final Manifest manifest;
     private final CodeSource codeSource;
 
     FileResourceLoader(final String rootName, final File root) {
+        super(root);
         if (root == null) {
             throw new IllegalArgumentException("root is null");
         }
@@ -135,7 +60,6 @@ final class FileResourceLoader extends AbstractResourceLoader {
             throw new IllegalArgumentException("rootName is null");
         }
         this.rootName = rootName;
-        this.root = root;
         final File manifestFile = new File(root, "META-INF" + File.separatorChar + "MANIFEST.MF");
         manifest = readManifestFile(manifestFile);
         final URL rootUrl;
@@ -160,7 +84,7 @@ final class FileResourceLoader extends AbstractResourceLoader {
     }
 
     public ClassSpec getClassSpec(final String fileName) throws IOException {
-        final File file = new File(root, fileName);
+        final File file = new File(getRoot(), fileName);
         if (! file.exists()) {
             return null;
         }
@@ -197,17 +121,12 @@ final class FileResourceLoader extends AbstractResourceLoader {
     }
 
     public PackageSpec getPackageSpec(final String name) throws IOException {
-        return getPackageSpec(name, manifest, root.toURI().toURL());
-    }
-
-    public String getLibrary(final String name) {
-        final File file = new File(root, ARCH_NAME + File.separatorChar + System.mapLibraryName(name));
-        return file.exists() ? file.getAbsolutePath() : null;
+        return getPackageSpec(name, manifest, getRoot().toURI().toURL());
     }
 
     public Resource getResource(final String name) {
         try {
-            final File file = new File(root, name);
+            final File file = new File(getRoot(), name);
             if (! file.exists()) {
                 return null;
             }
@@ -221,7 +140,7 @@ final class FileResourceLoader extends AbstractResourceLoader {
     public Collection<String> getPaths() {
         final List<String> index = new ArrayList<String>();
         // First check for an index file
-        final File indexFile = new File(root.getPath() + ".index");
+        final File indexFile = new File(getRoot().getPath() + ".index");
         if (indexFile.exists()) {
             try {
                 final BufferedReader r = new BufferedReader(new InputStreamReader(new FileInputStream(indexFile)));
@@ -241,7 +160,7 @@ final class FileResourceLoader extends AbstractResourceLoader {
         }
         // Manually build index, starting with the root path
         index.add("");
-        buildIndex(index, root, "");
+        buildIndex(index, getRoot(), "");
         if (ResourceLoaders.WRITE_INDEXES) {
             // Now try to write it
             boolean ok = false;

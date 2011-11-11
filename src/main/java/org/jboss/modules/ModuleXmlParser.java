@@ -837,6 +837,7 @@ final class ModuleXmlParser {
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case END_ELEMENT: {
+                    specBuilder.addResourceRoot(new ResourceLoaderSpec(new NativeLibraryResourceLoader(new File(rootPath, "lib")), PathFilters.rejectAll()));
                     return;
                 }
                 case START_ELEMENT: {
