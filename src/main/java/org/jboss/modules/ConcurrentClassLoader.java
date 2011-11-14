@@ -494,6 +494,12 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
      * @return the package, or {@code null} if no such package is visible to this class loader
      */
     protected final Package getPackage(final String name) {
+        final String packageName = name + ".";
+        for (String s : Module.systemPackages) {
+            if (packageName.startsWith(s)) {
+                return Package.getPackage(name);
+            }
+        }
         if (GET_PACKAGE_SUPPRESSOR.get() == Boolean.TRUE) {
             return null;
         }
