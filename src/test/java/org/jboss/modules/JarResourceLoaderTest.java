@@ -53,7 +53,7 @@ public class JarResourceLoaderTest extends AbstractResourceLoaderTestCase {
         outputFile.getParentFile().mkdirs();
         buildJar(fileResourceRoot, outputFile);
         // Create the jar file and resource loader
-        jarFile = new JarFile(outputFile);
+        jarFile = new JarFile(outputFile, true);
         return new JarFileResourceLoader("test-root", jarFile);
     }
 

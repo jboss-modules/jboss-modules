@@ -119,13 +119,6 @@ public abstract class AbstractResourceLoaderTestCase extends AbstractModuleTestC
     @Test
     public void testMissingPackageSpec() throws Exception {
         PackageSpec spec = loader.getPackageSpec("org.jboss.modules.bogus");
-        assertNotNull(spec);
-
-        assertEquals("MODULES-89", spec.getSpecTitle());
-        assertNull(spec.getSpecVersion());
-        assertNull(spec.getSpecVendor());
-        assertNull(spec.getImplTitle());
-        assertNull(spec.getImplVersion());
-        assertNull(spec.getImplVendor());
+        assertNull(spec);
     }
 }

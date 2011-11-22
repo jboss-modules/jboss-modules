@@ -43,6 +43,9 @@ public abstract class AbstractResourceLoader implements ResourceLoader {
         final Attributes mainAttribute = manifest.getMainAttributes();
         final String path = name.replace('.', '/').concat("/");
         final Attributes entryAttribute = manifest.getAttributes(path);
+        if (entryAttribute == null || entryAttribute.isEmpty()) {
+            return null;
+        }
         spec.setSpecTitle(getDefinedAttribute(Attributes.Name.SPECIFICATION_TITLE, entryAttribute, mainAttribute));
         spec.setSpecVersion(getDefinedAttribute(Attributes.Name.SPECIFICATION_VERSION, entryAttribute, mainAttribute));
         spec.setSpecVendor(getDefinedAttribute(Attributes.Name.SPECIFICATION_VENDOR, entryAttribute, mainAttribute));

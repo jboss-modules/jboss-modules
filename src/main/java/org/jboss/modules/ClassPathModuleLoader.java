@@ -121,7 +121,7 @@ final class ClassPathModuleLoader extends ModuleLoader {
                     }
                     if (root.isFile()) {
                         try {
-                            builder.addResourceRoot(ResourceLoaderSpec.createResourceLoaderSpec(ResourceLoaders.createJarResourceLoader(root.getParent(), new JarFile(root))));
+                            builder.addResourceRoot(ResourceLoaderSpec.createResourceLoaderSpec(ResourceLoaders.createJarResourceLoader(root.getParent(), new JarFile(root, true))));
                         } catch (Exception e) {
                             Module.log.trace(e, "Resource %s does not appear to be a valid JAR. Loaded as file resource.", root);
                             builder.addResourceRoot(ResourceLoaderSpec.createResourceLoaderSpec(ResourceLoaders.createFileResourceLoader(entry, root)));

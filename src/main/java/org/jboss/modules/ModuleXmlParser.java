@@ -203,7 +203,8 @@ final class ModuleXmlParser {
                         if (file.isDirectory()) {
                             return new FileResourceLoader(loaderName, file);
                         } else {
-                            return new JarFileResourceLoader(loaderName, new JarFile(file));
+                            final JarFile jarFile = new JarFile(file, true);
+                            return new JarFileResourceLoader(loaderName, jarFile);
                         }
                     }
                 }, root.getPath(), fis, moduleInfoFile.getPath(), moduleIdentifier);
