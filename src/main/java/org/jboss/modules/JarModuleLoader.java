@@ -76,7 +76,7 @@ final class JarModuleLoader extends ModuleLoader {
     protected ModuleSpec findModule(final ModuleIdentifier identifier) throws ModuleLoadException {
         if (identifier.equals(myIdentifier)) {
             // special root JAR module
-            Manifest manifest = null;
+            Manifest manifest;
             try {
                 manifest = jarFile.getManifest();
             } catch (IOException e) {

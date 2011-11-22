@@ -92,7 +92,6 @@ final class JarFileResourceLoader extends AbstractResourceLoader {
             // no such entry
             return null;
         }
-        spec.setCodeSource(new CodeSource(rootUrl, entry.getCodeSigners()));
         final long size = entry.getSize();
         final InputStream is = jarFile.getInputStream(entry);
         try {
@@ -108,6 +107,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader {
                 baos.close();
                 is.close();
                 spec.setBytes(baos.toByteArray());
+                spec.setCodeSource(new CodeSource(rootUrl, entry.getCodeSigners()));
                 return spec;
             } else if (size <= (long) Integer.MAX_VALUE) {
                 final int castSize = (int) size;
@@ -119,6 +119,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader {
                 // done
                 is.close();
                 spec.setBytes(bytes);
+                spec.setCodeSource(new CodeSource(rootUrl, entry.getCodeSigners()));
                 return spec;
             } else {
                 throw new IOException("Resource is too large to be a valid class file");
