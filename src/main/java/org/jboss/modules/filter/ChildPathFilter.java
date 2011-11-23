@@ -38,7 +38,7 @@ final class ChildPathFilter implements PathFilter {
     }
 
     public boolean equals(final Object obj) {
-        return obj instanceof EqualsPathFilter && equals((ChildPathFilter) obj);
+        return obj instanceof ChildPathFilter && equals((ChildPathFilter) obj);
     }
 
     public boolean equals(final ChildPathFilter obj) {
