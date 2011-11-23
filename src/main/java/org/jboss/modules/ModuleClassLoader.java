@@ -226,12 +226,14 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
 
         // Check to see if we can define it locally it
         ClassSpec classSpec = null;
+        ResourceLoader resourceLoader = null;
         try {
             if (loaders.size() > 0) {
                 String fileName = Module.fileNameOfClass(className);
                 for (ResourceLoader loader : loaders) {
                     classSpec = loader.getClassSpec(fileName);
                     if (classSpec != null) {
+                        resourceLoader = loader;
                         break;
                     }
                 }
@@ -257,7 +259,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         catch (Throwable th) {
             throw new ClassNotFoundException("Failed to preDefine class: " + className, th);
         }
-        final Class<?> clazz = defineClass(className, classSpec);
+        final Class<?> clazz = defineClass(className, classSpec, resourceLoader);
         try{
             postDefine(classSpec, clazz);
         }
@@ -346,9 +348,10 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
      *
      * @param name the class name
      * @param classSpec the class spec
+     * @param resourceLoader the resource loader of the class spec
      * @return the new class
      */
-    private Class<?> defineClass(final String name, final ClassSpec classSpec) {
+    private Class<?> defineClass(final String name, final ClassSpec classSpec, final ResourceLoader resourceLoader) {
         final ModuleLogger log = Module.log;
         final Module module = this.module;
         log.trace("Attempting to define class %s in %s", name, module);
@@ -361,27 +364,9 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
             synchronized (this) {
                 Package pkg = findLoadedPackage(packageName);
                 if (pkg == null) {
-                    final Map<String, List<ResourceLoader>> paths = this.paths.getAllPaths();
-                    final String path = Module.pathOf(name);
-                    final List<ResourceLoader> loaders = paths.get(path);
-                    if (loaders != null) {
-                        PackageSpec spec = null;
-                        for (ResourceLoader loader : loaders) {
-                            try {
-                                spec = loader.getPackageSpec(packageName);
-                                if (spec != null) {
-                                    break;
-                                }
-                            } catch (IOException e) {
-                                // skip
-                            }
-                        }
-                        if (spec != null) {
-                            pkg = definePackage(packageName, spec);
-                        } else {
-                            pkg = definePackage(packageName, null);
-                        }
-                    } else {
+                    try {
+                        pkg = definePackage(packageName, resourceLoader.getPackageSpec(packageName));
+                    } catch (IOException e) {
                         pkg = definePackage(packageName, null);
                     }
                 }
