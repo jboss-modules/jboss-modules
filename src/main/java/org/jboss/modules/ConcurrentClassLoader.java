@@ -61,6 +61,7 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
     protected static final Method REGISTER_AS_PARALLEL_CAPABLE_METHOD;
 
     private static final boolean LOCKLESS;
+    private static final boolean SAFE_JDK;
 
     private static final ClassLoader definingLoader = ConcurrentClassLoader.class.getClassLoader();
 
@@ -74,22 +75,20 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
         */
         Package.getPackages();
         // Determine whether to run in lockless mode
-        boolean locklessDefault = false;
-        if (AccessController.doPrivileged(new PropertyReadAction("java.specification.version", "1.6")).equals("1.6")) {
-            // For 1.6, we require Unsafe to perform lockless stuff
-            try {
-                Class.forName("sun.misc.Unsafe", false, null);
-                locklessDefault = true;
-            } catch (Throwable t) {
-                // ignored
-            }
+        boolean is16 = AccessController.doPrivileged(new PropertyReadAction("java.specification.version", "1.6")).equals("1.6");
+        boolean hasUnsafe = false;
+        // For 1.6, we require Unsafe to perform lockless stuff
+        if (is16) try {
+            Class.forName("sun.misc.Unsafe", false, null);
+            hasUnsafe = true;
+        } catch (Throwable t) {
+            // ignored
         }
-        // Make sure we're not running JRockit, which doesn't like lockless mode
-        if (AccessController.doPrivileged(new PropertyReadAction("java.vm.name", "")).toUpperCase(Locale.US).contains("JROCKIT")) {
-            locklessDefault = false;
-        }
+        final boolean isJRockit = AccessController.doPrivileged(new PropertyReadAction("java.vm.name", "")).toUpperCase(Locale.US).contains("JROCKIT");
         // But the user is always right, so if they override, respect it
-        LOCKLESS = Boolean.parseBoolean(AccessController.doPrivileged(new PropertyReadAction("jboss.modules.lockless", Boolean.toString(locklessDefault))));
+        LOCKLESS = Boolean.parseBoolean(AccessController.doPrivileged(new PropertyReadAction("jboss.modules.lockless", Boolean.toString(is16 && hasUnsafe && ! isJRockit))));
+        // If the JDK has safe CL, set this flag
+        SAFE_JDK = Boolean.parseBoolean(AccessController.doPrivileged(new PropertyReadAction("jboss.modules.safe-jdk", Boolean.toString(isJRockit))));
         Method method = null;
         try {
             method = ClassLoader.class.getDeclaredMethod("registerAsParallelCapable");
@@ -436,7 +435,9 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
      * @throws ClassNotFoundException if {@link #findClass(String, boolean, boolean)} throws this exception
      */
     private Class<?> performLoadClassChecked(final String className, final boolean exportsOnly, final boolean resolve) throws ClassNotFoundException {
-        if (Thread.holdsLock(this)) {
+        if (SAFE_JDK) {
+            return performLoadClassUnchecked(className, exportsOnly, resolve);
+        } else if (Thread.holdsLock(this)) {
             if (LOCKLESS) {
                 final Unsafe unsafe = UnsafeHolder.UNSAFE;
                 unsafe.monitorExit(this);
@@ -474,6 +475,10 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
             }
         }
         // no deadlock risk!  Either the lock isn't held, or we're inside the class loader thread.
+        return performLoadClassUnchecked(className, exportsOnly, resolve);
+    }
+
+    private Class<?> performLoadClassUnchecked(final String className, final boolean exportsOnly, final boolean resolve) throws ClassNotFoundException {
         if (className.charAt(0) == '[') {
             // Use Class.forName to load the array type
             final Class<?> array = Class.forName(className, false, this);
