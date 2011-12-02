@@ -225,8 +225,8 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         }
 
         // Check to see if we can define it locally it
-        ClassSpec classSpec = null;
-        ResourceLoader resourceLoader = null;
+        ClassSpec classSpec;
+        ResourceLoader resourceLoader;
         try {
             if (loaders.size() > 0) {
                 String fileName = Module.fileNameOfClass(className);
@@ -234,7 +234,23 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
                     classSpec = loader.getClassSpec(fileName);
                     if (classSpec != null) {
                         resourceLoader = loader;
-                        break;
+                        try {
+                            preDefine(classSpec, className);
+                        }
+                        catch (Throwable th) {
+                            throw new ClassNotFoundException("Failed to preDefine class: " + className, th);
+                        }
+                        final Class<?> clazz = defineClass(className, classSpec, resourceLoader);
+                        try {
+                            postDefine(classSpec, clazz);
+                        }
+                        catch (Throwable th) {
+                            throw new ClassNotFoundException("Failed to postDefine class: " + className, th);
+                        }
+                        if (resolve) {
+                            resolveClass(clazz);
+                        }
+                        return clazz;
                     }
                 }
             }
@@ -247,29 +263,8 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
             log.trace(e, "Unexpected error in module loader");
             throw new ClassNotFoundException(className, e);
         }
-
-        if (classSpec == null) {
-            log.trace("No local specification found for class %s in %s", className, module);
-            return null;
-        }
-
-        try{
-            preDefine(classSpec, className);
-        }
-        catch (Throwable th) {
-            throw new ClassNotFoundException("Failed to preDefine class: " + className, th);
-        }
-        final Class<?> clazz = defineClass(className, classSpec, resourceLoader);
-        try{
-            postDefine(classSpec, clazz);
-        }
-        catch (Throwable th) {
-            throw new ClassNotFoundException("Failed to postDefine class: " + className, th);
-        }
-        if (resolve) {
-            resolveClass(clazz);
-        }
-        return clazz;
+        log.trace("No local specification found for class %s in %s", className, module);
+        return null;
     }
 
     /**
