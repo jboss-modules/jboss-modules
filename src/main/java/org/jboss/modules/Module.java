@@ -230,7 +230,12 @@ public final class Module {
             if (mainClassName == null) {
                 throw new NoSuchMethodException("No main class defined for " + this);
             }
-            final Class<?> mainClass = moduleClassLoader.loadClass(mainClassName);
+            final Class<?> mainClass = Class.forName(mainClassName, false, moduleClassLoader);
+            try {
+                Class.forName(mainClassName, true, moduleClassLoader);
+            } catch (Throwable t) {
+                throw new InvocationTargetException(t, "Failed to initialize main class '" + mainClassName + "'");
+            }
             final Method mainMethod = mainClass.getMethod("main", String[].class);
             final int modifiers = mainMethod.getModifiers();
             if (! Modifier.isStatic(modifiers)) {
