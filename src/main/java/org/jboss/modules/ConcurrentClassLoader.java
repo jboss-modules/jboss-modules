@@ -25,7 +25,6 @@ package org.jboss.modules;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.net.URL;
 import java.security.AccessControlContext;
 import java.security.AccessController;
@@ -40,7 +39,6 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Locale;
 import java.util.Queue;
-import java.util.concurrent.ConcurrentMap;
 import sun.misc.Unsafe;
 
 /**
@@ -52,13 +50,6 @@ import sun.misc.Unsafe;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public abstract class ConcurrentClassLoader extends SecureClassLoader {
-
-    /**
-     * A holder for the {@code Method} object of the JDK 7 {@code registerAsParallelCapable}.  Due to the way
-     * that JDK 7 parallelism works, if this field is non-{@code null}, any subclass of this class should invoke this
-     * {@code Method} in its static initializer to ensure that the class loader is properly registered.
-     */
-    protected static final Method REGISTER_AS_PARALLEL_CAPABLE_METHOD;
 
     private static final boolean LOCKLESS;
     private static final boolean SAFE_JDK;
@@ -89,29 +80,16 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
         LOCKLESS = Boolean.parseBoolean(AccessController.doPrivileged(new PropertyReadAction("jboss.modules.lockless", Boolean.toString(is16 && hasUnsafe && ! isJRockit))));
         // If the JDK has safe CL, set this flag
         SAFE_JDK = Boolean.parseBoolean(AccessController.doPrivileged(new PropertyReadAction("jboss.modules.safe-jdk", Boolean.toString(isJRockit))));
-        Method method = null;
         try {
-            method = ClassLoader.class.getDeclaredMethod("registerAsParallelCapable");
-            if (method != null) method.invoke(null);
-        } catch (Throwable ignored) {}
-        REGISTER_AS_PARALLEL_CAPABLE_METHOD = method;
+            ClassLoader.registerAsParallelCapable();
+        } catch (Throwable ignored) {
+        }
     }
 
     /**
      * An empty enumeration, for subclasses to use if desired.
      */
     protected static final Enumeration<URL> EMPTY_ENUMERATION = Collections.enumeration(Collections.<URL>emptySet());
-
-    /**
-     * The thread-local lock for JDK7 lockless behavior.
-     */
-    private static final ThreadLocal<Object> OBJ = new ThreadLocal<Object>() {
-        protected Object initialValue() {
-            return new Object();
-        }
-    };
-
-    final ConcurrentMap<Object, Object> localStorage = new UnlockedReadHashMap<Object, Object>();
 
     /**
      * Construct a new instance with the given parent class loader, which must be a concurrent class loader, or {@code null}
@@ -574,18 +552,6 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
         } finally {
             suppressor.remove();
         }
-    }
-
-    /**
-     * Get the lock to use for class loading operations.  Applies to JDK 1.7 only.
-     *
-     * @param className the class name
-     * @return the current thread
-     */
-    @SuppressWarnings("unused")
-    protected final Object getClassLoadingLock(String className) {
-        // todo: change 'this' to 'super.getClassLoadingLock(className)'
-        return LOCKLESS ? OBJ.get() : this;
     }
 
     static final class LoaderThreadHolder {
