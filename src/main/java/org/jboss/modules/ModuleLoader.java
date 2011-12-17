@@ -155,20 +155,30 @@ public abstract class ModuleLoader {
      * Get the module loader for a class.
      *
      * @param clazz the class
-     * @return the module loader
+     *
+     * @return the module loader or {@code null} if the class's class loader does not belong to a module loader.
      */
     public static ModuleLoader forClass(Class<?> clazz) {
-        return Module.forClass(clazz).getModuleLoader();
+        final Module module = Module.forClass(clazz);
+        if (module == null) {
+            return null;
+        }
+        return module.getModuleLoader();
     }
 
     /**
      * Get the module loader for a class loader.
      *
      * @param classLoader the class loader
-     * @return the module loader
+     *
+     * @return the module loader or {@code null} if the class loader does not belong to a module loader.
      */
     public static ModuleLoader forClassLoader(ClassLoader classLoader) {
-        return Module.forClassLoader(classLoader, true).getModuleLoader();
+        final Module module = Module.forClassLoader(classLoader, true);
+        if (module == null) {
+            return null;
+        }
+        return module.getModuleLoader();
     }
 
     /**
