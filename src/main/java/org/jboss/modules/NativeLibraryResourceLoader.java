@@ -67,6 +67,10 @@ public class NativeLibraryResourceLoader extends AbstractResourceLoader {
             realName = "os390";
         } else if (sysName.startsWith("FREEBSD")) {
             realName = "freebsd";
+        } else if (sysName.startsWith("OPENBSD")) {
+            realName = "openbsd";
+        } else if (sysName.startsWith("NETBSD")) {
+            realName = "netbsd";
         } else if (sysName.startsWith("IRIX")) {
             realName = "irix";
         } else if (sysName.startsWith("DIGITAL UNIX")) {
@@ -92,8 +96,14 @@ public class NativeLibraryResourceLoader extends AbstractResourceLoader {
             realArch = "ppc";
         } else if (sysArch.startsWith("ARM")) {
             realArch = "arm";
+        } else if (sysArch.startsWith("PA_RISC2.0W")) {
+            realArch = "parisc64";
         } else if (sysArch.startsWith("PA_RISC") || sysArch.startsWith("PA-RISC")) {
             realArch = "parisc";
+        } else if (sysArch.startsWith("IA64")) {
+            // HP-UX reports IA64W for 64-bit Itanium and IA64N when running
+            // in 32-bit mode.
+            realArch = sysArch.toLowerCase(Locale.US);
         } else if (sysArch.startsWith("ALPHA")) {
             realArch = "alpha";
         } else if (sysArch.startsWith("MIPS")) {
