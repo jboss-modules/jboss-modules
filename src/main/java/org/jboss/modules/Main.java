@@ -78,6 +78,8 @@ public final class Main {
         System.out.println("                  class to load from the class path; not compatible with -jar");
         System.out.println("    -cp,-classpath <search path of archives or directories>");
         System.out.println("                  A search path for class files; implies -class");
+        System.out.println("    -lp,-libpath <library path>");
+        System.out.println("                  Directory where native libraries may be located");
         System.out.println("    -dep,-dependencies <module-spec>[,<module-spec>,...]");
         System.out.println("                  A list of module dependencies to add to the class path;");
         System.out.println("                  requires -class or -cp");
@@ -106,6 +108,7 @@ public final class Main {
         final int argsLen = args.length;
         String deps = null;
         String[] moduleArgs = NO_STRINGS;
+        String libraryPath = null;
         String modulePath = null;
         String configPath = null;
         String classpath = null;
@@ -138,6 +141,13 @@ public final class Main {
                         }
                         modulePath = args[++i];
                         System.setProperty("module.path", modulePath);
+                    } else if ("-libpath".equals(arg) || "-lp".equals(arg)) {
+                        if (libraryPath != null) {
+                            System.err.println("Library path may only be specified once");
+                            System.exit(1);
+                        }
+                        libraryPath = args[++i];
+                        System.setProperty("module.library.path", libraryPath);
                     } else if ("-config".equals(arg)) {
                         if (configPath != null) {
                             System.err.println("Config file path may only be specified once");
