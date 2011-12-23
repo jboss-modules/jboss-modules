@@ -35,15 +35,19 @@ public class NativeLibraryResourceLoader extends AbstractResourceLoader {
     static {
         final PropertyReadAction osNameReadAction = new PropertyReadAction("os.name");
         final PropertyReadAction osArchReadAction = new PropertyReadAction("os.arch");
+        final PropertyReadAction modulePathAction = new PropertyReadAction("module.path");
         final SecurityManager sm = System.getSecurityManager();
         final String sysName;
         final String sysArch;
+        final String libPath;
         if (sm != null) {
             sysName = AccessController.doPrivileged(osNameReadAction).toUpperCase(Locale.US);
             sysArch = AccessController.doPrivileged(osArchReadAction).toUpperCase(Locale.US);
+            libPath = AccessController.doPrivileged(modulePathAction);
         } else {
             sysName = osNameReadAction.run().toUpperCase(Locale.US);
             sysArch = osArchReadAction.run().toUpperCase(Locale.US);
+            libPath = modulePathAction.run();
         }
         final String realName;
         final String realArch;
@@ -112,14 +116,34 @@ public class NativeLibraryResourceLoader extends AbstractResourceLoader {
             realArch = "unknown";
         }
         ARCH_NAME = realName + "-" + realArch;
+        if (libPath == null) {
+            //noinspection ZeroLengthArrayAllocation
+            LIBS_PATH = new File[0];
+        } else {
+            LIBS_PATH = getFiles(libPath, 0, 0);
+        }        
     }
 
     private static final String ARCH_NAME;
+    private static final File[] LIBS_PATH;
 
     /**
      * The filesystem root of the resource loader.
      */
     private final File root;
+
+    private static File[] getFiles(final String modulePath, final int stringIdx, final int arrayIdx) {
+        final int i = modulePath.indexOf(File.pathSeparatorChar, stringIdx);
+        final File[] files;
+        if (i == -1) {
+            files = new File[arrayIdx + 1];
+            files[arrayIdx] = new File(modulePath.substring(stringIdx)).getAbsoluteFile();
+        } else {
+            files = getFiles(modulePath, i + 1, arrayIdx + 1);
+            files[arrayIdx] = new File(modulePath.substring(stringIdx, i)).getAbsoluteFile();
+        }
+        return files;
+    }
 
     /**
      * Construct a new instance.
@@ -133,7 +157,16 @@ public class NativeLibraryResourceLoader extends AbstractResourceLoader {
     /** {@inheritDoc} */
     public String getLibrary(final String name) {
         final File file = new File(root, ARCH_NAME + File.separatorChar + System.mapLibraryName(name));
-        return file.exists() ? file.getAbsolutePath() : null;
+        if (file.exists()) {
+            return file.getAbsolutePath();
+        }
+        for (File root : LIBS_PATH) {
+            final File lib = new File(root, "lib" + File.separatorChar + ARCH_NAME + File.separatorChar + System.mapLibraryName(name));
+            if (lib.exists()) {
+                return lib.getAbsolutePath();
+            }
+        }
+        return null;
     }
 
     /**
