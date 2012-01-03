@@ -387,7 +387,7 @@ public final class Main {
                     try { stream.close(); } catch (Throwable ignored) {}
                 }
             }
-        } catch (IOException ignored) {
+        } catch (Exception ignored) {
         }
         JAR_NAME = jarName;
         VERSION_STRING = versionString;
