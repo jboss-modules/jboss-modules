@@ -120,6 +120,8 @@ final class ModuleXmlParser {
         SYSTEM,
         PATHS,
         MODULE_ALIAS,
+        PROPERTIES,
+        PROPERTY,
 
         // default unknown element
         UNKNOWN;
@@ -148,6 +150,8 @@ final class ModuleXmlParser {
             elementsMap.put("system", Element.SYSTEM);
             elementsMap.put("paths", Element.PATHS);
             elementsMap.put("module-alias", Element.MODULE_ALIAS);
+            elementsMap.put("properties", Element.PROPERTIES);
+            elementsMap.put("property", Element.PROPERTY);
             elements = elementsMap;
         }
 
@@ -171,6 +175,7 @@ final class ModuleXmlParser {
         DEFAULT_LOADER,
         TARGET_NAME,
         TARGET_SLOT,
+        VALUE,
 
         // default unknown attribute
         UNKNOWN;
@@ -188,6 +193,7 @@ final class ModuleXmlParser {
             attributesMap.put(new QName("default-loader"), DEFAULT_LOADER);
             attributesMap.put(new QName("target-name"), TARGET_NAME);
             attributesMap.put(new QName("target-slot"), TARGET_SLOT);
+            attributesMap.put(new QName("value"), VALUE);
             attributes = attributesMap;
         }
 
@@ -668,6 +674,7 @@ final class ModuleXmlParser {
                         case DEPENDENCIES: parseDependencies(reader, specBuilder); break;
                         case MAIN_CLASS:   parseMainClass(reader, specBuilder); break;
                         case RESOURCES:    parseResources(factory, rootPath, reader, specBuilder); break;
+                        case PROPERTIES:   parseProperties(reader, specBuilder); break;
                         default: throw unexpectedContent(reader);
                     }
                     break;
@@ -1003,6 +1010,54 @@ final class ModuleXmlParser {
             throw missingAttributes(reader.getLocation(), required);
         }
         set.add(name);
+
+        // consume remainder of element
+        parseNoContent(reader);
+    }
+
+    private static void parseProperties(final XMLStreamReader reader, final ModuleSpec.Builder specBuilder) throws XMLStreamException {
+        // xsd:choice
+        while (reader.hasNext()) {
+            switch (reader.nextTag()) {
+                case END_ELEMENT: {
+                    return;
+                }
+                case START_ELEMENT: {
+                    switch (Element.of(reader.getName())) {
+                        case PROPERTY: {
+                            parseProperty(reader, specBuilder);
+                            break;
+                        }
+                        default: throw unexpectedContent(reader);
+                    }
+                    break;
+                }
+                default: {
+                    throw unexpectedContent(reader);
+                }
+            }
+        }
+        throw endOfDocument(reader.getLocation());
+    }
+
+    private static void parseProperty(final XMLStreamReader reader, final ModuleSpec.Builder specBuilder) throws XMLStreamException {
+        String name = null;
+        String value = null;
+        final Set<Attribute> required = EnumSet.of(Attribute.NAME);
+        final int count = reader.getAttributeCount();
+        for (int i = 0; i < count; i ++) {
+            final Attribute attribute = Attribute.of(reader.getAttributeName(i));
+            required.remove(attribute);
+            switch (attribute) {
+                case NAME: name = reader.getAttributeValue(i); break;
+                case VALUE: value = reader.getAttributeValue(i); break;
+                default: throw unexpectedContent(reader);
+            }
+        }
+        if (! required.isEmpty()) {
+            throw missingAttributes(reader.getLocation(), required);
+        }
+        specBuilder.addProperty(name, value == null ? "true" : value);
 
         // consume remainder of element
         parseNoContent(reader);

@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -154,6 +155,10 @@ public final class Module {
      * The fallback local loader, if any is defined.
      */
     private final LocalLoader fallbackLoader;
+    /**
+     * The properties map specified when this module was defined.
+     */
+    private final Map<String, String> properties;
 
     // mutable properties
 
@@ -192,6 +197,8 @@ public final class Module {
         if (factory != null) moduleClassLoader = factory.create(configuration);
         if (moduleClassLoader == null) moduleClassLoader = new ModuleClassLoader(configuration);
         this.moduleClassLoader = moduleClassLoader;
+        final Map<String, String> properties = spec.getProperties();
+        this.properties = properties.isEmpty() ? Collections.<String, String>emptyMap() : new LinkedHashMap<String, String>(properties);
     }
 
     LocalLoader getFallbackLoader() {
@@ -660,6 +667,36 @@ public final class Module {
      */
     static String fileNameOfClass(final String className) {
         return className.replace('.', '/') + ".class";
+    }
+
+    /**
+     * Get the property with the given name, or {@code null} if none was defined.
+     *
+     * @param name the property name
+     * @return the property value
+     */
+    public String getProperty(String name) {
+        return properties.get(name);
+    }
+
+    /**
+     * Get the property with the given name, or a default value if none was defined.
+     *
+     * @param name the property name
+     * @param defaultVal the default value
+     * @return the property value
+     */
+    public String getProperty(String name, String defaultVal) {
+        return properties.containsKey(name) ? properties.get(name) : defaultVal;
+    }
+
+    /**
+     * Get a copy of the list of property names.
+     *
+     * @return the property names list
+     */
+    public List<String> getPropertyNames() {
+        return new ArrayList<String>(properties.keySet());
     }
 
     /**

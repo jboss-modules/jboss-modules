@@ -24,7 +24,9 @@ package org.jboss.modules;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A {@code Module} specification which is used by a {@code ModuleLoader} to define new modules.
@@ -56,6 +58,7 @@ public abstract class ModuleSpec {
             private AssertionSetting assertionSetting = AssertionSetting.INHERIT;
             private final List<ResourceLoaderSpec> resourceLoaders = new ArrayList<ResourceLoaderSpec>(0);
             private final List<DependencySpec> dependencies = new ArrayList<DependencySpec>();
+            private final Map<String, String> properties = new LinkedHashMap<String, String>(0);
             private LocalLoader fallbackLoader;
             private ModuleClassLoaderFactory moduleClassLoaderFactory;
             private ClassFileTransformer classFileTransformer;
@@ -96,14 +99,21 @@ public abstract class ModuleSpec {
                 return this;
             }
 
+            @Override
             public Builder setClassFileTransformer(final ClassFileTransformer classFileTransformer) {
                 this.classFileTransformer = classFileTransformer;
                 return this;
             }
 
             @Override
+            public Builder addProperty(final String name, final String value) {
+                properties.put(name, value);
+                return this;
+            }
+
+            @Override
             public ModuleSpec create() {
-                return new ConcreteModuleSpec(moduleIdentifier, mainClass, assertionSetting, resourceLoaders.toArray(new ResourceLoaderSpec[resourceLoaders.size()]), dependencies.toArray(new DependencySpec[dependencies.size()]), fallbackLoader, moduleClassLoaderFactory, classFileTransformer);
+                return new ConcreteModuleSpec(moduleIdentifier, mainClass, assertionSetting, resourceLoaders.toArray(new ResourceLoaderSpec[resourceLoaders.size()]), dependencies.toArray(new DependencySpec[dependencies.size()]), fallbackLoader, moduleClassLoaderFactory, classFileTransformer, properties);
             }
 
             @Override
@@ -228,6 +238,15 @@ public abstract class ModuleSpec {
          * @return this builder
          */
         ModuleSpec.Builder setClassFileTransformer(ClassFileTransformer classFileTransformer);
+
+        /**
+         * Add a property to this module specification.
+         *
+         * @param name the property name
+         * @param value the property value
+         * @return this builder
+         */
+        ModuleSpec.Builder addProperty(String name, String value);
     }
 
     /**

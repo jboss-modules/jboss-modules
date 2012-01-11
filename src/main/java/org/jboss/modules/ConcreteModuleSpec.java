@@ -23,7 +23,7 @@
 package org.jboss.modules;
 
 import java.lang.instrument.ClassFileTransformer;
-
+import java.util.Map;
 
 /**
  * A {@code Module} specification for a concrete module implementation.
@@ -42,8 +42,9 @@ class ConcreteModuleSpec extends ModuleSpec {
     private final LocalLoader fallbackLoader;
     private final ModuleClassLoaderFactory moduleClassLoaderFactory;
     private final ClassFileTransformer classFileTransformer;
+    private final Map<String, String> properties;
 
-    ConcreteModuleSpec(final ModuleIdentifier moduleIdentifier, final String mainClass, final AssertionSetting assertionSetting, final ResourceLoaderSpec[] resourceLoaders, final DependencySpec[] dependencies, final LocalLoader fallbackLoader, final ModuleClassLoaderFactory moduleClassLoaderFactory, final ClassFileTransformer classFileTransformer) {
+    ConcreteModuleSpec(final ModuleIdentifier moduleIdentifier, final String mainClass, final AssertionSetting assertionSetting, final ResourceLoaderSpec[] resourceLoaders, final DependencySpec[] dependencies, final LocalLoader fallbackLoader, final ModuleClassLoaderFactory moduleClassLoaderFactory, final ClassFileTransformer classFileTransformer, final Map<String, String> properties) {
         super(moduleIdentifier);
         this.mainClass = mainClass;
         this.assertionSetting = assertionSetting;
@@ -52,6 +53,7 @@ class ConcreteModuleSpec extends ModuleSpec {
         this.fallbackLoader = fallbackLoader;
         this.moduleClassLoaderFactory = moduleClassLoaderFactory;
         this.classFileTransformer = classFileTransformer;
+        this.properties = properties;
     }
 
     String getMainClass() {
@@ -80,5 +82,9 @@ class ConcreteModuleSpec extends ModuleSpec {
 
     ClassFileTransformer getClassFileTransformer() {
         return classFileTransformer;
+    }
+
+    Map<String, String> getProperties() {
+        return properties;
     }
 }

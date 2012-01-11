@@ -23,14 +23,11 @@
 package org.jboss.modules;
 
 import java.net.URL;
-import java.util.Collections;
 import java.util.Enumeration;
 
-import org.jboss.modules.filter.PathFilters;
 import org.jboss.modules.util.TestModuleLoader;
 
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
