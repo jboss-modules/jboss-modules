@@ -35,15 +35,19 @@ public class NativeLibraryResourceLoader extends AbstractResourceLoader {
     static {
         final PropertyReadAction osNameReadAction = new PropertyReadAction("os.name");
         final PropertyReadAction osArchReadAction = new PropertyReadAction("os.arch");
+        final PropertyReadAction nativesLibAction = new PropertyReadAction("module.library.path");
         final SecurityManager sm = System.getSecurityManager();
         final String sysName;
         final String sysArch;
+        final String libPath;
         if (sm != null) {
             sysName = AccessController.doPrivileged(osNameReadAction).toUpperCase(Locale.US);
             sysArch = AccessController.doPrivileged(osArchReadAction).toUpperCase(Locale.US);
+            libPath = AccessController.doPrivileged(nativesLibAction);
         } else {
             sysName = osNameReadAction.run().toUpperCase(Locale.US);
             sysArch = osArchReadAction.run().toUpperCase(Locale.US);
+            libPath = nativesLibAction.run();
         }
         final String realName;
         final String realArch;
@@ -112,9 +116,16 @@ public class NativeLibraryResourceLoader extends AbstractResourceLoader {
             realArch = "unknown";
         }
         ARCH_NAME = realName + "-" + realArch;
+        if (libPath != null) {
+            LIBS_PATH = new File(libPath).getAbsoluteFile();
+        }
+        else {
+            LIBS_PATH = null;
+        }
     }
 
     private static final String ARCH_NAME;
+    private static final File   LIBS_PATH;
 
     /**
      * The filesystem root of the resource loader.
@@ -133,7 +144,16 @@ public class NativeLibraryResourceLoader extends AbstractResourceLoader {
     /** {@inheritDoc} */
     public String getLibrary(final String name) {
         final File file = new File(root, ARCH_NAME + File.separatorChar + System.mapLibraryName(name));
-        return file.exists() ? file.getAbsolutePath() : null;
+        if (file.exists()) {
+            return file.getAbsolutePath();
+        }
+        if (LIBS_PATH != null) {
+            final File lib = new File(LIBS_PATH, System.mapLibraryName(name));
+            if (lib.exists()) {
+                return lib.getAbsolutePath();
+            }
+        }
+        return null;
     }
 
     /**
