@@ -86,10 +86,6 @@ public final class Main {
         System.out.println("    -config <config-location>");
         System.out.println("                  The location of the module configuration.  Either -mp or -config");
         System.out.println("                  may be specified, but not both");
-        System.out.println("    -logmodule <module-name>");
-        System.out.println("                  The module to use to load the system logmanager");
-        System.out.println("    -mbeanserverbuildermodule <module-name>");
-        System.out.println("                  The module to use to load the mbean server builder");
         System.out.println("    -jaxpmodule <module-name>");
         System.out.println("                  The default JAXP implementation to use of the JDK");
         System.out.println("    -version      Print version and exit\n");
@@ -113,8 +109,6 @@ public final class Main {
         boolean classpathDefined = false;
         boolean classDefined = false;
         String moduleIdentifierOrExeName = null;
-        ModuleIdentifier logManagerModuleIdentifier = null;
-        ModuleIdentifier mbeanServerBuilderModuleIdentifier = null;
         ModuleIdentifier jaxpModuleIdentifier = null;
         for (int i = 0, argsLength = argsLen; i < argsLength; i++) {
             final String arg = args[i];
@@ -148,10 +142,6 @@ public final class Main {
                             System.exit(1);
                         }
                         configPath = args[++i];
-                    } else if ("-logmodule".equals(arg)) {
-                        logManagerModuleIdentifier = ModuleIdentifier.fromString(args[++i]);
-                    } else if ("-mbeanserverbuildermodule".equals(arg)) {
-                        mbeanServerBuilderModuleIdentifier = ModuleIdentifier.fromString(args[++i]);
                     } else if ("-jaxpmodule".equals(arg)) {
                         jaxpModuleIdentifier = ModuleIdentifier.fromString(args[++i]);
                     } else if ("-jar".equals(arg)) {
@@ -260,45 +250,9 @@ public final class Main {
             moduleIdentifier = ModuleIdentifier.fromString(moduleIdentifierOrExeName);
         }
         Module.initBootModuleLoader(loader);
-        if (logManagerModuleIdentifier != null) {
-            final ModuleClassLoader classLoader = loader.loadModule(logManagerModuleIdentifier).getClassLoaderPrivate();
-            String name = getServiceName(classLoader, "java.util.logging.LogManager");
-
-            if (name != null) {
-                System.setProperty("java.util.logging.manager", name);
-                final ClassLoader old = setContextClassLoader(classLoader);
-                try {
-                    if (LogManager.getLogManager().getClass() == LogManager.class) {
-                        System.err.println("WARNING: Failed to load the specified logmodule " + logManagerModuleIdentifier);
-                    } else {
-                        Module.setModuleLogger(new JDKModuleLogger());
-                    }
-                } finally {
-                    setContextClassLoader(old);
-                }
-            } else {
-                System.err.println("WARNING: No log manager service descriptor found in specified logmodule " + logManagerModuleIdentifier);
-            }
-        }
-        if (mbeanServerBuilderModuleIdentifier != null) {
-            final ModuleClassLoader classLoader = loader.loadModule(mbeanServerBuilderModuleIdentifier).getClassLoaderPrivate();
-            String name = getServiceName(classLoader, "javax.management.MBeanServerBuilder");
-
-            if (name != null) {
-                System.setProperty("javax.management.builder.initial", name);
-                final ClassLoader old = setContextClassLoader(classLoader);
-                try {
-                    //Initialize the platform mbean server
-                    ManagementFactory.getPlatformMBeanServer();
-                } finally {
-                    setContextClassLoader(old);
-                }
-            } else {
-                System.err.println("WARNING: No mbeanserver service descriptor found in specified mbeanserverbuildermodule " + mbeanServerBuilderModuleIdentifier);
-            }
-        }
-        if (jaxpModuleIdentifier != null)
+        if (jaxpModuleIdentifier != null) {
             __JAXPRedirected.changeAll(jaxpModuleIdentifier, Module.getBootModuleLoader());
+        }
 
         final Module module;
         try {
@@ -308,6 +262,27 @@ public final class Main {
             System.exit(1);
             return;
         }
+
+        final ModuleClassLoader bootClassLoader = module.getClassLoaderPrivate();
+        setContextClassLoader(bootClassLoader);
+
+        final String logManagerName = getServiceName(bootClassLoader, "java.util.logging.LogManager");
+        if (logManagerName != null) {
+            System.setProperty("java.util.logging.manager", logManagerName);
+            if (LogManager.getLogManager().getClass() == LogManager.class) {
+                System.err.println("WARNING: Failed to load the specified log manager class " + logManagerName);
+            } else {
+                Module.setModuleLogger(new JDKModuleLogger());
+            }
+        }
+
+        final String mbeanServerBuilderName = getServiceName(bootClassLoader, "javax.management.MBeanServerBuilder");
+        if (mbeanServerBuilderName != null) {
+            System.setProperty("javax.management.builder.initial", mbeanServerBuilderName);
+            // Initialize the platform mbean server
+            ManagementFactory.getPlatformMBeanServer();
+        }
+
         try {
             ModuleLoader.installMBeanServer();
             module.run(moduleArgs);
