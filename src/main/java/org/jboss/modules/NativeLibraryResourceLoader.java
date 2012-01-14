@@ -134,9 +134,12 @@ public class NativeLibraryResourceLoader extends AbstractResourceLoader {
     public String getLibrary(final String name) {
         final File file = new File(root, ARCH_NAME + File.separatorChar + System.mapLibraryName(name));
         if (file.exists())
-            file.getAbsolutePath();
+            return file.getAbsolutePath();
         final File fmap = new File(root, ARCH_NAME + File.separatorChar + name);
-        return fmap.exists() ? fmap.getAbsolutePath() : null;
+        if (fmap.exists())
+            return fmap.getAbsolutePath()
+        else
+            return null;
     }
 
     /**
