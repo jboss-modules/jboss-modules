@@ -47,6 +47,24 @@ abstract class Dependency {
     }
 
     protected Dependency(final PathFilter exportFilter, final PathFilter importFilter, final PathFilter resourceExportFilter, final PathFilter resourceImportFilter, final ClassFilter classExportFilter, final ClassFilter classImportFilter) {
+        if (exportFilter == null) {
+            throw new IllegalArgumentException("exportFilter is null");
+        }
+        if (importFilter == null) {
+            throw new IllegalArgumentException("importFilter is null");
+        }
+        if (resourceExportFilter == null) {
+            throw new IllegalArgumentException("resourceExportFilter is null");
+        }
+        if (resourceImportFilter == null) {
+            throw new IllegalArgumentException("resourceImportFilter is null");
+        }
+        if (classExportFilter == null) {
+            throw new IllegalArgumentException("classExportFilter is null");
+        }
+        if (classImportFilter == null) {
+            throw new IllegalArgumentException("classImportFilter is null");
+        }
         this.exportFilter = exportFilter;
         this.importFilter = importFilter;
         this.resourceExportFilter = resourceExportFilter;
