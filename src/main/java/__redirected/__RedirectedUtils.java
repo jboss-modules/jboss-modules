@@ -28,7 +28,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -91,28 +90,18 @@ public final class __RedirectedUtils {
     static <T> Class<? extends T> loadProvider(Class<T> intf, ClassLoader classLoader, String name) {
         List<String> names = findProviderClassNames(intf, classLoader, name);
 
-
-        if (names.size() < 1) {
+        if (names.isEmpty()) {
             Module.getModuleLogger().providerUnloadable("Not found", classLoader);
             return null;
         }
 
         String clazzName = names.get(0);
-
-        Class<? extends T> clazz = null;
         try {
-            @SuppressWarnings("unchecked")
-            Class<? extends T> t = (Class<? extends T>) classLoader.loadClass(clazzName);
-            clazz = t;
-        } catch (ClassNotFoundException ignore) {
-        }
-
-        if (clazz == null || !intf.isAssignableFrom(clazz)) {
+            return classLoader.loadClass(clazzName).asSubclass(intf);
+        } catch (Exception ignore) {
             Module.getModuleLogger().providerUnloadable(clazzName, classLoader);
             return null;
         }
-
-        return clazz;
     }
 
     static <T> List<Class<? extends T>> loadProviders(Class<T> intf, ClassLoader classLoader) {
@@ -130,18 +119,10 @@ public final class __RedirectedUtils {
         List<Class<? extends T>> classes = new ArrayList<Class<? extends T>>();
 
         for (String className : names) {
-            Class<? extends T> clazz = null;
             try {
-                @SuppressWarnings("unchecked")
-                Class<? extends T> t = (Class<? extends T>) classLoader.loadClass(className);
-                clazz = t;
-            } catch (ClassNotFoundException ignore) {
-            }
-
-            if (clazz == null || !intf.isAssignableFrom(clazz)) {
+                classes.add(classLoader.loadClass(className).asSubclass(intf));
+            } catch (Exception ignore) {
                 Module.getModuleLogger().providerUnloadable(className, classLoader);
-            } else {
-                classes.add(clazz);
             }
         }
 
