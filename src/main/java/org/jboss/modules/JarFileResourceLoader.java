@@ -107,7 +107,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader {
         return rootName;
     }
 
-    public ClassSpec getClassSpec(final String fileName) throws IOException {
+    public synchronized ClassSpec getClassSpec(final String fileName) throws IOException {
         final ClassSpec spec = new ClassSpec();
         final JarEntry entry = getJarEntry(fileName);
         if (entry == null) {
@@ -138,6 +138,8 @@ final class JarFileResourceLoader extends AbstractResourceLoader {
                 while ((res = is.read(bytes, a, castSize - a)) > 0) {
                     a += res;
                 }
+                // consume remainder so that cert check doesn't fail in case of wonky JARs
+                while (is.read() != -1);
                 // done
                 is.close();
                 spec.setBytes(bytes);
