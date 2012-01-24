@@ -1,8 +1,8 @@
 /*
- * JBoss, Home of Professional Open Source
- * Copyright 2005, JBoss Inc., and individual contributors as indicated
- * by the @authors tag. See the copyright.txt in the distribution for a
- * full listing of individual contributors.
+ * JBoss, Home of Professional Open Source.
+ * Copyright 2012, Red Hat, Inc., and individual contributors
+ * as indicated by the @author tags. See the copyright.txt file in the
+ * distribution for a full listing of individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -22,6 +22,7 @@
 package org.jboss.modules;
 
 import org.jboss.modules.filter.ClassFilter;
+import org.jboss.modules.filter.ClassFilters;
 import org.jboss.modules.filter.PathFilter;
 import org.jboss.modules.filter.PathFilters;
 import org.jboss.modules.test.BarImpl;
@@ -53,10 +54,10 @@ public class ClassFilteringTest extends ModulesTestBase {
 
         // Export-Package: com.acme.foo; include:="Qux*,BarImpl";exclude:=QuxImpl
 
-        String packagePath = QuxBar.class.getPackage().getName();
-        PathFilter inA = PathFilters.match(packagePath + ".Qux*");
-        PathFilter inB = PathFilters.match(packagePath + ".BarImpl");
-        PathFilter exA = PathFilters.match(packagePath + ".QuxImpl");
+        String packagePath = QuxBar.class.getPackage().getName().replace('.', '/');
+        PathFilter inA = PathFilters.match(packagePath + "/Qux*.class");
+        PathFilter inB = PathFilters.match(packagePath + "/BarImpl.class");
+        PathFilter exA = PathFilters.match(packagePath + "/QuxImpl.class");
 
         //A class is only visible if it is:
         //    Matched with an entry in the included list, and
@@ -66,16 +67,9 @@ public class ClassFilteringTest extends ModulesTestBase {
         PathFilter ex = PathFilters.not(PathFilters.any(exA));
         final PathFilter filter = PathFilters.all(in, ex);
 
-        ClassFilter classImportFilter = new ClassFilter() {
-            public boolean accept(String className) {
-                return true;
-            }
-        };
-        ClassFilter classExportFilter = new ClassFilter() {
-            public boolean accept(String className) {
-                return filter.accept(className);
-            }
-        };
+        ClassFilter classImportFilter = ClassFilters.acceptAll();
+        ClassFilter classExportFilter = ClassFilters.fromResourcePathFilter(filter);
+
         specBuilderA.addResourceRoot(createResourceLoaderSpec(getTestResourceLoader()));
         PathFilter importFilter = PathFilters.acceptAll();
         PathFilter exportFilter = PathFilters.acceptAll();

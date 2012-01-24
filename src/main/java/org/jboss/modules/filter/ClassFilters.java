@@ -50,4 +50,13 @@ public final class ClassFilters {
         return BooleanClassFilter.FALSE;
     }
 
+    /**
+     * Get a class filter which uses a resource path filter to filter classes.
+     *
+     * @param resourcePathFilter the resource path filter
+     * @return the class filter
+     */
+    public static ClassFilter fromResourcePathFilter(final PathFilter resourcePathFilter) {
+        return resourcePathFilter == PathFilters.acceptAll() ? acceptAll() : new PathClassFilter(resourcePathFilter);
+    }
 }
