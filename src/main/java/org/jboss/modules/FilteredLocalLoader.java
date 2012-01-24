@@ -47,7 +47,7 @@ class FilteredLocalLoader implements LocalLoader {
     }
 
     public Package loadPackageLocal(final String name) {
-        return resourcePathFilter.accept(name.replace('.', '/')) ? originalLoader.loadPackageLocal(name) : null;
+        return originalLoader.loadPackageLocal(name);
     }
 
     public List<Resource> loadResourceLocal(final String name) {
