@@ -194,6 +194,9 @@ public final class Main {
                             System.exit(1);
                         }
                         classDefined = true;
+                    } else if ("-logmodule".equals(arg)) {
+                        System.out.println("WARNING: -logmodule is deprecated. Please use the system property 'java.util.logging.manager' or the 'java.util.logging.LogManager' service loader.");
+                        i++;
                     } else {
                         System.err.printf("Invalid option '%s'\n", arg);
                         usage();
