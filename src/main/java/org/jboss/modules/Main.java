@@ -194,7 +194,10 @@ public final class Main {
                             System.exit(1);
                         }
                         classDefined = true;
-                    } else {
+                    } else if ("-logmodule".equals(arg)) {
+			String ignored = args[++i];
+			System.out.println("Warning: ignoring -logmodule argument."); 
+		    } else {
                         System.err.printf("Invalid option '%s'\n", arg);
                         usage();
                         System.exit(1);
