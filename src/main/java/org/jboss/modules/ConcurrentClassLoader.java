@@ -59,8 +59,12 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
     private static final ThreadLocal<Boolean> GET_PACKAGE_SUPPRESSOR = new ThreadLocal<Boolean>();
 
     static {
+        try {
+            ClassLoader.registerAsParallelCapable();
+        } catch (Throwable ignored) {
+        }
         /*
-         This resolves a know deadlock that can occur if one thread is in the process of defining a package as part of
+         This resolves a known deadlock that can occur if one thread is in the process of defining a package as part of
          defining a class, and another thread is defining the system package that can result in loading a class.  One holds
          the Package.pkgs lock and one holds the Classloader lock.
         */
@@ -80,10 +84,6 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
         LOCKLESS = Boolean.parseBoolean(AccessController.doPrivileged(new PropertyReadAction("jboss.modules.lockless", Boolean.toString(is16 && hasUnsafe && ! isJRockit))));
         // If the JDK has safe CL, set this flag
         SAFE_JDK = Boolean.parseBoolean(AccessController.doPrivileged(new PropertyReadAction("jboss.modules.safe-jdk", Boolean.toString(isJRockit))));
-        try {
-            ClassLoader.registerAsParallelCapable();
-        } catch (Throwable ignored) {
-        }
     }
 
     /**
