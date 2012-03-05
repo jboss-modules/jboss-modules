@@ -1125,32 +1125,47 @@ public final class Module {
     }
 
     Map<String, List<LocalLoader>> getPaths(final boolean exports) throws ModuleLoadException {
-        Linkage linkage = this.linkage;
-        Linkage.State state = linkage.getState();
+        Linkage oldLinkage = this.linkage;
+        Linkage linkage;
+        Linkage.State state = oldLinkage.getState();
         if (state == Linkage.State.LINKED) {
-            return linkage.getPaths(exports);
+            return oldLinkage.getPaths(exports);
         }
         // slow path loop
         boolean intr = false;
         try {
             for (;;) {
                 synchronized (this) {
-                    linkage = this.linkage;
-                    state = linkage.getState();
+                    oldLinkage = this.linkage;
+                    state = oldLinkage.getState();
                     while (state == Linkage.State.LINKING || state == Linkage.State.NEW) try {
                         wait();
-                        linkage = this.linkage;
-                        state = linkage.getState();
+                        oldLinkage = this.linkage;
+                        state = oldLinkage.getState();
                     } catch (InterruptedException e) {
                         intr = true;
                     }
                     if (state == Linkage.State.LINKED) {
-                        return linkage.getPaths(exports);
+                        return oldLinkage.getPaths(exports);
                     }
-                    this.linkage = linkage = new Linkage(linkage.getSourceList(), Linkage.State.LINKING);
+                    this.linkage = linkage = new Linkage(oldLinkage.getSourceList(), Linkage.State.LINKING);
                     // fall out and link
                 }
-                link(linkage);
+                boolean ok = false;
+                try {
+                    link(linkage);
+                    ok = true;
+                } finally {
+                    if (! ok) {
+                        // restore original (lack of) linkage
+                        synchronized (this) {
+                            if (this.linkage == linkage) {
+                                this.linkage = oldLinkage;
+                                notifyAll();
+                            }
+                        }
+                    }
+                }
             }
         } finally {
             if (intr) {
@@ -1193,18 +1208,33 @@ public final class Module {
     }
 
     void relinkIfNecessary() throws ModuleLoadException {
-        Linkage linkage = this.linkage;
-        if (linkage.getState() != Linkage.State.UNLINKED) {
+        Linkage oldLinkage = this.linkage;
+        Linkage linkage;
+        if (oldLinkage.getState() != Linkage.State.UNLINKED) {
             return;
         }
         synchronized (this) {
-            linkage = this.linkage;
-            if (linkage.getState() != Linkage.State.UNLINKED) {
+            oldLinkage = this.linkage;
+            if (oldLinkage.getState() != Linkage.State.UNLINKED) {
                 return;
             }
-            this.linkage = linkage = new Linkage(linkage.getSourceList(), Linkage.State.LINKING);
+            this.linkage = linkage = new Linkage(oldLinkage.getSourceList(), Linkage.State.LINKING);
         }
-        link(linkage);
+        boolean ok = false;
+        try {
+            link(linkage);
+            ok = true;
+        } finally {
+            if (! ok) {
+                // restore original (lack of) linkage
+                synchronized (this) {
+                    if (this.linkage == linkage) {
+                        this.linkage = oldLinkage;
+                        notifyAll();
+                    }
+                }
+            }
+        }
     }
 
     void relink() throws ModuleLoadException {
