@@ -379,7 +379,7 @@ public abstract class ModuleLoader {
         final ModuleLogger log = Module.log;
         final ModuleIdentifier moduleIdentifier = moduleSpec.getModuleIdentifier();
 
-        final Module module = new Module(moduleSpec, this, futureModule);
+        final Module module = new Module(moduleSpec, this);
         module.getClassLoaderPrivate().recalculate();
         module.setDependencies(Arrays.asList(moduleSpec.getDependencies()));
         log.moduleDefined(moduleIdentifier, this);

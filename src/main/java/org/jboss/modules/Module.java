@@ -152,11 +152,6 @@ public final class Module {
      */
     private final ModuleLoader moduleLoader;
     /**
-     * This reference exists solely to prevent the {@code FutureModule} from getting GC'd prematurely.
-     */
-    @SuppressWarnings({ "unused" })
-    private final Object myKey;
-    /**
      * The fallback local loader, if any is defined.
      */
     private final LocalLoader fallbackLoader;
@@ -185,11 +180,9 @@ public final class Module {
      *
      * @param spec the module specification
      * @param moduleLoader the module loader
-     * @param myKey the key to keep a strong reference to
      */
-    Module(final ConcreteModuleSpec spec, final ModuleLoader moduleLoader, final Object myKey) {
+    Module(final ConcreteModuleSpec spec, final ModuleLoader moduleLoader) {
         this.moduleLoader = moduleLoader;
-        this.myKey = myKey;
 
         // Initialize state from the spec.
         identifier = spec.getModuleIdentifier();
