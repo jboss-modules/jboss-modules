@@ -199,7 +199,6 @@ final class JarFileResourceLoader extends AbstractResourceLoader {
             if (entry == null) {
                 return null;
             }
-            String jarFilePath = new File(jarFile.getName()).toURI().toString();
             return new JarEntryResource(jarFile, entry, getJarURI(new File(jarFile.getName()).toURI(), entry.getName()).toURL());
         } catch (MalformedURLException e) {
             // must be invalid...?  (todo: check this out)
