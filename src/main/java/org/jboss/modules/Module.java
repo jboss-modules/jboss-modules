@@ -66,27 +66,18 @@ import __redirected.__JAXPRedirected;
 */
 public final class Module {
 
-    private static final AtomicReference<ModuleLoader> BOOT_MODULE_LOADER = new AtomicReference<ModuleLoader>();
+    private static final AtomicReference<ModuleLoader> BOOT_MODULE_LOADER;
 
     static {
-        AccessController.doPrivileged(new PrivilegedAction<Void>() {
-            public Void run() {
-                try {
-                    URL.setURLStreamHandlerFactory(new ModularURLStreamHandlerFactory());
-                } catch (Throwable t) {
-                    // todo log a warning or something
-                }
-                try {
-                    URLConnection.setContentHandlerFactory(new ModularContentHandlerFactory());
-                } catch (Throwable t) {
-                    // todo log a warning or something
-                }
-
-                __JAXPRedirected.initAll();
-
-                return null;
-            }
-        });
+        log = NoopModuleLogger.getInstance();
+        BOOT_MODULE_LOADER = new AtomicReference<ModuleLoader>();
+        EMPTY_CLASS_FILTERS = new FastCopyHashSet<ClassFilter>(0);
+        EMPTY_PATH_FILTERS = new FastCopyHashSet<PathFilter>(0);
+        GET_CLASS_LOADER = new RuntimePermission("getClassLoader");
+        GET_BOOT_MODULE_LOADER = new RuntimePermission("getBootModuleLoader");
+        ACCESS_MODULE_LOGGER = new RuntimePermission("accessModuleLogger");
+        ADD_CONTENT_HANDLER_FACTORY = new RuntimePermission("addContentHandlerFactory");
+        ADD_URL_STREAM_HANDLER_FACTORY = new RuntimePermission("addURLStreamHandlerFactory");
 
         final String pkgsString = AccessController.doPrivileged(new PropertyReadAction("jboss.modules.system.pkgs"));
         final List<String> list = new ArrayList<String>();
@@ -118,6 +109,25 @@ public final class Module {
             iterator.set(iterator.next().replace('.', '/'));
         }
         systemPaths = list.toArray(list.toArray(new String[list.size()]));
+
+        AccessController.doPrivileged(new PrivilegedAction<Void>() {
+            public Void run() {
+                try {
+                    URL.setURLStreamHandlerFactory(new ModularURLStreamHandlerFactory());
+                } catch (Throwable t) {
+                    // todo log a warning or something
+                }
+                try {
+                    URLConnection.setContentHandlerFactory(new ModularContentHandlerFactory());
+                } catch (Throwable t) {
+                    // todo log a warning or something
+                }
+
+                __JAXPRedirected.initAll();
+
+                return null;
+            }
+        });
     }
 
     // static properties
@@ -128,10 +138,10 @@ public final class Module {
     /**
      * The system-wide module logger, which may be changed via {@link #setModuleLogger(org.jboss.modules.log.ModuleLogger)}.
      */
-    static volatile ModuleLogger log = NoopModuleLogger.getInstance();
+    static volatile ModuleLogger log;
 
-    private static final FastCopyHashSet<ClassFilter> EMPTY_CLASS_FILTERS = new FastCopyHashSet<ClassFilter>(0);
-    private static final FastCopyHashSet<PathFilter> EMPTY_PATH_FILTERS = new FastCopyHashSet<PathFilter>(0);
+    private static final FastCopyHashSet<ClassFilter> EMPTY_CLASS_FILTERS;
+    private static final FastCopyHashSet<PathFilter> EMPTY_PATH_FILTERS;
 
     // immutable properties
 
@@ -174,11 +184,11 @@ public final class Module {
 
     // private constants
 
-    private static final RuntimePermission GET_CLASS_LOADER = new RuntimePermission("getClassLoader");
-    private static final RuntimePermission GET_BOOT_MODULE_LOADER = new RuntimePermission("getBootModuleLoader");
-    private static final RuntimePermission ACCESS_MODULE_LOGGER = new RuntimePermission("accessModuleLogger");
-    private static final RuntimePermission ADD_CONTENT_HANDLER_FACTORY = new RuntimePermission("addContentHandlerFactory");
-    private static final RuntimePermission ADD_URL_STREAM_HANDLER_FACTORY = new RuntimePermission("addURLStreamHandlerFactory");
+    private static final RuntimePermission GET_CLASS_LOADER;
+    private static final RuntimePermission GET_BOOT_MODULE_LOADER;
+    private static final RuntimePermission ACCESS_MODULE_LOGGER;
+    private static final RuntimePermission ADD_CONTENT_HANDLER_FACTORY;
+    private static final RuntimePermission ADD_URL_STREAM_HANDLER_FACTORY;
 
     /**
      * Construct a new instance from a module specification.
