@@ -35,6 +35,8 @@ import java.net.URL;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Enumeration;
+import java.util.Iterator;
+import java.util.ServiceLoader;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.logging.LogManager;
@@ -110,6 +112,8 @@ public final class Main {
         boolean classDefined = false;
         String moduleIdentifierOrExeName = null;
         ModuleIdentifier jaxpModuleIdentifier = null;
+        boolean defaultSecMgr = false;
+        String secMgrModule = null;
         for (int i = 0, argsLength = argsLen; i < argsLength; i++) {
             final String arg = args[i];
             try {
@@ -195,8 +199,28 @@ public final class Main {
                         }
                         classDefined = true;
                     } else if ("-logmodule".equals(arg)) {
-                        System.out.println("WARNING: -logmodule is deprecated. Please use the system property 'java.util.logging.manager' or the 'java.util.logging.LogManager' service loader.");
+                        System.err.println("WARNING: -logmodule is deprecated. Please use the system property 'java.util.logging.manager' or the 'java.util.logging.LogManager' service loader.");
                         i++;
+                    } else if ("-secmgr".equals(arg)) {
+                        if (defaultSecMgr) {
+                            System.err.println("-secmgr may only be specified once");
+                            System.exit(1);
+                        }
+                        if (secMgrModule != null) {
+                            System.err.println("-secmgr may not be specified when -secmgrmodule is given");
+                            System.exit(1);
+                        }
+                        defaultSecMgr = true;
+                    } else if ("-secmgrmodule".equals(arg)) {
+                        if (secMgrModule != null) {
+                            System.err.println("-secmgrmodule may only be specified once");
+                            System.exit(1);
+                        }
+                        if (defaultSecMgr) {
+                            System.err.println("-secmgrmodule may not be specified when -secmgr is given");
+                            System.exit(1);
+                        }
+                        secMgrModule = args[++i];
                     } else {
                         System.err.printf("Invalid option '%s'\n", arg);
                         usage();
@@ -257,6 +281,24 @@ public final class Main {
             __JAXPRedirected.changeAll(jaxpModuleIdentifier, Module.getBootModuleLoader());
         }
 
+        if (secMgrModule != null) {
+            final Module loadedModule;
+            try {
+                loadedModule = loader.loadModule(ModuleIdentifier.fromString(secMgrModule));
+            } catch (ModuleNotFoundException e) {
+                e.printStackTrace(System.err);
+                System.exit(1);
+                return;
+            }
+            final Iterator<SecurityManager> iterator = ServiceLoader.load(SecurityManager.class, loadedModule.getClassLoaderPrivate()).iterator();
+            if (iterator.hasNext()) {
+                System.setSecurityManager(iterator.next());
+            } else {
+                System.err.println("No security manager found in module " + secMgrModule);
+                System.exit(1);
+            }
+        }
+
         final Module module;
         try {
             module = loader.loadModule(moduleIdentifier);
@@ -264,6 +306,15 @@ public final class Main {
             e.printStackTrace(System.err);
             System.exit(1);
             return;
+        }
+
+        if (defaultSecMgr) {
+            final Iterator<SecurityManager> iterator = ServiceLoader.load(SecurityManager.class, module.getClassLoaderPrivate()).iterator();
+            if (iterator.hasNext()) {
+                System.setSecurityManager(iterator.next());
+            } else {
+                System.setSecurityManager(new SecurityManager());
+            }
         }
 
         final ModuleClassLoader bootClassLoader = module.getClassLoaderPrivate();
