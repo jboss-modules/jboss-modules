@@ -38,8 +38,6 @@ import java.io.InputStream;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarFile;
@@ -255,20 +253,6 @@ final class ModuleXmlParser {
         }
     }
 
-    static ModuleLoader parseModuleConfigXml(final File moduleConfigFile) {
-        final FileInputStream fis;
-        try {
-            fis = new FileInputStream(moduleConfigFile);
-        } catch (FileNotFoundException e) {
-            throw new IllegalArgumentException("No module-config.xml file found at " + moduleConfigFile);
-        }
-        try {
-            return parseModuleConfigXml(moduleConfigFile.getPath(), fis);
-        } finally {
-            safeClose(fis);
-        }
-    }
-
     private static void setIfSupported(XMLInputFactory inputFactory, String property, Object value) {
         if (inputFactory.isPropertySupported(property)) {
             inputFactory.setProperty(property, value);
@@ -290,22 +274,6 @@ final class ModuleXmlParser {
             }
         } catch (XMLStreamException e) {
             throw new ModuleLoadException("Error loading module from " + moduleInfoFile, e);
-        }
-    }
-
-    private static ModuleLoader parseModuleConfigXml(final String configFilePath, final InputStream source) {
-        try {
-            final XMLInputFactory inputFactory = INPUT_FACTORY;
-            setIfSupported(inputFactory, XMLInputFactory.IS_VALIDATING, Boolean.FALSE);
-            setIfSupported(inputFactory, XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
-            final XMLStreamReader streamReader = inputFactory.createXMLStreamReader(source);
-            try {
-                return parseConfigDocument(streamReader);
-            } finally {
-                safeClose(streamReader);
-            }
-        } catch (XMLStreamException e) {
-            throw new IllegalArgumentException("Error loading module configuration from " + configFilePath, e);
         }
     }
 
@@ -369,169 +337,6 @@ final class ModuleXmlParser {
             b.append(' ').append(attribute);
         }
         return new XMLStreamException(b.toString(), location);
-    }
-
-    private static XMLStreamException noSuchLoader(final XMLStreamReader reader, final String loader) {
-        return new XMLStreamException("No such loader found named '" + loader + "'", reader.getLocation());
-    }
-
-    private static XMLStreamException selfImport(final XMLStreamReader reader, final String loader) {
-        return new XMLStreamException("Module loader '" + loader + "' imports itself", reader.getLocation());
-    }
-
-    private static XMLStreamException duplicateLoader(final XMLStreamReader reader, final String loader) {
-        return new XMLStreamException("Multiple loaders defined named '" + loader + "'", reader.getLocation());
-    }
-
-    private static ModuleLoader parseConfigDocument(XMLStreamReader reader) throws XMLStreamException {
-        while (reader.hasNext()) {
-            switch (reader.nextTag()) {
-                case START_DOCUMENT: {
-                    return parseConfigRootElement(reader);
-                }
-                case START_ELEMENT: {
-                    if (Element.of(reader.getName()) != Element.CONFIGURATION) {
-                        throw unexpectedContent(reader);
-                    }
-                    return parseConfigRootElementContents(reader);
-                }
-                default: {
-                    throw unexpectedContent(reader);
-                }
-            }
-        }
-        throw endOfDocument(reader.getLocation());
-    }
-
-    private static ModuleLoader parseConfigRootElement(final XMLStreamReader reader) throws XMLStreamException {
-        while (reader.hasNext()) {
-            switch (reader.nextTag()) {
-                case START_ELEMENT: {
-                    if (Element.of(reader.getName()) != Element.CONFIGURATION) {
-                        throw unexpectedContent(reader);
-                    }
-                    return parseConfigRootElementContents(reader);
-                }
-                default: {
-                    throw unexpectedContent(reader);
-                }
-            }
-        }
-        throw endOfDocument(reader.getLocation());
-    }
-
-    private static ModuleLoader parseConfigRootElementContents(final XMLStreamReader reader) throws XMLStreamException {
-        final int count = reader.getAttributeCount();
-        String defaultLoader = null;
-        final Set<Attribute> required = EnumSet.of(Attribute.DEFAULT_LOADER);
-        for (int i = 0; i < count; i ++) {
-            final Attribute attribute = Attribute.of(reader.getAttributeName(i));
-            required.remove(attribute);
-            switch (attribute) {
-                case DEFAULT_LOADER: defaultLoader = reader.getAttributeValue(i); break;
-                default: throw unexpectedContent(reader);
-            }
-        }
-        if (! required.isEmpty() || defaultLoader == null) {
-            throw missingAttributes(reader.getLocation(), required);
-        }
-        final Map<String, LocalModuleLoader> moduleLoaderMap = new HashMap<String, LocalModuleLoader>();
-        final Map<String, Set<String>> importsMap = new HashMap<String, Set<String>>();
-        while (reader.hasNext()) {
-            switch (reader.nextTag()) {
-                case START_ELEMENT: {
-                    switch (Element.of(reader.getName())) {
-                        case LOADER: {
-                            parseConfigLoaderElement(reader, moduleLoaderMap, importsMap);
-                            break;
-                        }
-                        default: throw unexpectedContent(reader);
-                    }
-                    break;
-                }
-                case END_ELEMENT: {
-                    ModuleLoader loader = moduleLoaderMap.get(defaultLoader);
-                    if (loader == null) {
-                        throw noSuchLoader(reader, defaultLoader);
-                    }
-                    for (Map.Entry<String, Set<String>> entry : importsMap.entrySet()) {
-                        String key = entry.getKey();
-                        Set<String> value = entry.getValue();
-                        LocalModuleLoader moduleLoader = moduleLoaderMap.get(key);
-                        assert moduleLoader != null;
-                        final ModuleLoader[] importedLoaders = new ModuleLoader[value.size()];
-                        int i = 0;
-                        for (String importName : value) {
-                            LocalModuleLoader importedLoader = moduleLoaderMap.get(importName);
-                            if (importedLoader == null) {
-                                throw noSuchLoader(reader, importName);
-                            }
-                            if (importName.equals(key)) {
-                                throw selfImport(reader, importName);
-                            }
-                            importedLoaders[i++] = importedLoader;
-                        }
-                        moduleLoader.setImportLoaders(importedLoaders);
-                    }
-                    return loader;
-                }
-                default: {
-                    throw unexpectedContent(reader);
-                }
-            }
-        }
-        throw endOfDocument(reader.getLocation());
-    }
-
-    private static void parseConfigLoaderElement(final XMLStreamReader reader, final Map<String, LocalModuleLoader> map, final Map<String, Set<String>> importsMap) throws XMLStreamException {
-        final Set<String> roots = new HashSet<String>();
-        final Set<String> imports = new LinkedHashSet<String>();
-        final int count = reader.getAttributeCount();
-        String name = null;
-        final Set<Attribute> required = EnumSet.of(Attribute.NAME);
-        for (int i = 0; i < count; i ++) {
-            final Attribute attribute = Attribute.of(reader.getAttributeName(i));
-            required.remove(attribute);
-            switch (attribute) {
-                case NAME:    name = reader.getAttributeValue(i); break;
-                default: throw unexpectedContent(reader);
-            }
-        }
-        if (! required.isEmpty() || name == null) {
-            throw missingAttributes(reader.getLocation(), required);
-        }
-        if (map.containsKey(name)) {
-            throw duplicateLoader(reader, name);
-        }
-        while (reader.hasNext()) {
-            switch (reader.nextTag()) {
-                case START_ELEMENT: {
-                    switch (Element.of(reader.getName())) {
-                        case MODULE_PATH: {
-                            parsePathName(reader, roots);
-                            break;
-                        }
-                        case IMPORT: {
-                            // it's not really a path name, but whatever works
-                            parsePathName(reader, imports);
-                            break;
-                        }
-                    }
-                    break;
-                }
-                case END_ELEMENT: {
-                    File[] files = new File[roots.size()];
-                    int i = 0;
-                    for (String root : roots) {
-                        files[i++] = new File(root);
-                    }
-                    map.put(name, new LocalModuleLoader(files));
-                    importsMap.put(name, imports);
-                    return;
-                }
-                default: throw unexpectedContent(reader);
-            }
-        }
     }
 
     private static ModuleSpec parseDocument(final ResourceRootFactory factory, final String rootPath, XMLStreamReader reader, final ModuleIdentifier moduleIdentifier) throws XMLStreamException {

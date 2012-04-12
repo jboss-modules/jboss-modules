@@ -85,9 +85,6 @@ public final class Main {
         System.out.println("                  requires -class or -cp");
         System.out.println("    -jar          Specify that the final argument is the name of a");
         System.out.println("                  JAR file to run as a module; not compatible with -class");
-        System.out.println("    -config <config-location>");
-        System.out.println("                  The location of the module configuration.  Either -mp or -config");
-        System.out.println("                  may be specified, but not both");
         System.out.println("    -jaxpmodule <module-name>");
         System.out.println("                  The default JAXP implementation to use of the JDK");
         System.out.println("    -version      Print version and exit\n");
@@ -105,7 +102,6 @@ public final class Main {
         String deps = null;
         String[] moduleArgs = NO_STRINGS;
         String modulePath = null;
-        String configPath = null;
         String classpath = null;
         boolean jar = false;
         boolean classpathDefined = false;
@@ -130,22 +126,11 @@ public final class Main {
                             System.err.println("Module path may only be specified once");
                             System.exit(1);
                         }
-                        if (configPath != null) {
-                            System.err.println("Module path may not be specified with config path");
-                            System.exit(1);
-                        }
                         modulePath = args[++i];
                         System.setProperty("module.path", modulePath);
                     } else if ("-config".equals(arg)) {
-                        if (configPath != null) {
-                            System.err.println("Config file path may only be specified once");
-                            System.exit(1);
-                        }
-                        if (modulePath != null) {
-                            System.err.println("Module path may not be specified with config path");
-                            System.exit(1);
-                        }
-                        configPath = args[++i];
+                        System.err.println("Config files are no longer supported.  Use the -mp option instead");
+                        System.exit(1);
                     } else if ("-jaxpmodule".equals(arg)) {
                         jaxpModuleIdentifier = ModuleIdentifier.fromString(args[++i]);
                     } else if ("-jar".equals(arg)) {
@@ -260,11 +245,7 @@ public final class Main {
         }
         final ModuleLoader loader;
         final ModuleLoader environmentLoader;
-        if (configPath != null) {
-            environmentLoader = ModuleXmlParser.parseModuleConfigXml(new File(configPath));
-        } else {
-            environmentLoader = DefaultBootModuleLoaderHolder.INSTANCE;
-        }
+        environmentLoader = DefaultBootModuleLoaderHolder.INSTANCE;
         final ModuleIdentifier moduleIdentifier;
         if (jar) {
             loader = new JarModuleLoader(environmentLoader, new JarFile(moduleIdentifierOrExeName));
