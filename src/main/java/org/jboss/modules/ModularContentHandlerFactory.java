@@ -73,6 +73,8 @@ final class ModularContentHandlerFactory implements ContentHandlerFactory {
         modules = list;
     }
 
+    static final ModularContentHandlerFactory INSTANCE = new ModularContentHandlerFactory();
+
     static void addHandlerModule(Module module) {
         modules.add(module);
     }

@@ -308,6 +308,9 @@ public final class Main {
             return;
         }
 
+        ModularURLStreamHandlerFactory.addHandlerModule(module);
+        ModularContentHandlerFactory.addHandlerModule(module);
+
         if (defaultSecMgr) {
             final Iterator<SecurityManager> iterator = ServiceLoader.load(SecurityManager.class, module.getClassLoaderPrivate()).iterator();
             if (iterator.hasNext()) {
