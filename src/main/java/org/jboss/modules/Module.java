@@ -113,12 +113,12 @@ public final class Module {
         AccessController.doPrivileged(new PrivilegedAction<Void>() {
             public Void run() {
                 try {
-                    URL.setURLStreamHandlerFactory(new ModularURLStreamHandlerFactory());
+                    URL.setURLStreamHandlerFactory(ModularURLStreamHandlerFactory.INSTANCE);
                 } catch (Throwable t) {
                     // todo log a warning or something
                 }
                 try {
-                    URLConnection.setContentHandlerFactory(new ModularContentHandlerFactory());
+                    URLConnection.setContentHandlerFactory(ModularContentHandlerFactory.INSTANCE);
                 } catch (Throwable t) {
                     // todo log a warning or something
                 }

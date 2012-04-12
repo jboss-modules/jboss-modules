@@ -266,6 +266,9 @@ public final class Main {
             return;
         }
 
+        ModularURLStreamHandlerFactory.addHandlerModule(module);
+        ModularContentHandlerFactory.addHandlerModule(module);
+
         final ModuleClassLoader bootClassLoader = module.getClassLoaderPrivate();
         setContextClassLoader(bootClassLoader);
 

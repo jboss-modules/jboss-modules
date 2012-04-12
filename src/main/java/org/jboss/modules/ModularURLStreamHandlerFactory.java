@@ -82,8 +82,13 @@ final class ModularURLStreamHandlerFactory implements URLStreamHandlerFactory {
         modules = list;
     }
 
+    static final ModularURLStreamHandlerFactory INSTANCE = new ModularURLStreamHandlerFactory();
+
     static void addHandlerModule(Module module) {
         modules.add(module);
+    }
+
+    private ModularURLStreamHandlerFactory() {
     }
 
     public URLStreamHandler createURLStreamHandler(final String protocol) {
