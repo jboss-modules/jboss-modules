@@ -350,7 +350,8 @@ public final class Main {
         String jarName = "(unknown)";
         String versionString = "(unknown)";
         try {
-            resources = Main.class.getClassLoader().getResources("META-INF/MANIFEST.MF");
+            final ClassLoader classLoader = Main.class.getClassLoader();
+            resources = classLoader == null ? ModuleClassLoader.getSystemResources("META-INF/MANIFEST.MF") : classLoader.getResources("META-INF/MANIFEST.MF");
             while (resources.hasMoreElements()) {
                 final URL url = resources.nextElement();
                 final InputStream stream = url.openStream();
