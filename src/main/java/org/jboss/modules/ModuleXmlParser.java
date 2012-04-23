@@ -40,6 +40,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarFile;
@@ -1058,6 +1059,9 @@ final class ModuleXmlParser {
             throw missingAttributes(reader.getLocation(), required);
         }
         specBuilder.addProperty(name, value == null ? "true" : value);
+        if ("jboss.assertions".equals(name)) try {
+            specBuilder.setAssertionSetting(AssertionSetting.valueOf(value.toUpperCase(Locale.US)));
+        } catch (IllegalArgumentException ignored) {}
 
         // consume remainder of element
         parseNoContent(reader);
