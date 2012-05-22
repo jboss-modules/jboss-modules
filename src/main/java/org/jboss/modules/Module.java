@@ -76,7 +76,7 @@ public final class Module {
         BOOT_MODULE_LOADER = new AtomicReference<ModuleLoader>();
         NO_DEPENDENCIES = new Dependency[0];
         GET_CLASS_LOADER = new RuntimePermission("getClassLoader");
-        GET_SYSTEM_MODULE = new RuntimePermission("getSystemModule")
+        GET_SYSTEM_MODULE = new RuntimePermission("getSystemModule");
         GET_BOOT_MODULE_LOADER = new RuntimePermission("getBootModuleLoader");
         ACCESS_MODULE_LOGGER = new RuntimePermission("accessModuleLogger");
         ADD_CONTENT_HANDLER_FACTORY = new RuntimePermission("addContentHandlerFactory");
