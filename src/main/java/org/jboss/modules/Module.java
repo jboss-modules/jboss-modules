@@ -245,24 +245,23 @@ public final class Module {
             if (mainClassName == null) {
                 throw new NoSuchMethodException("No main class defined for " + this);
             }
-            final Class<?> mainClass = Class.forName(mainClassName, false, moduleClassLoader);
+            final ClassLoader oldClassLoader = SecurityActions.setContextClassLoader(moduleClassLoader);
             try {
-                Class.forName(mainClassName, true, moduleClassLoader);
-            } catch (Throwable t) {
-                throw new InvocationTargetException(t, "Failed to initialize main class '" + mainClassName + "'");
-            }
-            final Method mainMethod = mainClass.getMethod("main", String[].class);
-            final int modifiers = mainMethod.getModifiers();
-            if (! Modifier.isStatic(modifiers)) {
-                throw new NoSuchMethodException("Main method is not static for " + this);
-            }
-            final ClassLoader previousClassLoader = Thread.currentThread().getContextClassLoader();
-            try {
-                Thread.currentThread().setContextClassLoader(moduleClassLoader);
+                final Class<?> mainClass = Class.forName(mainClassName, false, moduleClassLoader);
+                try {
+                    Class.forName(mainClassName, true, moduleClassLoader);
+                } catch (Throwable t) {
+                    throw new InvocationTargetException(t, "Failed to initialize main class '" + mainClassName + "'");
+                }
+                final Method mainMethod = mainClass.getMethod("main", String[].class);
+                final int modifiers = mainMethod.getModifiers();
+                if (! Modifier.isStatic(modifiers)) {
+                    throw new NoSuchMethodException("Main method is not static for " + this);
+                }
                 // ignore the return value
                 mainMethod.invoke(null, new Object[] {args});
             } finally {
-                Thread.currentThread().setContextClassLoader(previousClassLoader);
+                SecurityActions.setContextClassLoader(oldClassLoader);
             }
         } catch (IllegalAccessException e) {
             // unexpected; should be public

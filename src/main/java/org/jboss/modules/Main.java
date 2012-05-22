@@ -33,7 +33,6 @@ import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.ServiceLoader;
@@ -43,6 +42,8 @@ import java.util.logging.LogManager;
 
 import java.util.jar.Manifest;
 import org.jboss.modules.log.JDKModuleLogger;
+
+import static org.jboss.modules.SecurityActions.setContextClassLoader;
 
 /**
  * The main entry point of JBoss Modules when run as a JAR on the command line.
@@ -355,26 +356,6 @@ public final class Main {
             }
         }
         return null;
-    }
-
-    private static ClassLoader setContextClassLoader(final ClassLoader classLoader) {
-        final SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
-            return AccessController.doPrivileged(new PrivilegedAction<ClassLoader>() {
-                public ClassLoader run() {
-                    return doSetContextClassLoader(classLoader);
-                }
-            });
-        }
-        return doSetContextClassLoader(classLoader);
-    }
-
-    private static ClassLoader doSetContextClassLoader(final ClassLoader classLoader) {
-        try {
-            return Thread.currentThread().getContextClassLoader();
-        } finally {
-            Thread.currentThread().setContextClassLoader(classLoader);
-        }
     }
 
     private static final String JAR_NAME;
