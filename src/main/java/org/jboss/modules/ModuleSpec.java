@@ -84,7 +84,7 @@ public abstract class ModuleSpec {
             @Override
             public Builder addDependency(final DependencySpec dependencySpec) {
                 dependencies.add(dependencySpec);
-                return null;
+                return this;
             }
 
             @Override
