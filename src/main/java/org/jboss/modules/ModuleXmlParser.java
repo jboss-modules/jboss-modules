@@ -598,13 +598,8 @@ final class ModuleXmlParser {
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case END_ELEMENT: {
-                    if (export) {
-                        // If re-exported, add META-INF/** -> false at the end of the list (require explicit override)
-                        exportBuilder.addFilter(PathFilters.getMetaInfSubdirectoriesFilter(), false);
-                        exportBuilder.addFilter(PathFilters.getMetaInfFilter(), false);
-                    }
                     final PathFilter exportFilter = exportBuilder.create();
-                    specBuilder.addDependency(DependencySpec.createSystemDependencySpec(PathFilters.getDefaultImportFilter(), exportFilter, paths));
+                    specBuilder.addDependency(DependencySpec.createSystemDependencySpec(PathFilters.acceptAll(), exportFilter, paths));
                     return;
                 }
                 case START_ELEMENT: {
