@@ -119,7 +119,8 @@ public final class LocalModuleLoader extends ModuleLoader {
                 final File file = new File(root, child);
                 final File moduleXml = new File(file, "module.xml");
                 if (moduleXml.exists()) {
-                    return parseModuleInfoFile(moduleIdentifier, file, moduleXml);
+                    final ModuleSpec spec = parseModuleInfoFile(moduleIdentifier, file, moduleXml);
+                    if (spec != null) return spec;
                 }
             }
         }

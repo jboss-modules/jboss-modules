@@ -81,6 +81,7 @@ final class ModuleXmlParser {
         UNKNOWN,
         MODULE_1_0,
         MODULE_1_1,
+        MODULE_1_2,
         ;
 
         private static final Map<String, Namespace> namespaces;
@@ -89,6 +90,7 @@ final class ModuleXmlParser {
             Map<String, Namespace> namespacesMap = new HashMap<String, Namespace>();
             namespacesMap.put("urn:jboss:module:1.0", MODULE_1_0);
             namespacesMap.put("urn:jboss:module:1.1", MODULE_1_1);
+            namespacesMap.put("urn:jboss:module:1.2", MODULE_1_2);
             namespaces = namespacesMap;
         }
 
@@ -121,6 +123,7 @@ final class ModuleXmlParser {
         MODULE_ALIAS,
         PROPERTIES,
         PROPERTY,
+        MODULE_ABSENT,
 
         // default unknown element
         UNKNOWN;
@@ -360,6 +363,10 @@ final class ModuleXmlParser {
                             parseEndDocument(reader);
                             return moduleSpec;
                         }
+                        case MODULE_ABSENT: {
+                            parseModuleAbsentContents(reader, moduleIdentifier);
+                            return null;
+                        }
                         default: {
                             throw unexpectedContent(reader);
                         }
@@ -389,6 +396,10 @@ final class ModuleXmlParser {
                             final ModuleSpec moduleSpec = parseModuleAliasContents(reader, moduleIdentifier);
                             parseEndDocument(reader);
                             return moduleSpec;
+                        }
+                        case MODULE_ABSENT: {
+                            parseModuleAbsentContents(reader, moduleIdentifier);
+                            return null;
                         }
                         default: {
                             throw unexpectedContent(reader);
@@ -431,6 +442,39 @@ final class ModuleXmlParser {
             switch (reader.nextTag()) {
                 case END_ELEMENT: {
                     return ModuleSpec.buildAlias(moduleIdentifier, ModuleIdentifier.create(targetName, targetSlot)).create();
+                }
+                default: {
+                    throw unexpectedContent(reader);
+                }
+            }
+        }
+        throw endOfDocument(reader.getLocation());
+    }
+
+    private static void parseModuleAbsentContents(final XMLStreamReader reader, final ModuleIdentifier moduleIdentifier) throws XMLStreamException {
+        final int count = reader.getAttributeCount();
+        String name = null;
+        String slot = null;
+        final Set<Attribute> required = EnumSet.of(Attribute.NAME, Attribute.TARGET_NAME);
+        for (int i = 0; i < count; i ++) {
+            final Attribute attribute = Attribute.of(reader.getAttributeName(i));
+            required.remove(attribute);
+            switch (attribute) {
+                case NAME:    name = reader.getAttributeValue(i); break;
+                case SLOT:    slot = reader.getAttributeValue(i); break;
+                default: throw unexpectedContent(reader);
+            }
+        }
+        if (! required.isEmpty()) {
+            throw missingAttributes(reader.getLocation(), required);
+        }
+        if (! moduleIdentifier.equals(ModuleIdentifier.create(name, slot))) {
+            throw invalidModuleName(reader.getLocation(), moduleIdentifier);
+        }
+        while (reader.hasNext()) {
+            switch (reader.nextTag()) {
+                case END_ELEMENT: {
+                    return;
                 }
                 default: {
                     throw unexpectedContent(reader);
