@@ -120,7 +120,7 @@ public final class LocalModuleLoader extends ModuleLoader {
                 final File moduleXml = new File(file, "module.xml");
                 if (moduleXml.exists()) {
                     final ModuleSpec spec = parseModuleInfoFile(moduleIdentifier, file, moduleXml);
-                    if (spec != null) return spec;
+                    if (spec == null) break;
                 }
             }
         }
