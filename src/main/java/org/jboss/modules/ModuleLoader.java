@@ -31,7 +31,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Hashtable;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -109,9 +108,6 @@ public abstract class ModuleLoader {
             public ModuleLoaderMXBean run() {
                 ObjectName objectName;
                 try {
-                    Hashtable<String, String> table = new Hashtable<String, String>();
-                    table.put("type", "ModuleLoader");
-                    table.put("name", ModuleLoader.this.getClass().getSimpleName() + "-" + Integer.toString(SEQ.incrementAndGet()));
                     objectName = new ObjectName("jboss.modules", ObjectProperties.properties(
                             property("type", "ModuleLoader"),
                             property("name", ModuleLoader.this.getClass().getSimpleName() + "-" + Integer.toString(SEQ.incrementAndGet()))
