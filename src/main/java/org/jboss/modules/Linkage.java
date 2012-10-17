@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2011, Red Hat, Inc., and individual contributors
+ * Copyright 2012, Red Hat, Inc., and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -46,29 +46,19 @@ final class Linkage {
     private final Dependency[] sourceList;
     private final State state;
     private final Map<String, List<LocalLoader>> allPaths;
-    private final Map<String, List<LocalLoader>> exportedPaths;
 
     Linkage(final Dependency[] sourceList, final State state) {
-        this(sourceList, state, Collections.<String, List<LocalLoader>>emptyMap(), Collections.<String, List<LocalLoader>>emptyMap());
+        this(sourceList, state, Collections.<String, List<LocalLoader>>emptyMap());
     }
 
-    Linkage(final Dependency[] sourceList, final State state, final Map<String, List<LocalLoader>> allPaths, final Map<String, List<LocalLoader>> exportedPaths) {
+    Linkage(final Dependency[] sourceList, final State state, final Map<String, List<LocalLoader>> allPaths) {
         this.sourceList = sourceList;
         this.state = state;
         this.allPaths = allPaths;
-        this.exportedPaths = exportedPaths;
     }
 
-    Map<String, List<LocalLoader>> getAllPaths() {
+    Map<String, List<LocalLoader>> getPaths() {
         return allPaths;
-    }
-
-    Map<String, List<LocalLoader>> getExportedPaths() {
-        return exportedPaths;
-    }
-
-    Map<String, List<LocalLoader>> getPaths(boolean export) {
-        return export ? exportedPaths : allPaths;
     }
 
     State getState() {
@@ -79,5 +69,5 @@ final class Linkage {
         return sourceList;
     }
 
-    static final Linkage NONE = new Linkage(NO_DEPENDENCIES, State.NEW, Collections.<String, List<LocalLoader>>emptyMap(), Collections.<String, List<LocalLoader>>emptyMap());
+    static final Linkage NONE = new Linkage(NO_DEPENDENCIES, State.NEW, Collections.<String, List<LocalLoader>>emptyMap());
 }

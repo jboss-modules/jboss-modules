@@ -824,7 +824,7 @@ public final class Module {
         }
     }
 
-    long addPaths(Dependency[] dependencies, Map<String, List<LocalLoader>> map, FastCopyHashSet<PathFilter> filterStack, FastCopyHashSet<ClassFilter> classFilterStack, final FastCopyHashSet<PathFilter> resourceFilterStack, Set<Visited> visited) throws ModuleLoadException {
+    private long addPaths(Dependency[] dependencies, Map<String, List<LocalLoader>> map, FastCopyHashSet<PathFilter> filterStack, FastCopyHashSet<ClassFilter> classFilterStack, final FastCopyHashSet<PathFilter> resourceFilterStack, Set<Visited> visited) throws ModuleLoadException {
         long subtract = 0L;
         moduleLoader.incScanCount();
         for (Dependency dependency : dependencies) {
@@ -954,7 +954,7 @@ public final class Module {
         return subtract;
     }
 
-    long addExportedPaths(Dependency[] dependencies, Map<String, List<LocalLoader>> map, FastCopyHashSet<PathFilter> filterStack, FastCopyHashSet<ClassFilter> classFilterStack, final FastCopyHashSet<PathFilter> resourceFilterStack, Set<Visited> visited) throws ModuleLoadException {
+    private long addExportedPaths(Dependency[] dependencies, Map<String, List<LocalLoader>> map, FastCopyHashSet<PathFilter> filterStack, FastCopyHashSet<ClassFilter> classFilterStack, final FastCopyHashSet<PathFilter> resourceFilterStack, Set<Visited> visited) throws ModuleLoadException {
         if (!visited.add(new Visited(this, filterStack, classFilterStack, resourceFilterStack))) {
             return 0L;
         }
@@ -1128,7 +1128,7 @@ public final class Module {
         Linkage linkage;
         Linkage.State state = oldLinkage.getState();
         if (state == Linkage.State.LINKED) {
-            return oldLinkage.getPaths(false);
+            return oldLinkage.getPaths();
         }
         // slow path loop
         boolean intr = false;
@@ -1145,7 +1145,7 @@ public final class Module {
                         intr = true;
                     }
                     if (state == Linkage.State.LINKED) {
-                        return oldLinkage.getPaths(false);
+                        return oldLinkage.getPaths();
                     }
                     this.linkage = linkage = new Linkage(oldLinkage.getSourceList(), Linkage.State.LINKING);
                     // fall out and link
@@ -1183,7 +1183,6 @@ public final class Module {
 
     void link(final Linkage linkage) throws ModuleLoadException {
         final HashMap<String, List<LocalLoader>> importsMap = new HashMap<String, List<LocalLoader>>();
-        final HashMap<String, List<LocalLoader>> exportsMap = new HashMap<String, List<LocalLoader>>();
         final Dependency[] dependencies = linkage.getSourceList();
         final long start = Metrics.getCurrentCPUTime();
         long subtractTime = 0L;
@@ -1193,10 +1192,9 @@ public final class Module {
             final FastCopyHashSet<ClassFilter> classFilterStack = EMPTY_CLASS_FILTERS;
             final FastCopyHashSet<PathFilter> resourceFilterStack = EMPTY_PATH_FILTERS;
             subtractTime += addPaths(dependencies, importsMap, filterStack, classFilterStack, resourceFilterStack, visited);
-            subtractTime += addExportedPaths(dependencies, exportsMap, filterStack, classFilterStack, resourceFilterStack, visited);
             synchronized (this) {
                 if (this.linkage == linkage) {
-                    this.linkage = new Linkage(linkage.getSourceList(), Linkage.State.LINKED, importsMap, exportsMap);
+                    this.linkage = new Linkage(linkage.getSourceList(), Linkage.State.LINKED, importsMap);
                     notifyAll();
                 }
                 // else all our efforts were just wasted since someone changed the deps in the meantime
@@ -1242,7 +1240,7 @@ public final class Module {
 
     void setDependencies(final List<DependencySpec> dependencySpecs) throws ModuleLoadException {
         synchronized (this) {
-            linkage = new Linkage(calculateDependencies(dependencySpecs), Linkage.State.UNLINKED, null, null);
+            linkage = new Linkage(calculateDependencies(dependencySpecs), Linkage.State.UNLINKED, null);
             notifyAll();
         }
     }
