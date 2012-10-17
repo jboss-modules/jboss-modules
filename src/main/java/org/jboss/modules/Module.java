@@ -338,7 +338,7 @@ public final class Module {
      * @return the paths that are exported by this module
      */
     public Set<String> getExportedPaths() {
-        return Collections.unmodifiableSet(getPathsUnchecked(true).keySet());
+        return Collections.unmodifiableSet(getPathsUnchecked().keySet());
     }
 
     /**
@@ -496,11 +496,10 @@ public final class Module {
      * Load a class from a local loader.
      *
      * @param className the class name
-     * @param exportsOnly {@code true} to only load if the class is exported, {@code false} to load any class
      * @param resolve {@code true} to resolve the class after definition
      * @return the class
      */
-    Class<?> loadModuleClass(final String className, final boolean exportsOnly, final boolean resolve) {
+    Class<?> loadModuleClass(final String className, final boolean resolve) {
         for (String s : systemPackages) {
             if (className.startsWith(s)) {
                 try {
@@ -511,7 +510,7 @@ public final class Module {
             }
         }
         final String path = pathOfClass(className);
-        final Map<String, List<LocalLoader>> paths = getPathsUnchecked(exportsOnly);
+        final Map<String, List<LocalLoader>> paths = getPathsUnchecked();
         final List<LocalLoader> loaders = paths.get(path);
         if (loaders != null) {
             Class<?> clazz;
@@ -533,10 +532,9 @@ public final class Module {
      * Load a resource from a local loader.
      *
      * @param name the resource name
-     * @param exportsOnly {@code true} to only consider exported resources
      * @return the resource URL, or {@code null} if not found
      */
-    URL getResource(final String name, final boolean exportsOnly) {
+    URL getResource(final String name) {
         final String canonPath = PathUtils.canonicalize(name);
         for (String s : Module.systemPaths) {
             if (canonPath.startsWith(s)) {
@@ -545,7 +543,7 @@ public final class Module {
         }
         log.trace("Attempting to find resource %s in %s", canonPath, this);
         final String path = pathOf(canonPath);
-        final Map<String, List<LocalLoader>> paths = getPathsUnchecked(exportsOnly);
+        final Map<String, List<LocalLoader>> paths = getPathsUnchecked();
         final List<LocalLoader> loaders = paths.get(path);
         if (loaders != null) {
             for (LocalLoader loader : loaders) {
@@ -569,10 +567,9 @@ public final class Module {
      * Load all resources of a given name from a local loader.
      *
      * @param name the resource name
-     * @param exportsOnly {@code true} to only consider exported resources
      * @return the enumeration of all the matching resource URLs (may be empty)
      */
-    Enumeration<URL> getResources(final String name, final boolean exportsOnly) {
+    Enumeration<URL> getResources(final String name) {
         final String canonPath = PathUtils.canonicalize(name);
         for (String s : Module.systemPaths) {
             if (canonPath.startsWith(s)) {
@@ -585,7 +582,7 @@ public final class Module {
         }
         log.trace("Attempting to find all resources %s in %s", canonPath, this);
         final String path = pathOf(canonPath);
-        final Map<String, List<LocalLoader>> paths = getPathsUnchecked(exportsOnly);
+        final Map<String, List<LocalLoader>> paths = getPathsUnchecked();
         final List<LocalLoader> loaders = paths.get(path);
 
         final List<URL> list = new ArrayList<URL>();
@@ -615,7 +612,7 @@ public final class Module {
      * @return the resource, or {@code null} if it was not found
      */
     public URL getExportedResource(final String name) {
-        return getResource(name, true);
+        return getResource(name);
     }
 
     /**
@@ -625,7 +622,7 @@ public final class Module {
      * @return the resource URLs
      */
     public Enumeration<URL> getExportedResources(final String name) {
-        return getResources(name, true);
+        return getResources(name);
     }
 
     /**
@@ -1126,12 +1123,12 @@ public final class Module {
         return subtract;
     }
 
-    Map<String, List<LocalLoader>> getPaths(final boolean exports) throws ModuleLoadException {
+    Map<String, List<LocalLoader>> getPaths() throws ModuleLoadException {
         Linkage oldLinkage = this.linkage;
         Linkage linkage;
         Linkage.State state = oldLinkage.getState();
         if (state == Linkage.State.LINKED) {
-            return oldLinkage.getPaths(exports);
+            return oldLinkage.getPaths(false);
         }
         // slow path loop
         boolean intr = false;
@@ -1148,7 +1145,7 @@ public final class Module {
                         intr = true;
                     }
                     if (state == Linkage.State.LINKED) {
-                        return oldLinkage.getPaths(exports);
+                        return oldLinkage.getPaths(false);
                     }
                     this.linkage = linkage = new Linkage(oldLinkage.getSourceList(), Linkage.State.LINKING);
                     // fall out and link
@@ -1176,9 +1173,9 @@ public final class Module {
         }
     }
 
-    Map<String, List<LocalLoader>> getPathsUnchecked(final boolean export) {
+    Map<String, List<LocalLoader>> getPathsUnchecked() {
         try {
-            return getPaths(export);
+            return getPaths();
         } catch (ModuleLoadException e) {
             throw e.toError();
         }
@@ -1265,7 +1262,7 @@ public final class Module {
     }
 
     Package getPackage(final String name) {
-        List<LocalLoader> loaders = getPathsUnchecked(false).get(name.replace('.', '/'));
+        List<LocalLoader> loaders = getPathsUnchecked().get(name.replace('.', '/'));
         if (loaders != null) for (LocalLoader localLoader : loaders) {
             Package pkg = localLoader.loadPackageLocal(name);
             if (pkg != null) return pkg;
@@ -1275,7 +1272,7 @@ public final class Module {
 
     Package[] getPackages() {
         final ArrayList<Package> packages = new ArrayList<Package>();
-        final Map<String, List<LocalLoader>> allPaths = getPathsUnchecked(false);
+        final Map<String, List<LocalLoader>> allPaths = getPathsUnchecked();
         next: for (String path : allPaths.keySet()) {
             String packageName = path.replace('/', '.');
             for (LocalLoader loader : allPaths.get(path)) {

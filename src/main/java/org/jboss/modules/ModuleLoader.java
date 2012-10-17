@@ -734,7 +734,7 @@ public abstract class ModuleLoader {
             final Module module = loadModule(name, loader);
             final Map<String, List<LocalLoader>> paths;
             try {
-                paths = module.getPathsUnchecked(exports);
+                paths = module.getPathsUnchecked();
             } catch (ModuleLoadError e) {
                 throw new IllegalArgumentException("Error loading module " + name + ": " + e.toString());
             }

@@ -38,7 +38,6 @@ import java.util.List;
 
 import static org.jboss.modules.util.Util.toList;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -197,40 +196,6 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
     }
 
     @Test
-    public void testExportClassLoad() throws Exception {
-        final Module testModule = moduleLoader.loadModule(MODULE_WITH_CONTENT_ID);
-        final ModuleClassLoader classLoader = testModule.getClassLoader();
-
-        try {
-            classLoader.loadExportedClass("org.jboss.modules.test.ImportedClass");
-            fail("Should have thrown ClassNotFoundException");
-        } catch (ClassNotFoundException expected) {
-        }
-
-        final Module exportingModule = moduleLoader.loadModule(MODULE_WITH_EXPORT_ID);
-        final ModuleClassLoader exportingClassLoader = exportingModule.getClassLoader();
-
-        try {
-            Class<?> testClass = exportingClassLoader.loadExportedClass("org.jboss.modules.test.ImportedClass");
-            assertNotNull(testClass);
-        } catch (ClassNotFoundException e) {
-            fail("Should have loaded exported class");
-        }
-    }
-
-    @Test
-    public void testFilteredExportClassLoad() throws Exception {
-        final Module testModule = moduleLoader.loadModule(MODULE_WITH_FILTERED_EXPORT_ID);
-        final ModuleClassLoader classLoader = testModule.getClassLoader();
-
-        try {
-            classLoader.loadExportedClass("org.jboss.modules.test.ImportedClass");
-            fail("Should have thrown ClassNotFoundException");
-        } catch (ClassNotFoundException expected) {
-        }
-    }
-
-    @Test
     public void testFilteredImportClassLoad() throws Exception {
         final Module testModule = moduleLoader.loadModule(MODULE_WITH_FILTERED_IMPORT_ID);
         final ModuleClassLoader classLoader = testModule.getClassLoader();
@@ -297,31 +262,6 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
     }
 
     @Test
-    public void testExportResourceRetrieval() throws Exception {
-        final Module testModule = moduleLoader.loadModule(MODULE_WITH_CONTENT_ID);
-
-        URL resUrl = testModule.getExportedResource("testTwo.txt");
-        assertNull(resUrl);
-
-        final Module exportingModule = moduleLoader.loadModule(MODULE_WITH_EXPORT_ID);
-
-        resUrl = exportingModule.getExportedResource("testTwo.txt");
-        assertNotNull(resUrl);
-    }
-
-    @Test
-    public void testFilteredExportResourceRetrieval() throws Exception {
-        final Module testModule = moduleLoader.loadModule(MODULE_WITH_FILTERED_EXPORT_ID);
-        final ModuleClassLoader classLoader = testModule.getClassLoader();
-
-        URL resUrl = classLoader.getResource("nested/nested.txt");
-        assertNotNull(resUrl);
-
-        resUrl = testModule.getExportedResource("nested/nested.txt");
-        assertNull(resUrl);
-    }
-
-    @Test
     public void testFilteredImportResourceRetrieval() throws Exception {
         final Module testModule = moduleLoader.loadModule(MODULE_WITH_FILTERED_IMPORT_ID);
         final ModuleClassLoader classLoader = testModule.getClassLoader();
@@ -381,37 +321,6 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
         assertTrue(rootOne);
         assertTrue(rootTwo);
     }
-
-    @Test
-    public void testExportResourcesRetrieval() throws Exception {
-        final Module testModule = moduleLoader.loadModule(MODULE_WITH_CONTENT_ID);
-
-        Enumeration<URL> resUrls = testModule.getExportedResources("testTwo.txt");
-        List<URL> resUrlList = toList(resUrls);
-        assertTrue(resUrlList.isEmpty());
-
-        final Module exportingModule = moduleLoader.loadModule(MODULE_WITH_EXPORT_ID);
-
-        resUrls = exportingModule.getExportedResources("testTwo.txt");
-        resUrlList = toList(resUrls);
-        assertEquals(1, resUrlList.size());
-        assertTrue(resUrlList.get(0).getPath().contains("rootTwo"));
-    }
-
-    @Test
-    public void testFilteredExportResourcesRetrieval() throws Exception {
-        final Module testModule = moduleLoader.loadModule(MODULE_WITH_FILTERED_EXPORT_ID);
-        final ModuleClassLoader classLoader = testModule.getClassLoader();
-
-        Enumeration<URL> resUrls = classLoader.getResources("nested/nested.txt");
-        List<URL> resUrlList = toList(resUrls);
-        assertFalse(resUrlList.isEmpty());
-
-        resUrls = testModule.getExportedResources("nested/nested.txt");
-        resUrlList = toList(resUrls);
-        assertTrue(resUrlList.isEmpty());
-    }
-
 
     @Test
     public void testFilteredImportResourcesRetrieval() throws Exception {

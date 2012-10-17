@@ -179,7 +179,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         final Module module = this.module;
         log.trace("Finding class %s from %s", className, module);
 
-        final Class<?> clazz = module.loadModuleClass(className, exportsOnly, resolve);
+        final Class<?> clazz = module.loadModuleClass(className, resolve);
 
         if (clazz != null) {
             return clazz;
@@ -480,13 +480,13 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
     /** {@inheritDoc} */
     @Override
     public final URL findResource(final String name, final boolean exportsOnly) {
-        return module.getResource(name, exportsOnly);
+        return module.getResource(name);
     }
 
     /** {@inheritDoc} */
     @Override
     public final Enumeration<URL> findResources(final String name, final boolean exportsOnly) throws IOException {
-        return module.getResources(name, exportsOnly);
+        return module.getResources(name);
     }
 
     /** {@inheritDoc} */
