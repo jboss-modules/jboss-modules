@@ -1,0 +1,14 @@
+
+javax/xml/rpc/handler/soap
+META-INF/maven
+javax/xml/rpc/encoding
+javax/xml/rpc/handler
+META-INF
+javax/xml/rpc
+javax/xml/rpc/soap
+javax/xml
+META-INF/maven/org.jboss.spec.javax.xml.rpc/jboss-jaxrpc-api_1.1_spec
+javax
+javax/xml/rpc/holders
+META-INF/maven/org.jboss.spec.javax.xml.rpc
+javax/xml/rpc/server

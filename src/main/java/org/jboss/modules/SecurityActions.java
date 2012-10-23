@@ -22,11 +22,11 @@
 
 package org.jboss.modules;
 
-import java.security.PrivilegedAction;
-
 import static java.lang.System.getSecurityManager;
 import static java.lang.Thread.currentThread;
 import static java.security.AccessController.doPrivileged;
+
+import java.security.PrivilegedAction;
 
 /**
  * This class must not be public.
@@ -35,7 +35,12 @@ import static java.security.AccessController.doPrivileged;
  */
 final class SecurityActions {
 
+    private SecurityActions() {
+        throw new UnsupportedOperationException("No instances permitted");
+    }
+
     private static final PrivilegedAction<ClassLoader> GET_LOADER_ACTION = new PrivilegedAction<ClassLoader>() {
+        @Override
         public ClassLoader run() {
             return currentThread().getContextClassLoader();
         }
@@ -45,6 +50,7 @@ final class SecurityActions {
         final SecurityManager sm = getSecurityManager();
         if (sm != null) {
             return doPrivileged(new PrivilegedAction<ClassLoader>() {
+                @Override
                 public ClassLoader run() {
                     try {
                         return currentThread().getContextClassLoader();
@@ -68,6 +74,20 @@ final class SecurityActions {
             return doPrivileged(GET_LOADER_ACTION);
         } else {
             return currentThread().getContextClassLoader();
+        }
+    }
+
+    static String getSystemProperty(final String key) {
+        assert key != null && key.length() > 0 : "Key must be specified";
+        if (System.getSecurityManager() == null) {
+            return System.getProperty(key);
+        } else {
+            return doPrivileged(new PrivilegedAction<String>() {
+                @Override
+                public String run() {
+                    return System.getProperty(key);
+                }
+            });
         }
     }
 }

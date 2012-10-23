@@ -1,0 +1,10 @@
+
+javax/servlet/jsp
+javax/servlet/jsp/el
+javax/servlet/jsp/tagext
+javax/servlet
+META-INF/maven
+javax
+META-INF/maven/org.jboss.spec.javax.servlet.jsp
+META-INF/maven/org.jboss.spec.javax.servlet.jsp/jboss-jsp-api_2.2_spec
+META-INF

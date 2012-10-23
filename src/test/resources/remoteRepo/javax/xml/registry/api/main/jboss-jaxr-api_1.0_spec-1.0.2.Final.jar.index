@@ -1,0 +1,9 @@
+
+javax/xml/registry
+javax/xml
+META-INF/maven
+javax
+META-INF/maven/org.jboss.spec.javax.xml.registry
+javax/xml/registry/infomodel
+META-INF
+META-INF/maven/org.jboss.spec.javax.xml.registry/jboss-jaxr-api_1.0_spec

@@ -1,0 +1,10 @@
+
+javax/persistence/spi
+javax/persistence/metamodel
+javax/persistence/criteria
+META-INF/maven/org.hibernate.javax.persistence
+META-INF/maven
+javax
+javax/persistence
+META-INF/maven/org.hibernate.javax.persistence/hibernate-jpa-2.0-api
+META-INF
