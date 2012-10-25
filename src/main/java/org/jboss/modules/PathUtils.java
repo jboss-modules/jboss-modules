@@ -22,6 +22,18 @@
 
 package org.jboss.modules;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import org.jboss.modules.filter.PathFilter;
+
 /**
  * General helpful path utility methods.
  *
@@ -30,6 +42,77 @@ package org.jboss.modules;
 public final class PathUtils {
 
     private PathUtils() {
+    }
+
+    /**
+     * Filter the paths from {@code source} into {@code target} using {@code filter}.
+     *
+     * @param source the source paths
+     * @param filter the filter to apply
+     * @param target the destination for filtered paths
+     * @param <T> the collection type
+     * @return the {@code target} set
+     */
+    public static <T extends Collection<? super String>> T filterPaths(Iterable<String> source, PathFilter filter, T target) {
+        for (String path : source) {
+            if (filter.accept(path)) {
+                target.add(path);
+            }
+        }
+        return target;
+    }
+
+    /**
+     * Attempt to get a set of all paths defined directly by the given class loader.  If the path set cannot be
+     * ascertained, {@code null} is returned.
+     *
+     * @param classLoader the class loader to inspect
+     * @return the set, or {@code null} if the paths could not be determined
+     */
+    public static Set<String> getPathSet(ClassLoader classLoader) {
+        if (classLoader == null) {
+            return JDKPaths.JDK;
+        } else if (classLoader instanceof ModuleClassLoader) {
+            final ModuleClassLoader moduleClassLoader = (ModuleClassLoader) classLoader;
+            return Collections.unmodifiableSet(moduleClassLoader.getPaths());
+        } else if (classLoader instanceof URLClassLoader) {
+            // here's where it starts to get ugly...
+            final URLClassLoader urlClassLoader = (URLClassLoader) classLoader;
+            final URL[] urls = urlClassLoader.getURLs();
+            final Set<String> paths = new HashSet<String>();
+            for (URL url : urls) {
+                final URI uri;
+                try {
+                    uri = url.toURI();
+                } catch (URISyntaxException e) {
+                    return null;
+                }
+                final String scheme = uri.getScheme();
+                if ("file".equals(scheme)) {
+                    final File file;
+                    try {
+                        file = new File(uri);
+                    } catch (Exception e) {
+                        return null;
+                    }
+                    if (file.exists()) {
+                        if (file.isDirectory()) {
+                            JDKPaths.processDirectory0(paths, file);
+                        } else {
+                            try {
+                                JDKPaths.processJar(paths, file);
+                            } catch (IOException e) {
+                                return null;
+                            }
+                        }
+                    }
+                }
+            }
+            return Collections.unmodifiableSet(paths);
+        } else {
+            // ???
+            return null;
+        }
     }
 
     /**

@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2011, Red Hat, Inc., and individual contributors
+ * Copyright 2012, Red Hat, Inc., and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -25,6 +25,7 @@ package org.jboss.modules;
 import java.io.File;
 import java.io.IOException;
 import java.security.AccessController;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Set;
 import java.util.zip.ZipEntry;
@@ -52,7 +53,7 @@ final class JDKPaths {
         pathSet.add("org/jboss/modules/log");
         pathSet.add("org/jboss/modules/management");
         pathSet.add("org/jboss/modules/ref");
-        JDK = pathSet;
+        JDK = Collections.unmodifiableSet(pathSet);
     }
 
     private JDKPaths() {
@@ -70,20 +71,7 @@ final class JDKPaths {
                     processDirectory0(pathSet, file);
                 } else {
                     try {
-                        final ZipFile zipFile = new ZipFile(file);
-                        try {
-                            final Enumeration<? extends ZipEntry> entries = zipFile.entries();
-                            while (entries.hasMoreElements()) {
-                                final ZipEntry entry = entries.nextElement();
-                                final String name = entry.getName();
-                                final int lastSlash = name.lastIndexOf('/');
-                                if (lastSlash != -1) {
-                                    pathSet.add(name.substring(0, lastSlash));
-                                }
-                            }
-                        } finally {
-                            zipFile.close();
-                        }
+                        processJar(pathSet, file);
                     } catch (IOException ex) {
                         // ignore
                     }
@@ -93,7 +81,27 @@ final class JDKPaths {
         } while (e != -1);
     }
 
-    private static void processDirectory0(final Set<String> pathSet, final File file) {
+    static void processJar(final Set<String> pathSet, final File file) throws IOException {
+        final ZipFile zipFile = new ZipFile(file);
+        try {
+            final Enumeration<? extends ZipEntry> entries = zipFile.entries();
+            while (entries.hasMoreElements()) {
+                final ZipEntry entry = entries.nextElement();
+                final String name = entry.getName();
+                final int lastSlash = name.lastIndexOf('/');
+                if (lastSlash != -1) {
+                    pathSet.add(name.substring(0, lastSlash));
+                }
+            }
+            zipFile.close();
+        } finally {
+            try {
+                zipFile.close();
+            } catch (IOException ignored) {}
+        }
+    }
+
+    static void processDirectory0(final Set<String> pathSet, final File file) {
         for (File entry : file.listFiles()) {
             if (entry.isDirectory()) {
                 processDirectory1(pathSet, entry, file.getPath());
@@ -104,7 +112,7 @@ final class JDKPaths {
         }
     }
 
-    private static void processDirectory1(final Set<String> pathSet, final File file, final String pathBase) {
+    static void processDirectory1(final Set<String> pathSet, final File file, final String pathBase) {
         for (File entry : file.listFiles()) {
             if (entry.isDirectory()) {
                 processDirectory1(pathSet, entry, pathBase);

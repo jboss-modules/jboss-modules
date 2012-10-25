@@ -66,7 +66,7 @@ import javax.management.ObjectName;
  *
  * @apiviz.landmark
  */
-public abstract class ModuleLoader {
+public class ModuleLoader {
 
     private static final RuntimePermission ML_PERM = new RuntimePermission("canCreateModuleLoader");
     private static final RuntimePermission MODULE_REDEFINE_PERM = new RuntimePermission("canRedefineModule");
@@ -77,7 +77,13 @@ public abstract class ModuleLoader {
 
     private static volatile MBeanReg REG_REF = new TempMBeanReg();
 
+    /**
+     * A constant representing zero module finders.
+     */
+    public static final ModuleFinder[] NO_FINDERS = new ModuleFinder[0];
+
     private final ConcurrentMap<ModuleIdentifier, FutureModule> moduleMap = new UnlockedReadHashMap<ModuleIdentifier, FutureModule>(256);
+    private final ModuleFinder[] finders;
 
     private final boolean canRedefine;
     private final ModuleLoaderMXBean mxBean;
@@ -102,9 +108,14 @@ public abstract class ModuleLoader {
     private static final AtomicIntegerFieldUpdater<ModuleLoader> raceCountUpdater = AtomicIntegerFieldUpdater.newUpdater(ModuleLoader.class, "raceCount");
     private static final AtomicIntegerFieldUpdater<ModuleLoader> classCountUpdater = AtomicIntegerFieldUpdater.newUpdater(ModuleLoader.class, "classCount");
 
-    // Bypass security check for classes in this package
     ModuleLoader(boolean canRedefine, boolean skipRegister) {
+        this(canRedefine, skipRegister, NO_FINDERS);
+    }
+
+    // Bypass security check for classes in this package
+    ModuleLoader(boolean canRedefine, boolean skipRegister, ModuleFinder[] finders) {
         this.canRedefine = canRedefine;
+        this.finders = finders;
         mxBean = skipRegister ? null : AccessController.doPrivileged(new PrivilegedAction<ModuleLoaderMXBean>() {
             public ModuleLoaderMXBean run() {
                 ObjectName objectName;
@@ -134,7 +145,16 @@ public abstract class ModuleLoader {
      * Construct a new instance.
      */
     protected ModuleLoader() {
-        this(checkPermissions(), false);
+        this(NO_FINDERS);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param finders the module finders to search, in order
+     */
+    protected ModuleLoader(final ModuleFinder[] finders) {
+        this(checkPermissions(), false, finders);
     }
 
     private static boolean checkPermissions() {
@@ -186,7 +206,9 @@ public abstract class ModuleLoader {
      *
      * @return the string representation
      */
-    public abstract String toString();
+    public String toString() {
+        return String.format("%s@%x for finders %s", getClass().getSimpleName(), Arrays.toString(finders));
+    }
 
     static void installMBeanServer() {
         REG_REF.installReal();
@@ -353,18 +375,38 @@ public abstract class ModuleLoader {
     }
 
     /**
-     * Find a Module's specification in this ModuleLoader by its identifier.  This should be overriden by sub-classes
-     * to implement the Module loading strategy for this loader.
+     * Find a Module's specification in this ModuleLoader by its identifier.  This can be overriden by sub-classes to
+     * implement the Module loading strategy for this loader.  The default implementation iterates the module finders
+     * provided during construction.
      * <p/>
-     * If no module is found in this module loader with the given identifier, then this method should return {@code null}.
-     * If the module is found but some problem occurred (for example, a transitive dependency failed to load) then this
-     * method should throw a {@link ModuleLoadException} of the relevant type.
+     * If no module is found in this module loader with the given identifier, then this method should return {@code
+     * null}. If the module is found but some problem occurred (for example, a transitive dependency failed to load)
+     * then this method should throw a {@link ModuleLoadException} of the relevant type.
      *
-     * @param moduleIdentifier The modules Identifier
+     * @param moduleIdentifier the module identifier
      * @return the module specification, or {@code null} if no module is found with the given identifier
      * @throws ModuleLoadException if any problems occur finding the module
      */
-    protected abstract ModuleSpec findModule(final ModuleIdentifier moduleIdentifier) throws ModuleLoadException;
+    protected ModuleSpec findModule(final ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
+        for (ModuleFinder finder : finders) {
+            if (finder != null) {
+                final ModuleSpec spec = finder.findModule(moduleIdentifier, this);
+                if (spec != null) {
+                    return spec;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Get the module finders configured for this module loader.
+     *
+     * @return the module finders
+     */
+    protected final ModuleFinder[] getFinders() {
+        return finders.length > 0 ? finders.clone() : NO_FINDERS;
+    }
 
     /**
      * Defines a Module based on a specification.  May only be called from {@link #loadModuleLocal(ModuleIdentifier)}.

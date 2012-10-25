@@ -34,9 +34,6 @@ import org.jboss.modules.filter.PathFilters;
  */
 public final class LocalModuleLoader extends ModuleLoader {
 
-    private final File[] repoRoots;
-    private final PathFilter pathFilter;
-
     /**
      * Construct a new instance.
      *
@@ -53,8 +50,7 @@ public final class LocalModuleLoader extends ModuleLoader {
      * @param pathFilter the path filter to apply to roots
      */
     public LocalModuleLoader(final File[] repoRoots, final PathFilter pathFilter) {
-        this.repoRoots = repoRoots;
-        this.pathFilter = pathFilter;
+        super(new ModuleFinder[] { new LocalModuleFinder(repoRoots, pathFilter)});
     }
 
     /**
@@ -62,77 +58,12 @@ public final class LocalModuleLoader extends ModuleLoader {
      * to get the list of module repository roots.
      */
     public LocalModuleLoader() {
-        final String modulePath = System.getProperty("module.path", System.getenv("JAVA_MODULEPATH"));
-        if (modulePath == null) {
-            //noinspection ZeroLengthArrayAllocation
-            repoRoots = new File[0];
-        } else {
-            repoRoots = getFiles(modulePath, 0, 0);
-        }
-        pathFilter = PathFilters.acceptAll();
-    }
-
-    private static File[] getFiles(final String modulePath, final int stringIdx, final int arrayIdx) {
-        final int i = modulePath.indexOf(File.pathSeparatorChar, stringIdx);
-        final File[] files;
-        if (i == -1) {
-            files = new File[arrayIdx + 1];
-            files[arrayIdx] = new File(modulePath.substring(stringIdx)).getAbsoluteFile();
-        } else {
-            files = getFiles(modulePath, i + 1, arrayIdx + 1);
-            files[arrayIdx] = new File(modulePath.substring(stringIdx, i)).getAbsoluteFile();
-        }
-        return files;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    protected Module preloadModule(final ModuleIdentifier identifier) throws ModuleLoadException {
-        return super.preloadModule(identifier);
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    protected ModuleSpec findModule(final ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
-        final String child = toPathString(moduleIdentifier);
-        if (pathFilter.accept(child)) {
-            for (File root : repoRoots) {
-                final File file = new File(root, child);
-                final File moduleXml = new File(file, "module.xml");
-                if (moduleXml.exists()) {
-                    final ModuleSpec spec = parseModuleInfoFile(moduleIdentifier, file, moduleXml);
-                    if (spec == null) break;
-                    return spec;
-                }
-            }
-        }
-        throw new ModuleNotFoundException("Module " + moduleIdentifier + " is not found in " + this);
-    }
-
-    private static String toPathString(ModuleIdentifier moduleIdentifier) {
-        final StringBuilder builder = new StringBuilder(40);
-        builder.append(moduleIdentifier.getName().replace('.', File.separatorChar));
-        builder.append(File.separatorChar).append(moduleIdentifier.getSlot());
-        builder.append(File.separatorChar);
-        return builder.toString();
-    }
-
-    private ModuleSpec parseModuleInfoFile(final ModuleIdentifier moduleIdentifier, final File moduleRoot, final File moduleInfoFile) throws ModuleLoadException {
-        return ModuleXmlParser.parseModuleXml(moduleIdentifier, moduleRoot, moduleInfoFile);
+        super(new ModuleFinder[] { new LocalModuleFinder() });
     }
 
     public String toString() {
         final StringBuilder b = new StringBuilder();
-        b.append("local module loader @").append(Integer.toHexString(hashCode())).append(" (roots: ");
-        final int repoRootsLength = repoRoots.length;
-        for (int i = 0; i < repoRootsLength; i++) {
-            final File root = repoRoots[i];
-            b.append(root);
-            if (i != repoRootsLength - 1) {
-                b.append(',');
-            }
-        }
-        b.append(')');
+        b.append("local module loader @").append(Integer.toHexString(hashCode())).append(" (finder: ").append(getFinders()[0]).append(')');
         return b.toString();
     }
 }

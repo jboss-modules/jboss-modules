@@ -35,7 +35,7 @@ import java.util.jar.JarFile;
  */
 final class ClassPathModuleLoader extends ModuleLoader {
 
-    private static final String[] NO_STRINGS = new String[0];
+    static final String[] NO_STRINGS = new String[0];
     private final ModuleLoader delegateLoader;
     private final String classPath;
     private final String dependencies;
