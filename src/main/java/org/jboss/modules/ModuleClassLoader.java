@@ -104,7 +104,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
      */
     protected ModuleClassLoader(final Configuration configuration) {
         module = configuration.getModule();
-        paths = new Paths<ResourceLoader, ResourceLoaderSpec>(configuration.getResourceLoaders(), Collections.<String, List<ResourceLoader>>emptyMap(), Collections.<String, List<ResourceLoader>>emptyMap());
+        paths = new Paths<ResourceLoader, ResourceLoaderSpec>(configuration.getResourceLoaders(), Collections.<String, List<ResourceLoader>>emptyMap());
         final AssertionSetting setting = configuration.getAssertionSetting();
         if (setting != AssertionSetting.INHERIT) {
             setDefaultAssertionStatus(setting == AssertionSetting.ENABLED);
@@ -152,7 +152,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
                 }
             }
         }
-        return pathsUpdater.compareAndSet(this, paths, new Paths<ResourceLoader, ResourceLoaderSpec>(resourceLoaders, allPaths, null));
+        return pathsUpdater.compareAndSet(this, paths, new Paths<ResourceLoader, ResourceLoaderSpec>(resourceLoaders, allPaths));
     }
 
     /**
