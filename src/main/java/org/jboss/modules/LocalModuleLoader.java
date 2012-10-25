@@ -36,9 +36,6 @@ public final class LocalModuleLoader extends ModuleLoader {
 
     private final File[] repoRoots;
     private final PathFilter pathFilter;
-    private volatile ModuleLoader[] importLoaders = NO_LOADERS;
-
-    private static final ModuleLoader[] NO_LOADERS = new ModuleLoader[0];
 
     /**
      * Construct a new instance.
@@ -91,23 +88,7 @@ public final class LocalModuleLoader extends ModuleLoader {
     /** {@inheritDoc} */
     @Override
     protected Module preloadModule(final ModuleIdentifier identifier) throws ModuleLoadException {
-        Module module = super.preloadModule(identifier);
-        if (module == null) {
-            for (ModuleLoader loader : importLoaders) {
-                module = preloadModule(identifier, loader);
-                if (module != null) {
-                    break;
-                }
-            }
-        }
-        return module;
-    }
-
-    void setImportLoaders(ModuleLoader[] loaders) {
-        if (loaders == null) {
-            throw new IllegalArgumentException("loaders is null");
-        }
-        importLoaders = loaders.clone();
+        return super.preloadModule(identifier);
     }
 
     /** {@inheritDoc} */
