@@ -47,7 +47,8 @@ import org.mortbay.jetty.handler.AbstractHandler;
 public class RepositoryModuleLoaderTest {
 
     private static final Logger log = Logger.getLogger(RepositoryModuleLoaderTest.class.getName());
-    private static final File LOCAL_REPO = new File("target", ".jboss/modules/repo");
+    private static final File LOCAL_REPO = new File("target", ".jboss" + File.separatorChar + "modules"
+        + File.separatorChar + "repo");
 
     private static final int HTTP_TEST_PORT = 12345;
     private static Server httpServer;

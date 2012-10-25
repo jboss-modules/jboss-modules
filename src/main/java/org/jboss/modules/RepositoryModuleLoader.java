@@ -209,9 +209,11 @@ public final class RepositoryModuleLoader extends ModuleLoader {
         // Parse out the name of the resource root and any dependencies
         String resourceRootPath = null;
         final Set<String> dependencies = new HashSet<String>();
-        final XMLStreamReader reader;
+        XMLStreamReader reader = null;
+        InputStream in = null;
         try {
-            reader = XMLInputFactory.newInstance().createXMLStreamReader(new FileInputStream(localModulesFile));
+            in = new FileInputStream(localModulesFile);
+            reader = XMLInputFactory.newInstance().createXMLStreamReader(in);
         } catch (final FileNotFoundException fnfe) {
             throw new RuntimeException("Could not find the file we've just written: "
                 + localModulesFile.getAbsolutePath());
@@ -262,6 +264,20 @@ public final class RepositoryModuleLoader extends ModuleLoader {
             }
         } catch (final XMLStreamException xmlse) {
             throw new RuntimeException("Encountered error reading from " + localModulesFile.getAbsolutePath(), xmlse);
+        } finally {
+            if (reader != null) {
+                try {
+                    // This doesn't close the associated instream
+                    reader.close();
+                } catch (final XMLStreamException ignore) {
+                }
+            }
+            if (in != null) {
+                try {
+                    in.close();
+                } catch (final IOException ignore) {
+                }
+            }
         }
 
         if (resourceRootPath == null) {
@@ -361,6 +377,12 @@ public final class RepositoryModuleLoader extends ModuleLoader {
                 throw new RuntimeException(ioe);
             }
         } finally {
+            if (in != null) {
+                try {
+                    in.close();
+                } catch (final IOException ignore) {
+                }
+            }
             try {
                 if (out != null) {
                     out.close();
