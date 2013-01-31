@@ -191,6 +191,17 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
     }
 
     /**
+     * Load a class from this class loader.
+     *
+     * @param className the class name to load
+     * @return the loaded class or {@code null} if it was not found
+     * @throws ClassNotFoundException if an exception occurs while loading the class or its dependencies
+     */
+    public Class<?> loadClassLocal(String className) throws ClassNotFoundException {
+        return loadClassLocal(className, false);
+    }
+
+    /**
      * Load a local class from this class loader.
      *
      * @param className the class name
@@ -198,7 +209,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
      * @return the loaded class or {@code null} if it was not found
      * @throws ClassNotFoundException if an error occurs while loading the class
      */
-    Class<?> loadClassLocal(final String className, final boolean resolve) throws ClassNotFoundException {
+    public Class<?> loadClassLocal(final String className, final boolean resolve) throws ClassNotFoundException {
         final ModuleLogger log = Module.log;
         final Module module = this.module;
         log.trace("Finding local class %s from %s", className, module);
@@ -301,7 +312,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
      * @param name the resource name
      * @return the list of resources
      */
-    List<Resource> loadResourceLocal(final String name) {
+    public List<Resource> loadResourceLocal(final String name) {
         final Map<String, List<ResourceLoader>> paths = this.paths.getAllPaths();
 
         final String path = Module.pathOf(name);
