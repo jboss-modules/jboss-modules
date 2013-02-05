@@ -61,20 +61,44 @@ public final class LocalModuleFinder implements ModuleFinder {
     /**
      * Construct a new instance, using the {@code module.path} system property or the {@code JAVA_MODULEPATH} environment variable
      * to get the list of module repository roots.
+     * <p>
+     * This is equivalent to a call to {@link LocalModuleFinder#LocalModuleFinder(boolean) LocalModuleFinder(true)}.
+     * </p>
      */
     public LocalModuleFinder() {
+        this(true);
+    }
+
+    /**
+     * Construct a new instance, using the {@code module.path} system property or the {@code JAVA_MODULEPATH} environment variable
+     * to get the list of module repository roots.
+     *
+     * @param supportLayersAndAddOns {@code true} if the identified module repository roots should be checked for
+     *                               an internal structure of child "layer" and "add-on" directories that may also
+     *                               be treated as module roots lower in precedence than the parent root. Any "layers"
+     *                               subdirectories whose names are specified in a {@code layers.conf} file found in
+     *                               the module repository root will be added in the precedence of order specified
+     *                               in the {@code layers.conf} file; all "add-on" subdirectories will be added at
+     *                               a lower precedence than all "layers" and with no guaranteed precedence order
+     *                               between them. If {@code false} no check for "layer" and "add-on" directories
+     *                               will be performed.
+     *
+     */
+    public LocalModuleFinder(boolean supportLayersAndAddOns) {
         final String modulePathFile = System.getProperty("module.path.file");
+        File[] basicRoots;
         if (modulePathFile != null) {
-            repoRoots = getFileList(modulePathFile);
+            basicRoots = getFileList(modulePathFile);
         } else {
             final String modulePath = System.getProperty("module.path", System.getenv("JAVA_MODULEPATH"));
             if (modulePath == null) {
                 //noinspection ZeroLengthArrayAllocation
-                repoRoots = NO_FILES;
+                basicRoots = NO_FILES;
             } else {
-                repoRoots = getFiles(modulePath);
+                basicRoots = getFiles(modulePath);
             }
         }
+        repoRoots = supportLayersAndAddOns ? LayeredModulePathFactory.resolveLayeredModulePath(basicRoots) : basicRoots;
         pathFilter = PathFilters.acceptAll();
     }
 
