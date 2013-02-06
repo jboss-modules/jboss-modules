@@ -27,7 +27,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.jboss.modules</groupId>
     <artifactId>jboss-modules</artifactId>
-    <version>1.2.0.CR1</version>
+    <version>1.2.0.CR2-SNAPSHOT</version>
     <name>JBoss Modules</name>
 
     <parent>
