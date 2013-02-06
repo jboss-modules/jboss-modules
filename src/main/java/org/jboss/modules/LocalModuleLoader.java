@@ -63,15 +63,39 @@ public final class LocalModuleLoader extends ModuleLoader {
     /**
      * Construct a new instance, using the {@code module.path} system property or the {@code JAVA_MODULEPATH} environment variable
      * to get the list of module repository roots.
+     * <p>
+     * This is equivalent to a call to {@link LocalModuleLoader#LocalModuleLoader(boolean) LocalModuleLoader(true)}.
+     * </p>
      */
     public LocalModuleLoader() {
+        this(true);
+    }
+
+    /**
+     * Construct a new instance, using the {@code module.path} system property or the {@code JAVA_MODULEPATH} environment variable
+     * to get the list of module repository roots.
+     *
+     * @param supportLayersAndAddOns {@code true} if the identified module repository roots should be checked for
+     *                               an internal structure of child "layer" and "add-on" directories that may also
+     *                               be treated as module roots lower in precedence than the parent root. Any "layers"
+     *                               subdirectories whose names are specified in a {@code layers.conf} file found in
+     *                               the module repository root will be added in the precedence of order specified
+     *                               in the {@code layers.conf} file; all "add-on" subdirectories will be added at
+     *                               a lower precedence than all "layers" and with no guaranteed precedence order
+     *                               between them. If {@code false} no check for "layer" and "add-on" directories
+     *                               will be performed.
+     *
+     */
+    public LocalModuleLoader(boolean supportLayersAndAddOns) {
         final String modulePath = System.getProperty("module.path", System.getenv("JAVA_MODULEPATH"));
+        File[] basicRoots;
         if (modulePath == null) {
             //noinspection ZeroLengthArrayAllocation
-            repoRoots = new File[0];
+            basicRoots = new File[0];
         } else {
-            repoRoots = getFiles(modulePath, 0, 0);
+            basicRoots = getFiles(modulePath, 0, 0);
         }
+        repoRoots = supportLayersAndAddOns ? LayeredModulePathFactory.resolveLayeredModulePath(basicRoots) : basicRoots;
         pathFilter = PathFilters.acceptAll();
     }
 
