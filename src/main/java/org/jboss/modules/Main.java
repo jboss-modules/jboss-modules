@@ -280,6 +280,8 @@ public final class Main {
         Module.initBootModuleLoader(loader);
         if (jaxpModuleIdentifier != null) {
             __JAXPRedirected.changeAll(jaxpModuleIdentifier, Module.getBootModuleLoader());
+        } else {
+            __JAXPRedirected.changeAll(moduleIdentifier, Module.getBootModuleLoader());
         }
 
         if (secMgrModule != null) {
