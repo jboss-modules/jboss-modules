@@ -22,18 +22,7 @@
 
 package org.jboss.modules;
 
-import java.io.BufferedReader;
-import java.io.Closeable;
 import java.io.File;
-import java.io.FileFilter;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.jboss.modules.filter.PathFilter;
 import org.jboss.modules.filter.PathFilters;
 
@@ -44,8 +33,6 @@ import org.jboss.modules.filter.PathFilters;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class LocalModuleFinder implements ModuleFinder {
-
-    private static final File[] NO_FILES = new File[0];
     private final File[] repoRoots;
     private final PathFilter pathFilter;
 
@@ -85,179 +72,29 @@ public final class LocalModuleFinder implements ModuleFinder {
      *
      */
     public LocalModuleFinder(boolean supportLayersAndAddOns) {
-        final String modulePathFile = System.getProperty("module.path.file");
+        final String modulePath = System.getProperty("module.path", System.getenv("JAVA_MODULEPATH"));
         File[] basicRoots;
-        if (modulePathFile != null) {
-            basicRoots = getFileList(modulePathFile);
+        if (modulePath == null) {
+            //noinspection ZeroLengthArrayAllocation
+            basicRoots = new File[0];
         } else {
-            final String modulePath = System.getProperty("module.path", System.getenv("JAVA_MODULEPATH"));
-            if (modulePath == null) {
-                //noinspection ZeroLengthArrayAllocation
-                basicRoots = NO_FILES;
-            } else {
-                basicRoots = getFiles(modulePath);
-            }
+            basicRoots = getFiles(modulePath, 0, 0);
         }
         repoRoots = supportLayersAndAddOns ? LayeredModulePathFactory.resolveLayeredModulePath(basicRoots) : basicRoots;
         pathFilter = PathFilters.acceptAll();
     }
 
-    static File[] getFileList(final String modulePathFile) {
-        final ArrayList<File> files = new ArrayList<File>();
-        try {
-            final FileInputStream inputStream = new FileInputStream(modulePathFile);
-            try {
-                final InputStreamReader reader = new InputStreamReader(inputStream, "UTF-8");
-                try {
-                    final BufferedReader bufferedReader = new BufferedReader(reader);
-                    try {
-                        String line;
-                        int i;
-                        while ((line = bufferedReader.readLine()) != null) {
-                            i = line.indexOf('#');
-                            final String trimmed = i == -1 ? line.trim() : line.substring(0, i).trim();
-                            if (! trimmed.isEmpty()) {
-                                expandWildCard(new File(trimmed), files);
-                            }
-                        }
-                        bufferedReader.close();
-                        reader.close();
-                        inputStream.close();
-                        return files.isEmpty() ? NO_FILES : files.toArray(new File[files.size()]);
-                    } finally {
-                        safeClose(bufferedReader);
-                    }
-                } finally {
-                    safeClose(reader);
-                }
-            } finally {
-                safeClose(inputStream);
-            }
-        } catch (IOException e) {
-            return NO_FILES;
-        }
-    }
-
-    private static final void safeClose(Closeable c) {
-        if (c != null) try {
-            c.close();
-        } catch (Throwable ignored) {}
-    }
-
-    static void expandWildCard(File wildcard, ArrayList<File> target) {
-        final String absolutePath = PathUtils.canonicalize(wildcard.getAbsolutePath());
-        expandWildCard(absolutePath, target);
-    }
-
-    private static final String QUOTED_SEPARATOR = File.separatorChar == '\\' ? "\\\\" : File.separator;
-    private static final Pattern GLOB_PATTERN = Pattern.compile("\\*|\\?|[^*?]+");
-    private static final String NOT_SEPARATOR_PATTERN = "[^" + QUOTED_SEPARATOR + "]";
-
-    private static final class PatternFileFilter implements FileFilter {
-        private final Pattern pattern;
-
-        private PatternFileFilter(String glob) {
-            final StringBuilder patternBuilder = new StringBuilder();
-            final Matcher matcher = GLOB_PATTERN.matcher(glob);
-            String matched;
-            while (matcher.find()) {
-                matched = matcher.group();
-                if (matched.equals("*")) {
-                    patternBuilder.append(NOT_SEPARATOR_PATTERN).append('*');
-                } else if (matched.equals("?")) {
-                    patternBuilder.append(NOT_SEPARATOR_PATTERN);
-                } else {
-                    patternBuilder.append(Pattern.quote(matched));
-                }
-            }
-            pattern = Pattern.compile(patternBuilder.toString());
-        }
-
-        public boolean accept(final File file) {
-            return pattern.matcher(file.getName()).matches();
-        }
-    }
-
-    private static void expandWildCard(final File parentFile, final ArrayDeque<File> segments, final ArrayList<File> target) {
-        if (parentFile == null) {
-            // it's a root and cannot be expanded
-            if (segments.isEmpty()) {
-                // last segment
-                return;
-            } else {
-                final File segment = segments.removeFirst();
-                try {
-                    expandWildCard(segment, segments, target);
-                } finally {
-                    segments.addFirst(segment);
-                }
-            }
-        } else {
-            if (segments.isEmpty()) {
-                // last segment
-                target.add(parentFile);
-                return;
-            } else {
-                final File segment = segments.removeFirst();
-                try {
-                    final String name = segment.getName();
-                    if (name.indexOf('?') != -1 || name.indexOf('*') != -1) {
-                        // wildcard
-                        final File[] files = parentFile.listFiles(new PatternFileFilter(name));
-                        Arrays.sort(files);
-                        if (segments.isEmpty()) {
-                            // last segment
-                            for (File file : files) {
-                                if (file.isDirectory()) {
-                                    target.add(file);
-                                }
-                            }
-                        } else {
-                            for (File file : files) {
-                                if (file.isDirectory()) {
-                                    expandWildCard(file, segments, target);
-                                }
-                            }
-                        }
-                    } else {
-                        final File file = new File(parentFile, name);
-                        if (segments.isEmpty()) {
-                            if (file.isDirectory()) target.add(file);
-                        } else {
-                            expandWildCard(file, segments, target);
-                        }
-                    }
-                } finally {
-                    segments.addFirst(segment);
-                }
-            }
-        }
-    }
-
-    private static void expandWildCard(final String absolutePath, final ArrayList<File> target) {
-        final File absoluteFile = new File(absolutePath);
-        final ArrayDeque<File> segments = new ArrayDeque<File>();
-        for (File f = absoluteFile; f != null; f = f.getParentFile()) {
-            segments.addFirst(f);
-        }
-        expandWildCard(null, segments, target);
-    }
-
-    private static File[] getFiles(String modulePath) {
-        final ArrayList<File> files = new ArrayList<File>();
-        int i = modulePath.indexOf(File.pathSeparatorChar);
+    static File[] getFiles(final String modulePath, final int stringIdx, final int arrayIdx) {
+        final int i = modulePath.indexOf(File.pathSeparatorChar, stringIdx);
+        final File[] files;
         if (i == -1) {
-            expandWildCard(modulePath, files);
+            files = new File[arrayIdx + 1];
+            files[arrayIdx] = new File(modulePath.substring(stringIdx)).getAbsoluteFile();
         } else {
-            int s = 0;
-            do {
-                expandWildCard(modulePath.substring(s, i), files);
-                s = i + 1;
-                i = modulePath.indexOf(File.pathSeparatorChar, s);
-            } while (i != -1);
-            expandWildCard(modulePath.substring(s), files);
+            files = getFiles(modulePath, i + 1, arrayIdx + 1);
+            files[arrayIdx] = new File(modulePath.substring(stringIdx, i)).getAbsoluteFile();
         }
-        return files.isEmpty() ? NO_FILES : files.toArray(new File[files.size()]);
+        return files;
     }
 
     static String toPathString(ModuleIdentifier moduleIdentifier) {

@@ -77,9 +77,6 @@ public final class Main {
         System.out.println("    -mp <search path of directories>");
         System.out.println("                  A list of directories, separated by '" + File.pathSeparator + "', where modules may be located");
         System.out.println("                  If not specified, the value of the \"module.path\" system property is used");
-        System.out.println("    -modulepathfile <filename>");
-        System.out.println("    -mpf <filename>");
-        System.out.println("                  A file containing a newline-separated list of module path entries");
         System.out.println("    -class        Specify that the final argument is a");
         System.out.println("                  class to load from the class path; not compatible with -jar");
         System.out.println("    -cp,-classpath <search path of archives or directories>");
@@ -106,7 +103,6 @@ public final class Main {
         String deps = null;
         String[] moduleArgs = NO_STRINGS;
         String modulePath = null;
-        String modulePathFile = null;
         String classpath = null;
         boolean jar = false;
         boolean classpathDefined = false;
@@ -131,23 +127,8 @@ public final class Main {
                             System.err.println("Module path may only be specified once");
                             System.exit(1);
                         }
-                        if (modulePathFile != null) {
-                            System.err.println("-mp/-modulepath may not be specified with -mpf/-modulepathfile");
-                            System.exit(1);
-                        }
                         modulePath = args[++i];
                         System.setProperty("module.path", modulePath);
-                    } else if ("-modulepathfile".equals(arg) || "-mpf".equals(arg)) {
-                        if (modulePath != null) {
-                            System.err.println("-mpf/-modulepathfile may not be specified with -mp/-modulepath");
-                            System.exit(1);
-                        }
-                        if (modulePathFile != null) {
-                            System.err.println("Module path file may only be specified once");
-                            System.exit(1);
-                        }
-                        modulePathFile = args[++i];
-                        System.setProperty("module.path.file", modulePathFile);
                     } else if ("-config".equals(arg)) {
                         System.err.println("Config files are no longer supported.  Use the -mp option instead");
                         System.exit(1);
