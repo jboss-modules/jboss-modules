@@ -28,7 +28,6 @@ import org.jboss.modules.log.ModuleLogger;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.instrument.ClassFileTransformer;
-import java.lang.instrument.IllegalClassFormatException;
 import java.net.URL;
 import java.security.CodeSource;
 import java.security.PermissionCollection;
@@ -381,7 +380,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
                     try {
                         // todo: support protection domain
                         bytes = transformer.transform(this, name.replace('.', '/'), null, null, bytes);
-                    } catch (IllegalClassFormatException e) {
+                    } catch (Exception e) {
                         ClassFormatError error = new ClassFormatError(e.getMessage());
                         error.initCause(e);
                         throw error;
