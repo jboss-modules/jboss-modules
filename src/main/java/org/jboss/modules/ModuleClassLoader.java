@@ -243,7 +243,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
             throw new ClassNotFoundException(className, e);
         } catch (Error e) {
             log.trace(e, "Unexpected error in module loader");
-            throw new ClassNotFoundException(className, e);
+            throw e;
         }
 
         if (classSpec == null) {
