@@ -1053,8 +1053,8 @@ public final class Module {
                     final PathFilter importFilter = classLoaderDependency.getImportFilter();
                     final Set<String> paths = classLoaderDependency.getPaths();
                     for (String path : paths) {
-                        boolean accept = true;
-                        for (Object filter : filterStack.getRawArray()) {
+                        boolean accept = ! "_private".equals(path);
+                        if (accept) for (Object filter : filterStack.getRawArray()) {
                             if (filter != null && ! ((PathFilter)filter).accept(path)) {
                                 accept = false; break;
                             }
