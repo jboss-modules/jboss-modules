@@ -102,6 +102,14 @@
                     </documentation>
                 </annotation>
             </xsd:element>
+            <xsd:element name="permissions" type="permissionsType" minOccurs="0">
+                <annotation xmlns="http://www.w3.org/2001/XMLSchema">
+                    <documentation>
+                        Lists the requested permission set for this module. If the requested permissions cannot
+                        be assigned, the module cannot be loaded.
+                    </documentation>
+                </annotation>
+            </xsd:element>
         </xsd:all>
         <xsd:attribute name="name" type="moduleNameType" use="required">
             <annotation xmlns="http://www.w3.org/2001/XMLSchema">
@@ -539,6 +547,47 @@
             <annotation xmlns="http://www.w3.org/2001/XMLSchema">
                 <documentation>
                     The property value (optional, defaults to "true").
+                </documentation>
+            </annotation>
+        </xsd:attribute>
+    </xsd:complexType>
+
+    <xsd:complexType name="permissionsType">
+        <annotation xmlns="http://www.w3.org/2001/XMLSchema">
+            <documentation>
+                A list of permissions that this module requires.
+            </documentation>
+        </annotation>
+        <xsd:choice minOccurs="0" maxOccurs="unbounded">
+            <xsd:element name="grant" type="permissionType">
+                <annotation xmlns="http://www.w3.org/2001/XMLSchema">
+                    <documentation>
+                        The permission to grant.
+                    </documentation>
+                </annotation>
+            </xsd:element>
+        </xsd:choice>
+    </xsd:complexType>
+    
+    <xsd:complexType name="permissionType">
+        <xsd:attribute name="permission" type="xsd:string" use="required">
+            <annotation xmlns="http://www.w3.org/2001/XMLSchema">
+                <documentation>
+                    The qualified class name of the permission to grant.
+                </documentation>
+            </annotation>
+        </xsd:attribute>
+        <xsd:attribute name="name" type="xsd:string" use="optional">
+            <annotation xmlns="http://www.w3.org/2001/XMLSchema">
+                <documentation>
+                    The permission name to provide to the permission class constructor.
+                </documentation>
+            </annotation>
+        </xsd:attribute>
+        <xsd:attribute name="actions" type="xsd:string" use="optional">
+            <annotation xmlns="http://www.w3.org/2001/XMLSchema">
+                <documentation>
+                    The (optional) list of actions, required by some permission types.
                 </documentation>
             </annotation>
         </xsd:attribute>

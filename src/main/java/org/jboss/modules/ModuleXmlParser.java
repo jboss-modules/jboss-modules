@@ -35,6 +35,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -45,6 +46,9 @@ import java.util.jar.JarFile;
 import org.jboss.modules.filter.MultiplePathFilterBuilder;
 import org.jboss.modules.filter.PathFilter;
 import org.jboss.modules.filter.PathFilters;
+import org.jboss.modules.security.FactoryPermissionCollection;
+import org.jboss.modules.security.ModularPermissionFactory;
+import org.jboss.modules.security.PermissionFactory;
 
 import static javax.xml.stream.XMLStreamConstants.ATTRIBUTE;
 import static javax.xml.stream.XMLStreamConstants.CDATA;
@@ -124,6 +128,8 @@ final class ModuleXmlParser {
         PROPERTIES,
         PROPERTY,
         MODULE_ABSENT,
+        PERMISSIONS,
+        GRANT,
 
         // default unknown element
         UNKNOWN;
@@ -132,28 +138,30 @@ final class ModuleXmlParser {
 
         static {
             Map<String, Element> elementsMap = new HashMap<String, Element>();
-            elementsMap.put("module", Element.MODULE);
-            elementsMap.put("dependencies", Element.DEPENDENCIES);
-            elementsMap.put("resources", Element.RESOURCES);
-            elementsMap.put("main-class", Element.MAIN_CLASS);
-            elementsMap.put("resource-root", Element.RESOURCE_ROOT);
-            elementsMap.put("path", Element.PATH);
-            elementsMap.put("exports", Element.EXPORTS);
-            elementsMap.put("imports", Element.IMPORTS);
-            elementsMap.put("include", Element.INCLUDE);
-            elementsMap.put("exclude", Element.EXCLUDE);
-            elementsMap.put("include-set", Element.INCLUDE_SET);
-            elementsMap.put("exclude-set", Element.EXCLUDE_SET);
-            elementsMap.put("filter", Element.FILTER);
-            elementsMap.put("configuration", Element.CONFIGURATION);
-            elementsMap.put("loader", Element.LOADER);
-            elementsMap.put("module-path", Element.MODULE_PATH);
-            elementsMap.put("import", Element.IMPORT);
-            elementsMap.put("system", Element.SYSTEM);
-            elementsMap.put("paths", Element.PATHS);
-            elementsMap.put("module-alias", Element.MODULE_ALIAS);
-            elementsMap.put("properties", Element.PROPERTIES);
-            elementsMap.put("property", Element.PROPERTY);
+            elementsMap.put("module", MODULE);
+            elementsMap.put("dependencies", DEPENDENCIES);
+            elementsMap.put("resources", RESOURCES);
+            elementsMap.put("main-class", MAIN_CLASS);
+            elementsMap.put("resource-root", RESOURCE_ROOT);
+            elementsMap.put("path", PATH);
+            elementsMap.put("exports", EXPORTS);
+            elementsMap.put("imports", IMPORTS);
+            elementsMap.put("include", INCLUDE);
+            elementsMap.put("exclude", EXCLUDE);
+            elementsMap.put("include-set", INCLUDE_SET);
+            elementsMap.put("exclude-set", EXCLUDE_SET);
+            elementsMap.put("filter", FILTER);
+            elementsMap.put("configuration", CONFIGURATION);
+            elementsMap.put("loader", LOADER);
+            elementsMap.put("module-path", MODULE_PATH);
+            elementsMap.put("import", IMPORT);
+            elementsMap.put("system", SYSTEM);
+            elementsMap.put("paths", PATHS);
+            elementsMap.put("module-alias", MODULE_ALIAS);
+            elementsMap.put("properties", PROPERTIES);
+            elementsMap.put("property", PROPERTY);
+            elementsMap.put("permissions", PERMISSIONS);
+            elementsMap.put("grant", GRANT);
             elements = elementsMap;
         }
 
@@ -178,6 +186,8 @@ final class ModuleXmlParser {
         TARGET_NAME,
         TARGET_SLOT,
         VALUE,
+        PERMISSION,
+        ACTIONS,
 
         // default unknown attribute
         UNKNOWN;
@@ -196,6 +206,8 @@ final class ModuleXmlParser {
             attributesMap.put(new QName("target-name"), TARGET_NAME);
             attributesMap.put(new QName("target-slot"), TARGET_SLOT);
             attributesMap.put(new QName("value"), VALUE);
+            attributesMap.put(new QName("permission"), PERMISSION);
+            attributesMap.put(new QName("actions"), ACTIONS);
             attributes = attributesMap;
         }
 
@@ -233,7 +245,7 @@ final class ModuleXmlParser {
         }
     }
 
-    static ModuleSpec parseModuleXml(final ModuleIdentifier moduleIdentifier, final File root, final File moduleInfoFile) throws ModuleLoadException {
+    static ModuleSpec parseModuleXml(final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier, final File root, final File moduleInfoFile) throws ModuleLoadException {
         final FileInputStream fis;
         try {
             fis = new FileInputStream(moduleInfoFile);
@@ -251,7 +263,7 @@ final class ModuleXmlParser {
                             return new JarFileResourceLoader(loaderName, jarFile);
                         }
                     }
-                }, root.getPath(), new BufferedInputStream(fis), moduleInfoFile.getPath(), moduleIdentifier);
+                }, root.getPath(), new BufferedInputStream(fis), moduleInfoFile.getPath(), moduleLoader, moduleIdentifier);
         } finally {
             safeClose(fis);
         }
@@ -265,14 +277,14 @@ final class ModuleXmlParser {
 
     private static final XMLInputFactory INPUT_FACTORY = XMLInputFactory.newInstance();
 
-    static ModuleSpec parseModuleXml(final ResourceRootFactory factory, final String rootPath, InputStream source, final String moduleInfoFile, final ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
+    static ModuleSpec parseModuleXml(final ResourceRootFactory factory, final String rootPath, InputStream source, final String moduleInfoFile, final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
         try {
             final XMLInputFactory inputFactory = INPUT_FACTORY;
             setIfSupported(inputFactory, XMLInputFactory.IS_VALIDATING, Boolean.FALSE);
             setIfSupported(inputFactory, XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
             final XMLStreamReader streamReader = inputFactory.createXMLStreamReader(source);
             try {
-                return parseDocument(factory, rootPath, streamReader, moduleIdentifier);
+                return parseDocument(factory, rootPath, streamReader, moduleLoader, moduleIdentifier);
             } finally {
                 safeClose(streamReader);
             }
@@ -343,18 +355,18 @@ final class ModuleXmlParser {
         return new XMLStreamException(b.toString(), location);
     }
 
-    private static ModuleSpec parseDocument(final ResourceRootFactory factory, final String rootPath, XMLStreamReader reader, final ModuleIdentifier moduleIdentifier) throws XMLStreamException {
+    private static ModuleSpec parseDocument(final ResourceRootFactory factory, final String rootPath, XMLStreamReader reader, final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier) throws XMLStreamException {
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case START_DOCUMENT: {
-                    return parseRootElement(factory, rootPath, reader, moduleIdentifier);
+                    return parseRootElement(factory, rootPath, reader, moduleLoader, moduleIdentifier);
                 }
                 case START_ELEMENT: {
                     final Element element = Element.of(reader.getName());
                     switch (element) {
                         case MODULE: {
                             final ModuleSpec.Builder specBuilder = ModuleSpec.build(moduleIdentifier);
-                            parseModuleContents(factory, rootPath, reader, specBuilder);
+                            parseModuleContents(reader, factory, moduleLoader, moduleIdentifier, specBuilder, rootPath);
                             parseEndDocument(reader);
                             return specBuilder.create();
                         }
@@ -380,7 +392,7 @@ final class ModuleXmlParser {
         throw endOfDocument(reader.getLocation());
     }
 
-    private static ModuleSpec parseRootElement(final ResourceRootFactory factory, final String rootPath, final XMLStreamReader reader, final ModuleIdentifier moduleIdentifier) throws XMLStreamException {
+    private static ModuleSpec parseRootElement(final ResourceRootFactory factory, final String rootPath, final XMLStreamReader reader, final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier) throws XMLStreamException {
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case START_ELEMENT: {
@@ -388,7 +400,7 @@ final class ModuleXmlParser {
                     switch (element) {
                         case MODULE: {
                             final ModuleSpec.Builder specBuilder = ModuleSpec.build(moduleIdentifier);
-                            parseModuleContents(factory, rootPath, reader, specBuilder);
+                            parseModuleContents(reader, factory, moduleLoader, moduleIdentifier, specBuilder, rootPath);
                             parseEndDocument(reader);
                             return specBuilder.create();
                         }
@@ -484,7 +496,7 @@ final class ModuleXmlParser {
         throw endOfDocument(reader.getLocation());
     }
 
-    private static void parseModuleContents(final ResourceRootFactory factory, final String rootPath, final XMLStreamReader reader, final ModuleSpec.Builder specBuilder) throws XMLStreamException {
+    private static void parseModuleContents(final XMLStreamReader reader, final ResourceRootFactory factory, final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier, final ModuleSpec.Builder specBuilder, final String rootPath) throws XMLStreamException {
         final int count = reader.getAttributeCount();
         String name = null;
         String slot = null;
@@ -525,6 +537,7 @@ final class ModuleXmlParser {
                         case MAIN_CLASS:   parseMainClass(reader, specBuilder); break;
                         case RESOURCES:    parseResources(factory, rootPath, reader, specBuilder); break;
                         case PROPERTIES:   parseProperties(reader, specBuilder); break;
+                        case PERMISSIONS:  parsePermissions(reader, moduleLoader, moduleIdentifier, specBuilder); break;
                         default: throw unexpectedContent(reader);
                     }
                     break;
@@ -906,6 +919,58 @@ final class ModuleXmlParser {
         if ("jboss.assertions".equals(name)) try {
             specBuilder.setAssertionSetting(AssertionSetting.valueOf(value.toUpperCase(Locale.US)));
         } catch (IllegalArgumentException ignored) {}
+
+        // consume remainder of element
+        parseNoContent(reader);
+    }
+
+    private static void parsePermissions(final XMLStreamReader reader, final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier, final ModuleSpec.Builder specBuilder) throws XMLStreamException {
+        // xsd:choice
+        ArrayList<PermissionFactory> list = new ArrayList<PermissionFactory>();
+        while (reader.hasNext()) {
+            switch (reader.nextTag()) {
+                case END_ELEMENT: {
+                    specBuilder.setPermissionCollection(new FactoryPermissionCollection(list.toArray(new PermissionFactory[list.size()])));
+                    return;
+                }
+                case START_ELEMENT: {
+                    switch (Element.of(reader.getName())) {
+                        case GRANT: {
+                            parseGrant(reader, moduleLoader, moduleIdentifier, list);
+                            break;
+                        }
+                        default: throw unexpectedContent(reader);
+                    }
+                    break;
+                }
+                default: {
+                    throw unexpectedContent(reader);
+                }
+            }
+        }
+        throw endOfDocument(reader.getLocation());
+    }
+
+    private static void parseGrant(final XMLStreamReader reader, final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier, final ArrayList<PermissionFactory> list) throws XMLStreamException {
+        String permission = null;
+        String name = null;
+        String actions = null;
+        final Set<Attribute> required = EnumSet.of(Attribute.PERMISSION, Attribute.NAME);
+        final int count = reader.getAttributeCount();
+        for (int i = 0; i < count; i ++) {
+            final Attribute attribute = Attribute.of(reader.getAttributeName(i));
+            required.remove(attribute);
+            switch (attribute) {
+                case PERMISSION: permission = reader.getAttributeValue(i); break;
+                case NAME: name = reader.getAttributeValue(i); break;
+                case ACTIONS: actions = reader.getAttributeValue(i); break;
+                default: throw unexpectedContent(reader);
+            }
+        }
+        if (! required.isEmpty()) {
+            throw missingAttributes(reader.getLocation(), required);
+        }
+        list.add(new ModularPermissionFactory(moduleLoader, moduleIdentifier, permission, name, actions));
 
         // consume remainder of element
         parseNoContent(reader);

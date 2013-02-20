@@ -23,6 +23,7 @@
 package org.jboss.modules;
 
 import java.lang.instrument.ClassFileTransformer;
+import java.security.PermissionCollection;
 import java.util.Map;
 
 /**
@@ -43,8 +44,9 @@ class ConcreteModuleSpec extends ModuleSpec {
     private final ModuleClassLoaderFactory moduleClassLoaderFactory;
     private final ClassFileTransformer classFileTransformer;
     private final Map<String, String> properties;
+    private final PermissionCollection permissionCollection;
 
-    ConcreteModuleSpec(final ModuleIdentifier moduleIdentifier, final String mainClass, final AssertionSetting assertionSetting, final ResourceLoaderSpec[] resourceLoaders, final DependencySpec[] dependencies, final LocalLoader fallbackLoader, final ModuleClassLoaderFactory moduleClassLoaderFactory, final ClassFileTransformer classFileTransformer, final Map<String, String> properties) {
+    ConcreteModuleSpec(final ModuleIdentifier moduleIdentifier, final String mainClass, final AssertionSetting assertionSetting, final ResourceLoaderSpec[] resourceLoaders, final DependencySpec[] dependencies, final LocalLoader fallbackLoader, final ModuleClassLoaderFactory moduleClassLoaderFactory, final ClassFileTransformer classFileTransformer, final Map<String, String> properties, final PermissionCollection permissionCollection) {
         super(moduleIdentifier);
         this.mainClass = mainClass;
         this.assertionSetting = assertionSetting;
@@ -54,6 +56,7 @@ class ConcreteModuleSpec extends ModuleSpec {
         this.moduleClassLoaderFactory = moduleClassLoaderFactory;
         this.classFileTransformer = classFileTransformer;
         this.properties = properties;
+        this.permissionCollection = permissionCollection;
     }
 
     String getMainClass() {
@@ -86,5 +89,9 @@ class ConcreteModuleSpec extends ModuleSpec {
 
     Map<String, String> getProperties() {
         return properties;
+    }
+
+    PermissionCollection getPermissionCollection() {
+        return permissionCollection;
     }
 }
