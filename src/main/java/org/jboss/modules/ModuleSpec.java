@@ -45,6 +45,7 @@ public abstract class ModuleSpec {
     static {
         final Permissions permissions = new Permissions();
         permissions.add(new AllPermission());
+        permissions.setReadOnly();
         DEFAULT_PERMISSION_COLLECTION = permissions;
     }
 
@@ -273,7 +274,7 @@ public abstract class ModuleSpec {
          * @param permissionCollection the permission collection
          * @return this builder
          */
-        Builder setPermissionCollection(PermissionCollection permissionCollection);
+        ModuleSpec.Builder setPermissionCollection(PermissionCollection permissionCollection);
     }
 
     /**

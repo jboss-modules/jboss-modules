@@ -112,7 +112,7 @@ public final class LocalModuleFinder implements ModuleFinder {
                 final File file = new File(root, child);
                 final File moduleXml = new File(file, "module.xml");
                 if (moduleXml.exists()) {
-                    final ModuleSpec spec = ModuleXmlParser.parseModuleXml(identifier, file, moduleXml);
+                    final ModuleSpec spec = ModuleXmlParser.parseModuleXml(delegateLoader, identifier, file, moduleXml);
                     if (spec == null) break;
                     return spec;
                 }

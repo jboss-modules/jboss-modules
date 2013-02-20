@@ -140,7 +140,7 @@ public final class JarModuleFinder implements ModuleFinder {
                         public ResourceLoader createResourceLoader(final String rootPath, final String loaderPath, final String loaderName) throws IOException {
                             return new JarFileResourceLoader(loaderName, jarFile, loaderPath);
                         }
-                    }, basePath, inputStream, moduleXmlEntry.getName(), identifier);
+                    }, basePath, inputStream, moduleXmlEntry.getName(), delegateLoader, identifier);
                 } finally {
                     JarModuleLoader.safeClose(inputStream);
                 }

@@ -577,14 +577,14 @@
                 </documentation>
             </annotation>
         </xsd:attribute>
-        <xsd:attribute name="name" type="xsd:string" use="required">
+        <xsd:attribute name="name" type="xsd:string" use="optional">
             <annotation xmlns="http://www.w3.org/2001/XMLSchema">
                 <documentation>
                     The permission name to provide to the permission class constructor.
                 </documentation>
             </annotation>
         </xsd:attribute>
-        <xsd:attribute name="actions" type="actionList" use="optional">
+        <xsd:attribute name="actions" type="xsd:string" use="optional">
             <annotation xmlns="http://www.w3.org/2001/XMLSchema">
                 <documentation>
                     The (optional) list of actions, required by some permission types.
@@ -592,13 +592,4 @@
             </annotation>
         </xsd:attribute>
     </xsd:complexType>
-
-    <xsd:simpleType name="actionList">
-        <xsd:list itemType="xsd:string"/>
-        <annotation xmlns="http://www.w3.org/2001/XMLSchema">
-            <documentation>
-                A list of actions. As per XML standard, each item is separated by whitespace.
-            </documentation>
-        </annotation>
-    </xsd:simpleType>
 </xsd:schema>
