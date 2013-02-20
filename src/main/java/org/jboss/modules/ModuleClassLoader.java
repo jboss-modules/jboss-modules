@@ -22,6 +22,8 @@
 
 package org.jboss.modules;
 
+import java.security.Principal;
+import java.security.ProtectionDomain;
 import org.jboss.modules.filter.PathFilter;
 import org.jboss.modules.log.ModuleLogger;
 
@@ -332,9 +334,9 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         return list.isEmpty() ? Collections.<Resource>emptyList() : list;
     }
 
-    private Class<?> doDefineOrLoadClass(final String className, final byte[] bytes, int off, int len, CodeSource codeSource) {
+    private Class<?> doDefineOrLoadClass(final String className, final byte[] bytes, int off, int len, ProtectionDomain protectionDomain) {
         try {
-            final Class<?> definedClass = defineClass(className, bytes, off, len, codeSource);
+            final Class<?> definedClass = defineClass(className, bytes, off, len, protectionDomain);
             module.getModuleLoader().incClassCount();
             return definedClass;
         } catch (LinkageError e) {
@@ -387,10 +389,10 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         try {
             byte[] bytes = classSpec.getBytes();
             try {
+                final ProtectionDomain protectionDomain = new ProtectionDomain(classSpec.getCodeSource(), module.getPermissionCollection(), this, new Principal[0]);
                 if (transformer != null) {
                     try {
-                        // todo: support protection domain
-                        bytes = transformer.transform(this, name.replace('.', '/'), null, null, bytes);
+                        bytes = transformer.transform(this, name.replace('.', '/'), null, protectionDomain, bytes);
                     } catch (Exception e) {
                         ClassFormatError error = new ClassFormatError(e.getMessage());
                         error.initCause(e);
@@ -398,7 +400,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
                     }
                 }
                 final long start = Metrics.getCurrentCPUTime();
-                newClass = doDefineOrLoadClass(name, bytes, 0, bytes.length, classSpec.getCodeSource());
+                newClass = doDefineOrLoadClass(name, bytes, 0, bytes.length, protectionDomain);
                 module.getModuleLoader().addClassLoadTime(Metrics.getCurrentCPUTime() - start);
                 log.classDefined(name, module);
             } catch (NoClassDefFoundError e) {
@@ -536,7 +538,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
     /** {@inheritDoc} */
     @Override
     protected final PermissionCollection getPermissions(final CodeSource codesource) {
-        return super.getPermissions(codesource);
+        return module.getPermissionCollection();
     }
 
     /** {@inheritDoc} */

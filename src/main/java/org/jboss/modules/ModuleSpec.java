@@ -23,6 +23,9 @@
 package org.jboss.modules;
 
 import java.lang.instrument.ClassFileTransformer;
+import java.security.AllPermission;
+import java.security.PermissionCollection;
+import java.security.Permissions;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -36,6 +39,14 @@ import java.util.Map;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public abstract class ModuleSpec {
+
+    private static final PermissionCollection DEFAULT_PERMISSION_COLLECTION;
+
+    static {
+        final Permissions permissions = new Permissions();
+        permissions.add(new AllPermission());
+        DEFAULT_PERMISSION_COLLECTION = permissions;
+    }
 
     private final ModuleIdentifier moduleIdentifier;
 
@@ -62,6 +73,7 @@ public abstract class ModuleSpec {
             private LocalLoader fallbackLoader;
             private ModuleClassLoaderFactory moduleClassLoaderFactory;
             private ClassFileTransformer classFileTransformer;
+            private PermissionCollection permissionCollection = DEFAULT_PERMISSION_COLLECTION;
 
             @Override
             public Builder setFallbackLoader(final LocalLoader fallbackLoader) {
@@ -77,7 +89,7 @@ public abstract class ModuleSpec {
 
             @Override
             public Builder setAssertionSetting(final AssertionSetting assertionSetting) {
-                this.assertionSetting = assertionSetting;
+                this.assertionSetting = assertionSetting == null ? AssertionSetting.INHERIT : assertionSetting;
                 return this;
             }
 
@@ -112,8 +124,14 @@ public abstract class ModuleSpec {
             }
 
             @Override
+            public Builder setPermissionCollection(PermissionCollection permissionCollection) {
+                this.permissionCollection = permissionCollection == null ? DEFAULT_PERMISSION_COLLECTION : permissionCollection;
+                return this;
+            }
+
+            @Override
             public ModuleSpec create() {
-                return new ConcreteModuleSpec(moduleIdentifier, mainClass, assertionSetting, resourceLoaders.toArray(new ResourceLoaderSpec[resourceLoaders.size()]), dependencies.toArray(new DependencySpec[dependencies.size()]), fallbackLoader, moduleClassLoaderFactory, classFileTransformer, properties);
+                return new ConcreteModuleSpec(moduleIdentifier, mainClass, assertionSetting, resourceLoaders.toArray(new ResourceLoaderSpec[resourceLoaders.size()]), dependencies.toArray(new DependencySpec[dependencies.size()]), fallbackLoader, moduleClassLoaderFactory, classFileTransformer, properties, permissionCollection);
             }
 
             @Override
@@ -247,6 +265,15 @@ public abstract class ModuleSpec {
          * @return this builder
          */
         ModuleSpec.Builder addProperty(String name, String value);
+
+        /**
+         * Set the permission collection for this module specification.  If none is given, a collection implying
+         * {@link AllPermission} is assumed.
+         *
+         * @param permissionCollection the permission collection
+         * @return this builder
+         */
+        Builder setPermissionCollection(PermissionCollection permissionCollection);
     }
 
     /**

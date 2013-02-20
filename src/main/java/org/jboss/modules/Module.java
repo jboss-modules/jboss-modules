@@ -29,6 +29,7 @@ import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLConnection;
 import java.security.AccessController;
+import java.security.PermissionCollection;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -169,6 +170,10 @@ public final class Module {
      * The properties map specified when this module was defined.
      */
     private final Map<String, String> properties;
+    /**
+     * The assigned permission collection.
+     */
+    private final PermissionCollection permissionCollection;
 
     // mutable properties
 
@@ -198,6 +203,7 @@ public final class Module {
         identifier = spec.getModuleIdentifier();
         mainClassName = spec.getMainClass();
         fallbackLoader = spec.getFallbackLoader();
+        permissionCollection = spec.getPermissionCollection();
         //noinspection ThisEscapedInObjectConstruction
         final ModuleClassLoader.Configuration configuration = new ModuleClassLoader.Configuration(this, spec.getAssertionSetting(), spec.getResourceLoaders(), spec.getClassFileTransformer());
         final ModuleClassLoaderFactory factory = spec.getModuleClassLoaderFactory();
@@ -792,6 +798,10 @@ public final class Module {
             sm.checkPermission(ADD_URL_STREAM_HANDLER_FACTORY);
         }
         ModularURLStreamHandlerFactory.addHandlerModule(module);
+    }
+
+    PermissionCollection getPermissionCollection() {
+        return permissionCollection;
     }
 
     // Linking and resolution
