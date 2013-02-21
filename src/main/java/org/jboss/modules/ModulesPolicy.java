@@ -35,8 +35,7 @@ final class ModulesPolicy extends Policy {
 
     static final PermissionCollection DEFAULT_PERMISSION_COLLECTION;
 
-    private static final ProtectionDomain ourProtectionDomain = ModulesPolicy.class.getProtectionDomain();
-    private static final CodeSource ourCodeSource = ourProtectionDomain.getCodeSource();
+    private static final CodeSource ourCodeSource = ModulesPolicy.class.getProtectionDomain().getCodeSource();
 
     private final Policy policy;
 
