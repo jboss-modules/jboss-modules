@@ -266,6 +266,25 @@ public final class Main {
             __JAXPRedirected.changeAll(moduleIdentifier, Module.getBootModuleLoader());
         }
 
+        final Module module;
+        try {
+            module = loader.loadModule(moduleIdentifier);
+        } catch (ModuleNotFoundException e) {
+            e.printStackTrace(System.err);
+            System.exit(1);
+            return;
+        }
+
+        ModularURLStreamHandlerFactory.addHandlerModule(module);
+        ModularContentHandlerFactory.addHandlerModule(module);
+
+        try {
+            final Iterator<Policy> iterator = module.loadService(Policy.class).iterator();
+            if (iterator.hasNext()) {
+                Policy.setPolicy(iterator.next());
+            }
+        } catch (Exception ignored) {}
+
         // configure policy so that if SM is enabled, modules can still function
         Policy.setPolicy(new ModulesPolicy(Policy.getPolicy()));
 
@@ -287,20 +306,8 @@ public final class Main {
             }
         }
 
-        final Module module;
-        try {
-            module = loader.loadModule(moduleIdentifier);
-        } catch (ModuleNotFoundException e) {
-            e.printStackTrace(System.err);
-            System.exit(1);
-            return;
-        }
-
-        ModularURLStreamHandlerFactory.addHandlerModule(module);
-        ModularContentHandlerFactory.addHandlerModule(module);
-
         if (defaultSecMgr) {
-            final Iterator<SecurityManager> iterator = ServiceLoader.load(SecurityManager.class, module.getClassLoaderPrivate()).iterator();
+            final Iterator<SecurityManager> iterator = module.loadService(SecurityManager.class).iterator();
             if (iterator.hasNext()) {
                 System.setSecurityManager(iterator.next());
             } else {
