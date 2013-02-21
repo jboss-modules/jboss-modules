@@ -25,7 +25,6 @@ package org.jboss.modules;
 import java.lang.instrument.ClassFileTransformer;
 import java.security.AllPermission;
 import java.security.PermissionCollection;
-import java.security.Permissions;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -39,15 +38,6 @@ import java.util.Map;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public abstract class ModuleSpec {
-
-    private static final PermissionCollection DEFAULT_PERMISSION_COLLECTION;
-
-    static {
-        final Permissions permissions = new Permissions();
-        permissions.add(new AllPermission());
-        permissions.setReadOnly();
-        DEFAULT_PERMISSION_COLLECTION = permissions;
-    }
 
     private final ModuleIdentifier moduleIdentifier;
 
@@ -74,7 +64,7 @@ public abstract class ModuleSpec {
             private LocalLoader fallbackLoader;
             private ModuleClassLoaderFactory moduleClassLoaderFactory;
             private ClassFileTransformer classFileTransformer;
-            private PermissionCollection permissionCollection = DEFAULT_PERMISSION_COLLECTION;
+            private PermissionCollection permissionCollection = ModulesPolicy.DEFAULT_PERMISSION_COLLECTION;
 
             @Override
             public Builder setFallbackLoader(final LocalLoader fallbackLoader) {
@@ -126,7 +116,7 @@ public abstract class ModuleSpec {
 
             @Override
             public Builder setPermissionCollection(PermissionCollection permissionCollection) {
-                this.permissionCollection = permissionCollection == null ? DEFAULT_PERMISSION_COLLECTION : permissionCollection;
+                this.permissionCollection = permissionCollection == null ? ModulesPolicy.DEFAULT_PERMISSION_COLLECTION : permissionCollection;
                 return this;
             }
 

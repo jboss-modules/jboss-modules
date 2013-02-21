@@ -33,6 +33,7 @@ import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.security.AccessController;
+import java.security.Policy;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.ServiceLoader;
@@ -263,6 +264,10 @@ public final class Main {
             __JAXPRedirected.changeAll(jaxpModuleIdentifier, Module.getBootModuleLoader());
         } else {
             __JAXPRedirected.changeAll(moduleIdentifier, Module.getBootModuleLoader());
+        }
+
+        if (secMgrModule != null || defaultSecMgr) {
+            Policy.setPolicy(new ModulesPolicy(Policy.getPolicy()));
         }
 
         if (secMgrModule != null) {
