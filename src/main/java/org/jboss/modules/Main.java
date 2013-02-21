@@ -266,9 +266,8 @@ public final class Main {
             __JAXPRedirected.changeAll(moduleIdentifier, Module.getBootModuleLoader());
         }
 
-        if (secMgrModule != null || defaultSecMgr) {
-            Policy.setPolicy(new ModulesPolicy(Policy.getPolicy()));
-        }
+        // configure policy so that if SM is enabled, modules can still function
+        Policy.setPolicy(new ModulesPolicy(Policy.getPolicy()));
 
         if (secMgrModule != null) {
             final Module loadedModule;
