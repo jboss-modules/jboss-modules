@@ -324,8 +324,9 @@ public final class Main {
             ManagementFactory.getPlatformMBeanServer();
         }
 
+        ModuleLoader.installMBeanServer();
+
         try {
-            ModuleLoader.installMBeanServer();
             module.run(moduleArgs);
         } catch (InvocationTargetException e) {
             throw e.getCause();

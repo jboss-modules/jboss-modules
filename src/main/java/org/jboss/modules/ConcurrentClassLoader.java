@@ -31,7 +31,6 @@ import java.security.AccessController;
 import java.security.CodeSource;
 import java.security.PrivilegedExceptionAction;
 import java.security.ProtectionDomain;
-import java.security.SecureClassLoader;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,7 +48,7 @@ import sun.misc.Unsafe;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public abstract class ConcurrentClassLoader extends SecureClassLoader {
+public abstract class ConcurrentClassLoader extends ClassLoader {
 
     private static final boolean LOCKLESS;
     private static final boolean SAFE_JDK;
@@ -184,29 +183,6 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
     protected final Class<?> defineOrLoadClass(final String className, final byte[] bytes, int off, int len) {
         try {
             final Class<?> definedClass = defineClass(className, bytes, off, len);
-            return definedClass;
-        } catch (LinkageError e) {
-            final Class<?> loadedClass = findLoadedClass(className);
-            if (loadedClass != null) {
-                return loadedClass;
-            }
-            throw e;
-        }
-    }
-
-    /**
-     * Atomically define or load the named class.  If the class is already defined, the existing class is returned.
-     *
-     * @param className the class name to define or load
-     * @param bytes the bytes to use to define the class
-     * @param off the offset into the byte array at which the class bytes begin
-     * @param len the number of bytes in the class
-     * @param codeSource the code source for the defined class
-     * @return the class
-     */
-    protected final Class<?> defineOrLoadClass(final String className, final byte[] bytes, int off, int len, CodeSource codeSource) {
-        try {
-            final Class<?> definedClass = defineClass(className, bytes, off, len, codeSource);
             return definedClass;
         } catch (LinkageError e) {
             final Class<?> loadedClass = findLoadedClass(className);

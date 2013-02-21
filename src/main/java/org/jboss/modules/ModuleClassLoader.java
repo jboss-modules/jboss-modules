@@ -22,8 +22,8 @@
 
 package org.jboss.modules;
 
-import java.security.Principal;
 import java.security.ProtectionDomain;
+import java.util.IdentityHashMap;
 import org.jboss.modules.filter.PathFilter;
 import org.jboss.modules.log.ModuleLogger;
 
@@ -32,7 +32,6 @@ import java.io.InputStream;
 import java.lang.instrument.ClassFileTransformer;
 import java.net.URL;
 import java.security.CodeSource;
-import java.security.PermissionCollection;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -349,6 +348,20 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         }
     }
 
+    private final IdentityHashMap<CodeSource, ProtectionDomain> protectionDomains = new IdentityHashMap<CodeSource, ProtectionDomain>();
+
+    private ProtectionDomain getProtectionDomain(CodeSource codeSource) {
+        final IdentityHashMap<CodeSource, ProtectionDomain> map = protectionDomains;
+        synchronized (map) {
+            ProtectionDomain protectionDomain = map.get(codeSource);
+            if (protectionDomain == null) {
+                protectionDomain = new ProtectionDomain(codeSource, module.getPermissionCollection());
+                map.put(codeSource, protectionDomain);
+            }
+            return protectionDomain;
+        }
+    }
+
     /**
      * Define a class from a class name and class spec.  Also defines any enclosing {@link Package} instances,
      * and performs any sealed-package checks.
@@ -389,7 +402,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         try {
             byte[] bytes = classSpec.getBytes();
             try {
-                final ProtectionDomain protectionDomain = new ProtectionDomain(classSpec.getCodeSource(), module.getPermissionCollection(), this, new Principal[0]);
+                final ProtectionDomain protectionDomain = getProtectionDomain(classSpec.getCodeSource());
                 if (transformer != null) {
                     try {
                         bytes = transformer.transform(this, name.replace('.', '/'), null, protectionDomain, bytes);
@@ -533,12 +546,6 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
 
     Set<String> getPaths() {
         return paths.getAllPaths().keySet();
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    protected final PermissionCollection getPermissions(final CodeSource codesource) {
-        return module.getPermissionCollection();
     }
 
     /** {@inheritDoc} */
