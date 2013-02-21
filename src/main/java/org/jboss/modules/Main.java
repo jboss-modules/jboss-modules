@@ -87,8 +87,11 @@ public final class Main {
         System.out.println("                  requires -class or -cp");
         System.out.println("    -jar          Specify that the final argument is the name of a");
         System.out.println("                  JAR file to run as a module; not compatible with -class");
-        System.out.println("    -jaxpmodule <module-name>");
+        System.out.println("    -jaxpmodule <module-spec>");
         System.out.println("                  The default JAXP implementation to use of the JDK");
+        System.out.println("    -secmgr       Run with a security manager installed; not compatible with -secmgrmodule");
+        System.out.println("    -secmgrmodule <module-spec>");
+        System.out.println("                  Run with a security manager module; not compatible with -secmgr");
         System.out.println("    -version      Print version and exit\n");
     }
 
