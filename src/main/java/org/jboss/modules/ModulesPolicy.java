@@ -33,17 +33,18 @@ import java.security.Provider;
 
 final class ModulesPolicy extends Policy {
 
-    static final PermissionCollection DEFAULT_PERMISSION_COLLECTION;
+    private static final AllPermission ALL_PERMISSION = new AllPermission();
+
+    static final Permissions DEFAULT_PERMISSION_COLLECTION = getAllPermission();
 
     private static final CodeSource ourCodeSource = ModulesPolicy.class.getProtectionDomain().getCodeSource();
 
     private final Policy policy;
 
-    static {
+    private static Permissions getAllPermission() {
         final Permissions permissions = new Permissions();
-        permissions.add(new AllPermission());
-        permissions.setReadOnly();
-        DEFAULT_PERMISSION_COLLECTION = permissions;
+        permissions.add(ALL_PERMISSION);
+        return permissions;
     }
 
     public ModulesPolicy(final Policy policy) {
@@ -63,11 +64,11 @@ final class ModulesPolicy extends Policy {
     }
 
     public PermissionCollection getPermissions(final CodeSource codesource) {
-        return codesource.equals(ourCodeSource) ? DEFAULT_PERMISSION_COLLECTION : policy.getPermissions(codesource);
+        return codesource.equals(ourCodeSource) ? getAllPermission() : policy.getPermissions(codesource);
     }
 
     public PermissionCollection getPermissions(final ProtectionDomain domain) {
-        return domain.getCodeSource().equals(ourCodeSource) ? DEFAULT_PERMISSION_COLLECTION : policy.getPermissions(domain);
+        return domain.getCodeSource().equals(ourCodeSource) ? getAllPermission() : policy.getPermissions(domain);
     }
 
     public boolean implies(final ProtectionDomain domain, final Permission permission) {
