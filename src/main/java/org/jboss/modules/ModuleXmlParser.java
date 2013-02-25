@@ -254,6 +254,7 @@ final class ModuleXmlParser {
    static ResourceLoader createMavenArtifactLoader(final String loaderName, final String groupId, final String artifactId, final String version) throws IOException
    {
       File fp = MavenArtifactUtil.resolveJarArtifact(groupId, artifactId, version);
+      if (fp == null) return null;
       JarFile jarFile = new JarFile(fp, true);
       return new JarFileResourceLoader(loaderName, jarFile);
    }
@@ -786,6 +787,7 @@ final class ModuleXmlParser {
                         try {
                            if (name == null) name = group + ":" + artifact + ":" + version;
                            resourceLoader = createMavenArtifactLoader(name, group, artifact, version);
+                           if (resourceLoader == null) throw new XMLStreamException(String.format("Failed to add resource root maven artifact '%s'", name), reader.getLocation());
                         } catch (IOException e) {
                            throw new XMLStreamException(String.format("Failed to add resource root artifact '%s'", name), reader.getLocation(), e);
                         }
