@@ -188,6 +188,9 @@ final class ModuleXmlParser {
         VALUE,
         PERMISSION,
         ACTIONS,
+        GROUP,
+        ARTIFACT,
+        VERSION,
 
         // default unknown attribute
         UNKNOWN;
@@ -208,6 +211,9 @@ final class ModuleXmlParser {
             attributesMap.put(new QName("value"), VALUE);
             attributesMap.put(new QName("permission"), PERMISSION);
             attributesMap.put(new QName("actions"), ACTIONS);
+            attributesMap.put(new QName("group"), GROUP);
+            attributesMap.put(new QName("artifact"), ARTIFACT);
+            attributesMap.put(new QName("version"), VERSION);
             attributes = attributesMap;
         }
 
@@ -245,7 +251,14 @@ final class ModuleXmlParser {
         }
     }
 
-    static ModuleSpec parseModuleXml(final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier, final File root, final File moduleInfoFile) throws ModuleLoadException {
+   static ResourceLoader createMavenArtifactLoader(final String loaderName, final String groupId, final String artifactId, final String version) throws IOException
+   {
+      File fp = MavenArtifactUtil.resolveJarArtifact(groupId, artifactId, version);
+      JarFile jarFile = new JarFile(fp, true);
+      return new JarFileResourceLoader(loaderName, jarFile);
+   }
+
+   static ModuleSpec parseModuleXml(final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier, final File root, final File moduleInfoFile) throws ModuleLoadException {
         final FileInputStream fis;
         try {
             fis = new FileInputStream(moduleInfoFile);
@@ -254,7 +267,7 @@ final class ModuleXmlParser {
         }
         try {
             return parseModuleXml(new ResourceRootFactory() {
-                    public ResourceLoader createResourceLoader(final String rootPath, final String loaderPath, final String loaderName) throws IOException {
+                public ResourceLoader createResourceLoader(final String rootPath, final String loaderPath, final String loaderName) throws IOException {
                         File file = new File(rootPath, loaderPath);
                         if (file.isDirectory()) {
                             return new FileResourceLoader(loaderName, file);
@@ -263,7 +276,7 @@ final class ModuleXmlParser {
                             return new JarFileResourceLoader(loaderName, jarFile);
                         }
                     }
-                }, root.getPath(), new BufferedInputStream(fis), moduleInfoFile.getPath(), moduleLoader, moduleIdentifier);
+             }, root.getPath(), new BufferedInputStream(fis), moduleInfoFile.getPath(), moduleLoader, moduleIdentifier);
         } finally {
             safeClose(fis);
         }
@@ -727,7 +740,10 @@ final class ModuleXmlParser {
     private static void parseResourceRoot(final ResourceRootFactory factory, final String rootPath, final XMLStreamReader reader, final ModuleSpec.Builder specBuilder) throws XMLStreamException {
         String name = null;
         String path = null;
-        final Set<Attribute> required = EnumSet.of(Attribute.PATH);
+        String group = null;
+        String artifact = null;
+        String version = null;
+        final Set<Attribute> required = EnumSet.of(Attribute.PATH, Attribute.GROUP, Attribute.ARTIFACT, Attribute.VERSION);
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
             final Attribute attribute = Attribute.of(reader.getAttributeName(i));
@@ -735,11 +751,21 @@ final class ModuleXmlParser {
             switch (attribute) {
                 case NAME: name = reader.getAttributeValue(i); break;
                 case PATH: path = reader.getAttributeValue(i); break;
+                case GROUP: group = reader.getAttributeValue(i); break;
+                case ARTIFACT: artifact = reader.getAttributeValue(i); break;
+                case VERSION: version = reader.getAttributeValue(i); break;
                 default: throw unexpectedContent(reader);
             }
         }
-        if (! required.isEmpty()) {
-            throw missingAttributes(reader.getLocation(), required);
+        // PATH or full maven attributes required
+        if (required.contains(Attribute.PATH))
+        {
+           // if no attributes defined
+           if (required.size() == 4) throw missingAttributes(reader.getLocation(), required);
+
+           // check that maven attributes are defined
+           required.remove(Attribute.PATH);
+           if (!required.isEmpty()) throw missingAttributes(reader.getLocation(), required);
         }
         if (name == null) name = path;
 
@@ -750,10 +776,19 @@ final class ModuleXmlParser {
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case END_ELEMENT: {
-                    try {
-                        resourceLoader = factory.createResourceLoader(rootPath, path, name);
-                    } catch (IOException e) {
-                        throw new XMLStreamException(String.format("Failed to add resource root '%s' at path '%s'", name, path), reader.getLocation(), e);
+                    if (path != null) {
+                        try {
+                            resourceLoader = factory.createResourceLoader(rootPath, path, name);
+                        } catch (IOException e) {
+                            throw new XMLStreamException(String.format("Failed to add resource root '%s' at path '%s'", name, path), reader.getLocation(), e);
+                        }
+                    } else {
+                        try {
+                           if (name == null) name = group + ":" + artifact + ":" + version;
+                           resourceLoader = createMavenArtifactLoader(name, group, artifact, version);
+                        } catch (IOException e) {
+                           throw new XMLStreamException(String.format("Failed to add resource root artifact '%s'", name), reader.getLocation(), e);
+                        }
                     }
                     specBuilder.addResourceRoot(new ResourceLoaderSpec(resourceLoader, filterBuilder.create()));
                     return;

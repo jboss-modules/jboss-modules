@@ -137,7 +137,7 @@ public final class JarModuleFinder implements ModuleFinder {
                 InputStream inputStream = jarFile.getInputStream(moduleXmlEntry);
                 try {
                     moduleSpec = ModuleXmlParser.parseModuleXml(new ModuleXmlParser.ResourceRootFactory() {
-                        public ResourceLoader createResourceLoader(final String rootPath, final String loaderPath, final String loaderName) throws IOException {
+                       public ResourceLoader createResourceLoader(final String rootPath, final String loaderPath, final String loaderName) throws IOException {
                             return new JarFileResourceLoader(loaderName, jarFile, loaderPath);
                         }
                     }, basePath, inputStream, moduleXmlEntry.getName(), delegateLoader, identifier);
