@@ -31,12 +31,12 @@ public class MavenResourceTest
 
    @Test
    public void testIt() throws Exception {
-      System.setProperty("local.repository.path", tmpdir.newFolder("repository").getAbsolutePath());
-      System.setProperty("remote.repository", "https://repository.jboss.org/nexus/content/groups/public/");
+      System.setProperty("local.maven.repo.path", tmpdir.newFolder("repository").getAbsolutePath());
+      System.setProperty("remote.maven.repo", "http://repository.jboss.org/nexus/content/groups/public/");
       try
       {
          Module module = moduleLoader.loadModule(MODULE_ID);
-         URL url = module.getResource("org/jboss/resteasy/spi/ResteasyProviderFactory.class");
+         URL url = module.getResource("org/jboss/resteasy/plugins/providers/jackson/ResteasyJacksonProvider.class");
          System.out.println(url);
          Assert.assertNotNull(url);
       }

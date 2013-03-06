@@ -357,8 +357,40 @@
                     </documentation>
                 </annotation>
             </xsd:element>
+            <xsd:element name="artifact" type="artifactType">
+                <annotation xmlns="http://www.w3.org/2001/XMLSchema">
+                    <documentation>
+                        A maven artifact within this deployment.
+                    </documentation>
+                </annotation>
+            </xsd:element>
+            <xsd:element name="native-artifact" type="artifactType">
+                <annotation xmlns="http://www.w3.org/2001/XMLSchema">
+                    <documentation>
+                        A maven native artifact within this deployment.  This is a jar that contains a lib/ directory
+                        with corresponding platform directories and binaries.  This element will cause the jar to
+                        be unzipped within the artifact's local repository directory.
+                    </documentation>
+                </annotation>
+            </xsd:element>
         </xsd:choice>
     </xsd:complexType>
+
+    <xsd:complexType name="artifactType">
+        <annotation xmlns="http://www.w3.org/2001/XMLSchema">
+            <documentation>
+                A maven artifact within a deployment.
+            </documentation>
+        </annotation>
+        <xsd:attribute name="name" type="xsd:string" use="required">
+            <annotation xmlns="http://www.w3.org/2001/XMLSchema">
+                <documentation>
+                    URI that points to the maven artifact "group:artifact:version[:classifier]"
+                </documentation>
+            </annotation>
+        </xsd:attribute>
+    </xsd:complexType>
+
 
     <xsd:complexType name="resourceType">
         <annotation xmlns="http://www.w3.org/2001/XMLSchema">
