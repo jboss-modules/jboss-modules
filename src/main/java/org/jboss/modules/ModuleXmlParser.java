@@ -115,6 +115,8 @@ final class ModuleXmlParser {
         EXCLUDE_SET,
         RESOURCES,
         MAIN_CLASS,
+        ARTIFACT,
+        NATIVE_ARTIFACT,
         RESOURCE_ROOT,
         PATH,
         FILTER,
@@ -139,6 +141,8 @@ final class ModuleXmlParser {
         static {
             Map<String, Element> elementsMap = new HashMap<String, Element>();
             elementsMap.put("module", MODULE);
+            elementsMap.put("artifact", ARTIFACT);
+            elementsMap.put("native-artifact", NATIVE_ARTIFACT);
             elementsMap.put("dependencies", DEPENDENCIES);
             elementsMap.put("resources", RESOURCES);
             elementsMap.put("main-class", MAIN_CLASS);
@@ -251,15 +255,8 @@ final class ModuleXmlParser {
         }
     }
 
-   static ResourceLoader createMavenArtifactLoader(final String loaderName, final String groupId, final String artifactId, final String version) throws IOException
-   {
-      File fp = MavenArtifactUtil.resolveJarArtifact(groupId, artifactId, version);
-      if (fp == null) return null;
-      JarFile jarFile = new JarFile(fp, true);
-      return new JarFileResourceLoader(loaderName, jarFile);
-   }
 
-   static ModuleSpec parseModuleXml(final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier, final File root, final File moduleInfoFile) throws ModuleLoadException {
+    static ModuleSpec parseModuleXml(final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier, final File root, final File moduleInfoFile) throws ModuleLoadException {
         final FileInputStream fis;
         try {
             fis = new FileInputStream(moduleInfoFile);
@@ -726,6 +723,14 @@ final class ModuleXmlParser {
                             parseResourceRoot(factory, rootPath, reader, specBuilder);
                             break;
                         }
+                        case ARTIFACT: {
+                            parseArtifact(reader, specBuilder);
+                            break;
+                        }
+                        case NATIVE_ARTIFACT: {
+                            parseNativeArtifact(reader, specBuilder);
+                            break;
+                        }
                         default: throw unexpectedContent(reader);
                     }
                     break;
@@ -738,13 +743,108 @@ final class ModuleXmlParser {
         throw endOfDocument(reader.getLocation());
     }
 
+    static ResourceLoader createMavenArtifactLoader(final String name) throws IOException
+    {
+        File fp = MavenArtifactUtil.resolveJarArtifact(name);
+        if (fp == null) return null;
+        JarFile jarFile = new JarFile(fp, true);
+        return new JarFileResourceLoader(name, jarFile);
+    }
+
+    static void createMavenNativeArtifactLoader(final String name, final XMLStreamReader reader, final ModuleSpec.Builder specBuilder) throws IOException, XMLStreamException
+    {
+        File fp = MavenArtifactUtil.resolveJarArtifact(name);
+        if (fp == null) throw new XMLStreamException(String.format("Failed to resolve native artifact '%s'", name), reader.getLocation());
+        File lib = new File(fp.getParentFile(), "lib");
+        if (!lib.exists()) {
+            if (!fp.getParentFile().canWrite()) throw new XMLStreamException(String.format("Native artifact '%s' cannot be unpacked", name), reader.getLocation());
+            Unzip.execute(fp, fp.getParentFile());
+        }
+        specBuilder.addResourceRoot(new ResourceLoaderSpec(new NativeLibraryResourceLoader(lib), PathFilters.rejectAll()));
+    }
+
+
+    private static void parseNativeArtifact(final XMLStreamReader reader, final ModuleSpec.Builder specBuilder) throws XMLStreamException {
+        String name = null;
+        final Set<Attribute> required = EnumSet.of(Attribute.NAME);
+        final int count = reader.getAttributeCount();
+        for (int i = 0; i < count; i ++) {
+            final Attribute attribute = Attribute.of(reader.getAttributeName(i));
+            required.remove(attribute);
+            switch (attribute) {
+                case NAME: name = reader.getAttributeValue(i); break;
+                default: throw unexpectedContent(reader);
+            }
+        }
+        if (! required.isEmpty()) {
+            throw missingAttributes(reader.getLocation(), required);
+        }
+
+        ResourceLoader resourceLoader;
+        while (reader.hasNext()) {
+            switch (reader.nextTag()) {
+                case END_ELEMENT: {
+                    try {
+                        createMavenNativeArtifactLoader(name, reader, specBuilder);
+                    } catch (IOException e) {
+                        throw new XMLStreamException(String.format("Failed to add artifact '%s'", name), reader.getLocation(), e);
+                    }
+                    return;
+                }
+                case START_ELEMENT: {
+                    throw unexpectedContent(reader);
+                }
+                default: {
+                    throw unexpectedContent(reader);
+                }
+            }
+        }
+    }
+
+
+    private static void parseArtifact(final XMLStreamReader reader, final ModuleSpec.Builder specBuilder) throws XMLStreamException {
+        String name = null;
+        final Set<Attribute> required = EnumSet.of(Attribute.NAME);
+        final int count = reader.getAttributeCount();
+        for (int i = 0; i < count; i ++) {
+            final Attribute attribute = Attribute.of(reader.getAttributeName(i));
+            required.remove(attribute);
+            switch (attribute) {
+                case NAME: name = reader.getAttributeValue(i); break;
+                default: throw unexpectedContent(reader);
+            }
+        }
+        if (! required.isEmpty()) {
+            throw missingAttributes(reader.getLocation(), required);
+        }
+
+        ResourceLoader resourceLoader;
+        while (reader.hasNext()) {
+            switch (reader.nextTag()) {
+                case END_ELEMENT: {
+                    try {
+                        resourceLoader = createMavenArtifactLoader(name);
+                    } catch (IOException e) {
+                        throw new XMLStreamException(String.format("Failed to add artifact '%s'", name), reader.getLocation(), e);
+                    }
+                    if (resourceLoader == null) throw new XMLStreamException(String.format("Failed to resolve artifact '%s'", name), reader.getLocation());
+                    specBuilder.addResourceRoot(ResourceLoaderSpec.createResourceLoaderSpec(resourceLoader));
+                    return;
+                }
+                case START_ELEMENT: {
+                    throw unexpectedContent(reader);
+                }
+                default: {
+                    throw unexpectedContent(reader);
+                }
+            }
+        }
+    }
+
     private static void parseResourceRoot(final ResourceRootFactory factory, final String rootPath, final XMLStreamReader reader, final ModuleSpec.Builder specBuilder) throws XMLStreamException {
         String name = null;
         String path = null;
-        String group = null;
-        String artifact = null;
-        String version = null;
-        final Set<Attribute> required = EnumSet.of(Attribute.PATH, Attribute.GROUP, Attribute.ARTIFACT, Attribute.VERSION);
+        final Set<Attribute> required = EnumSet.of(Attribute.PATH);
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
             final Attribute attribute = Attribute.of(reader.getAttributeName(i));
@@ -752,21 +852,11 @@ final class ModuleXmlParser {
             switch (attribute) {
                 case NAME: name = reader.getAttributeValue(i); break;
                 case PATH: path = reader.getAttributeValue(i); break;
-                case GROUP: group = reader.getAttributeValue(i); break;
-                case ARTIFACT: artifact = reader.getAttributeValue(i); break;
-                case VERSION: version = reader.getAttributeValue(i); break;
                 default: throw unexpectedContent(reader);
             }
         }
-        // PATH or full maven attributes required
-        if (required.contains(Attribute.PATH))
-        {
-           // if no attributes defined
-           if (required.size() == 4) throw missingAttributes(reader.getLocation(), required);
-
-           // check that maven attributes are defined
-           required.remove(Attribute.PATH);
-           if (!required.isEmpty()) throw missingAttributes(reader.getLocation(), required);
+        if (! required.isEmpty()) {
+            throw missingAttributes(reader.getLocation(), required);
         }
         if (name == null) name = path;
 
@@ -777,20 +867,10 @@ final class ModuleXmlParser {
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case END_ELEMENT: {
-                    if (path != null) {
-                        try {
-                            resourceLoader = factory.createResourceLoader(rootPath, path, name);
-                        } catch (IOException e) {
-                            throw new XMLStreamException(String.format("Failed to add resource root '%s' at path '%s'", name, path), reader.getLocation(), e);
-                        }
-                    } else {
-                        try {
-                           if (name == null) name = group + ":" + artifact + ":" + version;
-                           resourceLoader = createMavenArtifactLoader(name, group, artifact, version);
-                           if (resourceLoader == null) throw new XMLStreamException(String.format("Failed to add resource root maven artifact '%s'", name), reader.getLocation());
-                        } catch (IOException e) {
-                           throw new XMLStreamException(String.format("Failed to add resource root artifact '%s'", name), reader.getLocation(), e);
-                        }
+                    try {
+                        resourceLoader = factory.createResourceLoader(rootPath, path, name);
+                    } catch (IOException e) {
+                        throw new XMLStreamException(String.format("Failed to add resource root '%s' at path '%s'", name, path), reader.getLocation(), e);
                     }
                     specBuilder.addResourceRoot(new ResourceLoaderSpec(resourceLoader, filterBuilder.create()));
                     return;

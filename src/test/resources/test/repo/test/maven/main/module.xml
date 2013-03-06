@@ -24,7 +24,8 @@
 
 <module xmlns="urn:jboss:module:1.1" name="test.maven">
     <resources>
-        <resource-root group="org.jboss.resteasy" artifact="resteasy-jaxrs" version="3.0-beta-1"/>
+        <artifact name="org.jboss.resteasy:resteasy-jackson-provider:3.0-beta-1"/>
+        <artifact name="org.jboss.ws.cxf:jbossws-cxf-resources:4.1.3.Final:jboss711"/>
     </resources>
 
     <dependencies/>
