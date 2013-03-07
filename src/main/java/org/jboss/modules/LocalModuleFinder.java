@@ -23,8 +23,14 @@
 package org.jboss.modules;
 
 import java.io.File;
+import java.io.FilePermission;
+import java.lang.reflect.UndeclaredThrowableException;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import org.jboss.modules.filter.PathFilter;
 import org.jboss.modules.filter.PathFilters;
+
+import static java.security.AccessController.doPrivileged;
 
 /**
  * A module finder which locates module specifications which are stored in a local module
@@ -33,14 +39,38 @@ import org.jboss.modules.filter.PathFilters;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class LocalModuleFinder implements ModuleFinder {
+
+    private static final File[] NO_FILES = new File[0];
+
     private final File[] repoRoots;
     private final PathFilter pathFilter;
 
-    public LocalModuleFinder(final File[] repoRoots, final PathFilter pathFilter) {
-        this.repoRoots = repoRoots;
+    private LocalModuleFinder(final File[] repoRoots, final PathFilter pathFilter, final boolean cloneRoots) {
+        this.repoRoots = cloneRoots && repoRoots.length > 0 ? repoRoots.clone() : repoRoots;
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            for (File repoRoot : this.repoRoots) {
+                if (repoRoot == null) sm.checkPermission(new FilePermission(new File(repoRoot, "-").getPath(), "read"));
+            }
+        }
         this.pathFilter = pathFilter;
     }
 
+    /**
+     * Construct a new instance.
+     *
+     * @param repoRoots the repository roots to use
+     * @param pathFilter the path filter to use
+     */
+    public LocalModuleFinder(final File[] repoRoots, final PathFilter pathFilter) {
+        this(repoRoots, pathFilter, true);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param repoRoots the repository roots to use
+     */
     public LocalModuleFinder(final File[] repoRoots) {
         this(repoRoots, PathFilters.acceptAll());
     }
@@ -72,19 +102,15 @@ public final class LocalModuleFinder implements ModuleFinder {
      *
      */
     public LocalModuleFinder(boolean supportLayersAndAddOns) {
-        final String modulePath = System.getProperty("module.path", System.getenv("JAVA_MODULEPATH"));
-        File[] basicRoots;
-        if (modulePath == null) {
-            //noinspection ZeroLengthArrayAllocation
-            basicRoots = new File[0];
-        } else {
-            basicRoots = getFiles(modulePath, 0, 0);
-        }
-        repoRoots = supportLayersAndAddOns ? LayeredModulePathFactory.resolveLayeredModulePath(basicRoots) : basicRoots;
-        pathFilter = PathFilters.acceptAll();
+        this(supportLayersAndAddOns ? LayeredModulePathFactory.resolveLayeredModulePath(getModulePathFiles()) : getModulePathFiles(), PathFilters.acceptAll(), false);
     }
 
-    static File[] getFiles(final String modulePath, final int stringIdx, final int arrayIdx) {
+    private static File[] getModulePathFiles() {
+        return getFiles(System.getProperty("module.path", System.getenv("JAVA_MODULEPATH")), 0, 0);
+    }
+
+    private static File[] getFiles(final String modulePath, final int stringIdx, final int arrayIdx) {
+        if (modulePath == null) return NO_FILES;
         final int i = modulePath.indexOf(File.pathSeparatorChar, stringIdx);
         final File[] files;
         if (i == -1) {
@@ -97,7 +123,7 @@ public final class LocalModuleFinder implements ModuleFinder {
         return files;
     }
 
-    static String toPathString(ModuleIdentifier moduleIdentifier) {
+    private static String toPathString(ModuleIdentifier moduleIdentifier) {
         final StringBuilder builder = new StringBuilder(40);
         builder.append(moduleIdentifier.getName().replace('.', File.separatorChar));
         builder.append(File.separatorChar).append(moduleIdentifier.getSlot());
@@ -108,13 +134,32 @@ public final class LocalModuleFinder implements ModuleFinder {
     public ModuleSpec findModule(final ModuleIdentifier identifier, final ModuleLoader delegateLoader) throws ModuleLoadException {
         final String child = toPathString(identifier);
         if (pathFilter.accept(child)) {
-            for (File root : repoRoots) {
-                final File file = new File(root, child);
-                final File moduleXml = new File(file, "module.xml");
-                if (moduleXml.exists()) {
-                    final ModuleSpec spec = ModuleXmlParser.parseModuleXml(delegateLoader, identifier, file, moduleXml);
-                    if (spec == null) break;
-                    return spec;
+            try {
+                return doPrivileged(new PrivilegedExceptionAction<ModuleSpec>() {
+                    public ModuleSpec run() throws Exception {
+                        for (File root : repoRoots) {
+                            final File file = new File(root, child);
+                            final File moduleXml = new File(file, "module.xml");
+                            if (moduleXml.exists()) {
+                                final ModuleSpec spec = ModuleXmlParser.parseModuleXml(delegateLoader, identifier, file, moduleXml);
+                                if (spec == null) break;
+                                return spec;
+                            }
+                        }
+                        return null;
+                    }
+                });
+            } catch (PrivilegedActionException e) {
+                try {
+                    throw e.getException();
+                } catch (RuntimeException e1) {
+                    throw e1;
+                } catch (ModuleLoadException e1) {
+                    throw e1;
+                } catch (Error e1) {
+                    throw e1;
+                } catch (Exception e1) {
+                    throw new UndeclaredThrowableException(e1);
                 }
             }
         }
