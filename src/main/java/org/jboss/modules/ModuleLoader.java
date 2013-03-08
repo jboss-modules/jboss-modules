@@ -22,11 +22,14 @@
 
 package org.jboss.modules;
 
+import static java.security.AccessController.doPrivileged;
 import static org.jboss.modules.management.ObjectProperties.property;
 
 import java.lang.management.ManagementFactory;
-import java.security.AccessController;
+import java.lang.reflect.UndeclaredThrowableException;
 import java.security.PrivilegedAction;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -115,14 +118,11 @@ public class ModuleLoader {
     ModuleLoader(boolean canRedefine, boolean skipRegister, ModuleFinder[] finders) {
         this.canRedefine = canRedefine;
         this.finders = finders;
-        mxBean = skipRegister ? null : AccessController.doPrivileged(new PrivilegedAction<ModuleLoaderMXBean>() {
+        mxBean = skipRegister ? null : doPrivileged(new PrivilegedAction<ModuleLoaderMXBean>() {
             public ModuleLoaderMXBean run() {
                 ObjectName objectName;
                 try {
-                    objectName = new ObjectName("jboss.modules", ObjectProperties.properties(
-                            property("type", "ModuleLoader"),
-                            property("name", ModuleLoader.this.getClass().getSimpleName() + "-" + Integer.toString(SEQ.incrementAndGet()))
-                    ));
+                    objectName = new ObjectName("jboss.modules", ObjectProperties.properties(property("type", "ModuleLoader"), property("name", ModuleLoader.this.getClass().getSimpleName() + "-" + Integer.toString(SEQ.incrementAndGet()))));
                 } catch (MalformedObjectNameException e) {
                     return null;
                 }
@@ -413,23 +413,38 @@ public class ModuleLoader {
      * @throws ModuleLoadException If any dependent modules can not be loaded
      */
     private Module defineModule(final ConcreteModuleSpec moduleSpec, final FutureModule futureModule) throws ModuleLoadException {
-
-        final ModuleLogger log = Module.log;
-        final ModuleIdentifier moduleIdentifier = moduleSpec.getModuleIdentifier();
-
-        final Module module = new Module(moduleSpec, this);
-        module.getClassLoaderPrivate().recalculate();
-        module.setDependencies(Arrays.asList(moduleSpec.getDependencies()));
-        log.moduleDefined(moduleIdentifier, this);
         try {
-            futureModule.setModule(module);
-            return module;
-        } catch (RuntimeException e) {
-            log.trace(e, "Failed to load module %s", moduleIdentifier);
-            throw e;
-        } catch (Error e) {
-            log.trace(e, "Failed to load module %s", moduleIdentifier);
-            throw e;
+            return doPrivileged(new PrivilegedExceptionAction<Module>() {
+                public Module run() throws Exception {
+                    final ModuleLogger log = Module.log;
+                    final ModuleIdentifier moduleIdentifier = moduleSpec.getModuleIdentifier();
+
+                    final Module module = new Module(moduleSpec, ModuleLoader.this);
+                    module.getClassLoaderPrivate().recalculate();
+                    module.setDependencies(Arrays.asList(moduleSpec.getDependencies()));
+                    log.moduleDefined(moduleIdentifier, ModuleLoader.this);
+                    try {
+                        futureModule.setModule(module);
+                        return module;
+                    } catch (RuntimeException e) {
+                        log.trace(e, "Failed to load module %s", moduleIdentifier);
+                        throw e;
+                    } catch (Error e) {
+                        log.trace(e, "Failed to load module %s", moduleIdentifier);
+                        throw e;
+                    }
+                }
+            });
+        } catch (PrivilegedActionException pe) {
+            try {
+                throw pe.getException();
+            } catch (RuntimeException e) {
+                throw e;
+            } catch (ModuleLoadException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new UndeclaredThrowableException(e);
+            }
         }
     }
 
@@ -868,7 +883,7 @@ public class ModuleLoader {
         private final MBeanServer server;
 
         RealMBeanReg() {
-            server = AccessController.doPrivileged(new PrivilegedAction<MBeanServer>() {
+            server = doPrivileged(new PrivilegedAction<MBeanServer>() {
                 public MBeanServer run() {
                     return ManagementFactory.getPlatformMBeanServer();
                 }
