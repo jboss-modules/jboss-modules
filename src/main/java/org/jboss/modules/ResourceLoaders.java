@@ -38,7 +38,7 @@ public final class ResourceLoaders {
     static final boolean WRITE_INDEXES;
 
     static {
-        WRITE_INDEXES = Boolean.parseBoolean(AccessController.doPrivileged(new PropertyReadAction("jboss.modules.write-indexes", "true")));
+        WRITE_INDEXES = Boolean.parseBoolean(AccessController.doPrivileged(new PropertyReadAction("jboss.modules.write-indexes", "false")));
     }
 
     private ResourceLoaders() {
