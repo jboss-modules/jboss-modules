@@ -71,6 +71,7 @@ public final class Main {
         System.out.println("       java [-jvmoptions...] -jar " + getJarName() + ".jar [-options...] -jar <jar-name> [args...]");
         System.out.println("       java [-jvmoptions...] -jar " + getJarName() + ".jar [-options...] -cp <class-path> <class-name> [args...]");
         System.out.println("       java [-jvmoptions...] -jar " + getJarName() + ".jar [-options...] -class <class-name> [args...]");
+        System.out.println("       java [-jvmoptions...] -jar " + getJarName() + ".jar -addindex [-modify] <jar-name> ");
         System.out.println("where <module-spec> is a valid module specification string");
         System.out.println("and options include:");
         System.out.println("    -help         Display this message");
@@ -92,6 +93,9 @@ public final class Main {
         System.out.println("    -secmgr       Run with a security manager installed; not compatible with -secmgrmodule");
         System.out.println("    -secmgrmodule <module-spec>");
         System.out.println("                  Run with a security manager module; not compatible with -secmgr");
+        System.out.println("    -addindex     Specify that the final argument is a");
+        System.out.println("                  jar to create an index for");
+        System.out.println("    -modify       Modify the indexes jar in-place");
         System.out.println("    -version      Print version and exit\n");
     }
 
@@ -115,6 +119,9 @@ public final class Main {
         ModuleIdentifier jaxpModuleIdentifier = null;
         boolean defaultSecMgr = false;
         String secMgrModule = null;
+        boolean addIndex = false;
+        boolean modifyInPlace = false;
+        String indexJar = null;
         for (int i = 0, argsLength = argsLen; i < argsLength; i++) {
             final String arg = args[i];
             try {
@@ -126,6 +133,13 @@ public final class Main {
                     } else if ("-help".equals(arg)) {
                         usage();
                         return;
+                    } else if ("-addindex".equals(arg)) {
+                        addIndex = true;
+                        if (args[i + 1].equals("-modify")) {
+                            modifyInPlace = true;
+                            i++;
+                        }
+                        indexJar = args[++i];
                     } else if ("-modulepath".equals(arg) || "-mp".equals(arg)) {
                         if (modulePath != null) {
                             System.err.println("Module path may only be specified once");
@@ -229,6 +243,28 @@ public final class Main {
                 usage();
                 System.exit(1);
             }
+        }
+        
+        if (addIndex) {
+            if (modulePath != null)
+                System.err.println("-mp should not be used with -addindex");
+            if (modulePath != null)
+                System.err.println("-jaxpModuleIdentifier should not be used with -addindex");
+            if (classpathDefined)
+                System.err.println("-cp or -classpath should not be used with -addindex");
+            if (classDefined)
+                System.err.println("-class should not be used with -addindex");
+            if (jar)
+                System.err.println("-jar should not be used with -addindex");
+            if (deps != null)
+                System.err.println("-deps should not be used with -addindex");
+            if (defaultSecMgr)
+                System.err.println("-secmgr should not be used with -addindex");
+            if (secMgrModule != null)
+                System.err.println("-secmgrmodule should not be used with -addindex");
+
+            JarFileResourceLoader.addInternalIndex(new File(indexJar), modifyInPlace);
+            return;
         }
 
         if (deps != null && ! classDefined && ! classpathDefined) {
