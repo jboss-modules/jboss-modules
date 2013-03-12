@@ -203,7 +203,7 @@ public class ModuleLoader {
      * @return the string representation
      */
     public String toString() {
-        return String.format("%s@%x for finders %s", getClass().getSimpleName(), Arrays.toString(finders));
+        return String.format("%s@%x for finders %s", getClass().getSimpleName(), hashCode(), Arrays.toString(finders));
     }
 
     static void installMBeanServer() {
