@@ -230,15 +230,10 @@ final class JarFileResourceLoader extends AbstractResourceLoader {
         // Next check for an internal index
         JarEntry listEntry = jarFile.getJarEntry("META-INF/PATHS.LIST");
         if (listEntry != null) {
-            if (jarModified != 0L) {
-                final long entryTime = listEntry.getTime();
-                if (entryTime == -1L || entryTime >= jarModified) {
-                    try {
-                        return readIndex(jarFile.getInputStream(listEntry), index, relativePath);
-                    } catch (IOException e) {
-                        index.clear();
-                    }
-                }
+            try {
+                return readIndex(jarFile.getInputStream(listEntry), index, relativePath);
+            } catch (IOException e) {
+                index.clear();
             }
         }
         // Next just read the JAR
