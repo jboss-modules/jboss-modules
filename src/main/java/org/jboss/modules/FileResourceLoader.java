@@ -139,23 +139,25 @@ final class FileResourceLoader extends NativeLibraryResourceLoader {
 
     public Collection<String> getPaths() {
         final List<String> index = new ArrayList<String>();
-        // First check for an index file
         final File indexFile = new File(getRoot().getPath() + ".index");
-        if (indexFile.exists()) {
-            try {
-                final BufferedReader r = new BufferedReader(new InputStreamReader(new FileInputStream(indexFile)));
+        if (ResourceLoaders.USE_INDEXES) {
+            // First check for an index file
+            if (indexFile.exists()) {
                 try {
-                    String s;
-                    while ((s = r.readLine()) != null) {
-                        index.add(s.trim());
+                    final BufferedReader r = new BufferedReader(new InputStreamReader(new FileInputStream(indexFile)));
+                    try {
+                        String s;
+                        while ((s = r.readLine()) != null) {
+                            index.add(s.trim());
+                        }
+                        return index;
+                    } finally {
+                        // if exception is thrown, undo index creation
+                        r.close();
                     }
-                    return index;
-                } finally {
-                    // if exception is thrown, undo index creation
-                    r.close();
+                } catch (IOException e) {
+                    index.clear();
                 }
-            } catch (IOException e) {
-                index.clear();
             }
         }
         // Manually build index, starting with the root path

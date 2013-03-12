@@ -218,26 +218,23 @@ final class JarFileResourceLoader extends AbstractResourceLoader {
         final String jarFileName = jarFile.getName();
         final long jarModified = fileOfJar.lastModified();
         final File indexFile = new File(jarFileName + ".index");
-        if (indexFile.exists()) {
-            final long indexModified = indexFile.lastModified();
-            if (indexModified != 0L && jarModified != 0L && indexModified >= jarModified) try {
-                return readIndex(new FileInputStream(indexFile), index, relativePath);
-            } catch (IOException e) {
-                index.clear();
+        if (ResourceLoaders.USE_INDEXES) {
+            if (indexFile.exists()) {
+                final long indexModified = indexFile.lastModified();
+                if (indexModified != 0L && jarModified != 0L && indexModified >= jarModified) try {
+                    return readIndex(new FileInputStream(indexFile), index, relativePath);
+                } catch (IOException e) {
+                    index.clear();
+                }
             }
         }
         // Next check for an internal index
         JarEntry listEntry = jarFile.getJarEntry("META-INF/PATHS.LIST");
         if (listEntry != null) {
-            if (jarModified != 0L) {
-                final long entryTime = listEntry.getTime();
-                if (entryTime == -1L || entryTime >= jarModified) {
-                    try {
-                        return readIndex(jarFile.getInputStream(listEntry), index, relativePath);
-                    } catch (IOException e) {
-                        index.clear();
-                    }
-                }
+            try {
+                return readIndex(jarFile.getInputStream(listEntry), index, relativePath);
+            } catch (IOException e) {
+                index.clear();
             }
         }
         // Next just read the JAR
