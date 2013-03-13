@@ -35,10 +35,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
@@ -576,7 +578,7 @@ public final class Module {
      * @return the enumeration of all the matching resource URLs (may be empty)
      */
     Enumeration<URL> getResources(final String name) {
-        final String canonPath = PathUtils.canonicalize(name);
+        final String canonPath = PathUtils.canonicalize(PathUtils.relativize(name));
         for (String s : Module.systemPaths) {
             if (canonPath.startsWith(s)) {
                 try {
@@ -629,6 +631,74 @@ public final class Module {
      */
     public Enumeration<URL> getExportedResources(final String name) {
         return getResources(name);
+    }
+
+    /**
+     * Enumerate all the imported resources under the given path.  The given path name is relative to the root
+     * of the module.  If the path "escapes" the root via {@code ..}, such segments will be consumed.
+     * If the path is absolute, it will be converted to a relative path by dropping the leading {@code /}.
+     *
+     * @param startPath the path to search under
+     * @param recursive {@code true} to recursively descend into subdirectories, {@code false} to only read this path
+     * @return the resource iterator (possibly empty)
+     */
+    public Iterator<Resource> iterateResources(final String startPath, final boolean recursive) throws ModuleLoadException {
+        final String canonStartPath = PathUtils.canonicalize(PathUtils.relativize(startPath));
+        final Map<String, List<LocalLoader>> paths = getPaths();
+        final Iterator<Map.Entry<String, List<LocalLoader>>> iterator = paths.entrySet().iterator();
+        return new Iterator<Resource>() {
+
+            private String path;
+            private Iterator<Resource> resourceIterator;
+            private Iterator<LocalLoader> loaderIterator;
+            private Resource next;
+
+            public boolean hasNext() {
+                while (next == null) {
+                    if (resourceIterator != null) {
+                        assert path != null;
+                        if (resourceIterator.hasNext()) {
+                            next = resourceIterator.next();
+                            return true;
+                        }
+                        resourceIterator = null;
+                    }
+                    if (loaderIterator != null) {
+                        assert path != null;
+                        if (loaderIterator.hasNext()) {
+                            final LocalLoader loader = loaderIterator.next();
+                            if (loader instanceof IterableLocalLoader) {
+                                resourceIterator = ((IterableLocalLoader)loader).iterateResources(path, false);
+                                continue;
+                            }
+                        }
+                        loaderIterator = null;
+                    }
+                    if (! iterator.hasNext()) {
+                        return false;
+                    }
+                    final Map.Entry<String, List<LocalLoader>> entry = iterator.next();
+                    path = entry.getKey();
+                    if (recursive ? PathUtils.isDirectChild(canonStartPath, path) : PathUtils.isChild(canonStartPath, path)) {
+                        loaderIterator = entry.getValue().iterator();
+                    }
+                }
+                return true;
+            }
+
+            public Resource next() {
+                if (! hasNext()) throw new NoSuchElementException();
+                try {
+                    return next;
+                } finally {
+                    next = null;
+                }
+            }
+
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        };
     }
 
     /**

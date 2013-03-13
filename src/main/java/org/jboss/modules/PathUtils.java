@@ -179,6 +179,16 @@ public final class PathUtils {
                     // fall thru
                 }
                 default: {
+                    if (File.separatorChar != '/' && c == File.separatorChar) {
+                        switch (state) {
+                            case 0: state = 3; e = i; break outer;
+                            case 1: state = 3; e = i; break outer;
+                            case 2: state = 3; e = i; skip ++; break outer;
+                            case 3: e = i; break outer;
+                            default: throw new IllegalStateException();
+                        }
+                        // not reached!
+                    }
                     final int newE = e > 0 ? path.lastIndexOf('/', e - 1) : -1;
                     final int segmentLength = e - newE - 1;
                     if (skip > 0) {
@@ -200,5 +210,51 @@ public final class PathUtils {
             targetBuf[a--] = '/';
         }
         return new String(targetBuf, a + 1, length - a - 1);
+    }
+
+    /**
+     * Determine whether a one path is a child of another.
+     *
+     * @param parent the parent path
+     * @param child the child path
+     * @return {@code true} if the child is truly a child of parent
+     */
+    public static boolean isChild(final String parent, final String child) {
+        String cp = canonicalize(parent);
+        String cc = canonicalize(child);
+        if (isRelative(cp) != isRelative(cc)) {
+            throw new IllegalArgumentException("Cannot compare relative and absolute paths");
+        }
+        final int cpl = cp.length();
+        return cc.length() > cpl + 1 && cc.startsWith(cp) && cc.charAt(cpl) == '/';
+    }
+
+    /**
+     * Determine whether a one path is a direct (or immediate) child of another.
+     *
+     * @param parent the parent path
+     * @param child the child path
+     * @return {@code true} if the child is truly a direct child of parent
+     */
+    public static boolean isDirectChild(final String parent, final String child) {
+        String cp = canonicalize(parent);
+        String cc = canonicalize(child);
+        if (isRelative(cp) != isRelative(cc)) {
+            throw new IllegalArgumentException("Cannot compare relative and absolute paths");
+        }
+        final int cpl = cp.length();
+        return cc.length() > cpl + 1 && cc.startsWith(cp) && cc.charAt(cpl) == '/' && cc.indexOf('/', cpl + 1) == -1;
+    }
+
+    /**
+     * Determine whether a path name is relative.
+     *
+     * @param path the path name
+     * @return {@code true} if it is relative
+     */
+    public static boolean isRelative(final String path) {
+        final char c = path.charAt(0);
+        // the second half of this compare will optimize away on / OSes
+        return c != '/' && (File.separatorChar == '/' || c != File.separatorChar);
     }
 }

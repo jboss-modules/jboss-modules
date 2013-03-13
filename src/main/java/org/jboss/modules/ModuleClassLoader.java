@@ -69,7 +69,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
 
     private volatile Paths<ResourceLoader, ResourceLoaderSpec> paths;
 
-    private final LocalLoader localLoader = new LocalLoader() {
+    private final LocalLoader localLoader = new IterableLocalLoader() {
         public Class<?> loadClassLocal(final String name, final boolean resolve) {
             try {
                 return ModuleClassLoader.this.loadClassLocal(name, resolve);
@@ -84,6 +84,10 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
 
         public List<Resource> loadResourceLocal(final String name) {
             return ModuleClassLoader.this.loadResourceLocal(name);
+        }
+
+        public Iterator<Resource> iterateResources(final String startPath, final boolean recursive) {
+            return ModuleClassLoader.this.iterateResources(startPath, recursive);
         }
 
         public String toString() {
