@@ -38,14 +38,17 @@ import java.security.CodeSigner;
 import java.security.CodeSource;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.jar.Manifest;
 
 /**
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-final class FileResourceLoader extends NativeLibraryResourceLoader {
+final class FileResourceLoader extends NativeLibraryResourceLoader implements IterableResourceLoader {
 
     private final String rootName;
     private final Manifest manifest;
@@ -125,16 +128,79 @@ final class FileResourceLoader extends NativeLibraryResourceLoader {
     }
 
     public Resource getResource(final String name) {
+        final String canonPath = PathUtils.canonicalize(PathUtils.relativize(name));
         try {
-            final File file = new File(getRoot(), name);
-            if (! file.exists()) {
+            final File file = new File(getRoot(), canonPath);
+            if (! file.isFile()) {
                 return null;
             }
-            return new FileEntryResource(name, file, file.toURI().toURL());
+            return new FileEntryResource(canonPath, file, file.toURI().toURL());
         } catch (MalformedURLException e) {
             // must be invalid...?  (todo: check this out)
             return null;
         }
+    }
+
+    public Iterator<Resource> iterateResources(final String startPath, final boolean recursive) {
+        final String canonPath = PathUtils.canonicalize(PathUtils.relativize(startPath));
+        final File start = new File(getRoot(), canonPath);
+        final File[] files = start.listFiles();
+        if (files == null) {
+            return Collections.<Resource>emptySet().iterator();
+        }
+        class Itr implements Iterator<Resource> {
+            private final String name;
+            private final File[] files;
+            private int i = 0;
+            private Itr nested;
+            private Resource next;
+
+            Itr(final String name, final File[] files) {
+                this.name = name;
+                this.files = files;
+            }
+
+            public boolean hasNext() {
+                while (next == null) {
+                    if (recursive && nested == null) {
+                        final File current = files[i];
+                        final File[] children = current.listFiles();
+                        if (children != null && children.length > 0) {
+                            nested = new Itr(name + "/" + current.getName(), children);
+                        }
+                    }
+                    if (nested != null) {
+                        if (nested.hasNext()) {
+                            return true;
+                        }
+                        nested = null;
+                    }
+                    final File file = files[i++];
+                    if (file.isFile()) {
+                        try {
+                            next = new FileEntryResource(name, new File(name, file.getName()), file.toURI().toURL());
+                        } catch (MalformedURLException ignored) {
+                        }
+                    }
+                }
+                return true;
+            }
+
+            public Resource next() {
+                if (next == null) {
+                    throw new NoSuchElementException();
+                }
+                try {
+                    return next;
+                } finally {
+                    next = null;
+                }
+            }
+
+            public void remove() {
+            }
+        }
+        return new Itr(canonPath, files);
     }
 
     public Collection<String> getPaths() {

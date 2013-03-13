@@ -116,6 +116,21 @@ public final class PathUtils {
     }
 
     /**
+     * Relativize the given path.  Removes any leading {@code /} segments from the path.
+     *
+     * @param path the path to relativize
+     * @return the relative path
+     */
+    public static String relativize(String path) {
+        for (int i = 0; i < path.length(); i ++) {
+            if (path.charAt(i) != '/' && path.charAt(i) != File.separatorChar) {
+                return i == 0 ? path : path.substring(i);
+            }
+        }
+        return "";
+    }
+
+    /**
      * Canonicalize the given path.  Removes all {@code .} and {@code ..} segments from the path.
      *
      * @param path the relative or absolute possibly non-canonical path

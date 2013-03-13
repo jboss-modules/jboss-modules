@@ -41,6 +41,8 @@ import java.security.CodeSource;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -49,7 +51,7 @@ import java.util.jar.Manifest;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-final class JarFileResourceLoader extends AbstractResourceLoader {
+final class JarFileResourceLoader extends AbstractResourceLoader implements IterableResourceLoader {
     private final JarFile jarFile;
     private final String rootName;
     private final URL rootUrl;
@@ -193,8 +195,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader {
     public Resource getResource(String name) {
         try {
             final JarFile jarFile = this.jarFile;
-            if(name.startsWith("/"))
-                name = name.substring(1);
+            name = PathUtils.canonicalize(PathUtils.relativize(name));
             final JarEntry entry = getJarEntry(name);
             if (entry == null) {
                 return null;
@@ -207,6 +208,50 @@ final class JarFileResourceLoader extends AbstractResourceLoader {
             // must be invalid...?  (todo: check this out)
             return null;
         }
+    }
+
+    public Iterator<Resource> iterateResources(final String startPath, final boolean recursive) {
+        final JarFile jarFile = this.jarFile;
+        final String startName = PathUtils.canonicalize(PathUtils.relativize(startPath));
+        final Enumeration<JarEntry> entries = jarFile.entries();
+        return new Iterator<Resource>() {
+            private Resource next;
+
+            public boolean hasNext() {
+                while (next == null) {
+                    if (! entries.hasMoreElements()) {
+                        return false;
+                    }
+                    final JarEntry entry = entries.nextElement();
+                    final String name = entry.getName();
+                    if (name.startsWith(startName) && name.length() > startName.length() + 1 && name.charAt(startName.length()) == '/') {
+                        if (! recursive && startName.indexOf('/', startName.length() + 1) != -1) {
+                            continue;
+                        }
+                        try {
+                            next = new JarEntryResource(jarFile, entry, getJarURI(new File(jarFile.getName()).toURI(), entry.getName()).toURL());
+                        } catch (Exception ignored) {
+                        }
+                    }
+                }
+                return true;
+            }
+
+            public Resource next() {
+                if (! hasNext()) {
+                    throw new NoSuchElementException();
+                }
+                try {
+                    return next;
+                } finally {
+                    next = null;
+                }
+            }
+
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        };
     }
 
     public Collection<String> getPaths() {
