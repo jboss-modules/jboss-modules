@@ -32,6 +32,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -44,12 +45,16 @@ import java.util.HashSet;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 final class JarFileResourceLoader extends AbstractResourceLoader {
+    private static final String INDEX_FILE = "META-INF/PATHS.LIST";
+
     private final JarFile jarFile;
     private final String rootName;
     private final URL rootUrl;
@@ -229,7 +234,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader {
             }
         }
         // Next check for an internal index
-        JarEntry listEntry = jarFile.getJarEntry("META-INF/PATHS.LIST");
+        JarEntry listEntry = jarFile.getJarEntry(INDEX_FILE);
         if (listEntry != null) {
             try {
                 return readIndex(jarFile.getInputStream(listEntry), index, relativePath);
@@ -238,6 +243,16 @@ final class JarFileResourceLoader extends AbstractResourceLoader {
             }
         }
         // Next just read the JAR
+        extractJarPaths(jarFile, relativePath, index);
+
+        if (ResourceLoaders.WRITE_INDEXES && relativePath == null) {
+            writeExternalIndex(indexFile, index);
+        }
+        return index;
+    }
+
+    static void extractJarPaths(final JarFile jarFile, String relativePath,
+            final Collection<String> index) {
         index.add("");
         final Enumeration<JarEntry> entries = jarFile.entries();
         while (entries.hasMoreElements()) {
@@ -258,38 +273,39 @@ final class JarFileResourceLoader extends AbstractResourceLoader {
                 }
             }
         }
-        if (ResourceLoaders.WRITE_INDEXES && relativePath == null) {
-            // Now try to write it
-            boolean ok = false;
-            try {
-                final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(indexFile)));
-                try {
-                    for (String name : index) {
-                        writer.write(name);
-                        writer.write('\n');
-                    }
-                    writer.close();
-                    ok = true;
-                } finally {
-                    try {
-                        writer.close();
-                    } catch (IOException e) {
-                        // ignored
-                    }
-                }
-            } catch (IOException e) {
-                // failed, ignore
-            } finally {
-                if (! ok) {
-                    // well, we tried...
-                    indexFile.delete();
-                }
-            }
-        }
-        return index;
     }
 
-    private static Collection<String> readIndex(final InputStream stream, final Collection<String> index, final String relativePath) throws IOException {
+    static void writeExternalIndex(final File indexFile,
+            final Collection<String> index) {
+        // Now try to write it
+        boolean ok = false;
+        try {
+            final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(indexFile)));
+            try {
+                for (String name : index) {
+                    writer.write(name);
+                    writer.write('\n');
+                }
+                writer.close();
+                ok = true;
+            } finally {
+                try {
+                    writer.close();
+                } catch (IOException e) {
+                    // ignored
+                }
+            }
+        } catch (IOException e) {
+            // failed, ignore
+        } finally {
+            if (! ok) {
+                // well, we tried...
+                indexFile.delete();
+            }
+        }
+    }
+
+    static Collection<String> readIndex(final InputStream stream, final Collection<String> index, final String relativePath) throws IOException {
         final BufferedReader r = new BufferedReader(new InputStreamReader(stream));
         try {
             String s;
@@ -308,5 +324,86 @@ final class JarFileResourceLoader extends AbstractResourceLoader {
             // if exception is thrown, undo index creation
             r.close();
         }
+    }
+
+    static void addInternalIndex(File file, boolean modify) throws IOException {
+        JarFile oldJarFile = new JarFile(file, false);
+        final Collection<String> index = new HashSet<String>();
+        File outputFile;
+        ZipOutputStream zo = null;
+        BufferedWriter writer = null;
+
+        if (modify) {
+            outputFile = File.createTempFile(file.getName().substring(0, file.getName().lastIndexOf('.')) + "00", "jmp", file.getParentFile());
+        } else {
+            outputFile = new File(file.getAbsolutePath().replace(".jar", "-indexed.jar"));
+        }
+        zo = new ZipOutputStream(new FileOutputStream(outputFile));
+
+        try {
+            Enumeration<JarEntry> entries = oldJarFile.entries();
+            while (entries.hasMoreElements()) {
+                JarEntry entry = entries.nextElement();
+
+                // copy data, unless we're replacing the index
+                if (!entry.getName().equals(INDEX_FILE)) {
+                    JarEntry clone = (JarEntry) entry.clone();
+                    // Compression level and format can vary across implementations
+                    if (clone.getMethod() != ZipEntry.STORED)
+                        clone.setCompressedSize(-1);
+                    zo.putNextEntry(clone);
+                    copy(oldJarFile.getInputStream(entry), zo);
+                }
+
+                // add to the index
+                final String name = entry.getName();
+                final int idx = name.lastIndexOf('/');
+                if (idx == -1) continue;
+                final String path = name.substring(0, idx);
+                if (path.length() == 0 || path.endsWith("/")) {
+                    // invalid name, just skip...
+                    continue;
+                }
+                index.add(path);
+            }
+
+            // write index
+            zo.putNextEntry(new ZipEntry(INDEX_FILE));
+            writer = new BufferedWriter(new OutputStreamWriter(zo));
+            for (String name : index) {
+                writer.write(name);
+                writer.write('\n');
+            }
+
+            writer.close();
+            writer = null;
+            zo.close();
+            zo = null;
+            oldJarFile.close();
+            oldJarFile = null;
+
+            if (modify) {
+                file.delete();
+                if (!outputFile.renameTo(file)) {
+                    throw new IOException("failed to rename " + outputFile.getAbsolutePath() + " to " + file.getAbsolutePath());
+                }
+            }
+        } finally {
+            if (writer != null)
+                writer.close();
+            if (zo != null)
+                zo.close();
+            if (oldJarFile != null)
+                oldJarFile.close();
+        }
+    }
+
+    private static void copy(InputStream in, OutputStream out) throws IOException {
+        byte[] buf = new byte[8192];
+        int len;
+        while ((len = in.read(buf)) > 0) {
+            out.write(buf, 0, len);
+        }
+        out.flush();
     }
 }
