@@ -24,14 +24,16 @@ package org.jboss.modules;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Iterator;
 import org.jboss.modules.filter.PathFilter;
+import org.jboss.modules.filter.PathFilters;
 
-final class FilteredResourceLoader implements ResourceLoader {
+final class FilteredIterableResourceLoader implements IterableResourceLoader {
 
     private final PathFilter filter;
-    private final ResourceLoader loader;
+    private final IterableResourceLoader loader;
 
-    FilteredResourceLoader(final PathFilter filter, final ResourceLoader loader) {
+    FilteredIterableResourceLoader(final PathFilter filter, final IterableResourceLoader loader) {
         this.filter = filter;
         this.loader = loader;
     }
@@ -60,5 +62,9 @@ final class FilteredResourceLoader implements ResourceLoader {
 
     public Collection<String> getPaths() {
         return loader.getPaths();
+    }
+
+    public Iterator<Resource> iterateResources(final String startPath, final boolean recursive) {
+        return PathFilters.filtered(filter, loader.iterateResources(PathUtils.relativize(PathUtils.canonicalize(startPath)), recursive));
     }
 }

@@ -24,7 +24,10 @@ package org.jboss.modules.filter;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.Set;
+import org.jboss.modules.Resource;
 
 /**
  * Static factory methods for path filter types.
@@ -155,6 +158,45 @@ public final class PathFilters {
      */
     public static PathFilter in(Set<String> paths) {
         return new SetPathFilter(new HashSet<String>(paths));
+    }
+
+    /**
+     * Get a filtered view of a resource iteration.  Only resources which pass the given filter are accepted.
+     *
+     * @param filter the filter to check
+     * @param original the original iterator
+     * @return the filtered iterator
+     */
+    public static Iterator<Resource> filtered(final PathFilter filter, final Iterator<Resource> original) {
+        return new Iterator<Resource>() {
+            private Resource next;
+
+            public boolean hasNext() {
+                Resource next;
+                while (this.next == null && original.hasNext()) {
+                    next = original.next();
+                    if (filter.accept(next.getName())) {
+                        this.next = next;
+                    }
+                }
+                return this.next != null;
+            }
+
+            public Resource next() {
+                if (! hasNext()) {
+                    throw new NoSuchElementException();
+                }
+                try {
+                    return next;
+                } finally {
+                    next = null;
+                }
+            }
+
+            public void remove() {
+                original.remove();
+            }
+        };
     }
 
     private static final PathFilter defaultImportFilter;
