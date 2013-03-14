@@ -43,6 +43,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.jar.Manifest;
+import org.jboss.modules.filter.PathFilter;
 
 /**
  *
@@ -162,8 +163,8 @@ final class FileResourceLoader extends NativeLibraryResourceLoader implements It
 
             public boolean hasNext() {
                 while (next == null) {
+                    final File current = files[i];
                     if (recursive && nested == null) {
-                        final File current = files[i];
                         final File[] children = current.listFiles();
                         if (children != null && children.length > 0) {
                             nested = new Itr(name + "/" + current.getName(), children);
@@ -175,10 +176,11 @@ final class FileResourceLoader extends NativeLibraryResourceLoader implements It
                         }
                         nested = null;
                     }
-                    final File file = files[i++];
-                    if (file.isFile()) {
+                    i++;
+                    final String currentName = name + '/' + current.getName();
+                    if (current.isFile()) {
                         try {
-                            next = new FileEntryResource(name, new File(name, file.getName()), file.toURI().toURL());
+                            next = new FileEntryResource(name, new File(start, currentName), current.toURI().toURL());
                         } catch (MalformedURLException ignored) {
                         }
                     }

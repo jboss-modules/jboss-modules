@@ -253,8 +253,17 @@ public final class PathUtils {
      * @return {@code true} if it is relative
      */
     public static boolean isRelative(final String path) {
-        final char c = path.charAt(0);
+        return path.isEmpty() || isSeparator(path.charAt(0));
+    }
+
+    /**
+     * Determine whether the given character is a {@code /} or a platform-specific separator.
+     *
+     * @param ch the character to test
+     * @return {@code true} if it is a separator
+     */
+    public static boolean isSeparator(final char ch) {
         // the second half of this compare will optimize away on / OSes
-        return c != '/' && (File.separatorChar == '/' || c != File.separatorChar);
+        return ch == '/' || File.separatorChar != '/' && ch != File.separatorChar;
     }
 }

@@ -634,16 +634,14 @@ public final class Module {
     }
 
     /**
-     * Enumerate all the imported resources under the given path.  The given path name is relative to the root
-     * of the module.  If the path "escapes" the root via {@code ..}, such segments will be consumed.
-     * If the path is absolute, it will be converted to a relative path by dropping the leading {@code /}.
+     * Enumerate all the imported resources in this module, subject to a path filter.  The filter applies to
+     * the containing path of each resource.
      *
-     * @param startPath the path to search under
-     * @param recursive {@code true} to recursively descend into subdirectories, {@code false} to only read this path
+     * @param filter the filter to apply to the search
      * @return the resource iterator (possibly empty)
+     * @throws ModuleLoadException if linking a dependency module fails for some reason
      */
-    public Iterator<Resource> iterateResources(final String startPath, final boolean recursive) throws ModuleLoadException {
-        final String canonStartPath = PathUtils.canonicalize(PathUtils.relativize(startPath));
+    public Iterator<Resource> iterateResources(final PathFilter filter) throws ModuleLoadException {
         final Map<String, List<LocalLoader>> paths = getPaths();
         final Iterator<Map.Entry<String, List<LocalLoader>>> iterator = paths.entrySet().iterator();
         return new Iterator<Resource>() {
@@ -679,7 +677,7 @@ public final class Module {
                     }
                     final Map.Entry<String, List<LocalLoader>> entry = iterator.next();
                     path = entry.getKey();
-                    if (recursive ? PathUtils.isDirectChild(canonStartPath, path) : PathUtils.isChild(canonStartPath, path)) {
+                    if (filter.accept(path)) {
                         loaderIterator = entry.getValue().iterator();
                     }
                 }
@@ -699,6 +697,24 @@ public final class Module {
                 throw new UnsupportedOperationException();
             }
         };
+    }
+
+    /**
+     * Enumerate all imported resources in this module which match the given glob expression.  The glob applies to
+     * the whole resource name.
+     *
+     * @param glob the glob to apply
+     * @return the iterator
+     * @throws ModuleLoadException if linking a dependency module fails for some reason
+     */
+    public Iterator<Resource> globResources(final String glob) throws ModuleLoadException {
+        String safeGlob = PathUtils.canonicalize(PathUtils.relativize(glob));
+        final int i = safeGlob.lastIndexOf('/');
+        if (i == -1) {
+            return PathFilters.filtered(PathFilters.match(glob), iterateResources(PathFilters.acceptAll()));
+        } else {
+            return PathFilters.filtered(PathFilters.match(glob.substring(i + 1)), iterateResources(PathFilters.match(glob.substring(0, i))));
+        }
     }
 
     /**

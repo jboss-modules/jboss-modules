@@ -46,6 +46,7 @@ import java.util.NoSuchElementException;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
+import org.jboss.modules.filter.PathFilter;
 
 /**
  *
@@ -224,10 +225,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
                     }
                     final JarEntry entry = entries.nextElement();
                     final String name = entry.getName();
-                    if (name.startsWith(startName) && name.length() > startName.length() + 1 && name.charAt(startName.length()) == '/') {
-                        if (! recursive && startName.indexOf('/', startName.length() + 1) != -1) {
-                            continue;
-                        }
+                    if ((recursive ? PathUtils.isChild(startName, name) : PathUtils.isDirectChild(startName, name))) {
                         try {
                             next = new JarEntryResource(jarFile, entry, getJarURI(new File(jarFile.getName()).toURI(), entry.getName()).toURL());
                         } catch (Exception ignored) {
