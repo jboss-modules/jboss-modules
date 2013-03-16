@@ -59,6 +59,18 @@ public final class ResourceLoaders {
     }
 
     /**
+     * Create a filesystem-backed iterable resource loader with support for native libraries.  Created classes
+     * have a code source with a {@code file:} URL.
+     *
+     * @param name the name of the resource root
+     * @param root the root file of the resource loader
+     * @return the resource loader
+     */
+    public static IterableResourceLoader createIterableFileResourceLoader(final String name, final File root) {
+        return new FileResourceLoader(name, root);
+    }
+
+    /**
      * Create a JAR-backed resource loader.  JAR resource loaders do not have native library support.
      * Created classes have a code source with a {@code jar:} URL; nested JARs are not supported.
      *
@@ -67,6 +79,18 @@ public final class ResourceLoaders {
      * @return the resource loader
      */
     public static ResourceLoader createJarResourceLoader(final String name, final JarFile jarFile) {
+        return new JarFileResourceLoader(name, jarFile);
+    }
+
+    /**
+     * Create a JAR-backed iterable resource loader.  JAR resource loaders do not have native library support.
+     * Created classes have a code source with a {@code jar:} URL; nested JARs are not supported.
+     *
+     * @param name the name of the resource root
+     * @param jarFile the backing JAR file
+     * @return the resource loader
+     */
+    public static IterableResourceLoader createIterableJarResourceLoader(final String name, final JarFile jarFile) {
         return new JarFileResourceLoader(name, jarFile);
     }
 
@@ -80,5 +104,17 @@ public final class ResourceLoaders {
      */
     public static ResourceLoader createFilteredResourceLoader(final PathFilter pathFilter, final ResourceLoader originalLoader) {
         return new FilteredResourceLoader(pathFilter, originalLoader);
+    }
+
+    /**
+     * Create a filtered view of an iterable resource loader, which allows classes to be included or excluded on a name basis.
+     * The given filter is matched against the actual class or resource name, not the directory name.
+     *
+     * @param pathFilter the path filter to apply
+     * @param originalLoader the original loader to apply to
+     * @return the filtered resource loader
+     */
+    public static IterableResourceLoader createIterableFilteredResourceLoader(final PathFilter pathFilter, final IterableResourceLoader originalLoader) {
+        return new FilteredIterableResourceLoader(pathFilter, originalLoader);
     }
 }

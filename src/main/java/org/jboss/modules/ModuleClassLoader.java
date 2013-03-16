@@ -24,6 +24,8 @@ package org.jboss.modules;
 
 import java.security.ProtectionDomain;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 import org.jboss.modules.filter.PathFilter;
 import org.jboss.modules.log.ModuleLogger;
 
@@ -67,7 +69,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
 
     private volatile Paths<ResourceLoader, ResourceLoaderSpec> paths;
 
-    private final LocalLoader localLoader = new LocalLoader() {
+    private final LocalLoader localLoader = new IterableLocalLoader() {
         public Class<?> loadClassLocal(final String name, final boolean resolve) {
             try {
                 return ModuleClassLoader.this.loadClassLocal(name, resolve);
@@ -82,6 +84,10 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
 
         public List<Resource> loadResourceLocal(final String name) {
             return ModuleClassLoader.this.loadResourceLocal(name);
+        }
+
+        public Iterator<Resource> iterateResources(final String startPath, final boolean recursive) {
+            return ModuleClassLoader.this.iterateResources(startPath, recursive);
         }
 
         public String toString() {
@@ -626,6 +632,62 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
             loaders[i] = specs[i].getResourceLoader();
         }
         return loaders;
+    }
+
+    /**
+     * Iterate the resources within this module class loader.  Only resource roots which are inherently iterable will
+     * be checked, thus the result of this method may only be a subset of the actual loadable resources.  The returned
+     * resources are not sorted or grouped in any particular way.
+     *
+     * @param startName the directory name to search
+     * @param recurse {@code true} to recurse into subdirectories, {@code false} otherwise
+     * @return the resource iterator
+     */
+    public final Iterator<Resource> iterateResources(final String startName, final boolean recurse) {
+        final String realStartName = PathUtils.canonicalize(PathUtils.relativize(startName));
+        final ResourceLoaderSpec[] list = paths.getSourceList(NO_RESOURCE_LOADERS);
+        return new Iterator<Resource>() {
+            private int idx;
+            private Iterator<Resource> nested;
+            private Resource next;
+
+            public boolean hasNext() {
+                while (next == null) {
+                    if (nested != null) {
+                        if (nested.hasNext()) {
+                            next = nested.next();
+                            return true;
+                        }
+                        nested = null;
+                    }
+                    if (idx == list.length) {
+                        return false;
+                    }
+                    final ResourceLoaderSpec spec = list[idx++];
+                    final ResourceLoader loader = spec.getResourceLoader();
+                    if (loader instanceof IterableResourceLoader) {
+                        final IterableResourceLoader iterableResourceLoader = (IterableResourceLoader) loader;
+                        nested = iterableResourceLoader.iterateResources(realStartName, recurse);
+                    }
+                }
+                return true;
+            }
+
+            public Resource next() {
+                if (! hasNext()) {
+                    throw new NoSuchElementException();
+                }
+                try {
+                    return next;
+                } finally {
+                    next = null;
+                }
+            }
+
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        };
     }
 
     /**

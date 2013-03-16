@@ -53,6 +53,17 @@ public final class LocalLoaders {
     /**
      * Create a filtered local loader.
      *
+     * @param pathFilter the path filter to apply to resources
+     * @param originalLoader the original loader
+     * @return the filtered loader
+     */
+    public static IterableLocalLoader createIterablePathFilteredLocalLoader(final PathFilter pathFilter, final IterableLocalLoader originalLoader) {
+        return new FilteredIterableLocalLoader(ClassFilters.acceptAll(), pathFilter, originalLoader);
+    }
+
+    /**
+     * Create a filtered local loader.
+     *
      * @param classFilter the class filter to apply to classes
      * @param originalLoader the original loader
      * @return the filtered loader
@@ -65,11 +76,34 @@ public final class LocalLoaders {
      * Create a filtered local loader.
      *
      * @param classFilter the class filter to apply to classes
+     * @param originalLoader the original loader
+     * @return the filtered loader
+     */
+    public static IterableLocalLoader createIterableClassFilteredLocalLoader(final ClassFilter classFilter, final IterableLocalLoader originalLoader) {
+        return new FilteredIterableLocalLoader(classFilter, PathFilters.acceptAll(), originalLoader);
+    }
+
+    /**
+     * Create a filtered local loader.
+     *
+     * @param classFilter the class filter to apply to classes
      * @param resourcePathFilter the path filter to apply to resources
      * @param originalLoader the original loader
      * @return the filtered loader
      */
     public static LocalLoader createFilteredLocalLoader(final ClassFilter classFilter, final PathFilter resourcePathFilter, final LocalLoader originalLoader) {
         return new FilteredLocalLoader(classFilter, resourcePathFilter, originalLoader);
+    }
+
+    /**
+     * Create a filtered local loader.
+     *
+     * @param classFilter the class filter to apply to classes
+     * @param resourcePathFilter the path filter to apply to resources
+     * @param originalLoader the original loader
+     * @return the filtered loader
+     */
+    public static IterableLocalLoader createIterableFilteredLocalLoader(final ClassFilter classFilter, final PathFilter resourcePathFilter, final IterableLocalLoader originalLoader) {
+        return new FilteredIterableLocalLoader(classFilter, resourcePathFilter, originalLoader);
     }
 }
