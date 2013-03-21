@@ -44,10 +44,12 @@ import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.TreeSet;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 /**
@@ -165,6 +167,14 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
     }
 
     private static void safeClose(final Closeable closeable) {
+        if (closeable != null) try {
+            closeable.close();
+        } catch (IOException e) {
+            // ignore
+        }
+    }
+
+    private static void safeClose(final ZipFile closeable) {
         if (closeable != null) try {
             closeable.close();
         } catch (IOException e) {
@@ -369,74 +379,67 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
     }
 
     static void addInternalIndex(File file, boolean modify) throws IOException {
-        JarFile oldJarFile = new JarFile(file, false);
-        final Collection<String> index = new HashSet<String>();
-        File outputFile;
-        ZipOutputStream zo = null;
-        BufferedWriter writer = null;
-
-        if (modify) {
-            outputFile = File.createTempFile(file.getName().substring(0, file.getName().lastIndexOf('.')) + "00", "jmp", file.getParentFile());
-        } else {
-            outputFile = new File(file.getAbsolutePath().replace(".jar", "-indexed.jar"));
-        }
-        zo = new ZipOutputStream(new FileOutputStream(outputFile));
-
+        final JarFile oldJarFile = new JarFile(file, false);
         try {
-            Enumeration<JarEntry> entries = oldJarFile.entries();
-            while (entries.hasMoreElements()) {
-                JarEntry entry = entries.nextElement();
+            final Collection<String> index = new TreeSet<String>();
+            final File outputFile;
 
-                // copy data, unless we're replacing the index
-                if (!entry.getName().equals(INDEX_FILE)) {
-                    JarEntry clone = (JarEntry) entry.clone();
-                    // Compression level and format can vary across implementations
-                    if (clone.getMethod() != ZipEntry.STORED)
-                        clone.setCompressedSize(-1);
-                    zo.putNextEntry(clone);
-                    copy(oldJarFile.getInputStream(entry), zo);
+            outputFile = new File(file.getAbsolutePath().replace(".jar", "-indexed.jar"));
+
+            final ZipOutputStream zo = new ZipOutputStream(new FileOutputStream(outputFile));
+            try {
+                Enumeration<JarEntry> entries = oldJarFile.entries();
+                while (entries.hasMoreElements()) {
+                    final JarEntry entry = entries.nextElement();
+
+                    // copy data, unless we're replacing the index
+                    if (!entry.getName().equals(INDEX_FILE)) {
+                        final JarEntry clone = (JarEntry) entry.clone();
+                        // Compression level and format can vary across implementations
+                        if (clone.getMethod() != ZipEntry.STORED)
+                            clone.setCompressedSize(-1);
+                        zo.putNextEntry(clone);
+                        copy(oldJarFile.getInputStream(entry), zo);
+                    }
+
+                    // add to the index
+                    final String name = entry.getName();
+                    final int idx = name.lastIndexOf('/');
+                    if (idx == -1) continue;
+                    final String path = name.substring(0, idx);
+                    if (path.length() == 0 || path.endsWith("/")) {
+                        // invalid name, just skip...
+                        continue;
+                    }
+                    index.add(path);
                 }
 
-                // add to the index
-                final String name = entry.getName();
-                final int idx = name.lastIndexOf('/');
-                if (idx == -1) continue;
-                final String path = name.substring(0, idx);
-                if (path.length() == 0 || path.endsWith("/")) {
-                    // invalid name, just skip...
-                    continue;
+                // write index
+                zo.putNextEntry(new ZipEntry(INDEX_FILE));
+                final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(zo));
+                try {
+                    for (String name : index) {
+                        writer.write(name);
+                        writer.write('\n');
+                    }
+                    writer.close();
+                } finally {
+                    safeClose(writer);
                 }
-                index.add(path);
-            }
+                zo.close();
+                oldJarFile.close();
 
-            // write index
-            zo.putNextEntry(new ZipEntry(INDEX_FILE));
-            writer = new BufferedWriter(new OutputStreamWriter(zo));
-            for (String name : index) {
-                writer.write(name);
-                writer.write('\n');
-            }
-
-            writer.close();
-            writer = null;
-            zo.close();
-            zo = null;
-            oldJarFile.close();
-            oldJarFile = null;
-
-            if (modify) {
-                file.delete();
-                if (!outputFile.renameTo(file)) {
-                    throw new IOException("failed to rename " + outputFile.getAbsolutePath() + " to " + file.getAbsolutePath());
+                if (modify) {
+                    file.delete();
+                    if (!outputFile.renameTo(file)) {
+                        throw new IOException("failed to rename " + outputFile.getAbsolutePath() + " to " + file.getAbsolutePath());
+                    }
                 }
+            } finally {
+                safeClose(zo);
             }
         } finally {
-            if (writer != null)
-                writer.close();
-            if (zo != null)
-                zo.close();
-            if (oldJarFile != null)
-                oldJarFile.close();
+            safeClose(oldJarFile);
         }
     }
 

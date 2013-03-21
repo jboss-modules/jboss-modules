@@ -115,13 +115,12 @@ public final class Main {
         boolean jar = false;
         boolean classpathDefined = false;
         boolean classDefined = false;
-        String moduleIdentifierOrExeName = null;
+        String nameArgument = null;
         ModuleIdentifier jaxpModuleIdentifier = null;
         boolean defaultSecMgr = false;
         String secMgrModule = null;
         boolean addIndex = false;
         boolean modifyInPlace = false;
-        String indexJar = null;
         for (int i = 0, argsLength = argsLen; i < argsLength; i++) {
             final String arg = args[i];
             try {
@@ -135,11 +134,8 @@ public final class Main {
                         return;
                     } else if ("-addindex".equals(arg)) {
                         addIndex = true;
-                        if (args[i + 1].equals("-modify")) {
-                            modifyInPlace = true;
-                            i++;
-                        }
-                        indexJar = args[++i];
+                    } else if ("-modify".equals(arg)) {
+                        modifyInPlace = true;
                     } else if ("-modulepath".equals(arg) || "-mp".equals(arg)) {
                         if (modulePath != null) {
                             System.err.println("Module path may only be specified once");
@@ -232,7 +228,7 @@ public final class Main {
                     }
                 } else {
                     // it's the module specification
-                    moduleIdentifierOrExeName = arg;
+                    nameArgument = arg;
                     int cnt = argsLen - i - 1;
                     moduleArgs = new String[cnt];
                     System.arraycopy(args, i + 1, moduleArgs, 0, cnt);
@@ -245,25 +241,60 @@ public final class Main {
             }
         }
         
-        if (addIndex) {
-            if (modulePath != null)
-                System.err.println("-mp should not be used with -addindex");
-            if (modulePath != null)
-                System.err.println("-jaxpModuleIdentifier should not be used with -addindex");
-            if (classpathDefined)
-                System.err.println("-cp or -classpath should not be used with -addindex");
-            if (classDefined)
-                System.err.println("-class should not be used with -addindex");
-            if (jar)
-                System.err.println("-jar should not be used with -addindex");
-            if (deps != null)
-                System.err.println("-deps should not be used with -addindex");
-            if (defaultSecMgr)
-                System.err.println("-secmgr should not be used with -addindex");
-            if (secMgrModule != null)
-                System.err.println("-secmgrmodule should not be used with -addindex");
+        if (modifyInPlace && ! addIndex) {
+            System.err.println("-modify requires -addindex");
+            usage();
+            System.exit(1);
+        }
 
-            JarFileResourceLoader.addInternalIndex(new File(indexJar), modifyInPlace);
+        if (addIndex) {
+            if (nameArgument == null) {
+                System.err.println("-addindex requires a target JAR name");
+                usage();
+                System.exit(1);
+            }
+            if (modulePath != null) {
+                System.err.println("-mp may not be used with -addindex");
+                usage();
+                System.exit(1);
+            }
+            if (modulePath != null) {
+                System.err.println("-jaxpModuleIdentifier may not be used with -addindex");
+                usage();
+                System.exit(1);
+            }
+            if (classpathDefined) {
+                System.err.println("-cp or -classpath may not be used with -addindex");
+                usage();
+                System.exit(1);
+            }
+            if (classDefined) {
+                System.err.println("-class may not be used with -addindex");
+                usage();
+                System.exit(1);
+            }
+            if (jar) {
+                System.err.println("-jar may not be used with -addindex");
+                usage();
+                System.exit(1);
+            }
+            if (deps != null) {
+                System.err.println("-deps may not be used with -addindex");
+                usage();
+                System.exit(1);
+            }
+            if (defaultSecMgr) {
+                System.err.println("-secmgr may not be used with -addindex");
+                usage();
+                System.exit(1);
+            }
+            if (secMgrModule != null) {
+                System.err.println("-secmgrmodule may not be used with -addindex");
+                usage();
+                System.exit(1);
+            }
+
+            JarFileResourceLoader.addInternalIndex(new File(nameArgument), modifyInPlace);
             return;
         }
 
@@ -273,7 +304,7 @@ public final class Main {
         }
 
         // run the module
-        if (moduleIdentifierOrExeName == null) {
+        if (nameArgument == null) {
             if (classDefined || classpathDefined) {
                 System.err.println("No class name specified");
             } else if (jar) {
@@ -289,14 +320,14 @@ public final class Main {
         environmentLoader = DefaultBootModuleLoaderHolder.INSTANCE;
         final ModuleIdentifier moduleIdentifier;
         if (jar) {
-            loader = new JarModuleLoader(environmentLoader, new JarFile(moduleIdentifierOrExeName));
+            loader = new JarModuleLoader(environmentLoader, new JarFile(nameArgument));
             moduleIdentifier = ((JarModuleLoader) loader).getMyIdentifier();
         } else if (classpathDefined || classDefined) {
-            loader = new ClassPathModuleLoader(environmentLoader, moduleIdentifierOrExeName, classpath, deps);
+            loader = new ClassPathModuleLoader(environmentLoader, nameArgument, classpath, deps);
             moduleIdentifier = ModuleIdentifier.CLASSPATH;
         } else {
             loader = environmentLoader;
-            moduleIdentifier = ModuleIdentifier.fromString(moduleIdentifierOrExeName);
+            moduleIdentifier = ModuleIdentifier.fromString(nameArgument);
         }
         Module.initBootModuleLoader(loader);
         if (jaxpModuleIdentifier != null) {
