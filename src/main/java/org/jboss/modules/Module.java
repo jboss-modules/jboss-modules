@@ -941,6 +941,7 @@ public final class Module {
                     if (moduleDependency.isOptional()) {
                         continue;
                     } else {
+                        log.trace("Module %s, dependency %s preload failed: %s", getIdentifier(), moduleDependency.getIdentifier(), ex);
                         throw ex;
                     }
                 }
@@ -1091,6 +1092,7 @@ public final class Module {
                         if (moduleDependency.isOptional()) {
                             continue;
                         } else {
+                            log.trace("Module %s, dependency %s preload failed: %s", getIdentifier(), moduleDependency.getIdentifier(), ex);
                             throw ex;
                         }
                     }
