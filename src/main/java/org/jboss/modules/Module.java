@@ -846,7 +846,7 @@ public final class Module {
                     if (moduleDependency.isOptional()) {
                         continue;
                     } else {
-                        log.trace("Failed preloading dependency %s of module %s", moduleDependency.getIdentifier(), getIdentifier());
+                        log.trace("Module %s, dependency preload failed: %s", getIdentifier(), ex);
                         throw ex;
                     }
                 }
@@ -983,7 +983,7 @@ public final class Module {
                         if (moduleDependency.isOptional()) {
                             continue;
                         } else {
-                            log.trace("Failed preloading dependency %s of module %s", moduleDependency.getIdentifier(), getIdentifier());
+                            log.trace("Module %s, dependency preload failed: %s", getIdentifier(), ex);
                             throw ex;
                         }
                     }
