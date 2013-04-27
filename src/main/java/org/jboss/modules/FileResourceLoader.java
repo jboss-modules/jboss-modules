@@ -38,16 +38,15 @@ import java.security.CodeSigner;
 import java.security.CodeSource;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.jar.Manifest;
-import org.jboss.modules.filter.PathFilter;
 
 /**
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author Thomas.Diesler@jboss.com
  */
 final class FileResourceLoader extends NativeLibraryResourceLoader implements IterableResourceLoader {
 
@@ -97,7 +96,7 @@ final class FileResourceLoader extends NativeLibraryResourceLoader implements It
         spec.setCodeSource(codeSource);
         final InputStream is = new FileInputStream(file);
         try {
-            if (size <= (long) Integer.MAX_VALUE) {
+            if (size <= Integer.MAX_VALUE) {
                 final int castSize = (int) size;
                 byte[] bytes = new byte[castSize];
                 int a = 0, res;
@@ -145,50 +144,52 @@ final class FileResourceLoader extends NativeLibraryResourceLoader implements It
     public Iterator<Resource> iterateResources(final String startPath, final boolean recursive) {
         final String canonPath = PathUtils.canonicalize(PathUtils.relativize(startPath));
         final File start = new File(getRoot(), canonPath);
-        final File[] files = start.listFiles();
-        if (files == null) {
-            return Collections.<Resource>emptySet().iterator();
-        }
+        final File[] startfiles = start.listFiles();
+        final int rootPathLength = getRoot().getPath().length();
         class Itr implements Iterator<Resource> {
-            private final String name;
-            private final File[] files;
-            private int i = 0;
-            private Itr nested;
-            private Resource next;
+            final File parent;
+            final File[] files;
+            Resource next;
+            Itr nested;
+            int i = 0;
 
-            Itr(final String name, final File[] files) {
-                this.name = name;
+            Itr(File parent, File[] files) {
+                this.parent = parent;
                 this.files = files;
             }
 
             public boolean hasNext() {
-                while (next == null) {
-                    final File current = files[i];
-                    if (recursive && nested == null) {
-                        final File[] children = current.listFiles();
-                        if (children != null && children.length > 0) {
-                            nested = new Itr(name + "/" + current.getName(), children);
-                        }
-                    }
-                    if (nested != null) {
-                        if (nested.hasNext()) {
-                            return true;
-                        }
+                if (nested != null) {
+                    boolean hasnext = nested.hasNext();
+                    if (hasnext) {
+                        return true;
+                    } else {
                         nested = null;
                     }
-                    i++;
-                    final String currentName = name + '/' + current.getName();
+                }
+                while(next == null) {
+                    if (files == null || i >= files.length) {
+                        return false;
+                    }
+                    File current = files[i++];
                     if (current.isFile()) {
                         try {
-                            next = new FileEntryResource(name, new File(start, currentName), current.toURI().toURL());
+                            String name = current.getPath().substring(rootPathLength + 1);
+                            next = new FileEntryResource(name, new File(parent, current.getName()), current.toURI().toURL());
                         } catch (MalformedURLException ignored) {
                         }
+                    } else if (recursive) {
+                        nested = new Itr(current, current.listFiles());
+                        return nested.hasNext();
                     }
                 }
                 return true;
             }
 
             public Resource next() {
+                if (nested != null) {
+                    return nested.next();
+                }
                 if (next == null) {
                     throw new NoSuchElementException();
                 }
@@ -200,9 +201,10 @@ final class FileResourceLoader extends NativeLibraryResourceLoader implements It
             }
 
             public void remove() {
+                throw new UnsupportedOperationException();
             }
-        }
-        return new Itr(canonPath, files);
+        };
+        return new Itr(start, startfiles);
     }
 
     public Collection<String> getPaths() {
