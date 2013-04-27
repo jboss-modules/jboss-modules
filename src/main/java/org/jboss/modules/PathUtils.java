@@ -213,7 +213,7 @@ public final class PathUtils {
     }
 
     /**
-     * Determine whether a one path is a child of another.
+     * Determine whether one path is a child of another.
      *
      * @param parent the parent path
      * @param child the child path
@@ -226,11 +226,11 @@ public final class PathUtils {
             throw new IllegalArgumentException("Cannot compare relative and absolute paths");
         }
         final int cpl = cp.length();
-        return cc.length() > cpl + 1 && cc.startsWith(cp) && cc.charAt(cpl) == '/';
+        return cpl == 0 || cc.length() > cpl + 1 && cc.startsWith(cp) && cc.charAt(cpl) == '/';
     }
 
     /**
-     * Determine whether a one path is a direct (or immediate) child of another.
+     * Determine whether one path is a direct (or immediate) child of another.
      *
      * @param parent the parent path
      * @param child the child path
@@ -243,7 +243,11 @@ public final class PathUtils {
             throw new IllegalArgumentException("Cannot compare relative and absolute paths");
         }
         final int cpl = cp.length();
-        return cc.length() > cpl + 1 && cc.startsWith(cp) && cc.charAt(cpl) == '/' && cc.indexOf('/', cpl + 1) == -1;
+        if (cpl == 0) {
+            return cc.indexOf('/') < 0;
+        } else {
+            return cc.length() > cpl + 1 && cc.startsWith(cp) && cc.charAt(cpl) == '/' && cc.indexOf('/', cpl + 1) == -1;
+        }
     }
 
     /**
@@ -253,7 +257,7 @@ public final class PathUtils {
      * @return {@code true} if it is relative
      */
     public static boolean isRelative(final String path) {
-        return path.isEmpty() || isSeparator(path.charAt(0));
+        return path.isEmpty() || !isSeparator(path.charAt(0));
     }
 
     /**
