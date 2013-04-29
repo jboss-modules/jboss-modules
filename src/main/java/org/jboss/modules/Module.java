@@ -126,7 +126,9 @@ public final class Module {
                     // todo log a warning or something
                 }
 
-                __JAXPRedirected.initAll();
+
+                if(!Boolean.getBoolean("modules.ignore.jdk.factory"))
+                    __JAXPRedirected.initAll();
 
                 return null;
             }
