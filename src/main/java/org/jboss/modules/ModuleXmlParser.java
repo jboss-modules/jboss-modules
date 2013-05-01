@@ -86,6 +86,7 @@ final class ModuleXmlParser {
         MODULE_1_0,
         MODULE_1_1,
         MODULE_1_2,
+        MODULE_1_3,
         ;
 
         private static final Map<String, Namespace> namespaces;
@@ -95,6 +96,7 @@ final class ModuleXmlParser {
             namespacesMap.put("urn:jboss:module:1.0", MODULE_1_0);
             namespacesMap.put("urn:jboss:module:1.1", MODULE_1_1);
             namespacesMap.put("urn:jboss:module:1.2", MODULE_1_2);
+            namespacesMap.put("urn:jboss:module:1.3", MODULE_1_3);
             namespaces = namespacesMap;
         }
 
@@ -780,7 +782,6 @@ final class ModuleXmlParser {
             throw missingAttributes(reader.getLocation(), required);
         }
 
-        ResourceLoader resourceLoader;
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case END_ELEMENT: {
