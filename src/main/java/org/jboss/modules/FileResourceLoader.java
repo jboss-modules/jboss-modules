@@ -43,7 +43,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.jar.Manifest;
-import org.jboss.modules.filter.PathFilter;
 
 /**
  *
@@ -142,67 +141,80 @@ final class FileResourceLoader extends NativeLibraryResourceLoader implements It
         }
     }
 
+    class Itr implements Iterator<Resource> {
+        private final String base;
+        private final String[] names;
+        private final boolean recursive;
+        private int i = 0;
+        private Itr nested;
+        private Resource next;
+
+        Itr(final String base, final String[] names, final boolean recursive) {
+            assert PathUtils.isRelative(base);
+            assert names != null && names.length > 0;
+            this.base = base;
+            this.names = names;
+            this.recursive = recursive;
+        }
+
+        public boolean hasNext() {
+            final String[] names = this.names;
+            if (next != null) {
+                return true;
+            }
+            final String base = this.base;
+            while (i < names.length) {
+                final String current = names[i];
+                final String full = base.isEmpty() ? current : base + "/" + current;
+                final File file = new File(getRoot(), full);
+                if (recursive && nested == null) {
+                    final String[] children = file.list();
+                    if (children != null && children.length > 0) {
+                        nested = new Itr(full, children, recursive);
+                    }
+                }
+                if (nested != null) {
+                    if (nested.hasNext()) {
+                        next = nested.next();
+                        return true;
+                    }
+                    nested = null;
+                }
+                i++;
+                if (file.isFile()) {
+                    try {
+                        next = new FileEntryResource(full, file, file.toURI().toURL());
+                        return true;
+                    } catch (MalformedURLException ignored) {
+                    }
+                }
+            }
+            return false;
+        }
+
+        public Resource next() {
+            if (! hasNext()) {
+                throw new NoSuchElementException();
+            }
+            try {
+                return next;
+            } finally {
+                next = null;
+            }
+        }
+
+        public void remove() {
+        }
+    }
+
     public Iterator<Resource> iterateResources(final String startPath, final boolean recursive) {
         final String canonPath = PathUtils.canonicalize(PathUtils.relativize(startPath));
         final File start = new File(getRoot(), canonPath);
-        final File[] files = start.listFiles();
-        if (files == null) {
+        final String[] children = start.list();
+        if (children == null || children.length == 0) {
             return Collections.<Resource>emptySet().iterator();
         }
-        class Itr implements Iterator<Resource> {
-            private final String name;
-            private final File[] files;
-            private int i = 0;
-            private Itr nested;
-            private Resource next;
-
-            Itr(final String name, final File[] files) {
-                this.name = name;
-                this.files = files;
-            }
-
-            public boolean hasNext() {
-                while (next == null) {
-                    final File current = files[i];
-                    if (recursive && nested == null) {
-                        final File[] children = current.listFiles();
-                        if (children != null && children.length > 0) {
-                            nested = new Itr(name + "/" + current.getName(), children);
-                        }
-                    }
-                    if (nested != null) {
-                        if (nested.hasNext()) {
-                            return true;
-                        }
-                        nested = null;
-                    }
-                    i++;
-                    final String currentName = name + '/' + current.getName();
-                    if (current.isFile()) {
-                        try {
-                            next = new FileEntryResource(name, new File(start, currentName), current.toURI().toURL());
-                        } catch (MalformedURLException ignored) {
-                        }
-                    }
-                }
-                return true;
-            }
-
-            public Resource next() {
-                if (next == null) {
-                    throw new NoSuchElementException();
-                }
-                try {
-                    return next;
-                } finally {
-                    next = null;
-                }
-            }
-
-            public void remove() {
-            }
-        }
-        return new Itr(canonPath, files);
+        return new Itr(canonPath, children, recursive);
     }
 
     public Collection<String> getPaths() {
