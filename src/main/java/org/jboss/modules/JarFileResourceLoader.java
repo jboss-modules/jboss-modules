@@ -55,6 +55,7 @@ import java.util.zip.ZipOutputStream;
 /**
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author Thomas.Diesler@jboss.com
  */
 final class JarFileResourceLoader extends AbstractResourceLoader implements IterableResourceLoader {
     private static final String INDEX_FILE = "META-INF/PATHS.LIST";
@@ -240,9 +241,11 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
                     final JarEntry entry = entries.nextElement();
                     final String name = entry.getName();
                     if ((recursive ? PathUtils.isChild(startName, name) : PathUtils.isDirectChild(startName, name))) {
-                        try {
-                            next = new JarEntryResource(jarFile, entry, getJarURI(new File(jarFile.getName()).toURI(), entry.getName()).toURL());
-                        } catch (Exception ignored) {
+                        if (!entry.isDirectory()) {
+                            try {
+                                next = new JarEntryResource(jarFile, entry, getJarURI(new File(jarFile.getName()).toURI(), entry.getName()).toURL());
+                            } catch (Exception ignored) {
+                            }
                         }
                     }
                 }
