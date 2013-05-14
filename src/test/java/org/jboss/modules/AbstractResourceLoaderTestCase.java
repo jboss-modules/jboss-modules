@@ -22,14 +22,6 @@
 
 package org.jboss.modules;
 
-import org.jboss.modules.filter.PathFilter;
-import org.jboss.modules.filter.PathFilters;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.net.URL;
-import java.util.Collection;
-
 import static org.jboss.modules.util.Util.readBytes;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -37,6 +29,18 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+
+import java.net.URL;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+
+import org.jboss.modules.filter.PathFilter;
+import org.jboss.modules.filter.PathFilters;
+import org.junit.Before;
+import org.junit.Test;
 
 
 /**
@@ -127,5 +131,55 @@ public abstract class AbstractResourceLoaderTestCase extends AbstractModuleTestC
         assertNull(spec.getImplTitle());
         assertNull(spec.getImplVersion());
         assertNull(spec.getImplVendor());
+    }
+
+    @Test
+    public void testIterateResourcesRootRecursive() throws Exception {
+        Set<String> expected = new HashSet<String>();
+        expected.add("test.txt");
+        expected.add("nested/nested.txt");
+        expected.add("org/jboss/modules/test/TestClass.class");
+        expected.add("META-INF/MANIFEST.MF");
+        assertEquals(expected, getResourceNames("/", true));
+        assertEquals(expected, getResourceNames("", true));
+    }
+
+    @Test
+    public void testIterateResourcesRoot() throws Exception {
+        Set<String> expected = new HashSet<String>();
+        expected.add("test.txt");
+        assertEquals(expected, getResourceNames("/", false));
+        assertEquals(expected, getResourceNames("", false));
+    }
+
+    @Test
+    public void testIterateResourcesNested() throws Exception {
+        Set<String> expected = new HashSet<String>();
+        expected.add("nested/nested.txt");
+        assertEquals(expected, getResourceNames("/nested", true));
+        assertEquals(expected, getResourceNames("/nested", false));
+        assertEquals(expected, getResourceNames("nested", true));
+        assertEquals(expected, getResourceNames("nested", false));
+    }
+
+    @Test
+    public void testIterateResourcesClasses() throws Exception {
+        Set<String> expected = new HashSet<String>();
+        expected.add("org/jboss/modules/test/TestClass.class");
+        assertEquals(expected, getResourceNames("/org/jboss/modules", true));
+        assertEquals(expected, getResourceNames("org/jboss/modules", true));
+        expected = Collections.<String>emptySet();
+        assertEquals(expected, getResourceNames("/org/jboss/modules", false));
+        assertEquals(expected, getResourceNames("org/jboss/modules", false));
+    }
+
+    private Set<String> getResourceNames(String startPath, boolean recursive) {
+        Set<String> result = new HashSet<String>();
+        IterableResourceLoader itloader = (IterableResourceLoader) loader;
+        Iterator<Resource> itres = itloader.iterateResources(startPath, recursive);
+        while(itres.hasNext()) {
+            result.add(itres.next().getName());
+        }
+        return result;
     }
 }
