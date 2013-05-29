@@ -22,7 +22,6 @@
 
 package org.jboss.modules;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -120,14 +119,8 @@ class LayeredModulePathFactory {
         } catch (IOException e) {
             throw new RuntimeException(e);
         } finally {
-            safeClose(reader);
+            StreamUtil.safeClose(reader);
         }
-    }
-
-    private static void safeClose(Closeable c) {
-        if (c != null) try {
-            c.close();
-        } catch (Throwable ignored) {}
     }
 
     private static class LayersConfig {

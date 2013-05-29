@@ -29,7 +29,6 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 import java.io.BufferedInputStream;
-import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -278,7 +277,7 @@ final class ModuleXmlParser {
                     }
              }, root.getPath(), new BufferedInputStream(fis), moduleInfoFile.getPath(), moduleLoader, moduleIdentifier);
         } finally {
-            safeClose(fis);
+            StreamUtil.safeClose(fis);
         }
     }
 
@@ -299,26 +298,10 @@ final class ModuleXmlParser {
             try {
                 return parseDocument(factory, rootPath, streamReader, moduleLoader, moduleIdentifier);
             } finally {
-                safeClose(streamReader);
+                StreamUtil.safeClose(streamReader);
             }
         } catch (XMLStreamException e) {
             throw new ModuleLoadException("Error loading module from " + moduleInfoFile, e);
-        }
-    }
-
-    private static void safeClose(final Closeable closeable) {
-        if (closeable != null) try {
-            closeable.close();
-        } catch (IOException e) {
-            // ignore
-        }
-    }
-
-    private static void safeClose(final XMLStreamReader streamReader) {
-        if (streamReader != null) try {
-            streamReader.close();
-        } catch (XMLStreamException e) {
-            // ignore
         }
     }
 
@@ -760,7 +743,7 @@ final class ModuleXmlParser {
         File lib = new File(fp.getParentFile(), "lib");
         if (!lib.exists()) {
             if (!fp.getParentFile().canWrite()) throw new XMLStreamException(String.format("Native artifact '%s' cannot be unpacked", name), reader.getLocation());
-            Unzip.execute(fp, fp.getParentFile());
+            StreamUtil.unzip(fp, fp.getParentFile());
         }
         specBuilder.addResourceRoot(new ResourceLoaderSpec(new NativeLibraryResourceLoader(lib), PathFilters.rejectAll()));
     }

@@ -25,14 +25,12 @@ package org.jboss.modules;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
-import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -49,7 +47,6 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 /**
@@ -159,28 +156,12 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
                 throw new IOException("Resource is too large to be a valid class file");
             }
         } finally {
-            safeClose(is);
+            StreamUtil.safeClose(is);
         }
     }
 
     private JarEntry getJarEntry(final String fileName) {
         return relativePath == null ? jarFile.getJarEntry(fileName) : jarFile.getJarEntry(relativePath + "/" + fileName);
-    }
-
-    private static void safeClose(final Closeable closeable) {
-        if (closeable != null) try {
-            closeable.close();
-        } catch (IOException e) {
-            // ignore
-        }
-    }
-
-    private static void safeClose(final ZipFile closeable) {
-        if (closeable != null) try {
-            closeable.close();
-        } catch (IOException e) {
-            // ignore
-        }
     }
 
     public PackageSpec getPackageSpec(final String name) throws IOException {
@@ -196,7 +177,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
                 try {
                     manifest = new Manifest(inputStream);
                 } finally {
-                    safeClose(inputStream);
+                    StreamUtil.safeClose(inputStream);
                 }
             }
         }
@@ -402,7 +383,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
                         if (clone.getMethod() != ZipEntry.STORED)
                             clone.setCompressedSize(-1);
                         zo.putNextEntry(clone);
-                        copy(oldJarFile.getInputStream(entry), zo);
+                        StreamUtil.copy(oldJarFile.getInputStream(entry), zo);
                     }
 
                     // add to the index
@@ -427,7 +408,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
                     }
                     writer.close();
                 } finally {
-                    safeClose(writer);
+                    StreamUtil.safeClose(writer);
                 }
                 zo.close();
                 oldJarFile.close();
@@ -439,19 +420,10 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
                     }
                 }
             } finally {
-                safeClose(zo);
+                StreamUtil.safeClose(zo);
             }
         } finally {
-            safeClose(oldJarFile);
+            StreamUtil.safeClose(oldJarFile);
         }
-    }
-
-    private static void copy(InputStream in, OutputStream out) throws IOException {
-        byte[] buf = new byte[8192];
-        int len;
-        while ((len = in.read(buf)) > 0) {
-            out.write(buf, 0, len);
-        }
-        out.flush();
     }
 }

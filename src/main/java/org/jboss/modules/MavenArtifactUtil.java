@@ -36,7 +36,7 @@ import java.net.URL;
  * @author <a href="mailto:bill@burkecentral.com">Bill Burke</a>
  * @version $Revision: 1 $
  */
-public class MavenArtifactUtil {
+class MavenArtifactUtil {
 
     public static String[] getLocalRepositoryPaths() {
         String localRepositoryPath = System.getProperty("local.maven.repo.path");
@@ -120,9 +120,6 @@ public class MavenArtifactUtil {
     }
 
     public static void downloadFile(String artifact, String src, File dest) throws IOException {
-        final int CHUNK_SIZE = 8192;
-        final byte[] dataChunk = new byte[CHUNK_SIZE];
-
         final URL url = new URL(src);
         final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         boolean message = Boolean.parseBoolean(System.getProperty("maven.download.message", "true"));
@@ -134,31 +131,12 @@ public class MavenArtifactUtil {
             BufferedOutputStream bos = new BufferedOutputStream(fos);
             try {
                 if (message) System.out.println("Downloading " + artifact);
-                int dataread = 0;
-                long bytesRead = 0;
-                boolean kilobytes = false;
-                while (dataread >= 0) {
-                    dataread = bis.read(dataChunk, 0, CHUNK_SIZE);
-                    if (dataread > 0) {
-                        bos.write(dataChunk, 0, dataread);
-
-                        if (kilobytes) {
-                            dataread = dataread / 1024;
-                            bytesRead += dataread;
-                        } else {
-                            bytesRead += dataread;
-                            if (bytesRead > 1024) {
-                                bytesRead = bytesRead / 1024;
-                                kilobytes = true;
-                            }
-                        }
-                    }
-                }
+                StreamUtil.copy(bis, bos);
             } finally {
-                bos.close();
+                StreamUtil.safeClose(fos);
             }
         } finally {
-            bis.close();
+            StreamUtil.safeClose(bis);
         }
     }
 }

@@ -142,7 +142,7 @@ public final class JarModuleFinder implements ModuleFinder {
                         }
                     }, basePath, inputStream, moduleXmlEntry.getName(), delegateLoader, identifier);
                 } finally {
-                    JarModuleLoader.safeClose(inputStream);
+                    StreamUtil.safeClose(inputStream);
                 }
             } catch (IOException e) {
                 throw new ModuleLoadException("Failed to read module.xml file", e);

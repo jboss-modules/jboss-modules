@@ -24,7 +24,6 @@ package org.jboss.modules;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -111,15 +110,7 @@ final class FileResourceLoader extends NativeLibraryResourceLoader implements It
                 throw new IOException("Resource is too large to be a valid class file");
             }
         } finally {
-            safeClose(is);
-        }
-    }
-
-    private static void safeClose(final Closeable closeable) {
-        if (closeable != null) try {
-            closeable.close();
-        } catch (IOException e) {
-            // ignore
+            StreamUtil.safeClose(is);
         }
     }
 
@@ -262,13 +253,13 @@ final class FileResourceLoader extends NativeLibraryResourceLoader implements It
                             fos.close();
                             ok = true;
                         } finally {
-                            safeClose(writer);
+                            StreamUtil.safeClose(writer);
                         }
                     } finally {
-                        safeClose(osw);
+                        StreamUtil.safeClose(osw);
                     }
                 } finally {
-                    safeClose(fos);
+                    StreamUtil.safeClose(fos);
                 }
             } catch (IOException e) {
                 // failed, ignore

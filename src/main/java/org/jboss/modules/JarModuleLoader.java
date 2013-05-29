@@ -22,9 +22,7 @@
 
 package org.jboss.modules;
 
-import java.io.Closeable;
 import java.io.File;
-import java.io.IOException;
 import java.util.jar.JarFile;
 
 /**
@@ -69,13 +67,5 @@ final class JarModuleLoader extends ModuleLoader {
 
     public String toString() {
         return "JAR module loader";
-    }
-
-    static void safeClose(final Closeable closeable) {
-        if (closeable != null) try {
-            closeable.close();
-        } catch (IOException e) {
-            // ignore
-        }
     }
 }
