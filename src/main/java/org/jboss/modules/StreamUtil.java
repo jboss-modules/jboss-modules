@@ -22,7 +22,6 @@
 
 package org.jboss.modules;
 
-import java.io.BufferedOutputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileOutputStream;

@@ -325,11 +325,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
                 writer.close();
                 ok = true;
             } finally {
-                try {
-                    writer.close();
-                } catch (IOException e) {
-                    // ignored
-                }
+                StreamUtil.safeClose(writer);
             }
         } catch (IOException e) {
             // failed, ignore

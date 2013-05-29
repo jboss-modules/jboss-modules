@@ -35,7 +35,6 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.security.AccessController;
 import java.security.Policy;
-import java.security.PrivilegedAction;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.ServiceLoader;
@@ -425,29 +424,25 @@ public final class Main {
 
     private static String getServiceName(ClassLoader classLoader, String className) throws IOException {
         final InputStream stream = classLoader.getResourceAsStream("META-INF/services/" + className);
-        if (stream != null) {
-            try {
-                final BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    final int i = line.indexOf('#');
-                    if (i != -1) {
-                        line = line.substring(0, i);
-                    }
-                    line = line.trim();
-                    if (line.length() == 0) continue;
-                    return line;
-                }
-
-            } finally {
-                try {
-                    stream.close();
-                } catch (IOException ignored) {
-                    // ignore
-                }
-            }
+        if (stream == null) {
+            return null;
         }
-        return null;
+        try {
+            final BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                final int i = line.indexOf('#');
+                if (i != -1) {
+                    line = line.substring(0, i);
+                }
+                line = line.trim();
+                if (line.length() == 0) continue;
+                return line;
+            }
+            return null;
+        } finally {
+            StreamUtil.safeClose(stream);
+        }
     }
 
     private static final String JAR_NAME;
@@ -462,20 +457,21 @@ public final class Main {
             resources = classLoader == null ? ModuleClassLoader.getSystemResources("META-INF/MANIFEST.MF") : classLoader.getResources("META-INF/MANIFEST.MF");
             while (resources.hasMoreElements()) {
                 final URL url = resources.nextElement();
-                final InputStream stream = url.openStream();
-                if (stream != null) try {
-                    final Manifest manifest = new Manifest(stream);
-                    final Attributes mainAttributes = manifest.getMainAttributes();
-                    if (mainAttributes != null && "JBoss Modules".equals(mainAttributes.getValue("Specification-Title"))) {
-                        jarName = mainAttributes.getValue("Jar-Name");
-                        versionString = mainAttributes.getValue("Jar-Version");
+                try {
+                    final InputStream stream = url.openStream();
+                    if (stream != null) try {
+                        final Manifest manifest = new Manifest(stream);
+                        final Attributes mainAttributes = manifest.getMainAttributes();
+                        if (mainAttributes != null && "JBoss Modules".equals(mainAttributes.getValue("Specification-Title"))) {
+                            jarName = mainAttributes.getValue("Jar-Name");
+                            versionString = mainAttributes.getValue("Jar-Version");
+                        }
+                    } finally {
+                        StreamUtil.safeClose(stream);
                     }
-                } finally {
-                    try { stream.close(); } catch (Throwable ignored) {}
-                }
+                } catch (IOException ignored) {}
             }
-        } catch (IOException ignored) {
-        }
+        } catch (IOException ignored) {}
         JAR_NAME = jarName;
         VERSION_STRING = versionString;
     }

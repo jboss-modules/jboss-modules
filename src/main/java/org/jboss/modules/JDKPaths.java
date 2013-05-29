@@ -95,9 +95,7 @@ final class JDKPaths {
             }
             zipFile.close();
         } finally {
-            try {
-                zipFile.close();
-            } catch (IOException ignored) {}
+            StreamUtil.safeClose(zipFile);
         }
     }
 
