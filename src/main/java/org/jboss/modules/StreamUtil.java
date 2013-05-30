@@ -32,8 +32,6 @@ import java.util.Enumeration;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import javax.xml.stream.XMLStreamReader;
-
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
@@ -56,12 +54,6 @@ final class StreamUtil {
 
     // ZipFile didn't implement Closeable in 1.6
     static void safeClose(ZipFile closeable) {
-        if (closeable != null) try {
-            closeable.close();
-        } catch (Throwable ignored) {}
-    }
-
-    static void safeClose(final XMLStreamReader closeable) {
         if (closeable != null) try {
             closeable.close();
         } catch (Throwable ignored) {}

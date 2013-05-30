@@ -33,7 +33,7 @@
     <parent>
         <groupId>org.jboss</groupId>
         <artifactId>jboss-parent</artifactId>
-        <version>7</version>
+        <version>10</version>
     </parent>
 
     <licenses>
@@ -46,6 +46,8 @@
 
     <properties>
         <skip.enforcer>false</skip.enforcer>
+        <maven.compiler.target>1.7</maven.compiler.target>
+        <maven.compiler.source>1.7</maven.compiler.source>
     </properties>
 
     <build>
@@ -112,28 +114,7 @@
 
             <!-- Enforcer -->
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>1.0.1</version>
-                <executions>
-                    <execution>
-                        <!-- Enforce Java 7 version -->
-                        <id>enforce-java-7-version</id>
-                        <goals>
-                            <goal>enforce</goal>
-                        </goals>
-                        <configuration>
-                            <skip>${skip.enforcer}</skip>
-                            <rules>
-                                <requireJavaVersion>
-                                    <!-- version >= 1.7 -->
-                                    <version>[1.7,)</version>
-                                    <message>Java 7 or higher required to build this project</message>
-                                </requireJavaVersion>
-                            </rules>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>
