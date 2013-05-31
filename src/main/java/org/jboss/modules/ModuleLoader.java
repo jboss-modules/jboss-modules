@@ -34,9 +34,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -74,6 +76,7 @@ public class ModuleLoader {
     private static final RuntimePermission MODULE_REDEFINE_PERM = new RuntimePermission("canRedefineModule");
     private static final RuntimePermission MODULE_REDEFINE_ANY_PERM = new RuntimePermission("canRedefineAnyModule");
     private static final RuntimePermission MODULE_UNLOAD_ANY_PERM = new RuntimePermission("canUnloadAnyModule");
+    private static final RuntimePermission MODULE_ITERATE_PERM = new RuntimePermission("canIterateModules");
 
     private static final AtomicInteger SEQ = new AtomicInteger(1);
 
@@ -225,6 +228,55 @@ public class ModuleLoader {
         }
         module.relinkIfNecessary();
         return module;
+    }
+
+    /**
+     * Iterate the modules which can be located via this module loader.
+     *
+     * @param baseIdentifier the identifier to start with, or {@code null} to iterate all modules
+     * @param recursive {@code true} to find recursively nested modules, {@code false} to only find immediately nested modules
+     * @return an iterator for the modules in this module finder
+     * @throws SecurityException if the caller does not have permission to iterate module loaders
+     */
+    public final Iterator<ModuleIdentifier> iterateModules(final ModuleIdentifier baseIdentifier, final boolean recursive) {
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(MODULE_ITERATE_PERM);
+        }
+        return new Iterator<ModuleIdentifier>() {
+            int idx;
+            Iterator<ModuleIdentifier> nested;
+
+            public boolean hasNext() {
+                for (;;) {
+                    while (nested == null) {
+                        if (idx == finders.length) {
+                            return false;
+                        }
+                        final ModuleFinder finder = finders[idx++];
+                        if (finder instanceof IterableModuleFinder) {
+                            final Iterator<ModuleIdentifier> iterator = ((IterableModuleFinder) finder).iterateModules(baseIdentifier, recursive);
+                            if (iterator.hasNext()) {
+                                nested = iterator;
+                                return true;
+                            }
+                        }
+                    }
+                    if (! nested.hasNext()) nested = null;
+                }
+            }
+
+            public ModuleIdentifier next() {
+                if (! hasNext()) {
+                    throw new NoSuchElementException();
+                }
+                return nested.next();
+            }
+
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        };
     }
 
     /**
