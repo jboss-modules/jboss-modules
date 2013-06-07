@@ -27,6 +27,7 @@ import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import org.jboss.modules.filter.PathFilter;
+import org.jboss.modules.filter.PathFilters;
 import org.jboss.modules.log.ModuleLogger;
 
 import java.io.IOException;
@@ -645,38 +646,60 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
      */
     public final Iterator<Resource> iterateResources(final String startName, final boolean recurse) {
         final String realStartName = PathUtils.canonicalize(PathUtils.relativize(startName));
-        final ResourceLoaderSpec[] list = paths.getSourceList(NO_RESOURCE_LOADERS);
+        final PathFilter filter;
+        if (recurse) {
+            if (realStartName.isEmpty()) {
+                filter = PathFilters.acceptAll();
+            } else {
+                filter = PathFilters.any(PathFilters.is(realStartName), PathFilters.isChildOf(realStartName));
+            }
+        } else {
+            filter = PathFilters.is(realStartName);
+        }
+        final Map<String, List<ResourceLoader>> paths = this.paths.getAllPaths();
+        final Iterator<Map.Entry<String, List<ResourceLoader>>> iterator = paths.entrySet().iterator();
         return new Iterator<Resource>() {
-            private int idx;
-            private Iterator<Resource> nested;
+
+            private String path;
+            private Iterator<Resource> resourceIterator;
+            private Iterator<ResourceLoader> loaderIterator;
             private Resource next;
 
             public boolean hasNext() {
                 while (next == null) {
-                    if (nested != null) {
-                        if (nested.hasNext()) {
-                            next = nested.next();
+                    if (resourceIterator != null) {
+                        assert path != null;
+                        if (resourceIterator.hasNext()) {
+                            next = resourceIterator.next();
                             return true;
                         }
-                        nested = null;
+                        resourceIterator = null;
                     }
-                    if (idx == list.length) {
+                    if (loaderIterator != null) {
+                        assert path != null;
+                        if (loaderIterator.hasNext()) {
+                            final ResourceLoader loader = loaderIterator.next();
+                            if (loader instanceof IterableResourceLoader) {
+                                resourceIterator = ((IterableResourceLoader)loader).iterateResources(path, false);
+                                continue;
+                            }
+                        }
+                        loaderIterator = null;
+                    }
+                    if (! iterator.hasNext()) {
                         return false;
                     }
-                    final ResourceLoaderSpec spec = list[idx++];
-                    final ResourceLoader loader = spec.getResourceLoader();
-                    if (loader instanceof IterableResourceLoader) {
-                        final IterableResourceLoader iterableResourceLoader = (IterableResourceLoader) loader;
-                        nested = iterableResourceLoader.iterateResources(realStartName, recurse);
+                    final Map.Entry<String, List<ResourceLoader>> entry = iterator.next();
+                    path = entry.getKey();
+                    if (filter.accept(path)) {
+                        loaderIterator = entry.getValue().iterator();
                     }
                 }
                 return true;
             }
 
             public Resource next() {
-                if (! hasNext()) {
-                    throw new NoSuchElementException();
-                }
+                if (! hasNext()) throw new NoSuchElementException();
                 try {
                     return next;
                 } finally {
