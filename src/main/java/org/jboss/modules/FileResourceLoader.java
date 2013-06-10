@@ -131,7 +131,7 @@ final class FileResourceLoader extends NativeLibraryResourceLoader implements It
         final String canonPath = PathUtils.canonicalize(PathUtils.relativize(name));
         try {
             final File file = new File(getRoot(), canonPath);
-            if (! file.isFile()) {
+            if (! file.exists()) {
                 return null;
             }
             return new FileEntryResource(canonPath, file, file.toURI().toURL());
