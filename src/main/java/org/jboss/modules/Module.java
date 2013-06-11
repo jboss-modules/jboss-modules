@@ -863,6 +863,16 @@ public final class Module {
         ModularURLStreamHandlerFactory.addHandlerModule(module);
     }
 
+    /**
+     * Get the platform identifier.  This is the string that uniquely identifies the hardware and OS combination for
+     * the current running system.
+     *
+     * @return the platform identifier
+     */
+    public static String getPlatformIdentifier() {
+        return NativeLibraryResourceLoader.getArchName();
+    }
+
     PermissionCollection getPermissionCollection() {
         return permissionCollection;
     }
