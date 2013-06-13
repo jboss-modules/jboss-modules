@@ -268,6 +268,6 @@ public final class PathUtils {
      */
     public static boolean isSeparator(final char ch) {
         // the second half of this compare will optimize away on / OSes
-        return ch == '/' || File.separatorChar != '/' && ch != File.separatorChar;
+        return ch == File.separatorChar;
     }
 }
