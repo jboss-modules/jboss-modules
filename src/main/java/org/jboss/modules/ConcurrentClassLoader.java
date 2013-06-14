@@ -58,7 +58,7 @@ public abstract class ConcurrentClassLoader extends ClassLoader {
 
     static {
         try {
-            ClassLoader.registerAsParallelCapable();
+           ClassLoader.class.getMethod("registerAsParallelCapable").invoke(null);
         } catch (Throwable ignored) {
         }
         /*

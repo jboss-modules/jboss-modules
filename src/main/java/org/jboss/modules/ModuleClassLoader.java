@@ -57,7 +57,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
 
     static {
         try {
-            ClassLoader.registerAsParallelCapable();
+           ClassLoader.class.getMethod("registerAsParallelCapable").invoke(null);
         } catch (Throwable ignored) {
         }
     }

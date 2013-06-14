@@ -25,9 +25,9 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>org.jboss.modules</groupId>
-    <artifactId>jboss-modules</artifactId>
-    <version>1.3.0.Beta1</version>
+    <groupId>org.jboss.forge</groupId>
+    <artifactId>forge-jboss-modules</artifactId>
+    <version>4</version>
     <name>JBoss Modules</name>
 
     <parent>
@@ -46,8 +46,8 @@
 
     <properties>
         <skip.enforcer>false</skip.enforcer>
-        <maven.compiler.target>1.7</maven.compiler.target>
-        <maven.compiler.source>1.7</maven.compiler.source>
+        <maven.compiler.target>1.6</maven.compiler.target>
+        <maven.compiler.source>1.6</maven.compiler.source>
     </properties>
 
     <build>
