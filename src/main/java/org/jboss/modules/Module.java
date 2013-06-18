@@ -695,6 +695,19 @@ public final class Module {
     }
 
     /**
+     * Get the (unmodifiable) set of paths which are imported into this module class loader, including local paths.  The
+     * set will include all paths defined by the module's resource loaders, minus any paths excluded by filters.  The
+     * set will generally always contain an empty entry ("").  The set is unordered and unsorted, and is iterable in
+     * O(n) time and accessible in O(1) time.
+     *
+     * @return the set of paths
+     * @throws ModuleLoadException if the module was previously unlinked, and there was an exception while linking
+     */
+    public final Set<String> getImportedPaths() throws ModuleLoadException {
+        return Collections.unmodifiableSet(getPaths().keySet());
+    }
+
+    /**
      * Get the path name of a class.
      *
      * @param className the binary name of the class

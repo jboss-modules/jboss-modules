@@ -714,6 +714,18 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
     }
 
     /**
+     * Get the (unmodifiable) set of paths which are locally available in this module class loader.  The set will
+     * include all paths defined by the module's resource loaders, minus any paths excluded by filters.  The set will
+     * generally always contain an empty entry ("").  The set is unordered and unsorted, and is iterable in O(n) time
+     * and accessible in O(1) time.
+     *
+     * @return the set of local paths
+     */
+    public final Set<String> getLocalPaths() {
+        return Collections.unmodifiableSet(paths.getAllPaths().keySet());
+    }
+
+    /**
      * An opaque configuration used internally to create a module class loader.
      *
      * @apiviz.exclude
