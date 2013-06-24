@@ -26,6 +26,8 @@ import java.io.File;
 import java.io.FilePermission;
 import java.io.IOException;
 import java.lang.reflect.UndeclaredThrowableException;
+import java.security.AccessControlContext;
+import java.security.AccessController;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import org.jboss.modules.filter.PathFilter;
@@ -45,6 +47,7 @@ public final class LocalModuleFinder implements ModuleFinder {
 
     private final File[] repoRoots;
     private final PathFilter pathFilter;
+    private final AccessControlContext accessControlContext;
 
     private LocalModuleFinder(final File[] repoRoots, final PathFilter pathFilter, final boolean cloneRoots) {
         this.repoRoots = cloneRoots && repoRoots.length > 0 ? repoRoots.clone() : repoRoots;
@@ -55,6 +58,7 @@ public final class LocalModuleFinder implements ModuleFinder {
             }
         }
         this.pathFilter = pathFilter;
+        this.accessControlContext = AccessController.getContext();
     }
 
     /**
@@ -153,7 +157,7 @@ public final class LocalModuleFinder implements ModuleFinder {
                         }
                         return null;
                     }
-                });
+                }, accessControlContext);
             } catch (PrivilegedActionException e) {
                 try {
                     throw e.getException();
