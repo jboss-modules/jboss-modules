@@ -34,7 +34,7 @@ import java.util.Map;
  * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-class ConcreteModuleSpec extends ModuleSpec {
+public final class ConcreteModuleSpec extends ModuleSpec {
 
     private final String mainClass;
     private final AssertionSetting assertionSetting;
@@ -59,7 +59,7 @@ class ConcreteModuleSpec extends ModuleSpec {
         this.permissionCollection = permissionCollection;
     }
 
-    String getMainClass() {
+    public String getMainClass() {
         return mainClass;
     }
 
@@ -71,8 +71,12 @@ class ConcreteModuleSpec extends ModuleSpec {
         return resourceLoaders;
     }
 
-    DependencySpec[] getDependencies() {
+    DependencySpec[] getDependenciesInternal() {
         return dependencies;
+    }
+
+    public DependencySpec[] getDependencies() {
+        return dependencies.length == 0 ? dependencies : dependencies.clone();
     }
 
     LocalLoader getFallbackLoader() {

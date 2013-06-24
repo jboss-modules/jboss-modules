@@ -27,7 +27,7 @@ package org.jboss.modules;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-final class AliasModuleSpec extends ModuleSpec {
+public final class AliasModuleSpec extends ModuleSpec {
 
     private final ModuleIdentifier aliasTarget;
 

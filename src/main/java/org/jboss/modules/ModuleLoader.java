@@ -473,7 +473,7 @@ public class ModuleLoader {
 
                     final Module module = new Module(moduleSpec, ModuleLoader.this);
                     module.getClassLoaderPrivate().recalculate();
-                    module.setDependencies(Arrays.asList(moduleSpec.getDependencies()));
+                    module.setDependencies(Arrays.asList(moduleSpec.getDependenciesInternal()));
                     log.moduleDefined(moduleIdentifier, ModuleLoader.this);
                     try {
                         futureModule.setModule(module);

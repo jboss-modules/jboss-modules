@@ -24,6 +24,7 @@ package org.jboss.modules;
 
 import java.io.File;
 import java.io.FilePermission;
+import java.io.IOException;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
@@ -102,7 +103,11 @@ public final class LocalModuleFinder implements ModuleFinder {
      *
      */
     public LocalModuleFinder(boolean supportLayersAndAddOns) {
-        this(supportLayersAndAddOns ? LayeredModulePathFactory.resolveLayeredModulePath(getModulePathFiles()) : getModulePathFiles(), PathFilters.acceptAll(), false);
+        this(getRepoRoots(supportLayersAndAddOns), PathFilters.acceptAll(), false);
+    }
+
+    static File[] getRepoRoots(final boolean supportLayersAndAddOns) {
+        return supportLayersAndAddOns ? LayeredModulePathFactory.resolveLayeredModulePath(getModulePathFiles()) : getModulePathFiles();
     }
 
     private static File[] getModulePathFiles() {
@@ -161,6 +166,30 @@ public final class LocalModuleFinder implements ModuleFinder {
                 } catch (Exception e1) {
                     throw new UndeclaredThrowableException(e1);
                 }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Parse a {@code module.xml} file and return the corresponding module specification.
+     *
+     * @param identifier the identifier to load
+     * @param delegateLoader the delegate module loader to use for module specifications
+     * @param roots the repository root paths to search
+     * @return the module specification
+     * @throws IOException if reading the module file failed
+     * @throws ModuleLoadException if creating the module specification failed (e.g. due to a parse error)
+     */
+    public static ModuleSpec parseModuleXmlFile(final ModuleIdentifier identifier, final ModuleLoader delegateLoader, final File... roots) throws IOException, ModuleLoadException {
+        final String child = toPathString(identifier);
+        for (File root : roots) {
+            final File file = new File(root, child);
+            final File moduleXml = new File(file, "module.xml");
+            if (moduleXml.exists()) {
+                final ModuleSpec spec = ModuleXmlParser.parseModuleXml(delegateLoader, identifier, file, moduleXml);
+                if (spec == null) break;
+                return spec;
             }
         }
         return null;

@@ -47,6 +47,60 @@ public abstract class DependencySpec {
     final ClassFilter classImportFilter;
     final ClassFilter classExportFilter;
 
+    /**
+     * Get the dependency import filter.
+     *
+     * @return the import filter
+     */
+    public PathFilter getImportFilter() {
+        return importFilter;
+    }
+
+    /**
+     * Get the dependency export filter.
+     *
+     * @return the export filter
+     */
+    public PathFilter getExportFilter() {
+        return exportFilter;
+    }
+
+    /**
+     * Get the dependency resource import filter.
+     *
+     * @return the import filter
+     */
+    public PathFilter getResourceImportFilter() {
+        return resourceImportFilter;
+    }
+
+    /**
+     * Get the dependency resource export filter.
+     *
+     * @return the export filter
+     */
+    public PathFilter getResourceExportFilter() {
+        return resourceExportFilter;
+    }
+
+    /**
+     * Get the dependency class import filter.
+     *
+     * @return the class import filter
+     */
+    public ClassFilter getClassImportFilter() {
+        return classImportFilter;
+    }
+
+    /**
+     * Get the dependency class export filter.
+     *
+     * @return the class export filter
+     */
+    public ClassFilter getClassExportFilter() {
+        return classExportFilter;
+    }
+
     DependencySpec(final PathFilter importFilter, final PathFilter exportFilter) {
         this(importFilter, exportFilter, PathFilters.acceptAll(), PathFilters.acceptAll(), ClassFilters.acceptAll(), ClassFilters.acceptAll());
     }
@@ -427,15 +481,6 @@ public abstract class DependencySpec {
         if (resourceExportFilter == null) {
             throw new IllegalArgumentException("resourceExportFilter is null");
         }
-        return new DependencySpec(importFilter, exportFilter, resourceImportFilter, resourceExportFilter, classImportFilter, classExportFilter) {
-            Dependency getDependency(final Module module) {
-                final ModuleLoader loader = moduleLoader;
-                return new ModuleDependency(exportFilter, importFilter, resourceExportFilter, resourceImportFilter, classExportFilter, classImportFilter, loader == null ? module.getModuleLoader() : loader, identifier, optional);
-            }
-
-            public String toString() {
-                return "dependency on " + identifier;
-            }
-        };
+        return new ModuleDependencySpec(importFilter, exportFilter, resourceImportFilter, resourceExportFilter, classImportFilter, classExportFilter, moduleLoader, identifier, optional);
     }
 }

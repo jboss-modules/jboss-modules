@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
@@ -87,6 +88,7 @@ public final class Main {
         System.out.println("    -dep,-dependencies <module-spec>[,<module-spec>,...]");
         System.out.println("                  A list of module dependencies to add to the class path;");
         System.out.println("                  requires -class or -cp");
+        System.out.println("    -deptree      Print the dependency tree of the given module instead of running it");
         System.out.println("    -jar          Specify that the final argument is the name of a");
         System.out.println("                  JAR file to run as a module; not compatible with -class");
         System.out.println("    -jaxpmodule <module-spec>");
@@ -116,6 +118,7 @@ public final class Main {
         boolean jar = false;
         boolean classpathDefined = false;
         boolean classDefined = false;
+        boolean depTree = false;
         String nameArgument = null;
         ModuleIdentifier jaxpModuleIdentifier = null;
         boolean defaultSecMgr = false;
@@ -147,6 +150,24 @@ public final class Main {
                     } else if ("-config".equals(arg)) {
                         System.err.println("Config files are no longer supported.  Use the -mp option instead");
                         System.exit(1);
+                    } else if ("-deptree".equals(arg)) {
+                        if (depTree) {
+                            System.err.println("-deptree may only be specified once");
+                            System.exit(1);
+                        }
+                        if (jar) {
+                            System.err.println("-deptree may not be specified with -jar");
+                            System.exit(1);
+                        }
+                        if (classDefined) {
+                            System.err.println("-deptree may not be specified with -class");
+                            System.exit(1);
+                        }
+                        if (classpathDefined) {
+                            System.err.println("-deptree may not be specified with -classpath");
+                            System.exit(1);
+                        }
+                        depTree = true;
                     } else if ("-jaxpmodule".equals(arg)) {
                         jaxpModuleIdentifier = ModuleIdentifier.fromString(args[++i]);
                     } else if ("-jar".equals(arg)) {
@@ -162,6 +183,10 @@ public final class Main {
                             System.err.println("-class may not be specified with -jar");
                             System.exit(1);
                         }
+                        if (depTree) {
+                            System.err.println("-deptree may not be specified with -jar");
+                            System.exit(1);
+                        }
                         jar = true;
                     } else if ("-cp".equals(arg) || "-classpath".equals(arg)) {
                         if (classpathDefined) {
@@ -174,6 +199,10 @@ public final class Main {
                         }
                         if (jar) {
                             System.err.println("-cp/-classpath may not be specified with -jar");
+                            System.exit(1);
+                        }
+                        if (depTree) {
+                            System.err.println("-deptree may not be specified with -classpath");
                             System.exit(1);
                         }
                         classpathDefined = true;
@@ -196,6 +225,10 @@ public final class Main {
                         }
                         if (jar) {
                             System.err.println("-class may not be specified with -jar");
+                            System.exit(1);
+                        }
+                        if (depTree) {
+                            System.err.println("-deptree may not be specified with -class");
                             System.exit(1);
                         }
                         classDefined = true;
@@ -294,6 +327,11 @@ public final class Main {
                 usage();
                 System.exit(1);
             }
+            if (depTree) {
+                System.err.println("-deptree may not be used with -addindex");
+                usage();
+                System.exit(1);
+            }
 
             JarFileResourceLoader.addInternalIndex(new File(nameArgument), modifyInPlace);
             return;
@@ -316,6 +354,12 @@ public final class Main {
             usage();
             System.exit(1);
         }
+
+        if (depTree) {
+            DependencyTreeViewer.print(new PrintWriter(System.out), ModuleIdentifier.fromString(nameArgument), LocalModuleFinder.getRepoRoots(true));
+            System.exit(0);
+        }
+
         final ModuleLoader loader;
         final ModuleLoader environmentLoader;
         environmentLoader = DefaultBootModuleLoaderHolder.INSTANCE;
