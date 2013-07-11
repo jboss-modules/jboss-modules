@@ -25,6 +25,7 @@ package org.jboss.modules;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.ArrayList;
@@ -84,7 +85,7 @@ class LayeredModulePathFactory {
                     validLayers = false;
                     break;
                 }
-                layerFiles.add(layer);
+                loadOverlays(layer, layerFiles);
             }
             if (validLayers) {
                 foundLayers = true;
@@ -94,7 +95,7 @@ class LayeredModulePathFactory {
                 if (addOns != null) {
                     for (File addOn : addOns) {
                         if (addOn.isDirectory()) {
-                            layeredPath.add(addOn);
+                            loadOverlays(addOn, layeredPath);
                         }
                     }
                 }
@@ -189,4 +190,78 @@ class LayeredModulePathFactory {
             return layers;
         }
     }
+
+    private static final String OVERLAYS = ".overlays";
+
+    /**
+     * Load the overlays for each layer.
+     *
+     * @param layeringRoot the layer root
+     * @param path the module path
+     */
+    static void loadOverlays(final File layeringRoot, final List<File> path) {
+
+        final File overlays = new File(layeringRoot, OVERLAYS);
+        if (overlays.exists()) {
+            final File refs = new File(overlays, OVERLAYS);
+            if (refs.exists()) {
+                try {
+                    for (final String overlay : readRefs(refs)) {
+                        final File root = new File(overlays, overlay);
+                        path.add(root);
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+        path.add(layeringRoot);
+    }
+
+    public static List<String> readRefs(final File file) throws IOException {
+        if(! file.exists()) {
+            return Collections.emptyList();
+        }
+        final InputStream is = new FileInputStream(file);
+        try {
+            return readRefs(is);
+        } finally {
+            if (is != null) try {
+                is.close();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    static List<String> readRefs(final InputStream is) throws IOException {
+        final List<String> refs = new ArrayList<String>();
+        final StringBuffer buffer = new StringBuffer();
+        do {
+            if(buffer.length() > 0) {
+                final String ref = buffer.toString().trim();
+                if(ref.length() > 0) {
+                    refs.add(ref);
+                }
+            }
+        } while(readLine(is, buffer));
+        return refs;
+    }
+
+    static boolean readLine(InputStream is, StringBuffer buffer) throws IOException {
+        buffer.setLength(0);
+        int c;
+        for(;;) {
+            c = is.read();
+            switch(c) {
+                case '\t':
+                case '\r':
+                    break;
+                case -1: return false;
+                case '\n': return true;
+                default: buffer.append((char) c);
+            }
+        }
+    }
+
 }
