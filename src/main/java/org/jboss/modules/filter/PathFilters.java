@@ -265,7 +265,7 @@ public final class PathFilters {
 
         metaInfFilter = metaInf;
         metaInfSubdirectoriesFilter = metaInfChildren;
-        metaInfServicesFilter = metaInfServices;
+        metaInfServicesFilter = any(metaInfServices, metaInfServicesChildren);
 
         final MultiplePathFilterBuilder builder = multiplePathFilterBuilder(true);
         builder.addFilter(metaInfChildren, false);
