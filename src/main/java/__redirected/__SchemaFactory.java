@@ -63,6 +63,9 @@ public final class __SchemaFactory extends SchemaFactory {
         // the environment's TCCL
         thread.setContextClassLoader(ClassLoader.getSystemClassLoader());
         try {
+            if (System.getProperty(SchemaFactory.class.getName(), "").equals(__SchemaFactory.class.getName())) {
+                System.clearProperty(SchemaFactory.class.getName());
+            }
             SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
             try {
                 DEFAULT_FACTORY = PLATFORM_FACTORY = factory.getClass().getConstructor();

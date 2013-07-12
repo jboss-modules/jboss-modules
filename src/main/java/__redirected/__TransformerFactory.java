@@ -63,6 +63,9 @@ public final class __TransformerFactory extends SAXTransformerFactory {
         // the environment's TCCL
         thread.setContextClassLoader(ClassLoader.getSystemClassLoader());
         try {
+            if (System.getProperty(SAXTransformerFactory.class.getName(), "").equals(__TransformerFactory.class.getName())) {
+                System.clearProperty(SAXTransformerFactory.class.getName());
+            }
             TransformerFactory factory = TransformerFactory.newInstance();
             try {
                 DEFAULT_FACTORY = PLATFORM_FACTORY = factory.getClass().getConstructor();

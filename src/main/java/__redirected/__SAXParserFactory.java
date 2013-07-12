@@ -59,6 +59,9 @@ public final class __SAXParserFactory extends SAXParserFactory {
         // the environment's TCCL
         thread.setContextClassLoader(ClassLoader.getSystemClassLoader());
         try {
+            if (System.getProperty(SAXParserFactory.class.getName(), "").equals(__SAXParserFactory.class.getName())) {
+                System.clearProperty(SAXParserFactory.class.getName());
+            }
             SAXParserFactory factory = SAXParserFactory.newInstance();
             try {
                DEFAULT_FACTORY = PLATFORM_FACTORY = factory.getClass().getConstructor();

@@ -59,6 +59,9 @@ public final class __DatatypeFactory extends DatatypeFactory {
         // the environment's TCCL
         thread.setContextClassLoader(ClassLoader.getSystemClassLoader());
         try {
+            if (System.getProperty(DatatypeFactory.class.getName(), "").equals(__DatatypeFactory.class.getName())) {
+                System.clearProperty(DatatypeFactory.class.getName());
+            }
             DatatypeFactory factory = DatatypeFactory.newInstance();
             try {
                 DEFAULT_FACTORY = PLATFORM_FACTORY = factory.getClass().getConstructor();
