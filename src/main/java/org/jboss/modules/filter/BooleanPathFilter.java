@@ -51,4 +51,8 @@ final class BooleanPathFilter implements PathFilter {
     public String toString() {
         return result ? "Accept" : "Reject";
     }
+
+    boolean getResult() {
+        return result;
+    }
 }

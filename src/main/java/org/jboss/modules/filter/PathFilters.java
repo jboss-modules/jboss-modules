@@ -78,13 +78,39 @@ public final class PathFilters {
     }
 
     /**
+     * Get a path filter which returns {@code true} if none of the given filters return {@code true}.
+     *
+     * @param filters the filters
+     * @return the "none" filter
+     */
+    public static PathFilter none(PathFilter... filters) {
+        return not(any(filters));
+    }
+
+    /**
+     * Get a path filter which returns {@code true} if none of the given filters return {@code true}.
+     *
+     * @param filters the filters
+     * @return the "none" filter
+     */
+    public static PathFilter none(Collection<PathFilter> filters) {
+        return not(any(filters));
+    }
+
+    /**
      * Get a path filter which is {@code true} when the given filter is {@code false}, and vice-versa.
      *
      * @param filter the filter
      * @return the inverting filter
      */
     public static PathFilter not(PathFilter filter) {
-        return new InvertingPathFilter(filter);
+        if (filter instanceof BooleanPathFilter) {
+            return booleanFilter(!((BooleanPathFilter) filter).getResult());
+        } else if (filter instanceof InvertingPathFilter) {
+            return ((InvertingPathFilter) filter).getDelegate();
+        } else {
+            return new InvertingPathFilter(filter);
+        }
     }
 
     /**
@@ -121,6 +147,16 @@ public final class PathFilters {
     }
 
     /**
+     * Get a path filter which matches any path which is equal to, or a child of, the given path name.
+     *
+     * @param path the path name
+     * @return a filter which returns {@code true} if the path name is equal to, or a child of, the given path
+     */
+    public static PathFilter isOrIsChildOf(String path) {
+        return any(is(path), isChildOf(path));
+    }
+
+    /**
      * Get a builder for a multiple-path filter.  Such a filter contains multiple filters, each associated
      * with a flag which indicates that matching paths should be included or excluded.
      *
@@ -129,6 +165,10 @@ public final class PathFilters {
      */
     public static MultiplePathFilterBuilder multiplePathFilterBuilder(boolean defaultValue) {
         return new MultiplePathFilterBuilder(defaultValue);
+    }
+
+    private static BooleanPathFilter booleanFilter(boolean val) {
+        return val ? BooleanPathFilter.TRUE : BooleanPathFilter.FALSE;
     }
 
     /**
@@ -157,6 +197,17 @@ public final class PathFilters {
      * @return the filter
      */
     public static PathFilter in(Set<String> paths) {
+        return new SetPathFilter(new HashSet<String>(paths));
+    }
+
+    /**
+     * Get a filter which returns {@code true} if the tested path is contained within the given collection.
+     * Each member of the collection is a path separated by "{@code /}" characters; {@code null}s are disallowed.
+     *
+     * @param paths the path collection
+     * @return the filter
+     */
+    public static PathFilter in(Collection<String> paths) {
         return new SetPathFilter(new HashSet<String>(paths));
     }
 
@@ -207,9 +258,10 @@ public final class PathFilters {
     private static final PathFilter metaInfSubdirectoriesWithoutMetaInfFilter;
 
     static {
-        final PathFilter metaInfChildren = PathFilters.isChildOf("META-INF");
-        final PathFilter metaInf = PathFilters.is("META-INF");
-        final PathFilter metaInfServices = PathFilters.any(PathFilters.is("META-INF/services"), PathFilters.isChildOf("META-INF/services"));
+        final PathFilter metaInfChildren = isChildOf("META-INF");
+        final PathFilter metaInf = is("META-INF");
+        final PathFilter metaInfServicesChildren = isChildOf("META-INF/services");
+        final PathFilter metaInfServices = is("META-INF/services");
 
         metaInfFilter = metaInf;
         metaInfSubdirectoriesFilter = metaInfChildren;
@@ -222,6 +274,7 @@ public final class PathFilters {
 
         final MultiplePathFilterBuilder builder2 = multiplePathFilterBuilder(true);
         builder2.addFilter(metaInfServices, true);
+        builder2.addFilter(metaInfServicesChildren, true);
         builder2.addFilter(metaInfChildren, false);
         builder2.addFilter(metaInf, false);
         defaultImportFilterWithServices = builder2.create();

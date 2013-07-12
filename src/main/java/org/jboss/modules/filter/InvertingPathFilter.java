@@ -47,6 +47,10 @@ final class InvertingPathFilter implements PathFilter {
         return ! delegate.accept(path);
     }
 
+    PathFilter getDelegate() {
+        return delegate;
+    }
+
     public int hashCode() {
         return 47 + delegate.hashCode();
     }
