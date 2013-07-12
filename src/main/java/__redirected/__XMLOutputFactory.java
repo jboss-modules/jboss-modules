@@ -59,6 +59,9 @@ public final class __XMLOutputFactory extends XMLOutputFactory {
         // the environment's TCCL
         thread.setContextClassLoader(ClassLoader.getSystemClassLoader());
         try {
+            if (System.getProperty(XMLOutputFactory.class.getName(), "").equals(__XMLOutputFactory.class.getName())) {
+                System.clearProperty(XMLOutputFactory.class.getName());
+            }
             XMLOutputFactory factory = XMLOutputFactory.newInstance();
             try {
                 DEFAULT_FACTORY = PLATFORM_FACTORY = factory.getClass().getConstructor();

@@ -56,6 +56,9 @@ public final class __XPathFactory extends XPathFactory {
         // the environment's TCCL
         thread.setContextClassLoader(ClassLoader.getSystemClassLoader());
         try {
+            if (System.getProperty(XPathFactory.class.getName(), "").equals(__XPathFactory.class.getName())) {
+                System.clearProperty(XPathFactory.class.getName());
+            }
             XPathFactory factory = XPathFactory.newInstance();
             try {
                 DEFAULT_FACTORY = PLATFORM_FACTORY = factory.getClass().getConstructor();

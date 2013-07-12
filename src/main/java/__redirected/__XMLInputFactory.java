@@ -64,6 +64,9 @@ public final class __XMLInputFactory extends XMLInputFactory {
         // the environment's TCCL
         thread.setContextClassLoader(ClassLoader.getSystemClassLoader());
         try {
+            if (System.getProperty(XMLInputFactory.class.getName(), "").equals(__XMLInputFactory .class.getName())) {
+                System.clearProperty(XMLInputFactory.class.getName());
+            }
             XMLInputFactory factory = XMLInputFactory.newInstance();
             try {
                 DEFAULT_FACTORY = PLATFORM_FACTORY = factory.getClass().getConstructor();
