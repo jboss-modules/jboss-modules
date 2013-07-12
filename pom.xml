@@ -27,7 +27,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.jboss.modules</groupId>
     <artifactId>jboss-modules</artifactId>
-    <version>1.2.3.Final</version>
+    <version>1.2.4.Final-SNAPSHOT</version>
     <name>JBoss Modules</name>
 
     <parent>
@@ -138,6 +138,12 @@
         </plugins>
     </build>
     <dependencies>
+        <dependency>
+            <groupId>org.jboss.shrinkwrap</groupId>
+            <artifactId>shrinkwrap-impl-base</artifactId>
+            <version>1.0.0</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
