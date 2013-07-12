@@ -27,8 +27,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URL;
+import java.net.URLConnection;
 import java.security.AccessController;
 import java.security.PermissionCollection;
+import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -49,6 +51,8 @@ import org.jboss.modules.filter.PathFilter;
 import org.jboss.modules.filter.PathFilters;
 import org.jboss.modules.log.ModuleLogger;
 import org.jboss.modules.log.NoopModuleLogger;
+
+import __redirected.__JAXPRedirected;
 
 /**
  * A module is a unit of classes and other resources, along with the specification of what is imported and exported
@@ -108,6 +112,25 @@ public final class Module {
             iterator.set(iterator.next().replace('.', '/'));
         }
         systemPaths = list.toArray(list.toArray(new String[list.size()]));
+
+        AccessController.doPrivileged(new PrivilegedAction<Void>() {
+            public Void run() {
+                try {
+                    URL.setURLStreamHandlerFactory(ModularURLStreamHandlerFactory.INSTANCE);
+                } catch (Throwable t) {
+                    // todo log a warning or something
+                }
+                try {
+                    URLConnection.setContentHandlerFactory(ModularContentHandlerFactory.INSTANCE);
+                } catch (Throwable t) {
+                    // todo log a warning or something
+                }
+
+                __JAXPRedirected.initAll();
+
+                return null;
+            }
+        });
     }
 
     // static properties
