@@ -33,7 +33,6 @@ import java.io.PrintWriter;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
-import java.net.URLConnection;
 import java.security.AccessController;
 import java.security.Policy;
 import java.util.Enumeration;
@@ -374,13 +373,7 @@ public final class Main {
             loader = environmentLoader;
             moduleIdentifier = ModuleIdentifier.fromString(nameArgument);
         }
-
         Module.initBootModuleLoader(loader);
-
-        URL.setURLStreamHandlerFactory(ModularURLStreamHandlerFactory.INSTANCE);
-        URLConnection.setContentHandlerFactory(ModularContentHandlerFactory.INSTANCE);
-        __JAXPRedirected.initAll();
-
         if (jaxpModuleIdentifier != null) {
             __JAXPRedirected.changeAll(jaxpModuleIdentifier, Module.getBootModuleLoader());
         } else {

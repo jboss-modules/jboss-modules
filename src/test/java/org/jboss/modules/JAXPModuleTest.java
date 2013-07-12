@@ -150,7 +150,6 @@ public class JAXPModuleTest extends AbstractModuleTestCase {
 
     @Before
     public void setupModuleLoader() throws Exception {
-        __JAXPRedirected.initAll();
         jdkApiFilter = PathFilters.any(PathFilters.match("javax/**"),
                        PathFilters.match("org/w3c/**"),
                        PathFilters.match("org/xml/**"));
