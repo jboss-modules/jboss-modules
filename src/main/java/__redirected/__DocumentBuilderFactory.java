@@ -56,6 +56,9 @@ public final class __DocumentBuilderFactory extends DocumentBuilderFactory {
         // the environment's TCCL
         thread.setContextClassLoader(ClassLoader.getSystemClassLoader());
         try {
+            if (System.getProperty(DocumentBuilderFactory.class.getName(), "").equals(__DocumentBuilderFactory.class.getName())) {
+                System.clearProperty(DocumentBuilderFactory.class.getName());
+            }
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             try {
                 DEFAULT_FACTORY = PLATFORM_FACTORY = factory.getClass().getConstructor();

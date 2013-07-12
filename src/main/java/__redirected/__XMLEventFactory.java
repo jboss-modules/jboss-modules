@@ -70,6 +70,9 @@ public final class __XMLEventFactory extends XMLEventFactory {
         // the environment's TCCL
         thread.setContextClassLoader(ClassLoader.getSystemClassLoader());
         try {
+            if (System.getProperty(XMLEventFactory.class.getName(), "").equals(__XMLEventFactory.class.getName())) {
+                System.clearProperty(XMLEventFactory.class.getName());
+            }
             XMLEventFactory factory = XMLEventFactory.newInstance();
             try {
                 DEFAULT_FACTORY = PLATFORM_FACTORY = factory.getClass().getConstructor();

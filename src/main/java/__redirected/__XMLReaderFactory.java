@@ -70,6 +70,9 @@ public final class __XMLReaderFactory implements XMLReader {
         // the environment's TCCL
         thread.setContextClassLoader(ClassLoader.getSystemClassLoader());
         try {
+            if (System.getProperty(SAX_DRIVER, "").equals(__XMLReaderFactory.class.getName())) {
+                System.clearProperty(SAX_DRIVER);
+            }
             XMLReader factory = XMLReaderFactory.createXMLReader();
             try {
                DEFAULT_FACTORY = PLATFORM_FACTORY = factory.getClass().getConstructor();
