@@ -167,7 +167,7 @@ public final class PathFilters {
     static {
         final PathFilter metaInfChildren = PathFilters.isChildOf("META-INF");
         final PathFilter metaInf = PathFilters.is("META-INF");
-        final PathFilter metaInfServices = PathFilters.is("META-INF/services");
+        final PathFilter metaInfServices = PathFilters.any(PathFilters.is("META-INF/services"), PathFilters.isChildOf("META-INF/services"));
 
         metaInfFilter = metaInf;
         metaInfSubdirectoriesFilter = metaInfChildren;
