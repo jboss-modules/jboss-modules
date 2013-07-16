@@ -23,10 +23,14 @@
 package org.jboss.modules;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -366,6 +370,52 @@ public class LayeredModulePathTest extends AbstractModuleTestCase {
         validateModuleLoading(standardPath, false, false, false, "base");
     }
 
+    @Test
+    public void testLayersOverlayModulePath() throws Exception {
+        createRepo("root-a", false, false, Arrays.asList("top", "base"));
+        writeLayersConf("root-a", "top", "base");
+
+        createOverlays(repoA, "top", false, "top1", "top2");
+        createOverlays(repoA, "base", false, "base1", "base2");
+
+        File[] standardPath = { repoA };
+        File[] modulePath = LayeredModulePathFactory.resolveLayeredModulePath(standardPath);
+
+        Assert.assertEquals(7, modulePath.length);
+        Assert.assertEquals(repoA, modulePath[0]);
+        Assert.assertEquals(new File(repoA, "system/layers/top/.overlays/top1"), modulePath[1]);
+        Assert.assertEquals(new File(repoA, "system/layers/top/.overlays/top2"), modulePath[2]);
+        Assert.assertEquals(new File(repoA, "system/layers/top"), modulePath[3]);
+        Assert.assertEquals(new File(repoA, "system/layers/base/.overlays/base1"), modulePath[4]);
+        Assert.assertEquals(new File(repoA, "system/layers/base/.overlays/base2"), modulePath[5]);
+        Assert.assertEquals(new File(repoA, "system/layers/base"), modulePath[6]);
+
+    }
+
+    @Test
+    public void testAddOnsOverlayModulePath() throws Exception {
+        createRepo("root-a", true, false, Arrays.asList("base"));
+        writeLayersConf("root-a", "base");
+
+        createOverlays(repoA, "a", true, "a");
+        createOverlays(repoA, "b", true, "b");
+
+        File[] standardPath = { repoA };
+        File[] modulePath = LayeredModulePathFactory.resolveLayeredModulePath(standardPath);
+
+        Assert.assertEquals(6, modulePath.length);
+        Assert.assertEquals(repoA, modulePath[0]);
+        Assert.assertEquals(new File(repoA, "system/layers/base"), modulePath[1]);
+        // The order of the add-ons is non deterministic
+        Assert.assertEquals(".overlays", modulePath[2].getParentFile().getName());
+        final String firstOverlay = modulePath[2].getName();
+        Assert.assertEquals(new File(repoA, "system/add-ons/" + firstOverlay), modulePath[3]);
+        Assert.assertEquals(".overlays", modulePath[4].getParentFile().getName());
+        final String secondOverlays = modulePath[4].getName();
+        Assert.assertEquals(new File(repoA, "system/add-ons/" + secondOverlays), modulePath[5]);
+
+    }
+
     private void writeLayersConf(String rootName, String... layers) throws IOException {
         if (layers != null && layers.length > 0) {
 
@@ -547,6 +597,28 @@ public class LayeredModulePathTest extends AbstractModuleTestCase {
         } catch (ModuleLoadException e) {
             if (expectAvailable) {
                 Assert.fail(e.getMessage());
+            }
+        }
+    }
+
+    private void createOverlays(final File root, final String name, boolean addOn, String... overlays) throws IOException {
+        final File system = new File(root, "system");
+        final File layers = addOn ? new File(system, "add-ons") : new File(system, "layers");
+        final File repo = new File(layers, name);
+        final File overlaysRoot = new File(repo, ".overlays");
+        overlaysRoot.mkdir();
+        final File overlaysConfig = new File(overlaysRoot, ".overlays");
+        final OutputStream os = new FileOutputStream(overlaysConfig);
+        try {
+            for (final String overlay : overlays) {
+                os.write(overlay.getBytes());
+                os.write('\n');
+            }
+        } finally {
+            if (os != null) try {
+                os.close();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
     }
