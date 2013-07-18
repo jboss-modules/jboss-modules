@@ -31,10 +31,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.lang.reflect.UndeclaredThrowableException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.AccessControlContext;
+import java.security.AccessController;
 import java.security.CodeSigner;
 import java.security.CodeSource;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -52,14 +57,18 @@ final class FileResourceLoader extends NativeLibraryResourceLoader implements It
     private final String rootName;
     private final Manifest manifest;
     private final CodeSource codeSource;
+    private final AccessControlContext context;
 
-    FileResourceLoader(final String rootName, final File root) {
+    FileResourceLoader(final String rootName, final File root, final AccessControlContext context) {
         super(root);
         if (root == null) {
             throw new IllegalArgumentException("root is null");
         }
         if (rootName == null) {
             throw new IllegalArgumentException("rootName is null");
+        }
+        if (context == null) {
+            throw new IllegalArgumentException("context is null");
         }
         this.rootName = rootName;
         final File manifestFile = new File(root, "META-INF" + File.separatorChar + "MANIFEST.MF");
@@ -70,6 +79,7 @@ final class FileResourceLoader extends NativeLibraryResourceLoader implements It
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException("Invalid root file specified", e);
         }
+        this.context = context;
         codeSource = new CodeSource(rootUrl, (CodeSigner[])null);
     }
 
@@ -85,6 +95,31 @@ final class FileResourceLoader extends NativeLibraryResourceLoader implements It
         return rootName;
     }
 
+    static final FileInputStream openFile(final File file, final AccessControlContext context) throws IOException {
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            try {
+                return AccessController.doPrivileged(new PrivilegedExceptionAction<FileInputStream>() {
+                    public FileInputStream run() throws IOException {
+                        return new FileInputStream(file);
+                    }
+                }, context);
+            } catch (PrivilegedActionException e) {
+                try {
+                    throw e.getException();
+                } catch (RuntimeException e1) {
+                    throw e1;
+                } catch (IOException e1) {
+                    throw e1;
+                } catch (Exception e1) {
+                    throw new UndeclaredThrowableException(e1);
+                }
+            }
+        } else {
+            return new FileInputStream(file);
+        }
+    }
+
     public ClassSpec getClassSpec(final String fileName) throws IOException {
         final File file = new File(getRoot(), fileName);
         if (! file.exists()) {
@@ -93,7 +128,7 @@ final class FileResourceLoader extends NativeLibraryResourceLoader implements It
         final long size = file.length();
         final ClassSpec spec = new ClassSpec();
         spec.setCodeSource(codeSource);
-        final InputStream is = new FileInputStream(file);
+        final InputStream is = openFile(file, context);
         try {
             if (size <= (long) Integer.MAX_VALUE) {
                 final int castSize = (int) size;
@@ -125,7 +160,7 @@ final class FileResourceLoader extends NativeLibraryResourceLoader implements It
             if (! file.exists()) {
                 return null;
             }
-            return new FileEntryResource(canonPath, file, file.toURI().toURL());
+            return new FileEntryResource(canonPath, file, file.toURI().toURL(), context);
         } catch (MalformedURLException e) {
             // must be invalid...?  (todo: check this out)
             return null;
@@ -174,7 +209,7 @@ final class FileResourceLoader extends NativeLibraryResourceLoader implements It
                 i++;
                 if (file.isFile()) {
                     try {
-                        next = new FileEntryResource(full, file, file.toURI().toURL());
+                        next = new FileEntryResource(full, file, file.toURI().toURL(), context);
                         return true;
                     } catch (MalformedURLException ignored) {
                     }

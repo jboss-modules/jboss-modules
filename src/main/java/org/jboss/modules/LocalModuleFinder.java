@@ -34,6 +34,7 @@ import org.jboss.modules.filter.PathFilter;
 import org.jboss.modules.filter.PathFilters;
 
 import static java.security.AccessController.doPrivileged;
+import static java.security.AccessController.getContext;
 
 /**
  * A module finder which locates module specifications which are stored in a local module
@@ -150,7 +151,7 @@ public final class LocalModuleFinder implements ModuleFinder {
                             final File file = new File(root, child);
                             final File moduleXml = new File(file, "module.xml");
                             if (moduleXml.exists()) {
-                                final ModuleSpec spec = ModuleXmlParser.parseModuleXml(delegateLoader, identifier, file, moduleXml);
+                                final ModuleSpec spec = ModuleXmlParser.parseModuleXml(delegateLoader, identifier, file, moduleXml, accessControlContext);
                                 if (spec == null) break;
                                 return spec;
                             }
@@ -191,7 +192,7 @@ public final class LocalModuleFinder implements ModuleFinder {
             final File file = new File(root, child);
             final File moduleXml = new File(file, "module.xml");
             if (moduleXml.exists()) {
-                final ModuleSpec spec = ModuleXmlParser.parseModuleXml(delegateLoader, identifier, file, moduleXml);
+                final ModuleSpec spec = ModuleXmlParser.parseModuleXml(delegateLoader, identifier, file, moduleXml, getContext());
                 if (spec == null) break;
                 return spec;
             }

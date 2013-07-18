@@ -55,7 +55,7 @@ public final class ResourceLoaders {
      * @return the resource loader
      */
     public static ResourceLoader createFileResourceLoader(final String name, final File root) {
-        return new FileResourceLoader(name, root);
+        return new FileResourceLoader(name, root, AccessController.getContext());
     }
 
     /**
@@ -67,7 +67,7 @@ public final class ResourceLoaders {
      * @return the resource loader
      */
     public static IterableResourceLoader createIterableFileResourceLoader(final String name, final File root) {
-        return new FileResourceLoader(name, root);
+        return new FileResourceLoader(name, root, AccessController.getContext());
     }
 
     /**

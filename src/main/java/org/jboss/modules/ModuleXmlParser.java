@@ -28,6 +28,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.AccessControlContext;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -120,7 +121,7 @@ final class ModuleXmlParser {
     private static final String D_IMPORT = "import";
     private static final String D_EXPORT = "export";
 
-    static ModuleSpec parseModuleXml(final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier, final File root, final File moduleInfoFile) throws ModuleLoadException, IOException {
+    static ModuleSpec parseModuleXml(final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier, final File root, final File moduleInfoFile, final AccessControlContext context) throws ModuleLoadException, IOException {
         final FileInputStream fis;
         try {
             fis = new FileInputStream(moduleInfoFile);
@@ -129,10 +130,10 @@ final class ModuleXmlParser {
         }
         try {
             return parseModuleXml(new ResourceRootFactory() {
-                public ResourceLoader createResourceLoader(final String rootPath, final String loaderPath, final String loaderName) throws IOException {
+                    public ResourceLoader createResourceLoader(final String rootPath, final String loaderPath, final String loaderName) throws IOException {
                         File file = new File(rootPath, loaderPath);
                         if (file.isDirectory()) {
-                            return new FileResourceLoader(loaderName, file);
+                            return new FileResourceLoader(loaderName, file, context);
                         } else {
                             final JarFile jarFile = new JarFile(file, true);
                             return new JarFileResourceLoader(loaderName, jarFile);
