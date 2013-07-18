@@ -27,6 +27,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.UndeclaredThrowableException;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -36,6 +38,7 @@ import org.jboss.modules.ModuleClassLoader;
 import org.jboss.modules.ModuleIdentifier;
 import org.jboss.modules.ModuleLoadException;
 import org.jboss.modules.ModuleLoader;
+import org.jboss.modules.log.ModuleLogger;
 
 /**
  * Common utilities for redirected factories
@@ -44,6 +47,19 @@ import org.jboss.modules.ModuleLoader;
  * @authore Jason T. Greene
  */
 public final class __RedirectedUtils {
+
+    static ModuleLogger getModuleLogger() {
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            return AccessController.doPrivileged(new PrivilegedAction<ModuleLogger>() {
+                public ModuleLogger run() {
+                    return Module.getModuleLogger();
+                }
+            });
+        } else {
+            return Module.getModuleLogger();
+        }
+    }
 
     static RuntimeException rethrowCause(Throwable t) throws Error {
         try {
@@ -75,7 +91,7 @@ public final class __RedirectedUtils {
         try {
             module = moduleLoader.loadModule(id);
         } catch (ModuleLoadException e) {
-            Module.getModuleLogger().providerUnloadable(id.toString(), null);
+            getModuleLogger().providerUnloadable(id.toString(), null);
             return null;
         }
 
@@ -91,7 +107,7 @@ public final class __RedirectedUtils {
         List<String> names = findProviderClassNames(intf, classLoader, name);
 
         if (names.isEmpty()) {
-            Module.getModuleLogger().providerUnloadable("Not found", classLoader);
+            getModuleLogger().providerUnloadable("Not found", classLoader);
             return null;
         }
 
@@ -99,7 +115,7 @@ public final class __RedirectedUtils {
         try {
             return classLoader.loadClass(clazzName).asSubclass(intf);
         } catch (Exception ignore) {
-            Module.getModuleLogger().providerUnloadable(clazzName, classLoader);
+            getModuleLogger().providerUnloadable(clazzName, classLoader);
             return null;
         }
     }
@@ -112,7 +128,7 @@ public final class __RedirectedUtils {
         List<String> names = findProviderClassNames(intf, classLoader, name);
 
         if (names.size() < 1) {
-            Module.getModuleLogger().providerUnloadable("Not found", classLoader);
+            getModuleLogger().providerUnloadable("Not found", classLoader);
             return Collections.emptyList();
         }
 
@@ -122,7 +138,7 @@ public final class __RedirectedUtils {
             try {
                 classes.add(classLoader.loadClass(className).asSubclass(intf));
             } catch (Exception ignore) {
-                Module.getModuleLogger().providerUnloadable(className, classLoader);
+                getModuleLogger().providerUnloadable(className, classLoader);
             }
         }
 
