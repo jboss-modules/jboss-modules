@@ -153,13 +153,14 @@ public class ModuleLoader {
      * @param finders the module finders to search, in order
      */
     public ModuleLoader(final ModuleFinder[] finders) {
-        this(checkPermissions(), false, notEmpty(finders).clone());
+        this(checkPermissions(), false, safeClone(finders));
     }
 
-    private static ModuleFinder[] notEmpty(final ModuleFinder[] finders) {
+    private static ModuleFinder[] safeClone(ModuleFinder[] finders) {
         if (finders == null || finders.length == 0) {
-            throw new IllegalArgumentException("Must provide at least one module finder");
+            return NO_FINDERS;
         }
+        finders = finders.clone();
         for (ModuleFinder finder : finders) {
             if (finder == null) {
                 throw new IllegalArgumentException("Module finder cannot be null");
