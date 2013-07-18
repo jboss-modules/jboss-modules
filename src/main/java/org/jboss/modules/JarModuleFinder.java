@@ -25,6 +25,8 @@ package org.jboss.modules;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.AccessControlContext;
+import java.security.AccessController;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -40,6 +42,7 @@ import org.jboss.modules.filter.PathFilters;
 public final class JarModuleFinder implements ModuleFinder {
     private final ModuleIdentifier myIdentifier;
     private final JarFile jarFile;
+    private final AccessControlContext context;
 
     /**
      * Construct a new instance.
@@ -50,6 +53,7 @@ public final class JarModuleFinder implements ModuleFinder {
     public JarModuleFinder(final ModuleIdentifier myIdentifier, final JarFile jarFile) {
         this.myIdentifier = myIdentifier;
         this.jarFile = jarFile;
+        context = AccessController.getContext();
     }
 
     public ModuleSpec findModule(final ModuleIdentifier identifier, final ModuleLoader delegateLoader) throws ModuleLoadException {
@@ -83,7 +87,7 @@ public final class JarModuleFinder implements ModuleFinder {
                     if (entry.endsWith("/")) {
                         // directory reference
                         File root = new File(jarFile.getName(), entry);
-                        FileResourceLoader resourceLoader = new FileResourceLoader(entry, root);
+                        FileResourceLoader resourceLoader = new FileResourceLoader(entry, root, context);
                         builder.addResourceRoot(ResourceLoaderSpec.createResourceLoaderSpec(resourceLoader));
                     } else {
                         // assume a JAR

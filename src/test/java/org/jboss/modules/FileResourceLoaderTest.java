@@ -26,6 +26,7 @@ import org.jboss.modules.filter.PathFilter;
 import org.junit.Assert;
 
 import java.io.File;
+import java.security.AccessController;
 
 /**
  * Test the functionality of the FileResourceLoader
@@ -40,7 +41,7 @@ public class FileResourceLoaderTest extends AbstractResourceLoaderTestCase {
         resourceRoot = getResource("test/fileresourceloader");
         // Copy the classfile over
         copyResource("org/jboss/modules/test/TestClass.class", "test/fileresourceloader", "org/jboss/modules/test");
-        return new FileResourceLoader("test-root", resourceRoot);
+        return new FileResourceLoader("test-root", resourceRoot, AccessController.getContext());
     }
 
     @Override

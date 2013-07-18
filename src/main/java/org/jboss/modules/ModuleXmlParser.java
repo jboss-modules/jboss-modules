@@ -35,6 +35,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.AccessControlContext;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -245,7 +246,7 @@ final class ModuleXmlParser {
         }
     }
 
-    static ModuleSpec parseModuleXml(final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier, final File root, final File moduleInfoFile) throws ModuleLoadException {
+    static ModuleSpec parseModuleXml(final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier, final File root, final File moduleInfoFile, final AccessControlContext context) throws ModuleLoadException {
         final FileInputStream fis;
         try {
             fis = new FileInputStream(moduleInfoFile);
@@ -257,7 +258,7 @@ final class ModuleXmlParser {
                     public ResourceLoader createResourceLoader(final String rootPath, final String loaderPath, final String loaderName) throws IOException {
                         File file = new File(rootPath, loaderPath);
                         if (file.isDirectory()) {
-                            return new FileResourceLoader(loaderName, file);
+                            return new FileResourceLoader(loaderName, file, context);
                         } else {
                             final JarFile jarFile = new JarFile(file, true);
                             return new JarFileResourceLoader(loaderName, jarFile);
