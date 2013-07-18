@@ -152,8 +152,20 @@ public class ModuleLoader {
      *
      * @param finders the module finders to search, in order
      */
-    protected ModuleLoader(final ModuleFinder[] finders) {
-        this(checkPermissions(), false, finders);
+    public ModuleLoader(final ModuleFinder[] finders) {
+        this(checkPermissions(), false, notEmpty(finders).clone());
+    }
+
+    private static ModuleFinder[] notEmpty(final ModuleFinder[] finders) {
+        if (finders == null || finders.length == 0) {
+            throw new IllegalArgumentException("Must provide at least one module finder");
+        }
+        for (ModuleFinder finder : finders) {
+            if (finder == null) {
+                throw new IllegalArgumentException("Module finder cannot be null");
+            }
+        }
+        return finders;
     }
 
     private static boolean checkPermissions() {
