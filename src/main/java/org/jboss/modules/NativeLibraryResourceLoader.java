@@ -90,6 +90,8 @@ public class NativeLibraryResourceLoader extends AbstractResourceLoader {
             realArch = "x86_64";
         } else if (sysArch.startsWith("I386") || sysArch.startsWith("I586") || sysArch.startsWith("I686") || sysArch.startsWith("X86")) {
             realArch = "i686";
+        } else if (sysArch.startsWith("X32")) {
+            realArch = "x32";
         } else if (sysArch.startsWith("PPC64")) {
             realArch = "ppc64";
         } else if (sysArch.startsWith("PPC") || sysArch.startsWith("POWER")) {
