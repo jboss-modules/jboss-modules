@@ -36,6 +36,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLStreamHandler;
 import java.security.CodeSource;
 import java.util.Collection;
 import java.util.Enumeration;
@@ -197,7 +198,28 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
             if (entry == null) {
                 return null;
             }
-            return new JarEntryResource(jarFile, entry, getJarURI(new File(jarFile.getName()).toURI(), entry.getName()).toURL());
+            final URI uri;
+            try {
+                File absoluteFile = new File(jarFile.getName()).getAbsoluteFile();
+                String path = absoluteFile.getPath();
+                path = PathUtils.canonicalize(path);
+                if (File.separatorChar != '/') {
+                    // optimizes away on platforms with /
+                    path = path.replace(File.separatorChar, '/');
+                }
+                if (PathUtils.isRelative(path)) {
+                    // should not be possible, but the JDK thinks this might happen sometimes..?
+                    path = "/" + path;
+                }
+                if (path.startsWith("//")) {
+                    // UNC path URIs have loads of leading slashes
+                    path = "//" + path;
+                }
+                uri = new URI("file", null, path, null);
+            } catch (URISyntaxException x) {
+                throw new IllegalStateException(x);
+            }
+            return new JarEntryResource(jarFile, entry, new URL(null, getJarURI(uri, entry.getName()).toString(), (URLStreamHandler) null));
         } catch (MalformedURLException e) {
             // must be invalid...?  (todo: check this out)
             return null;
