@@ -22,11 +22,18 @@
 
 package org.jboss.modules;
 
+import static java.security.AccessController.doPrivileged;
+
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.UndeclaredThrowableException;
 import java.net.URL;
 import java.security.AccessControlContext;
+import java.security.PrivilegedAction;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 
 /**
  * A file entry resource.
@@ -48,7 +55,16 @@ final class FileEntryResource implements Resource {
     }
 
     public long getSize() {
-        return file.length();
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            return doPrivileged(new PrivilegedAction<Long>() {
+                public Long run() {
+                    return Long.valueOf(file.length());
+                }
+            }, context).longValue();
+        } else {
+            return file.length();
+        }
     }
 
     public String getName() {
@@ -60,6 +76,27 @@ final class FileEntryResource implements Resource {
     }
 
     public InputStream openStream() throws IOException {
-        return FileResourceLoader.openFile(file, context);
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            try {
+                return doPrivileged(new PrivilegedExceptionAction<FileInputStream>() {
+                    public FileInputStream run() throws IOException {
+                        return new FileInputStream(file);
+                    }
+                }, context);
+            } catch (PrivilegedActionException e) {
+                try {
+                    throw e.getException();
+                } catch (RuntimeException e1) {
+                    throw e1;
+                } catch (IOException e1) {
+                    throw e1;
+                } catch (Exception e1) {
+                    throw new UndeclaredThrowableException(e1);
+                }
+            }
+        } else {
+            return new FileInputStream(file);
+        }
     }
 }

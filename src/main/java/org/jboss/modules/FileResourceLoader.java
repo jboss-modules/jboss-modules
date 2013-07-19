@@ -22,6 +22,8 @@
 
 package org.jboss.modules;
 
+import static java.security.AccessController.doPrivileged;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.Closeable;
@@ -39,6 +41,7 @@ import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.CodeSigner;
 import java.security.CodeSource;
+import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
@@ -75,7 +78,18 @@ final class FileResourceLoader extends NativeLibraryResourceLoader implements It
         final File manifestFile = new File(root, "META-INF" + File.separatorChar + "MANIFEST.MF");
         manifest = readManifestFile(manifestFile);
         final URL rootUrl;
-        try {
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            rootUrl = doPrivileged(new PrivilegedAction<URL>() {
+                public URL run() {
+                    try {
+                        return root.getAbsoluteFile().toURI().toURL();
+                    } catch (MalformedURLException e) {
+                        throw new IllegalArgumentException("Invalid root file specified", e);
+                    }
+                }
+            }, context);
+        } else try {
             rootUrl = root.getAbsoluteFile().toURI().toURL();
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException("Invalid root file specified", e);
@@ -96,32 +110,32 @@ final class FileResourceLoader extends NativeLibraryResourceLoader implements It
         return rootName;
     }
 
-    static final FileInputStream openFile(final File file, final AccessControlContext context) throws IOException {
+    public ClassSpec getClassSpec(final String fileName) throws IOException {
         final SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
             try {
-                return AccessController.doPrivileged(new PrivilegedExceptionAction<FileInputStream>() {
-                    public FileInputStream run() throws IOException {
-                        return new FileInputStream(file);
+                return doPrivileged(new PrivilegedExceptionAction<ClassSpec>() {
+                    public ClassSpec run() throws IOException {
+                        return doGetClassSpec(fileName);
                     }
                 }, context);
             } catch (PrivilegedActionException e) {
                 try {
                     throw e.getException();
-                } catch (RuntimeException e1) {
-                    throw e1;
                 } catch (IOException e1) {
+                    throw e1;
+                } catch (RuntimeException e1) {
                     throw e1;
                 } catch (Exception e1) {
                     throw new UndeclaredThrowableException(e1);
                 }
             }
         } else {
-            return new FileInputStream(file);
+            return doGetClassSpec(fileName);
         }
     }
 
-    public ClassSpec getClassSpec(final String fileName) throws IOException {
+    private ClassSpec doGetClassSpec(final String fileName) throws IOException {
         final File file = new File(getRoot(), fileName);
         if (! file.exists()) {
             return null;
@@ -129,7 +143,7 @@ final class FileResourceLoader extends NativeLibraryResourceLoader implements It
         final long size = file.length();
         final ClassSpec spec = new ClassSpec();
         spec.setCodeSource(codeSource);
-        final InputStream is = openFile(file, context);
+        final InputStream is = new FileInputStream(file);
         try {
             if (size <= (long) Integer.MAX_VALUE) {
                 final int castSize = (int) size;
@@ -159,20 +173,56 @@ final class FileResourceLoader extends NativeLibraryResourceLoader implements It
     }
 
     public PackageSpec getPackageSpec(final String name) throws IOException {
-        return getPackageSpec(name, manifest, getRoot().toURI().toURL());
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            try {
+                return doPrivileged(new PrivilegedExceptionAction<PackageSpec>() {
+                    public PackageSpec run() throws IOException {
+                        return getPackageSpec(name, manifest, getRoot().toURI().toURL());
+                    }
+                }, context);
+            } catch (PrivilegedActionException e) {
+                try {
+                    throw e.getException();
+                } catch (IOException e1) {
+                    throw e1;
+                } catch (RuntimeException e1) {
+                    throw e1;
+                } catch (Exception e1) {
+                    throw new UndeclaredThrowableException(e1);
+                }
+            }
+        } else {
+            return getPackageSpec(name, manifest, getRoot().toURI().toURL());
+        }
     }
 
     public Resource getResource(final String name) {
         final String canonPath = PathUtils.canonicalize(PathUtils.relativize(name));
-        try {
-            final File file = new File(getRoot(), canonPath);
-            if (! file.exists()) {
+        final File file = new File(getRoot(), canonPath);
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            return doPrivileged(new PrivilegedAction<Resource>() {
+                public Resource run() {
+                    if (!file.exists()) {
+                        return null;
+                    } else {
+                        try {
+                            return new FileEntryResource(canonPath, file, file.toURI().toURL(), context);
+                        } catch (MalformedURLException e) {
+                            return null;
+                        }
+                    }
+                }
+            }, context);
+        } else if (! file.exists()) {
+            return null;
+        } else {
+            try {
+                return new FileEntryResource(canonPath, file, file.toURI().toURL(), context);
+            } catch (MalformedURLException e) {
                 return null;
             }
-            return new FileEntryResource(canonPath, file, file.toURI().toURL(), context);
-        } catch (MalformedURLException e) {
-            // must be invalid...?  (todo: check this out)
-            return null;
         }
     }
 
