@@ -23,6 +23,7 @@
 package org.jboss.modules;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -566,6 +567,41 @@ public final class Module {
             final List<Resource> resourceList = fallbackLoader.loadResourceLocal(canonPath);
             for (Resource resource : resourceList) {
                 return resource.getURL();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Load a resource from a local loader.
+     *
+     * @param name the resource name
+     * @return the resource stream, or {@code null} if not found
+     */
+    InputStream getResourceAsStream(final String name) throws IOException {
+        final String canonPath = PathUtils.canonicalize(name);
+        for (String s : Module.systemPaths) {
+            if (canonPath.startsWith(s)) {
+                return moduleClassLoader.getResourceAsStream(canonPath);
+            }
+        }
+        log.trace("Attempting to find resource %s in %s", canonPath, this);
+        final String path = pathOf(canonPath);
+        final Map<String, List<LocalLoader>> paths = getPathsUnchecked();
+        final List<LocalLoader> loaders = paths.get(path);
+        if (loaders != null) {
+            for (LocalLoader loader : loaders) {
+                final List<Resource> resourceList = loader.loadResourceLocal(canonPath);
+                for (Resource resource : resourceList) {
+                    return resource.openStream();
+                }
+            }
+        }
+        final LocalLoader fallbackLoader = this.fallbackLoader;
+        if (fallbackLoader != null) {
+            final List<Resource> resourceList = fallbackLoader.loadResourceLocal(canonPath);
+            for (Resource resource : resourceList) {
+                return resource.openStream();
             }
         }
         return null;

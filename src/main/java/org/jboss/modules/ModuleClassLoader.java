@@ -525,8 +525,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
     @Override
     public final InputStream findResourceAsStream(final String name, boolean exportsOnly) {
         try {
-            final URL resource = findResource(name, exportsOnly);
-            return resource == null ? null : resource.openStream();
+            return module.getResourceAsStream(name);
         } catch (IOException e) {
             return null;
         }
