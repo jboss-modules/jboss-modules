@@ -96,6 +96,8 @@ public class NativeLibraryResourceLoader extends AbstractResourceLoader {
             realArch = "ppc";
         } else if (sysArch.startsWith("ARM")) {
             realArch = "arm";
+        } else if (sysArch.startsWith("AARCH64") || sysArch.startsWith("ARM64")) {
+            realArch = "aarch64";
         } else if (sysArch.startsWith("PA_RISC2.0W")) {
             realArch = "parisc64";
         } else if (sysArch.startsWith("PA_RISC") || sysArch.startsWith("PA-RISC")) {
