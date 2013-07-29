@@ -422,6 +422,7 @@ public class ModuleLoader {
      *
      * @param module the module to unload
      * @throws SecurityException if an attempt is made to unload a module which does not belong to this module loader
+     * @throws SecurityException if the module was not defined by this module loader
      */
     protected final void unloadModuleLocal(Module module) throws SecurityException {
         final ModuleLoader moduleLoader = module.getModuleLoader();
@@ -486,7 +487,7 @@ public class ModuleLoader {
 
                     final Module module = new Module(moduleSpec, ModuleLoader.this);
                     module.getClassLoaderPrivate().recalculate();
-                    module.setDependencies(Arrays.asList(moduleSpec.getDependenciesInternal()));
+                    module.setDependencies(moduleSpec.getDependenciesInternal());
                     log.moduleDefined(moduleIdentifier, ModuleLoader.this);
                     try {
                         futureModule.setModule(module);
@@ -520,10 +521,16 @@ public class ModuleLoader {
      * changed and is returning different paths.
      *
      * @param module the module to refresh
+     * @throws SecurityException if the module was not defined by this module loader, or if the module loader does not
+     *      have the required permissions associated with it
      */
     protected void refreshResourceLoaders(Module module) {
-        if (!canRedefine)
+        if (! canRedefine) {
             throw new SecurityException("Module redefinition requires canRedefineModule permission");
+        }
+        if (module.getModuleLoader() != this) {
+            throw new SecurityException("Module is not defined by this module loader");
+        }
 
         module.getClassLoaderPrivate().recalculate();
     }
@@ -538,10 +545,16 @@ public class ModuleLoader {
      *
      * @param module the module to update and refresh
      * @param loaders the new collection of loaders the module should use
+     * @throws SecurityException if the module was not defined by this module loader, or if the module loader does not
+     *      have the required permissions associated with it
      */
     protected void setAndRefreshResourceLoaders(Module module, Collection<ResourceLoaderSpec> loaders) {
-        if (!canRedefine)
+        if (! canRedefine) {
             throw new SecurityException("Module redefinition requires canRedefineModule permission");
+        }
+        if (module.getModuleLoader() != this) {
+            throw new SecurityException("Module is not defined by this module loader");
+        }
 
         module.getClassLoaderPrivate().setResourceLoaders(loaders.toArray(new ResourceLoaderSpec[loaders.size()]));
     }
@@ -555,10 +568,16 @@ public class ModuleLoader {
      *
      * @param module the module to relink
      * @throws ModuleLoadException if relinking failed
+     * @throws SecurityException if the module was not defined by this module loader, or if the module loader does not
+     *      have the required permissions associated with it
      */
     protected void relink(Module module) throws ModuleLoadException {
-        if (!canRedefine)
+        if (! canRedefine) {
             throw new SecurityException("Module redefinition requires canRedefineModule permission");
+        }
+        if (module.getModuleLoader() != this) {
+            throw new SecurityException("Module is not defined by this module loader");
+        }
 
         module.relink();
     }
@@ -574,13 +593,32 @@ public class ModuleLoader {
      * @param module the module to update and relink
      * @param dependencies the new dependency list
      * @throws ModuleLoadException if relinking failed
+     * @throws SecurityException if the module was not defined by this module loader, or if the module loader does not
+     *      have the required permissions associated with it
      */
     protected void setAndRelinkDependencies(Module module, List<DependencySpec> dependencies) throws ModuleLoadException {
-        if (!canRedefine)
+        if (! canRedefine) {
             throw new SecurityException("Module redefinition requires canRedefineModule permission");
+        }
+        if (module.getModuleLoader() != this) {
+            throw new SecurityException("Module is not defined by this module loader");
+        }
 
         module.setDependencies(dependencies);
         module.relinkIfNecessary();
+    }
+
+    /**
+     * Get the current dependency list for a module which was defined by this module loader, without any access checks.
+     *
+     * @return the current dependency list for the module
+     * @throws SecurityException if the module was not defined by this module loader
+     */
+    protected DependencySpec[] getDependencies(Module module) {
+        if (module.getModuleLoader() != this) {
+            throw new SecurityException("Module is not defined by this module loader");
+        }
+        return module.getDependencySpecsInternal().clone();
     }
 
     void addLinkTime(long amount) {
@@ -795,7 +833,7 @@ public class ModuleLoader {
         }
 
         private List<DependencyInfo> doGetDependencies(final Module module) {
-            Dependency[] dependencies = module.getDependencies();
+            Dependency[] dependencies = module.getDependenciesInternal();
             if (dependencies == null) {
                 return Collections.emptyList();
             }

@@ -99,7 +99,7 @@ public class ModuleExportTest extends AbstractModuleTestCase {
     }
 
     private static void getExportedModuleDeps(final Module module, final Set<Module> visited, final Set<ModuleIdentifier> dependencyExports) throws ModuleLoadException {
-        for (Dependency dependency : module.getDependencies()) {
+        for (Dependency dependency : module.getDependenciesInternal()) {
             if (dependency instanceof ModuleDependency && dependency.getExportFilter() != PathFilters.rejectAll()) {
                 final ModuleDependency moduleDependency = (ModuleDependency) dependency;
                 final Module md = moduleDependency.getModuleLoader().loadModule(moduleDependency.getIdentifier());

@@ -77,6 +77,7 @@ public final class Module {
         BOOT_MODULE_LOADER = new AtomicReference<ModuleLoader>();
         EMPTY_CLASS_FILTERS = new FastCopyHashSet<ClassFilter>(0);
         EMPTY_PATH_FILTERS = new FastCopyHashSet<PathFilter>(0);
+        GET_DEPENDENCIES = new RuntimePermission("getDependencies");
         GET_CLASS_LOADER = new RuntimePermission("getClassLoader");
         GET_BOOT_MODULE_LOADER = new RuntimePermission("getBootModuleLoader");
         ACCESS_MODULE_LOGGER = new RuntimePermission("accessModuleLogger");
@@ -187,6 +188,7 @@ public final class Module {
 
     // private constants
 
+    private static final RuntimePermission GET_DEPENDENCIES;
     private static final RuntimePermission GET_CLASS_LOADER;
     private static final RuntimePermission GET_BOOT_MODULE_LOADER;
     private static final RuntimePermission ACCESS_MODULE_LOGGER;
@@ -222,12 +224,31 @@ public final class Module {
         return fallbackLoader;
     }
 
-    Dependency[] getDependencies() {
-        return linkage.getSourceList();
+    Dependency[] getDependenciesInternal() {
+        return linkage.getDependencies();
+    }
+
+    DependencySpec[] getDependencySpecsInternal() {
+        return linkage.getDependencySpecs();
     }
 
     ModuleClassLoader getClassLoaderPrivate() {
         return moduleClassLoader;
+    }
+
+    /**
+     * Get the current dependencies of this module.
+     *
+     * @return the current dependencies of this module
+     * @throws SecurityException if a security manager is enabled and the caller does not have the {@code getDependencies}
+     * {@link RuntimePermission}
+     */
+    public DependencySpec[] getDependencies() throws SecurityException {
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(GET_DEPENDENCIES);
+        }
+        return getDependencySpecsInternal().clone();
     }
 
     /**
@@ -1035,7 +1056,7 @@ public final class Module {
                     nestedResourceFilters = resourceFilterStack.clone();
                     if (resourceImportFilter != PathFilters.acceptAll()) nestedResourceFilters.add(resourceImportFilter);
                 }
-                subtract += module.addExportedPaths(module.getDependencies(), map, nestedFilters, nestedClassFilters, nestedResourceFilters, visited);
+                subtract += module.addExportedPaths(module.getDependenciesInternal(), map, nestedFilters, nestedClassFilters, nestedResourceFilters, visited);
             } else if (dependency instanceof ModuleClassLoaderDependency) {
                 final ModuleClassLoaderDependency classLoaderDependency = (ModuleClassLoaderDependency) dependency;
                 LocalLoader localLoader = classLoaderDependency.getLocalLoader();
@@ -1191,7 +1212,7 @@ public final class Module {
                         if (resourceImportFilter != PathFilters.acceptAll()) nestedResourceFilters.add(resourceImportFilter);
                         if (resourceExportFilter != PathFilters.acceptAll()) nestedResourceFilters.add(resourceExportFilter);
                     }
-                    subtract += module.addExportedPaths(module.getDependencies(), map, nestedFilters, nestedClassFilters, nestedResourceFilters, visited);
+                    subtract += module.addExportedPaths(module.getDependenciesInternal(), map, nestedFilters, nestedClassFilters, nestedResourceFilters, visited);
                 } else if (dependency instanceof ModuleClassLoaderDependency) {
                     final ModuleClassLoaderDependency classLoaderDependency = (ModuleClassLoaderDependency) dependency;
                     LocalLoader localLoader = classLoaderDependency.getLocalLoader();
@@ -1318,7 +1339,7 @@ public final class Module {
                     if (state == Linkage.State.LINKED) {
                         return oldLinkage.getPaths();
                     }
-                    this.linkage = linkage = new Linkage(oldLinkage.getSourceList(), Linkage.State.LINKING);
+                    this.linkage = linkage = new Linkage(oldLinkage.getDependencySpecs(), oldLinkage.getDependencies(), Linkage.State.LINKING);
                     // fall out and link
                 }
                 boolean ok = false;
@@ -1354,7 +1375,7 @@ public final class Module {
 
     void link(final Linkage linkage) throws ModuleLoadException {
         final HashMap<String, List<LocalLoader>> importsMap = new HashMap<String, List<LocalLoader>>();
-        final Dependency[] dependencies = linkage.getSourceList();
+        final Dependency[] dependencies = linkage.getDependencies();
         final long start = Metrics.getCurrentCPUTime();
         long subtractTime = 0L;
         try {
@@ -1365,7 +1386,7 @@ public final class Module {
             subtractTime += addPaths(dependencies, importsMap, filterStack, classFilterStack, resourceFilterStack, visited);
             synchronized (this) {
                 if (this.linkage == linkage) {
-                    this.linkage = new Linkage(linkage.getSourceList(), Linkage.State.LINKED, importsMap);
+                    this.linkage = new Linkage(linkage.getDependencySpecs(), linkage.getDependencies(), Linkage.State.LINKED, importsMap);
                     notifyAll();
                 }
                 // else all our efforts were just wasted since someone changed the deps in the meantime
@@ -1386,7 +1407,7 @@ public final class Module {
             if (oldLinkage.getState() != Linkage.State.UNLINKED) {
                 return;
             }
-            this.linkage = linkage = new Linkage(oldLinkage.getSourceList(), Linkage.State.LINKING);
+            this.linkage = linkage = new Linkage(oldLinkage.getDependencySpecs(), oldLinkage.getDependencies(), Linkage.State.LINKING);
         }
         boolean ok = false;
         try {
@@ -1409,15 +1430,28 @@ public final class Module {
         link(linkage);
     }
 
-    void setDependencies(final List<DependencySpec> dependencySpecs) throws ModuleLoadException {
+    void setDependencies(final List<DependencySpec> dependencySpecs) {
+        if (dependencySpecs == null) {
+            throw new IllegalArgumentException("dependencySpecs is null");
+        }
+        final DependencySpec[] specs = dependencySpecs.toArray(new DependencySpec[dependencySpecs.size()]);
+        for (DependencySpec spec : specs) {
+            if (spec == null) {
+                throw new IllegalArgumentException("dependencySpecs contains a null dependency specification");
+            }
+        }
+        setDependencies(specs);
+    }
+
+    void setDependencies(final DependencySpec[] dependencySpecs) {
         synchronized (this) {
-            linkage = new Linkage(calculateDependencies(dependencySpecs), Linkage.State.UNLINKED, null);
+            linkage = new Linkage(dependencySpecs, calculateDependencies(dependencySpecs), Linkage.State.UNLINKED, null);
             notifyAll();
         }
     }
 
-    private Dependency[] calculateDependencies(final List<DependencySpec> dependencySpecs) {
-        final Dependency[] dependencies = new Dependency[dependencySpecs.size()];
+    private Dependency[] calculateDependencies(final DependencySpec[] dependencySpecs) {
+        final Dependency[] dependencies = new Dependency[dependencySpecs.length];
         int i = 0;
         for (DependencySpec spec : dependencySpecs) {
             final Dependency dependency = spec.getDependency(this);

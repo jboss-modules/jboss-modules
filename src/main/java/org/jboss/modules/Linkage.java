@@ -34,6 +34,7 @@ import java.util.Map;
 final class Linkage {
 
     private static final Dependency[] NO_DEPENDENCIES = new Dependency[0];
+    private static final DependencySpec[] NO_DEPENDENCY_SPECS = new DependencySpec[0];
 
     enum State {
         NEW,
@@ -43,16 +44,23 @@ final class Linkage {
         ;
     }
 
-    private final Dependency[] sourceList;
+    private final DependencySpec[] dependencySpecs;
+    private final Dependency[] dependencies;
+
     private final State state;
     private final Map<String, List<LocalLoader>> allPaths;
 
-    Linkage(final Dependency[] sourceList, final State state) {
-        this(sourceList, state, Collections.<String, List<LocalLoader>>emptyMap());
+    Linkage(final State state) {
+        this(NO_DEPENDENCY_SPECS, NO_DEPENDENCIES, state, Collections.<String, List<LocalLoader>>emptyMap());
     }
 
-    Linkage(final Dependency[] sourceList, final State state, final Map<String, List<LocalLoader>> allPaths) {
-        this.sourceList = sourceList;
+    Linkage(final DependencySpec[] dependencySpecs, final Dependency[] dependencies, final State state) {
+        this(dependencySpecs, dependencies, state, Collections.<String, List<LocalLoader>>emptyMap());
+    }
+
+    Linkage(final DependencySpec[] dependencySpecs, final Dependency[] dependencies, final State state, final Map<String, List<LocalLoader>> allPaths) {
+        this.dependencySpecs = dependencySpecs;
+        this.dependencies = dependencies;
         this.state = state;
         this.allPaths = allPaths;
     }
@@ -65,9 +73,13 @@ final class Linkage {
         return state;
     }
 
-    Dependency[] getSourceList() {
-        return sourceList;
+    Dependency[] getDependencies() {
+        return dependencies;
     }
 
-    static final Linkage NONE = new Linkage(NO_DEPENDENCIES, State.NEW, Collections.<String, List<LocalLoader>>emptyMap());
+    DependencySpec[] getDependencySpecs() {
+        return dependencySpecs;
+    }
+
+    static final Linkage NONE = new Linkage(State.NEW);
 }
