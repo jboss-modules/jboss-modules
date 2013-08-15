@@ -90,13 +90,12 @@ final class ModularURLStreamHandlerFactory implements URLStreamHandlerFactory {
 
     private ModularURLStreamHandlerFactory() {
     }
-
-    public URLStreamHandler createURLStreamHandler(final String protocol) {
-        final Set<String> set = reentered.get();
-        if (set.add(protocol)) try {
-            for (Module module : modules) {
-                ServiceLoader<URLStreamHandlerFactory> loader = module.loadService(URLStreamHandlerFactory.class);
-                for (URLStreamHandlerFactory factory : loader) try {
+    
+    private URLStreamHandler locateHandler(final String protocol) {
+        for (Module module : modules) {
+            ServiceLoader<URLStreamHandlerFactory> loader = module.loadService(URLStreamHandlerFactory.class);
+            for (URLStreamHandlerFactory factory : loader) {
+                try {
                     final URLStreamHandler handler = factory.createURLStreamHandler(protocol);
                     if (handler != null) {
                         return handler;
@@ -105,8 +104,26 @@ final class ModularURLStreamHandlerFactory implements URLStreamHandlerFactory {
                     // ignored
                 }
             }
-        } finally {
-            set.remove(protocol);
+        }
+        
+        return null;
+    } 
+
+    public URLStreamHandler createURLStreamHandler(final String protocol) {
+        final Set<String> set = reentered.get();
+        if (set.add(protocol)) {
+            try {
+                if (System.getSecurityManager() == null) {
+                    return locateHandler(protocol);
+                }
+                return AccessController.doPrivileged(new PrivilegedAction<URLStreamHandler>() {
+                    public URLStreamHandler run() {
+                        return locateHandler(protocol);
+                    }
+                });
+            } finally {
+                set.remove(protocol);
+            }
         }
         return null;
     }
