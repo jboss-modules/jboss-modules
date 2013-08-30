@@ -32,8 +32,10 @@ import java.security.AccessControlContext;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarFile;
 
@@ -54,7 +56,6 @@ import static org.jboss.modules.xml.XmlPullParser.END_DOCUMENT;
 import static org.jboss.modules.xml.XmlPullParser.END_TAG;
 import static org.jboss.modules.xml.XmlPullParser.ENTITY_REF;
 import static org.jboss.modules.xml.XmlPullParser.FEATURE_PROCESS_NAMESPACES;
-import static org.jboss.modules.xml.XmlPullParser.FEATURE_REPORT_NAMESPACE_ATTRIBUTES;
 import static org.jboss.modules.xml.XmlPullParser.IGNORABLE_WHITESPACE;
 import static org.jboss.modules.xml.XmlPullParser.PROCESSING_INSTRUCTION;
 import static org.jboss.modules.xml.XmlPullParser.START_DOCUMENT;
@@ -81,45 +82,104 @@ final class ModuleXmlParser {
     private static final String MODULE_1_2 = "urn:jboss:module:1.2";
     private static final String MODULE_1_3 = "urn:jboss:module:1.3";
 
-    private static final String E_MODULE = "module";
-    private static final String E_ARTIFACT = "artifact";
-    private static final String E_NATIVE_ARTIFACT = "native-artifact";
-    private static final String E_DEPENDENCIES = "dependencies";
-    private static final String E_RESOURCES = "resources";
-    private static final String E_MAIN_CLASS = "main-class";
-    private static final String E_RESOURCE_ROOT = "resource-root";
-    private static final String E_PATH = "path";
-    private static final String E_EXPORTS = "exports";
-    private static final String E_IMPORTS = "imports";
-    private static final String E_INCLUDE = "include";
-    private static final String E_EXCLUDE = "exclude";
-    private static final String E_INCLUDE_SET = "include-set";
-    private static final String E_EXCLUDE_SET = "exclude-set";
-    private static final String E_FILTER = "filter";
-    private static final String E_SYSTEM = "system";
-    private static final String E_PATHS = "paths";
-    private static final String E_MODULE_ALIAS = "module-alias";
-    private static final String E_MODULE_ABSENT = "module-absent";
-    private static final String E_PROPERTIES = "properties";
-    private static final String E_PROPERTY = "property";
-    private static final String E_PERMISSIONS = "permissions";
-    private static final String E_GRANT = "grant";
+    private static enum Element {
+        UNKNOWN(null),
+        MODULE("module"),
+        ARTIFACT("artifact"),
+        NATIVE_ARTIFACT("native-artifact"),
+        DEPENDENCIES("dependencies"),
+        RESOURCES("resources"),
+        MAIN_CLASS("main-class"),
+        RESOURCE_ROOT("resource-root"),
+        PATH("path"),
+        EXPORTS("exports"),
+        IMPORTS("imports"),
+        INCLUDE("include"),
+        EXCLUDE("exclude"),
+        INCLUDE_SET("include-set"),
+        EXCLUDE_SET("exclude-set"),
+        FILTER("filter"),
+        SYSTEM("system"),
+        PATHS("paths"),
+        MODULE_ALIAS("module-alias"),
+        MODULE_ABSENT("module-absent"),
+        PROPERTIES("properties"),
+        PROPERTY("property"),
+        PERMISSIONS("permissions"),
+        GRANT("grant");
 
-    private static final String A_NAME = "name";
-    private static final String A_SLOT = "slot";
-    private static final String A_EXPORT = "export";
-    private static final String A_SERVICES = "services";
-    private static final String A_PATH = "path";
-    private static final String A_OPTIONAL = "optional";
-    private static final String A_TARGET_NAME = "target-name";
-    private static final String A_TARGET_SLOT = "target-slot";
-    private static final String A_VALUE = "value";
-    private static final String A_PERMISSION = "permission";
-    private static final String A_ACTIONS = "actions";
+        private final String name;
+
+        Element(final String name) {
+            this.name = name;
+        }
+
+        public String getLocalName() {
+            return name;
+        }
+
+        private static final Map<String, Element> MAP;
+
+        static {
+            final Map<String, Element> map = new HashMap<String, Element>();
+            for (Element element : values()) {
+                final String name = element.getLocalName();
+                if (name != null) map.put(name, element);
+            }
+            MAP = map;
+        }
+
+        public static Element forName(String localName) {
+            final Element element = MAP.get(localName);
+            return element == null ? UNKNOWN : element;
+        }
+    }
+
+    private static enum Attribute {
+        UNKNOWN(null),
+        NAME("name"),
+        SLOT("slot"),
+        EXPORT("export"),
+        SERVICES("services"),
+        PATH("path"),
+        OPTIONAL("optional"),
+        TARGET_NAME("target-name"),
+        TARGET_SLOT("target-slot"),
+        VALUE("value"),
+        PERMISSION("permission"),
+        ACTIONS("actions");
+
+        private final String name;
+
+        Attribute(final String name) {
+            this.name = name;
+        }
+
+        public String getLocalName() {
+            return name;
+        }
+
+        private static final Map<String, Attribute> MAP;
+
+        static {
+            final Map<String, Attribute> map = new HashMap<String, Attribute>();
+            for (Attribute element : values()) {
+                final String name = element.getLocalName();
+                if (name != null) map.put(name, element);
+            }
+            MAP = map;
+        }
+
+        public static Attribute forName(String localName) {
+            final Attribute element = MAP.get(localName);
+            return element == null ? UNKNOWN : element;
+        }
+    }
 
     private static final String D_NONE = "none";
     private static final String D_IMPORT = "import";
     private static final String D_EXPORT = "export";
+
 
     static ModuleSpec parseModuleXml(final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier, final File root, final File moduleInfoFile, final AccessControlContext context) throws ModuleLoadException, IOException {
         final FileInputStream fis;
@@ -192,15 +252,15 @@ final class ModuleXmlParser {
         return new XmlPullParserException("Invalid/mismatched module name (expected " + expected + ")", reader, null);
     }
 
-    private static XmlPullParserException missingAttributes(final XmlPullParser reader, final Set<String> required) {
+    private static XmlPullParserException missingAttributes(final XmlPullParser reader, final Set<Attribute> required) {
         final StringBuilder b = new StringBuilder("Missing one or more required attributes:");
-        for (String attribute : required) {
-            b.append(' ').append(attribute);
+        for (Attribute attribute : required) {
+            b.append(' ').append(attribute.getLocalName());
         }
         return new XmlPullParserException(b.toString(), reader, null);
     }
 
-    private static XmlPullParserException unknownAttribute(final XmlPullParser parser, final String attribute) {
+    private static XmlPullParserException unknownAttribute(final XmlPullParser parser, final Attribute attribute) {
         return new XmlPullParserException("Unknown attribute '" + attribute + "'", parser, null);
     }
 
@@ -212,20 +272,20 @@ final class ModuleXmlParser {
                     return parseRootElement(factory, rootPath, reader, moduleLoader, moduleIdentifier);
                 }
                 case START_TAG: {
-                    final String element = reader.getName();
+                    final Element element = Element.forName(reader.getName());
                     switch (element) {
-                        case E_MODULE: {
+                        case MODULE: {
                             final ModuleSpec.Builder specBuilder = ModuleSpec.build(moduleIdentifier);
                             parseModuleContents(reader, factory, moduleLoader, moduleIdentifier, specBuilder, rootPath);
                             parseEndDocument(reader);
                             return specBuilder.create();
                         }
-                        case E_MODULE_ALIAS: {
+                        case MODULE_ALIAS: {
                             final ModuleSpec moduleSpec = parseModuleAliasContents(reader, moduleIdentifier);
                             parseEndDocument(reader);
                             return moduleSpec;
                         }
-                        case E_MODULE_ABSENT: {
+                        case MODULE_ABSENT: {
                             parseModuleAbsentContents(reader, moduleIdentifier);
                             return null;
                         }
@@ -247,20 +307,20 @@ final class ModuleXmlParser {
         while ((eventType = reader.nextTag()) != END_DOCUMENT) {
             switch (eventType) {
                 case START_TAG: {
-                    final String element = reader.getName();
+                    final Element element = Element.forName(reader.getName());
                     switch (element) {
-                        case E_MODULE: {
+                        case MODULE: {
                             final ModuleSpec.Builder specBuilder = ModuleSpec.build(moduleIdentifier);
                             parseModuleContents(reader, factory, moduleLoader, moduleIdentifier, specBuilder, rootPath);
                             parseEndDocument(reader);
                             return specBuilder.create();
                         }
-                        case E_MODULE_ALIAS: {
+                        case MODULE_ALIAS: {
                             final ModuleSpec moduleSpec = parseModuleAliasContents(reader, moduleIdentifier);
                             parseEndDocument(reader);
                             return moduleSpec;
                         }
-                        case E_MODULE_ABSENT: {
+                        case MODULE_ABSENT: {
                             parseModuleAbsentContents(reader, moduleIdentifier);
                             return null;
                         }
@@ -283,15 +343,15 @@ final class ModuleXmlParser {
         String slot = null;
         String targetName = null;
         String targetSlot = null;
-        final Set<String> required = new HashSet<>(Arrays.asList(A_NAME, A_TARGET_NAME));
+        final Set<Attribute> required = new HashSet<Attribute>(Arrays.asList(Attribute.NAME, Attribute.TARGET_NAME));
         for (int i = 0; i < count; i ++) {
-            final String attribute = reader.getAttributeName(i);
+            final Attribute attribute = Attribute.forName(reader.getAttributeName(i));
             required.remove(attribute);
             switch (attribute) {
-                case A_NAME:    name = reader.getAttributeValue(i); break;
-                case A_SLOT:    slot = reader.getAttributeValue(i); break;
-                case A_TARGET_NAME: targetName = reader.getAttributeValue(i); break;
-                case A_TARGET_SLOT: targetSlot = reader.getAttributeValue(i); break;
+                case NAME:    name = reader.getAttributeValue(i); break;
+                case SLOT:    slot = reader.getAttributeValue(i); break;
+                case TARGET_NAME: targetName = reader.getAttributeValue(i); break;
+                case TARGET_SLOT: targetSlot = reader.getAttributeValue(i); break;
                 default: throw unknownAttribute(reader, attribute);
             }
         }
@@ -319,13 +379,13 @@ final class ModuleXmlParser {
         final int count = reader.getAttributeCount();
         String name = null;
         String slot = null;
-        final Set<String> required = new HashSet<>(Arrays.asList(A_NAME, A_TARGET_NAME));
+        final Set<Attribute> required = new HashSet<Attribute>(Arrays.asList(Attribute.NAME, Attribute.TARGET_NAME));
         for (int i = 0; i < count; i ++) {
-            final String attribute = reader.getAttributeName(i);
+            final Attribute attribute = Attribute.forName(reader.getAttributeName(i));
             required.remove(attribute);
             switch (attribute) {
-                case A_NAME:    name = reader.getAttributeValue(i); break;
-                case A_SLOT:    slot = reader.getAttributeValue(i); break;
+                case NAME:    name = reader.getAttributeValue(i); break;
+                case SLOT:    slot = reader.getAttributeValue(i); break;
                 default: throw unknownAttribute(reader, attribute);
             }
         }
@@ -353,13 +413,13 @@ final class ModuleXmlParser {
         final int count = reader.getAttributeCount();
         String name = null;
         String slot = null;
-        final Set<String> required = new HashSet<>(Arrays.asList(A_NAME));
+        final Set<Attribute> required = new HashSet<Attribute>(Arrays.asList(Attribute.NAME));
         for (int i = 0; i < count; i ++) {
-            final String attribute = reader.getAttributeName(i);
+            final Attribute attribute = Attribute.forName(reader.getAttributeName(i));
             required.remove(attribute);
             switch (attribute) {
-                case A_NAME:    name = reader.getAttributeValue(i); break;
-                case A_SLOT:    slot = reader.getAttributeValue(i); break;
+                case NAME:    name = reader.getAttributeValue(i); break;
+                case SLOT:    slot = reader.getAttributeValue(i); break;
                 default: throw unknownAttribute(reader, attribute);
             }
         }
@@ -371,7 +431,7 @@ final class ModuleXmlParser {
         }
         // xsd:all
         MultiplePathFilterBuilder exportsBuilder = PathFilters.multiplePathFilterBuilder(true);
-        Set<String> visited = new HashSet<>();
+        Set<Element> visited = new HashSet<Element>();
         int eventType;
         while ((eventType = reader.nextTag()) != END_DOCUMENT) {
             switch (eventType) {
@@ -380,18 +440,18 @@ final class ModuleXmlParser {
                     return;
                 }
                 case START_TAG: {
-                    final String element = reader.getName();
+                    final Element element = Element.forName(reader.getName());
                     if (visited.contains(element)) {
                         throw unexpectedContent(reader);
                     }
                     visited.add(element);
                     switch (element) {
-                        case E_EXPORTS:      parseFilterList(reader, exportsBuilder); break;
-                        case E_DEPENDENCIES: parseDependencies(reader, specBuilder); break;
-                        case E_MAIN_CLASS:   parseMainClass(reader, specBuilder); break;
-                        case E_RESOURCES:    parseResources(factory, rootPath, reader, specBuilder); break;
-                        case E_PROPERTIES:   parseProperties(reader, specBuilder); break;
-                        case E_PERMISSIONS:  parsePermissions(reader, moduleLoader, moduleIdentifier, specBuilder); break;
+                        case EXPORTS:      parseFilterList(reader, exportsBuilder); break;
+                        case DEPENDENCIES: parseDependencies(reader, specBuilder); break;
+                        case MAIN_CLASS:   parseMainClass(reader, specBuilder); break;
+                        case RESOURCES:    parseResources(factory, rootPath, reader, specBuilder); break;
+                        case PROPERTIES:   parseProperties(reader, specBuilder); break;
+                        case PERMISSIONS:  parsePermissions(reader, moduleLoader, moduleIdentifier, specBuilder); break;
                         default: throw unexpectedContent(reader);
                     }
                     break;
@@ -413,9 +473,9 @@ final class ModuleXmlParser {
                     return;
                 }
                 case START_TAG: {
-                    switch (reader.getName()) {
-                        case E_MODULE: parseModuleDependency(reader, specBuilder); break;
-                        case E_SYSTEM: parseSystemDependency(reader, specBuilder); break;
+                    switch (Element.forName(reader.getName())) {
+                        case MODULE: parseModuleDependency(reader, specBuilder); break;
+                        case SYSTEM: parseSystemDependency(reader, specBuilder); break;
                         default: throw unexpectedContent(reader);
                     }
                     break;
@@ -434,17 +494,17 @@ final class ModuleXmlParser {
         boolean export = false;
         boolean optional = false;
         String services = D_NONE;
-        final Set<String> required = new HashSet<>(Arrays.asList(A_NAME));
+        final Set<Attribute> required = new HashSet<Attribute>(Arrays.asList(Attribute.NAME));
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
-            final String attribute = reader.getAttributeName(i);
+            final Attribute attribute = Attribute.forName(reader.getAttributeName(i));
             required.remove(attribute);
             switch (attribute) {
-                case A_NAME:     name = reader.getAttributeValue(i); break;
-                case A_SLOT:     slot = reader.getAttributeValue(i); break;
-                case A_EXPORT:   export = Boolean.parseBoolean(reader.getAttributeValue(i)); break;
-                case A_SERVICES: services = reader.getAttributeValue(i); break;
-                case A_OPTIONAL: optional = Boolean.parseBoolean(reader.getAttributeValue(i)); break;
+                case NAME:     name = reader.getAttributeValue(i); break;
+                case SLOT:     slot = reader.getAttributeValue(i); break;
+                case EXPORT:   export = Boolean.parseBoolean(reader.getAttributeValue(i)); break;
+                case SERVICES: services = reader.getAttributeValue(i); break;
+                case OPTIONAL: optional = Boolean.parseBoolean(reader.getAttributeValue(i)); break;
                 default: throw unknownAttribute(reader, attribute);
             }
         }
@@ -482,9 +542,9 @@ final class ModuleXmlParser {
                     return;
                 }
                 case START_TAG: {
-                    switch (reader.getName()) {
-                        case E_EXPORTS: parseFilterList(reader, exportBuilder); break;
-                        case E_IMPORTS: parseFilterList(reader, importBuilder); break;
+                    switch (Element.forName(reader.getName())) {
+                        case EXPORTS: parseFilterList(reader, exportBuilder); break;
+                        case IMPORTS: parseFilterList(reader, importBuilder); break;
                         default: throw unexpectedContent(reader);
                     }
                     break;
@@ -500,9 +560,9 @@ final class ModuleXmlParser {
         boolean export = false;
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
-            final String attribute = reader.getAttributeName(i);
+            final Attribute attribute = Attribute.forName(reader.getAttributeName(i));
             switch (attribute) {
-                case A_EXPORT:  export = Boolean.parseBoolean(reader.getAttributeValue(i)); break;
+                case EXPORT:  export = Boolean.parseBoolean(reader.getAttributeValue(i)); break;
                 default: throw unexpectedContent(reader);
             }
         }
@@ -517,12 +577,12 @@ final class ModuleXmlParser {
                     return;
                 }
                 case START_TAG: {
-                    switch (reader.getName()) {
-                        case E_PATHS: {
+                    switch (Element.forName(reader.getName())) {
+                        case PATHS: {
                             paths = parseSet(reader);
                             break;
                         }
-                        case E_EXPORTS: {
+                        case EXPORTS: {
                             parseFilterList(reader, exportBuilder);
                             break;
                         }
@@ -537,13 +597,13 @@ final class ModuleXmlParser {
 
     private static void parseMainClass(final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
         String name = null;
-        final Set<String> required = new HashSet<>(Arrays.asList(A_NAME));
+        final Set<Attribute> required = new HashSet<Attribute>(Arrays.asList(Attribute.NAME));
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
-            final String attribute = reader.getAttributeName(i);
+            final Attribute attribute = Attribute.forName(reader.getAttributeName(i));
             required.remove(attribute);
             switch (attribute) {
-                case A_NAME: name = reader.getAttributeValue(i); break;
+                case NAME: name = reader.getAttributeValue(i); break;
                 default: throw unexpectedContent(reader);
             }
         }
@@ -565,16 +625,16 @@ final class ModuleXmlParser {
                     return;
                 }
                 case START_TAG: {
-                    switch (reader.getName()) {
-                        case E_RESOURCE_ROOT: {
+                    switch (Element.forName(reader.getName())) {
+                        case RESOURCE_ROOT: {
                             parseResourceRoot(factory, rootPath, reader, specBuilder);
                             break;
                         }
-                        case E_ARTIFACT: {
+                        case ARTIFACT: {
                             parseArtifact(reader, specBuilder);
                             break;
                         }
-                        case E_NATIVE_ARTIFACT: {
+                        case NATIVE_ARTIFACT: {
                             parseNativeArtifact(reader, specBuilder);
                             break;
                         }
@@ -613,13 +673,13 @@ final class ModuleXmlParser {
 
     private static void parseNativeArtifact(final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
         String name = null;
-        final Set<String> required = new HashSet<>(Arrays.asList(A_NAME));
+        final Set<Attribute> required = new HashSet<Attribute>(Arrays.asList(Attribute.NAME));
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
-            final String attribute = reader.getAttributeName(i);
+            final Attribute attribute = Attribute.forName(reader.getAttributeName(i));
             required.remove(attribute);
             switch (attribute) {
-                case A_NAME: name = reader.getAttributeValue(i); break;
+                case NAME: name = reader.getAttributeValue(i); break;
                 default: throw unknownAttribute(reader, attribute);
             }
         }
@@ -650,13 +710,13 @@ final class ModuleXmlParser {
 
     private static void parseArtifact(final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
         String name = null;
-        final Set<String> required = new HashSet<>(Arrays.asList(A_NAME));
+        final Set<Attribute> required = new HashSet<Attribute>(Arrays.asList(Attribute.NAME));
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
-            final String attribute = reader.getAttributeName(i);
+            final Attribute attribute = Attribute.forName(reader.getAttributeName(i));
             required.remove(attribute);
             switch (attribute) {
-                case A_NAME: name = reader.getAttributeValue(i); break;
+                case NAME: name = reader.getAttributeValue(i); break;
                 default: throw unknownAttribute(reader, attribute);
             }
         }
@@ -691,14 +751,14 @@ final class ModuleXmlParser {
     private static void parseResourceRoot(final ResourceRootFactory factory, final String rootPath, final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
         String name = null;
         String path = null;
-        final Set<String> required = new HashSet<>(Arrays.asList(A_PATH));
+        final Set<Attribute> required = new HashSet<Attribute>(Arrays.asList(Attribute.PATH));
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
-            final String attribute = reader.getAttributeName(i);
+            final Attribute attribute = Attribute.forName(reader.getAttributeName(i));
             required.remove(attribute);
             switch (attribute) {
-                case A_NAME: name = reader.getAttributeValue(i); break;
-                case A_PATH: path = reader.getAttributeValue(i); break;
+                case NAME: name = reader.getAttributeValue(i); break;
+                case PATH: path = reader.getAttributeValue(i); break;
                 default: throw unknownAttribute(reader, attribute);
             }
         }
@@ -710,7 +770,7 @@ final class ModuleXmlParser {
         final MultiplePathFilterBuilder filterBuilder = PathFilters.multiplePathFilterBuilder(true);
         final ResourceLoader resourceLoader;
 
-        final Set<String> encountered = new HashSet<>();
+        final Set<Element> encountered = new HashSet<Element>();
         int eventType;
         while ((eventType = reader.nextTag()) != END_DOCUMENT) {
             switch (eventType) {
@@ -724,10 +784,10 @@ final class ModuleXmlParser {
                     return;
                 }
                 case START_TAG: {
-                    final String element = reader.getName();
+                    final Element element = Element.forName(reader.getName());
                     if (! encountered.add(element)) throw unexpectedContent(reader);
                     switch (element) {
-                        case E_FILTER: parseFilterList(reader, filterBuilder); break;
+                        case FILTER: parseFilterList(reader, filterBuilder); break;
                         default: throw unexpectedContent(reader);
                     }
                     break;
@@ -748,11 +808,11 @@ final class ModuleXmlParser {
                     return;
                 }
                 case START_TAG: {
-                    switch (reader.getName()) {
-                        case E_INCLUDE: parsePath(reader, true, builder); break;
-                        case E_EXCLUDE: parsePath(reader, false, builder); break;
-                        case E_INCLUDE_SET: parseSet(reader, true, builder); break;
-                        case E_EXCLUDE_SET: parseSet(reader, false, builder); break;
+                    switch (Element.forName(reader.getName())) {
+                        case INCLUDE: parsePath(reader, true, builder); break;
+                        case EXCLUDE: parsePath(reader, false, builder); break;
+                        case INCLUDE_SET: parseSet(reader, true, builder); break;
+                        case EXCLUDE_SET: parseSet(reader, false, builder); break;
                         default: throw unexpectedContent(reader);
                     }
                     break;
@@ -767,13 +827,13 @@ final class ModuleXmlParser {
 
     private static void parsePath(final XmlPullParser reader, final boolean include, final MultiplePathFilterBuilder builder) throws XmlPullParserException, IOException {
         String path = null;
-        final Set<String> required = new HashSet<>(Arrays.asList(A_PATH));
+        final Set<Attribute> required = new HashSet<Attribute>(Arrays.asList(Attribute.PATH));
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
-            final String attribute = reader.getAttributeName(i);
+            final Attribute attribute = Attribute.forName(reader.getAttributeName(i));
             required.remove(attribute);
             switch (attribute) {
-                case A_PATH: path = reader.getAttributeValue(i); break;
+                case PATH: path = reader.getAttributeValue(i); break;
                 default: throw unknownAttribute(reader, attribute);
             }
         }
@@ -797,7 +857,7 @@ final class ModuleXmlParser {
     }
 
     private static Set<String> parseSet(final XmlPullParser reader) throws XmlPullParserException, IOException {
-        final Set<String> set = new FastCopyHashSet<>();
+        final Set<String> set = new FastCopyHashSet<String>();
         // xsd:choice
         int eventType;
         while ((eventType = reader.nextTag()) != END_DOCUMENT) {
@@ -806,8 +866,8 @@ final class ModuleXmlParser {
                     return set;
                 }
                 case START_TAG: {
-                    switch (reader.getName()) {
-                        case E_PATH: parsePathName(reader, set); break;
+                    switch (Element.forName(reader.getName())) {
+                        case PATH: parsePathName(reader, set); break;
                         default: throw unexpectedContent(reader);
                     }
                 }
@@ -822,13 +882,13 @@ final class ModuleXmlParser {
 
     private static void parsePathName(final XmlPullParser reader, final Set<String> set) throws XmlPullParserException, IOException {
         String name = null;
-        final Set<String> required = new HashSet<>(Arrays.asList(A_NAME));
+        final Set<Attribute> required = new HashSet<Attribute>(Arrays.asList(Attribute.NAME));
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
-            final String attribute = reader.getAttributeName(i);
+            final Attribute attribute = Attribute.forName(reader.getAttributeName(i));
             required.remove(attribute);
             switch (attribute) {
-                case A_NAME: name = reader.getAttributeValue(i); break;
+                case NAME: name = reader.getAttributeValue(i); break;
                 default: throw unknownAttribute(reader, attribute);
             }
         }
@@ -850,8 +910,8 @@ final class ModuleXmlParser {
                     return;
                 }
                 case START_TAG: {
-                    switch (reader.getName()) {
-                        case E_PROPERTY: {
+                    switch (Element.forName(reader.getName())) {
+                        case PROPERTY: {
                             parseProperty(reader, specBuilder);
                             break;
                         }
@@ -870,14 +930,14 @@ final class ModuleXmlParser {
     private static void parseProperty(final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
         String name = null;
         String value = null;
-        final Set<String> required = new HashSet<>(Arrays.asList(A_NAME));
+        final Set<Attribute> required = new HashSet<Attribute>(Arrays.asList(Attribute.NAME));
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
-            final String attribute = reader.getAttributeName(i);
+            final Attribute attribute = Attribute.forName(reader.getAttributeName(i));
             required.remove(attribute);
             switch (attribute) {
-                case A_NAME: name = reader.getAttributeValue(i); break;
-                case A_VALUE: value = reader.getAttributeValue(i); break;
+                case NAME: name = reader.getAttributeValue(i); break;
+                case VALUE: value = reader.getAttributeValue(i); break;
                 default: throw unknownAttribute(reader, attribute);
             }
         }
@@ -895,7 +955,7 @@ final class ModuleXmlParser {
 
     private static void parsePermissions(final XmlPullParser reader, final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
         // xsd:choice
-        ArrayList<PermissionFactory> list = new ArrayList<>();
+        ArrayList<PermissionFactory> list = new ArrayList<PermissionFactory>();
         int eventType;
         while ((eventType = reader.nextTag()) != END_DOCUMENT) {
             switch (eventType) {
@@ -904,8 +964,8 @@ final class ModuleXmlParser {
                     return;
                 }
                 case START_TAG: {
-                    switch (reader.getName()) {
-                        case E_GRANT: {
+                    switch (Element.forName(reader.getName())) {
+                        case GRANT: {
                             parseGrant(reader, moduleLoader, moduleIdentifier, list);
                             break;
                         }
@@ -925,15 +985,15 @@ final class ModuleXmlParser {
         String permission = null;
         String name = null;
         String actions = null;
-        final Set<String> required = new HashSet<>(Arrays.asList(A_PERMISSION, A_NAME));
+        final Set<Attribute> required = new HashSet<Attribute>(Arrays.asList(Attribute.PERMISSION, Attribute.NAME));
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
-            final String attribute = reader.getAttributeName(i);
+            final Attribute attribute = Attribute.forName(reader.getAttributeName(i));
             required.remove(attribute);
             switch (attribute) {
-                case A_PERMISSION: permission = reader.getAttributeValue(i); break;
-                case A_NAME: name = reader.getAttributeValue(i); break;
-                case A_ACTIONS: actions = reader.getAttributeValue(i); break;
+                case PERMISSION: permission = reader.getAttributeValue(i); break;
+                case NAME: name = reader.getAttributeValue(i); break;
+                case ACTIONS: actions = reader.getAttributeValue(i); break;
                 default: throw unknownAttribute(reader, attribute);
             }
         }
