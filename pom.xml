@@ -124,7 +124,7 @@
             <plugin>
                 <groupId>org.jboss.seven2six</groupId>
                 <artifactId>seven2six</artifactId>
-                <version>1.0.Final</version>
+                <version>1.1.Final</version>
                 <executions>
                     <execution>
                         <id>weave</id>
@@ -132,6 +132,16 @@
                         <goals>
                             <goal>transform</goal>
                         </goals>
+                    </execution>
+                    <execution>
+                        <id>weave-test</id>
+                        <phase>process-test-classes</phase>
+                        <goals>
+                            <goal>transform</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.testOutputDirectory}</outputDirectory>
+                        </configuration>
                     </execution>
                 </executions>
 
