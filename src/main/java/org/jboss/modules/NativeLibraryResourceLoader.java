@@ -65,6 +65,8 @@ public class NativeLibraryResourceLoader extends AbstractResourceLoader {
             realName = "aix";
         } else if (sysName.startsWith("OS/390")) {
             realName = "os390";
+        } else if (sysName.startsWith("OS/400")) {
+            realName = "os400";
         } else if (sysName.startsWith("FREEBSD")) {
             realName = "freebsd";
         } else if (sysName.startsWith("OPENBSD")) {
