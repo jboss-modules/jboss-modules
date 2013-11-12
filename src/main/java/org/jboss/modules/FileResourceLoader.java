@@ -73,7 +73,7 @@ final class FileResourceLoader extends NativeLibraryResourceLoader {
 
     private static Manifest readManifestFile(final File manifestFile) {
         try {
-            return new Manifest(new FileInputStream(manifestFile));
+            return manifestFile.exists() ? new Manifest(new FileInputStream(manifestFile)) : null;
         } catch (IOException e) {
             return null;
         }
