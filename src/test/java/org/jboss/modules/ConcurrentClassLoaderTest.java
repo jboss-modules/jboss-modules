@@ -91,6 +91,17 @@ public class ConcurrentClassLoaderTest {
     }
 
     private static final class TestConcurrentClassLoader extends ConcurrentClassLoader {
+        static {
+            boolean parallelOk = true;
+            try {
+                parallelOk = ClassLoader.registerAsParallelCapable();
+            } catch (Throwable ignored) {
+            }
+            if (! parallelOk) {
+                throw new Error("Failed to register " + TestConcurrentClassLoader.class.getName() + " as parallel-capable");
+            }
+        }
+
         private final ClassLoader realLoader;
         private final Set<String> allowedClasses = new HashSet<String>();
         private ClassLoader delegate;
