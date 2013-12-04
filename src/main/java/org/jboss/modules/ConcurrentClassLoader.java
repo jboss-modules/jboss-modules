@@ -53,12 +53,22 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
 
     private static final boolean LOCKLESS;
     private static final boolean SAFE_JDK;
+    private static final boolean PARALLEL_OK;
 
     private static final ClassLoader definingLoader = ConcurrentClassLoader.class.getClassLoader();
 
     private static final ThreadLocal<Boolean> GET_PACKAGE_SUPPRESSOR = new ThreadLocal<Boolean>();
 
     static {
+        boolean safeJdk = false;
+        boolean parallelOk = true;
+        try {
+            safeJdk = parallelOk = ClassLoader.registerAsParallelCapable();
+        } catch (Throwable ignored) {
+        }
+        if (! parallelOk) {
+            throw new Error("Failed to register " + ConcurrentClassLoader.class.getName() + " as parallel-capable");
+        }
         /*
          This resolves a know deadlock that can occur if one thread is in the process of defining a package as part of
          defining a class, and another thread is defining the system package that can result in loading a class.  One holds
@@ -79,11 +89,8 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
         // But the user is always right, so if they override, respect it
         LOCKLESS = Boolean.parseBoolean(AccessController.doPrivileged(new PropertyReadAction("jboss.modules.lockless", Boolean.toString(is16 && hasUnsafe && ! isJRockit))));
         // If the JDK has safe CL, set this flag
-        SAFE_JDK = Boolean.parseBoolean(AccessController.doPrivileged(new PropertyReadAction("jboss.modules.safe-jdk", Boolean.toString(isJRockit))));
-        try {
-            ClassLoader.registerAsParallelCapable();
-        } catch (Throwable ignored) {
-        }
+        SAFE_JDK = Boolean.parseBoolean(AccessController.doPrivileged(new PropertyReadAction("jboss.modules.safe-jdk", Boolean.toString(safeJdk || isJRockit))));
+        PARALLEL_OK = parallelOk;
     }
 
     /**
@@ -99,6 +106,11 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
      */
     protected ConcurrentClassLoader(final ConcurrentClassLoader parent) {
         super(parent == null ? ConcurrentClassLoader.class.getClassLoader() : parent);
+        if (PARALLEL_OK) {
+            if (getClassLoadingLock("$TEST$") == this) {
+                throw new Error("Cannot instantiate non-parallel subclass");
+            }
+        }
     }
 
     /**
@@ -106,6 +118,11 @@ public abstract class ConcurrentClassLoader extends SecureClassLoader {
      */
     protected ConcurrentClassLoader() {
         super(ConcurrentClassLoader.class.getClassLoader());
+        if (PARALLEL_OK) {
+            if (getClassLoadingLock("$TEST$") == this) {
+                throw new Error("Cannot instantiate non-parallel subclass");
+            }
+        }
     }
 
     /**
