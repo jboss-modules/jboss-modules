@@ -373,10 +373,10 @@ final class ModuleXmlParser {
         MultiplePathFilterBuilder exportsBuilder = PathFilters.multiplePathFilterBuilder(true);
         Set<String> visited = new HashSet<>();
         int eventType;
+        specBuilder.addDependency(DependencySpec.createLocalDependencySpec(PathFilters.acceptAll(), exportsBuilder.create()));
         while ((eventType = reader.nextTag()) != END_DOCUMENT) {
             switch (eventType) {
                 case END_TAG: {
-                    specBuilder.addDependency(DependencySpec.createLocalDependencySpec(PathFilters.acceptAll(), exportsBuilder.create()));
                     return;
                 }
                 case START_TAG: {
