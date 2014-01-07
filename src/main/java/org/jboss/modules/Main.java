@@ -76,8 +76,7 @@ public final class Main {
         System.out.println("where <module-spec> is a valid module specification string");
         System.out.println("and options include:");
         System.out.println("    -help         Display this message");
-        System.out.println("    -modulepath <search path of directories>");
-        System.out.println("    -mp <search path of directories>");
+        System.out.println("    -mp, -modulepath <search path of directories>");
         System.out.println("                  A list of directories, separated by '" + File.pathSeparator + "', where modules may be located");
         System.out.println("                  If not specified, the value of the \"module.path\" system property is used");
         System.out.println("    -class        Specify that the final argument is a");
