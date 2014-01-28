@@ -402,6 +402,8 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
                                     protectionDomain = new ProtectionDomain(codeSource, permissions);
                                 }
                             }
+                        } else {
+                            protectionDomain = new ProtectionDomain(codeSource, permissions);
                         }
                     } else {
                         protectionDomain = new ProtectionDomain(codeSource, permissions);
