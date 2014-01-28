@@ -22,6 +22,10 @@
 
 package org.jboss.modules;
 
+import java.security.Permission;
+import java.security.PermissionCollection;
+import java.security.Permissions;
+import java.security.Policy;
 import java.security.ProtectionDomain;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
@@ -56,6 +60,8 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
  */
 public class ModuleClassLoader extends ConcurrentClassLoader {
 
+    private static final boolean POLICY_PERMISSIONS;
+
     static {
         boolean parallelOk = true;
         try {
@@ -65,6 +71,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         if (! parallelOk) {
             throw new Error("Failed to register " + ModuleClassLoader.class.getName() + " as parallel-capable");
         }
+        POLICY_PERMISSIONS = Boolean.parseBoolean(System.getProperty("jboss.modules.policy-permissions", "false"));
     }
 
     static final ResourceLoaderSpec[] NO_RESOURCE_LOADERS = new ResourceLoaderSpec[0];
@@ -366,7 +373,42 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         synchronized (map) {
             ProtectionDomain protectionDomain = map.get(codeSource);
             if (protectionDomain == null) {
-                protectionDomain = new ProtectionDomain(codeSource, module.getPermissionCollection());
+                final PermissionCollection permissions = module.getPermissionCollection();
+                if (POLICY_PERMISSIONS) {
+                    final Policy policy = Policy.getPolicy();
+                    if (policy != null) {
+                        final PermissionCollection policyPermissions = policy.getPermissions(codeSource);
+                        if (policyPermissions != null && policyPermissions != Policy.UNSUPPORTED_EMPTY_COLLECTION) {
+                            if (permissions == null) {
+                                protectionDomain = new ProtectionDomain(codeSource, policyPermissions);
+                            } else {
+                                final Enumeration<Permission> e2 = policyPermissions.elements();
+                                final Enumeration<Permission> e1 = permissions.elements();
+                                if (e2.hasMoreElements()) {
+                                    if (e1.hasMoreElements()) {
+                                        final Permissions combined = new Permissions();
+                                        do {
+                                            combined.add(e1.nextElement());
+                                        } while (e1.hasMoreElements());
+                                        while (e2.hasMoreElements()) {
+                                            combined.add(e2.nextElement());
+                                        }
+                                        combined.setReadOnly();
+                                        protectionDomain = new ProtectionDomain(codeSource, combined);
+                                    } else {
+                                        protectionDomain = new ProtectionDomain(codeSource, policyPermissions);
+                                    }
+                                } else {
+                                    protectionDomain = new ProtectionDomain(codeSource, permissions);
+                                }
+                            }
+                        }
+                    } else {
+                        protectionDomain = new ProtectionDomain(codeSource, permissions);
+                    }
+                } else {
+                    protectionDomain = new ProtectionDomain(codeSource, permissions);
+                }
                 map.put(codeSource, protectionDomain);
             }
             return protectionDomain;
