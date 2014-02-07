@@ -373,10 +373,12 @@ final class ModuleXmlParser {
         MultiplePathFilterBuilder exportsBuilder = PathFilters.multiplePathFilterBuilder(true);
         Set<String> visited = new HashSet<>();
         int eventType;
+        boolean gotPerms = false;
         specBuilder.addDependency(DependencySpec.createLocalDependencySpec(PathFilters.acceptAll(), exportsBuilder.create()));
         while ((eventType = reader.nextTag()) != END_DOCUMENT) {
             switch (eventType) {
                 case END_TAG: {
+                    if (! gotPerms) specBuilder.setPermissionCollection(ModulesPolicy.DEFAULT_PERMISSION_COLLECTION);
                     return;
                 }
                 case START_TAG: {
@@ -391,7 +393,7 @@ final class ModuleXmlParser {
                         case E_MAIN_CLASS:   parseMainClass(reader, specBuilder); break;
                         case E_RESOURCES:    parseResources(factory, rootPath, reader, specBuilder); break;
                         case E_PROPERTIES:   parseProperties(reader, specBuilder); break;
-                        case E_PERMISSIONS:  parsePermissions(reader, moduleLoader, moduleIdentifier, specBuilder); break;
+                        case E_PERMISSIONS:  parsePermissions(reader, moduleLoader, moduleIdentifier, specBuilder); gotPerms = true; break;
                         default: throw unexpectedContent(reader);
                     }
                     break;
