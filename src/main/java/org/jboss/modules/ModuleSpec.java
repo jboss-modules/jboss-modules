@@ -64,7 +64,7 @@ public abstract class ModuleSpec {
             private LocalLoader fallbackLoader;
             private ModuleClassLoaderFactory moduleClassLoaderFactory;
             private ClassFileTransformer classFileTransformer;
-            private PermissionCollection permissionCollection = ModulesPolicy.DEFAULT_PERMISSION_COLLECTION;
+            private PermissionCollection permissionCollection;
 
             @Override
             public Builder setFallbackLoader(final LocalLoader fallbackLoader) {
@@ -116,7 +116,7 @@ public abstract class ModuleSpec {
 
             @Override
             public Builder setPermissionCollection(PermissionCollection permissionCollection) {
-                this.permissionCollection = permissionCollection == null ? ModulesPolicy.DEFAULT_PERMISSION_COLLECTION : permissionCollection;
+                this.permissionCollection = permissionCollection;
                 return this;
             }
 
