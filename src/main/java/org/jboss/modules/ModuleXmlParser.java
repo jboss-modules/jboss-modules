@@ -520,9 +520,11 @@ final class ModuleXmlParser {
         // xsd:all
         MultiplePathFilterBuilder exportsBuilder = PathFilters.multiplePathFilterBuilder(true);
         Set<Element> visited = EnumSet.noneOf(Element.class);
+        boolean gotPerms = false;
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case END_ELEMENT: {
+                    if (! gotPerms) specBuilder.setPermissionCollection(ModulesPolicy.DEFAULT_PERMISSION_COLLECTION);
                     specBuilder.addDependency(DependencySpec.createLocalDependencySpec(PathFilters.acceptAll(), exportsBuilder.create()));
                     return;
                 }
@@ -538,7 +540,7 @@ final class ModuleXmlParser {
                         case MAIN_CLASS:   parseMainClass(reader, specBuilder); break;
                         case RESOURCES:    parseResources(factory, rootPath, reader, specBuilder); break;
                         case PROPERTIES:   parseProperties(reader, specBuilder); break;
-                        case PERMISSIONS:  parsePermissions(reader, moduleLoader, moduleIdentifier, specBuilder); break;
+                        case PERMISSIONS:  parsePermissions(reader, moduleLoader, moduleIdentifier, specBuilder); gotPerms = true; break;
                         default: throw unexpectedContent(reader);
                     }
                     break;
