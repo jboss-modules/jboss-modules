@@ -118,6 +118,9 @@
             <!-- Enforcer -->
             <plugin>
                 <artifactId>maven-enforcer-plugin</artifactId>
+                <configuration>
+                    <skip>${skip.enforcer}</skip>
+                </configuration>
             </plugin>
 
             <!-- Backwards compat -->
