@@ -51,17 +51,17 @@ public abstract class ConcurrentClassLoader extends ClassLoader {
 
     private static final boolean LOCKLESS;
     private static final boolean SAFE_JDK;
-    private static final boolean PARALLEL_OK;
+    private static final boolean JDK7_PLUS;
 
     private static final ClassLoader definingLoader = ConcurrentClassLoader.class.getClassLoader();
 
     private static final ThreadLocal<Boolean> GET_PACKAGE_SUPPRESSOR = new ThreadLocal<Boolean>();
 
     static {
-        boolean safeJdk = false;
+        boolean jdk7plus = false;
         boolean parallelOk = true;
         try {
-            safeJdk = parallelOk = ClassLoader.registerAsParallelCapable();
+            jdk7plus = parallelOk = ClassLoader.registerAsParallelCapable();
         } catch (Throwable ignored) {
         }
         if (! parallelOk) {
@@ -74,10 +74,9 @@ public abstract class ConcurrentClassLoader extends ClassLoader {
         */
         Package.getPackages();
         // Determine whether to run in lockless mode
-        boolean is16 = AccessController.doPrivileged(new PropertyReadAction("java.specification.version", "1.6")).equals("1.6");
         boolean hasUnsafe = false;
         // For 1.6, we require Unsafe to perform lockless stuff
-        if (is16) try {
+        if (! jdk7plus) try {
             Class.forName("sun.misc.Unsafe", false, null);
             hasUnsafe = true;
         } catch (Throwable t) {
@@ -85,10 +84,10 @@ public abstract class ConcurrentClassLoader extends ClassLoader {
         }
         final boolean isJRockit = AccessController.doPrivileged(new PropertyReadAction("java.vm.name", "")).toUpperCase(Locale.US).contains("JROCKIT");
         // But the user is always right, so if they override, respect it
-        LOCKLESS = Boolean.parseBoolean(AccessController.doPrivileged(new PropertyReadAction("jboss.modules.lockless", Boolean.toString(is16 && hasUnsafe && ! isJRockit))));
+        LOCKLESS = Boolean.parseBoolean(AccessController.doPrivileged(new PropertyReadAction("jboss.modules.lockless", Boolean.toString(! jdk7plus && hasUnsafe && ! isJRockit))));
         // If the JDK has safe CL, set this flag
-        SAFE_JDK = Boolean.parseBoolean(AccessController.doPrivileged(new PropertyReadAction("jboss.modules.safe-jdk", Boolean.toString(safeJdk || isJRockit))));
-        PARALLEL_OK = parallelOk;
+        SAFE_JDK = Boolean.parseBoolean(AccessController.doPrivileged(new PropertyReadAction("jboss.modules.safe-jdk", Boolean.toString(jdk7plus || isJRockit))));
+        JDK7_PLUS = jdk7plus;
     }
 
     /**
@@ -104,7 +103,7 @@ public abstract class ConcurrentClassLoader extends ClassLoader {
      */
     protected ConcurrentClassLoader(final ConcurrentClassLoader parent) {
         super(parent == null ? ConcurrentClassLoader.class.getClassLoader() : parent);
-        if (PARALLEL_OK) {
+        if (JDK7_PLUS) {
             if (getClassLoadingLock("$TEST$") == this) {
                 throw new Error("Cannot instantiate non-parallel subclass");
             }
@@ -116,7 +115,7 @@ public abstract class ConcurrentClassLoader extends ClassLoader {
      */
     protected ConcurrentClassLoader() {
         super(ConcurrentClassLoader.class.getClassLoader());
-        if (PARALLEL_OK) {
+        if (JDK7_PLUS) {
             if (getClassLoadingLock("$TEST$") == this) {
                 throw new Error("Cannot instantiate non-parallel subclass");
             }
