@@ -157,8 +157,14 @@ public class NativeLibraryResourceLoader extends AbstractResourceLoader {
                             } else if (sysArch.startsWith("ARMV5T") || sysArch.startsWith("PXA") || sysArch.startsWith("IXC") || sysArch.startsWith("IOP") || sysArch.startsWith("IXP") || sysArch.startsWith("CE")) {
                                 hasEndian = true;
                                 String isaList = System.getProperty("sun.arch.isalist");
-                                if (isaList != null && isaList.toUpperCase(Locale.US).contains("MMX")) {
-                                    cpuName = "armv5t-iwmmx";
+                                if (isaList != null) {
+                                    if (isaList.toUpperCase(Locale.US).contains("MMX2")) {
+                                        cpuName = "armv5t-iwmmx2";
+                                    } else if (isaList.toUpperCase(Locale.US).contains("MMX")) {
+                                        cpuName = "armv5t-iwmmx";
+                                    } else {
+                                        cpuName = "armv5t";
+                                    }
                                 } else {
                                     cpuName = "armv5t";
                                 }
