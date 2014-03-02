@@ -49,7 +49,7 @@ public final class DependencyTreeViewer {
             final AliasModuleSpec aliasModuleSpec = (AliasModuleSpec) spec;
             out.print(" -> ");
             final ModuleIdentifier aliasTarget = aliasModuleSpec.getAliasTarget();
-            out.print(aliasTarget);
+            out.println(aliasTarget);
             if (visited.add(aliasTarget)) {
                 try {
                     final ModuleSpec moduleSpec = LocalModuleFinder.parseModuleXmlFile(aliasTarget, null, roots);
