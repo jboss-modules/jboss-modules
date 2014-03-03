@@ -73,7 +73,9 @@ class MavenArtifactUtil {
      */
     public static File resolveJarArtifact(String qualifier) throws IOException {
         String[] split = qualifier.split(":");
-        if (split.length < 3) throw new IllegalArgumentException("Illegal artifact");
+        if (split.length < 3) {
+            throw new IllegalArgumentException("Illegal artifact " + qualifier);
+        }
         String groupId = split[0];
         String artifactId = split[1];
         String version = split[2];
