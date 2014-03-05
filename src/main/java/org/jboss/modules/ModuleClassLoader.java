@@ -22,10 +22,12 @@
 
 package org.jboss.modules;
 
+import java.security.AccessController;
 import java.security.Permission;
 import java.security.PermissionCollection;
 import java.security.Permissions;
 import java.security.Policy;
+import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
@@ -371,6 +373,12 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
 
     private final IdentityHashMap<CodeSource, ProtectionDomain> protectionDomains = new IdentityHashMap<CodeSource, ProtectionDomain>();
 
+    private static final PrivilegedAction<Policy> GET_POLICY_ACTION = new PrivilegedAction<Policy>() {
+        public Policy run() {
+            return Policy.getPolicy();
+        }
+    };
+
     private ProtectionDomain getProtectionDomain(CodeSource codeSource) {
         final IdentityHashMap<CodeSource, ProtectionDomain> map = protectionDomains;
         synchronized (map) {
@@ -378,7 +386,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
             if (protectionDomain == null) {
                 final PermissionCollection permissions = module.getPermissionCollection();
                 if (POLICY_PERMISSIONS && POLICY_READY.get()) {
-                    final Policy policy = Policy.getPolicy();
+                    final Policy policy = AccessController.doPrivileged(GET_POLICY_ACTION);
                     if (policy != null) {
                         final PermissionCollection policyPermissions = policy.getPermissions(codeSource);
                         if (policyPermissions != null && policyPermissions != Policy.UNSUPPORTED_EMPTY_COLLECTION) {
