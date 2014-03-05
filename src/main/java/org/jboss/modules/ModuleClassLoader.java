@@ -46,6 +46,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 /**
@@ -61,6 +62,8 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 public class ModuleClassLoader extends ConcurrentClassLoader {
 
     private static final boolean POLICY_PERMISSIONS;
+
+    static final AtomicBoolean POLICY_READY = new AtomicBoolean();
 
     static {
         boolean parallelOk = true;
@@ -374,7 +377,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
             ProtectionDomain protectionDomain = map.get(codeSource);
             if (protectionDomain == null) {
                 final PermissionCollection permissions = module.getPermissionCollection();
-                if (POLICY_PERMISSIONS) {
+                if (POLICY_PERMISSIONS && POLICY_READY.get()) {
                     final Policy policy = Policy.getPolicy();
                     if (policy != null) {
                         final PermissionCollection policyPermissions = policy.getPermissions(codeSource);

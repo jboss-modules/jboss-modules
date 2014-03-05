@@ -402,6 +402,8 @@ public final class Main {
         // configure policy so that if SM is enabled, modules can still function
         Policy.setPolicy(new ModulesPolicy(Policy.getPolicy()));
 
+        ModuleClassLoader.POLICY_READY.set(true);
+
         if (secMgrModule != null) {
             final Module loadedModule;
             try {
