@@ -399,9 +399,12 @@ public final class Main {
         } catch (Exception ignored) {}
 
         // configure policy so that if SM is enabled, modules can still function
-        Policy.setPolicy(new ModulesPolicy(Policy.getPolicy()));
+        final ModulesPolicy policy = new ModulesPolicy(Policy.getPolicy());
+        Policy.setPolicy(policy);
 
+        // these two lines really needed for post EAP 6.x
         ModuleClassLoader.POLICY_READY.set(true);
+        policy.refresh();
 
         if (secMgrModule != null) {
             final Module loadedModule;
