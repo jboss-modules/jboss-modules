@@ -403,9 +403,12 @@ public final class Main {
         final ModulesPolicy policy = new ModulesPolicy(Policy.getPolicy());
         Policy.setPolicy(policy);
 
-        // these two lines really needed for post EAP 6.x
+        // these lines really needed for post EAP 6.x
         ModuleClassLoader.POLICY_READY.set(true);
-        policy.refresh();
+        // MODULES-186
+        if (System.getSecurityManager() != null) {
+            policy.refresh();
+        }
 
         if (secMgrModule != null) {
             final Module loadedModule;
