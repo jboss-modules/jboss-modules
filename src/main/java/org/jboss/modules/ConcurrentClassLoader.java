@@ -103,7 +103,7 @@ public abstract class ConcurrentClassLoader extends ClassLoader {
      */
     protected ConcurrentClassLoader(final ConcurrentClassLoader parent) {
         super(parent == null ? ConcurrentClassLoader.class.getClassLoader() : parent);
-        if (JDK7_PLUS) {
+        if (JDK7_PLUS && false) {
             if (getClassLoadingLock("$TEST$") == this) {
                 throw new Error("Cannot instantiate non-parallel subclass");
             }
@@ -115,7 +115,7 @@ public abstract class ConcurrentClassLoader extends ClassLoader {
      */
     protected ConcurrentClassLoader() {
         super(ConcurrentClassLoader.class.getClassLoader());
-        if (JDK7_PLUS) {
+        if (JDK7_PLUS && false) {
             if (getClassLoadingLock("$TEST$") == this) {
                 throw new Error("Cannot instantiate non-parallel subclass");
             }
