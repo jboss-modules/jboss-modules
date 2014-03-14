@@ -46,6 +46,7 @@ import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.jboss.modules._private.ModulesPrivateAccess;
 import org.jboss.modules.filter.ClassFilter;
 import org.jboss.modules.filter.ClassFilters;
 import org.jboss.modules.filter.PathFilter;
@@ -54,6 +55,7 @@ import org.jboss.modules.log.ModuleLogger;
 import org.jboss.modules.log.NoopModuleLogger;
 
 import __redirected.__JAXPRedirected;
+import org.jboss.modules.security.ModularPermissionFactory;
 
 /**
  * A module is a unit of classes and other resources, along with the specification of what is imported and exported
@@ -139,6 +141,24 @@ public final class Module {
 
     static final String[] systemPackages;
     static final String[] systemPaths;
+
+    static final ModulesPrivateAccess PRIVATE_ACCESS = new ModulesPrivateAccess() {
+        public ModuleClassLoader getClassLoaderOf(final Module module) {
+            return module.getClassLoaderPrivate();
+        }
+    };
+
+    /**
+     * Private access for module internal code.  Throws {@link SecurityException} for user code.
+     *
+     * @throws SecurityException always
+     */
+    public static ModulesPrivateAccess getPrivateAccess() {
+        if (CallerContext.getCallingClass() == ModularPermissionFactory.class) {
+            return PRIVATE_ACCESS;
+        }
+        throw new SecurityException();
+    }
 
     /**
      * The system-wide module logger, which may be changed via {@link #setModuleLogger(org.jboss.modules.log.ModuleLogger)}.

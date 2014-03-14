@@ -27,6 +27,7 @@ import java.security.Permission;
 import org.jboss.modules.Module;
 import org.jboss.modules.ModuleIdentifier;
 import org.jboss.modules.ModuleLoader;
+import org.jboss.modules._private.ModulesPrivateAccess;
 
 /**
  * A permission factory which instantiates a permission from a module.
@@ -41,6 +42,8 @@ public final class ModularPermissionFactory implements PermissionFactory {
     private final String permissionActions;
 
     private volatile Permission instance = UninitializedPermission.INSTANCE;
+
+    private static final ModulesPrivateAccess access = Module.getPrivateAccess();
 
     /**
      * Construct a new instance.
@@ -78,7 +81,7 @@ public final class ModularPermissionFactory implements PermissionFactory {
             }
             try {
                 final Module module = moduleLoader.loadModule(moduleIdentifier);
-                final Class<? extends Permission> permissionClass = module.getClassLoader().loadClass(className, true).asSubclass(Permission.class);
+                final Class<? extends Permission> permissionClass = access.getClassLoaderOf(module).loadClass(className, true).asSubclass(Permission.class);
                 final Constructor<? extends Permission> constructor = permissionClass.getConstructor(String.class, String.class);
                 return instance = constructor.newInstance(targetName, permissionActions);
             } catch (Throwable t) {
