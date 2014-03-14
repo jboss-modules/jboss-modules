@@ -78,7 +78,7 @@ public final class ModularPermissionFactory implements PermissionFactory {
             }
             try {
                 final Module module = moduleLoader.loadModule(moduleIdentifier);
-                final Class<? extends Permission> permissionClass = module.getClassLoader().loadClass(className, true).asSubclass(Permission.class);
+                final Class<? extends Permission> permissionClass = SecurityActions.getModuleClassLoader(module).loadClass(className, true).asSubclass(Permission.class);
                 final Constructor<? extends Permission> constructor = permissionClass.getConstructor(String.class, String.class);
                 return instance = constructor.newInstance(targetName, permissionActions);
             } catch (Throwable t) {
