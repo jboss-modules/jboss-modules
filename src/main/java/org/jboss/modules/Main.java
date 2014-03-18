@@ -43,6 +43,8 @@ import java.util.jar.JarFile;
 import java.util.logging.LogManager;
 
 import java.util.jar.Manifest;
+import java.util.prefs.Preferences;
+
 import org.jboss.modules.log.JDKModuleLogger;
 
 import static org.jboss.modules.SecurityActions.setContextClassLoader;
@@ -435,6 +437,20 @@ public final class Main {
 
         final ModuleClassLoader bootClassLoader = module.getClassLoaderPrivate();
         setContextClassLoader(bootClassLoader);
+
+        final String serviceName = getServiceName(bootClassLoader, "java.util.prefs.PreferencesFactory");
+        if (serviceName != null) {
+            final String old = System.setProperty("java.util.prefs.PreferencesFactory", serviceName);
+            try {
+                Preferences.systemRoot();
+            } finally {
+                if (old == null) {
+                    System.clearProperty("java.util.prefs.PreferencesFactory");
+                } else {
+                    System.setProperty("java.util.prefs.PreferencesFactory", old);
+                }
+            }
+        }
 
         final String logManagerName = getServiceName(bootClassLoader, "java.util.logging.LogManager");
         if (logManagerName != null) {
