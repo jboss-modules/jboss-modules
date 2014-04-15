@@ -549,14 +549,10 @@ public final class Module {
      * @param resolve {@code true} to resolve the class after definition
      * @return the class
      */
-    Class<?> loadModuleClass(final String className, final boolean resolve) {
+    Class<?> loadModuleClass(final String className, final boolean resolve) throws ClassNotFoundException {
         for (String s : systemPackages) {
             if (className.startsWith(s)) {
-                try {
-                    return moduleClassLoader.loadClass(className, resolve);
-                } catch (ClassNotFoundException e) {
-                    return null;
-                }
+                return moduleClassLoader.loadClass(className, resolve);
             }
         }
         final String path = pathOfClass(className);

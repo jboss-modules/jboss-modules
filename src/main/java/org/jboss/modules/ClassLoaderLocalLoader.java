@@ -77,6 +77,13 @@ final class ClassLoaderLocalLoader implements LocalLoader {
         try {
             return Class.forName(name, resolve, classLoader);
         } catch (ClassNotFoundException e) {
+            final Throwable cause = e.getCause();
+            if (cause instanceof Error) {
+                throw (Error) cause;
+            } else if (cause instanceof RuntimeException) {
+                //unlikely
+                throw (RuntimeException) cause;
+            }
             return null;
         }
     }
