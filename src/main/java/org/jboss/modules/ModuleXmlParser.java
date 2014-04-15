@@ -54,7 +54,6 @@ import static org.jboss.modules.xml.XmlPullParser.END_DOCUMENT;
 import static org.jboss.modules.xml.XmlPullParser.END_TAG;
 import static org.jboss.modules.xml.XmlPullParser.ENTITY_REF;
 import static org.jboss.modules.xml.XmlPullParser.FEATURE_PROCESS_NAMESPACES;
-import static org.jboss.modules.xml.XmlPullParser.FEATURE_REPORT_NAMESPACE_ATTRIBUTES;
 import static org.jboss.modules.xml.XmlPullParser.IGNORABLE_WHITESPACE;
 import static org.jboss.modules.xml.XmlPullParser.PROCESSING_INSTRUCTION;
 import static org.jboss.modules.xml.XmlPullParser.START_DOCUMENT;
@@ -130,16 +129,16 @@ final class ModuleXmlParser {
         }
         try {
             return parseModuleXml(new ResourceRootFactory() {
-                    public ResourceLoader createResourceLoader(final String rootPath, final String loaderPath, final String loaderName) throws IOException {
-                        File file = new File(rootPath, loaderPath);
-                        if (file.isDirectory()) {
-                            return new FileResourceLoader(loaderName, file, context);
-                        } else {
-                            final JarFile jarFile = new JarFile(file, true);
-                            return new JarFileResourceLoader(loaderName, jarFile);
-                        }
+                public ResourceLoader createResourceLoader(final String rootPath, final String loaderPath, final String loaderName) throws IOException {
+                    File file = new File(rootPath, loaderPath);
+                    if (file.isDirectory()) {
+                        return new FileResourceLoader(loaderName, file, context);
+                    } else {
+                        final JarFile jarFile = new JarFile(file, true);
+                        return new JarFileResourceLoader(loaderName, jarFile);
                     }
-             }, root.getPath(), new BufferedInputStream(fis), moduleInfoFile.getPath(), moduleLoader, moduleIdentifier);
+                }
+            }, root.getPath(), new BufferedInputStream(fis), moduleInfoFile.getPath(), moduleLoader, moduleIdentifier);
         } finally {
             StreamUtil.safeClose(fis);
         }
@@ -200,8 +199,54 @@ final class ModuleXmlParser {
         return new XmlPullParserException(b.toString(), reader, null);
     }
 
-    private static XmlPullParserException unknownAttribute(final XmlPullParser parser, final String attribute) {
-        return new XmlPullParserException("Unknown attribute '" + attribute + "'", parser, null);
+    private static XmlPullParserException unknownAttribute(final XmlPullParser parser, final int index) {
+        final String namespace = parser.getAttributeNamespace(index);
+        final String prefix = parser.getAttributePrefix(index);
+        final String name = parser.getAttributeName(index);
+        final StringBuilder eb = new StringBuilder("Unknown attribute \"");
+        if (prefix != null) eb.append(prefix).append(':');
+        eb.append(name);
+        if (namespace != null) eb.append("\" from namespace \"").append(namespace);
+        eb.append('"');
+        return new XmlPullParserException(eb.toString(), parser, null);
+    }
+
+    private static XmlPullParserException unknownAttributeValue(final XmlPullParser parser, final int index) {
+        final String namespace = parser.getAttributeNamespace(index);
+        final String prefix = parser.getAttributePrefix(index);
+        final String name = parser.getAttributeName(index);
+        final StringBuilder eb = new StringBuilder("Unknown value \"");
+        eb.append(parser.getAttributeValue(index));
+        eb.append("\" for attribute \"");
+        if (prefix != null && ! prefix.isEmpty()) eb.append(prefix).append(':');
+        eb.append(name);
+        if (namespace != null && ! namespace.isEmpty()) eb.append("\" from namespace \"").append(namespace);
+        eb.append('"');
+        return new XmlPullParserException(eb.toString(), parser, null);
+    }
+
+    private static void validateNamespace(final XmlPullParser reader) throws XmlPullParserException {
+        switch (reader.getNamespace()) {
+            case MODULE_1_0:
+            case MODULE_1_1:
+            case MODULE_1_2:
+            case MODULE_1_3:
+                break;
+            default: throw unexpectedContent(reader);
+        }
+    }
+
+    private static void assertNoAttributes(final XmlPullParser reader) throws XmlPullParserException {
+        final int attributeCount = reader.getAttributeCount();
+        if (attributeCount > 0) {
+            throw unknownAttribute(reader, 0);
+        }
+    }
+
+    private static void validateAttributeNamespace(final XmlPullParser reader, final int index) throws XmlPullParserException {
+        if (! reader.getAttributeNamespace(index).isEmpty()) {
+            throw unknownAttribute(reader, index);
+        }
     }
 
     private static ModuleSpec parseDocument(final ResourceRootFactory factory, final String rootPath, XmlPullParser reader, final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier) throws XmlPullParserException, IOException {
@@ -243,10 +288,12 @@ final class ModuleXmlParser {
     }
 
     private static ModuleSpec parseRootElement(final ResourceRootFactory factory, final String rootPath, final XmlPullParser reader, final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier) throws XmlPullParserException, IOException {
+        assertNoAttributes(reader);
         int eventType;
         while ((eventType = reader.nextTag()) != END_DOCUMENT) {
             switch (eventType) {
                 case START_TAG: {
+                    validateNamespace(reader);
                     final String element = reader.getName();
                     switch (element) {
                         case E_MODULE: {
@@ -285,6 +332,7 @@ final class ModuleXmlParser {
         String targetSlot = null;
         final Set<String> required = new HashSet<>(Arrays.asList(A_NAME, A_TARGET_NAME));
         for (int i = 0; i < count; i ++) {
+            validateAttributeNamespace(reader, i);
             final String attribute = reader.getAttributeName(i);
             required.remove(attribute);
             switch (attribute) {
@@ -292,7 +340,7 @@ final class ModuleXmlParser {
                 case A_SLOT:    slot = reader.getAttributeValue(i); break;
                 case A_TARGET_NAME: targetName = reader.getAttributeValue(i); break;
                 case A_TARGET_SLOT: targetSlot = reader.getAttributeValue(i); break;
-                default: throw unknownAttribute(reader, attribute);
+                default: throw unknownAttribute(reader, i);
             }
         }
         if (! required.isEmpty()) {
@@ -321,12 +369,13 @@ final class ModuleXmlParser {
         String slot = null;
         final Set<String> required = new HashSet<>(Arrays.asList(A_NAME, A_TARGET_NAME));
         for (int i = 0; i < count; i ++) {
+            validateAttributeNamespace(reader, i);
             final String attribute = reader.getAttributeName(i);
             required.remove(attribute);
             switch (attribute) {
                 case A_NAME:    name = reader.getAttributeValue(i); break;
                 case A_SLOT:    slot = reader.getAttributeValue(i); break;
-                default: throw unknownAttribute(reader, attribute);
+                default: throw unknownAttribute(reader, i);
             }
         }
         if (! required.isEmpty()) {
@@ -355,12 +404,13 @@ final class ModuleXmlParser {
         String slot = null;
         final Set<String> required = new HashSet<>(Arrays.asList(A_NAME));
         for (int i = 0; i < count; i ++) {
+            validateAttributeNamespace(reader, i);
             final String attribute = reader.getAttributeName(i);
             required.remove(attribute);
             switch (attribute) {
                 case A_NAME:    name = reader.getAttributeValue(i); break;
                 case A_SLOT:    slot = reader.getAttributeValue(i); break;
-                default: throw unknownAttribute(reader, attribute);
+                default: throw unknownAttribute(reader, i);
             }
         }
         if (! required.isEmpty()) {
@@ -382,6 +432,7 @@ final class ModuleXmlParser {
                     return;
                 }
                 case START_TAG: {
+                    validateNamespace(reader);
                     final String element = reader.getName();
                     if (visited.contains(element)) {
                         throw unexpectedContent(reader);
@@ -407,6 +458,7 @@ final class ModuleXmlParser {
     }
 
     private static void parseDependencies(final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
+        assertNoAttributes(reader);
         // xsd:choice
         int eventType;
         while ((eventType = reader.nextTag()) != END_DOCUMENT) {
@@ -415,6 +467,7 @@ final class ModuleXmlParser {
                     return;
                 }
                 case START_TAG: {
+                    validateNamespace(reader);
                     switch (reader.getName()) {
                         case E_MODULE: parseModuleDependency(reader, specBuilder); break;
                         case E_SYSTEM: parseSystemDependency(reader, specBuilder); break;
@@ -439,15 +492,26 @@ final class ModuleXmlParser {
         final Set<String> required = new HashSet<>(Arrays.asList(A_NAME));
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
+            validateAttributeNamespace(reader, i);
             final String attribute = reader.getAttributeName(i);
             required.remove(attribute);
             switch (attribute) {
                 case A_NAME:     name = reader.getAttributeValue(i); break;
                 case A_SLOT:     slot = reader.getAttributeValue(i); break;
                 case A_EXPORT:   export = Boolean.parseBoolean(reader.getAttributeValue(i)); break;
-                case A_SERVICES: services = reader.getAttributeValue(i); break;
                 case A_OPTIONAL: optional = Boolean.parseBoolean(reader.getAttributeValue(i)); break;
-                default: throw unknownAttribute(reader, attribute);
+                case A_SERVICES: {
+                    services = reader.getAttributeValue(i);
+                    switch (services) {
+                        case D_NONE:
+                        case D_IMPORT:
+                        case D_EXPORT:
+                            break;
+                        default: throw unknownAttributeValue(reader, i);
+                    }
+                    break;
+                }
+                default: throw unknownAttribute(reader, i);
             }
         }
         if (! required.isEmpty()) {
@@ -459,6 +523,7 @@ final class ModuleXmlParser {
         while ((eventType = reader.nextTag()) != END_DOCUMENT) {
             switch (eventType) {
                 case END_TAG: {
+                    assert services.equals(D_NONE) || services.equals(D_EXPORT) || services.equals(D_IMPORT);
                     if (services.equals(D_EXPORT)) {
                         // If services are to be re-exported, add META-INF/services -> true near the end of the list
                         exportBuilder.addFilter(PathFilters.getMetaInfServicesFilter(), true);
@@ -484,6 +549,7 @@ final class ModuleXmlParser {
                     return;
                 }
                 case START_TAG: {
+                    validateNamespace(reader);
                     switch (reader.getName()) {
                         case E_EXPORTS: parseFilterList(reader, exportBuilder); break;
                         case E_IMPORTS: parseFilterList(reader, importBuilder); break;
@@ -502,6 +568,7 @@ final class ModuleXmlParser {
         boolean export = false;
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
+            validateAttributeNamespace(reader, i);
             final String attribute = reader.getAttributeName(i);
             switch (attribute) {
                 case A_EXPORT:  export = Boolean.parseBoolean(reader.getAttributeValue(i)); break;
@@ -519,6 +586,7 @@ final class ModuleXmlParser {
                     return;
                 }
                 case START_TAG: {
+                    validateNamespace(reader);
                     switch (reader.getName()) {
                         case E_PATHS: {
                             paths = parseSet(reader);
@@ -542,6 +610,7 @@ final class ModuleXmlParser {
         final Set<String> required = new HashSet<>(Arrays.asList(A_NAME));
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
+            validateAttributeNamespace(reader, i);
             final String attribute = reader.getAttributeName(i);
             required.remove(attribute);
             switch (attribute) {
@@ -558,6 +627,7 @@ final class ModuleXmlParser {
     }
 
     private static void parseResources(final ResourceRootFactory factory, final String rootPath, final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
+        assertNoAttributes(reader);
         // xsd:choice
         int eventType;
         while ((eventType = reader.nextTag()) != END_DOCUMENT) {
@@ -567,6 +637,7 @@ final class ModuleXmlParser {
                     return;
                 }
                 case START_TAG: {
+                    validateNamespace(reader);
                     switch (reader.getName()) {
                         case E_RESOURCE_ROOT: {
                             parseResourceRoot(factory, rootPath, reader, specBuilder);
@@ -618,11 +689,12 @@ final class ModuleXmlParser {
         final Set<String> required = new HashSet<>(Arrays.asList(A_NAME));
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
+            validateAttributeNamespace(reader, i);
             final String attribute = reader.getAttributeName(i);
             required.remove(attribute);
             switch (attribute) {
                 case A_NAME: name = reader.getAttributeValue(i); break;
-                default: throw unknownAttribute(reader, attribute);
+                default: throw unknownAttribute(reader, i);
             }
         }
         if (! required.isEmpty()) {
@@ -655,11 +727,12 @@ final class ModuleXmlParser {
         final Set<String> required = new HashSet<>(Arrays.asList(A_NAME));
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
+            validateAttributeNamespace(reader, i);
             final String attribute = reader.getAttributeName(i);
             required.remove(attribute);
             switch (attribute) {
                 case A_NAME: name = reader.getAttributeValue(i); break;
-                default: throw unknownAttribute(reader, attribute);
+                default: throw unknownAttribute(reader, i);
             }
         }
         if (! required.isEmpty()) {
@@ -696,12 +769,13 @@ final class ModuleXmlParser {
         final Set<String> required = new HashSet<>(Arrays.asList(A_PATH));
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
+            validateAttributeNamespace(reader, i);
             final String attribute = reader.getAttributeName(i);
             required.remove(attribute);
             switch (attribute) {
                 case A_NAME: name = reader.getAttributeValue(i); break;
                 case A_PATH: path = reader.getAttributeValue(i); break;
-                default: throw unknownAttribute(reader, attribute);
+                default: throw unknownAttribute(reader, i);
             }
         }
         if (! required.isEmpty()) {
@@ -726,6 +800,7 @@ final class ModuleXmlParser {
                     return;
                 }
                 case START_TAG: {
+                    validateNamespace(reader);
                     final String element = reader.getName();
                     if (! encountered.add(element)) throw unexpectedContent(reader);
                     switch (element) {
@@ -742,6 +817,7 @@ final class ModuleXmlParser {
     }
 
     private static void parseFilterList(final XmlPullParser reader, final MultiplePathFilterBuilder builder) throws XmlPullParserException, IOException {
+        assertNoAttributes(reader);
         // xsd:choice
         int eventType;
         while ((eventType = reader.nextTag()) != END_DOCUMENT) {
@@ -750,6 +826,7 @@ final class ModuleXmlParser {
                     return;
                 }
                 case START_TAG: {
+                    validateNamespace(reader);
                     switch (reader.getName()) {
                         case E_INCLUDE: parsePath(reader, true, builder); break;
                         case E_EXCLUDE: parsePath(reader, false, builder); break;
@@ -772,11 +849,12 @@ final class ModuleXmlParser {
         final Set<String> required = new HashSet<>(Arrays.asList(A_PATH));
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
+            validateAttributeNamespace(reader, i);
             final String attribute = reader.getAttributeName(i);
             required.remove(attribute);
             switch (attribute) {
                 case A_PATH: path = reader.getAttributeValue(i); break;
-                default: throw unknownAttribute(reader, attribute);
+                default: throw unknownAttribute(reader, i);
             }
         }
         if (! required.isEmpty()) {
@@ -799,6 +877,7 @@ final class ModuleXmlParser {
     }
 
     private static Set<String> parseSet(final XmlPullParser reader) throws XmlPullParserException, IOException {
+        assertNoAttributes(reader);
         final Set<String> set = new FastCopyHashSet<>();
         // xsd:choice
         int eventType;
@@ -808,6 +887,7 @@ final class ModuleXmlParser {
                     return set;
                 }
                 case START_TAG: {
+                    validateNamespace(reader);
                     switch (reader.getName()) {
                         case E_PATH: parsePathName(reader, set); break;
                         default: throw unexpectedContent(reader);
@@ -827,11 +907,12 @@ final class ModuleXmlParser {
         final Set<String> required = new HashSet<>(Arrays.asList(A_NAME));
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
+            validateAttributeNamespace(reader, i);
             final String attribute = reader.getAttributeName(i);
             required.remove(attribute);
             switch (attribute) {
                 case A_NAME: name = reader.getAttributeValue(i); break;
-                default: throw unknownAttribute(reader, attribute);
+                default: throw unknownAttribute(reader, i);
             }
         }
         if (! required.isEmpty()) {
@@ -844,6 +925,7 @@ final class ModuleXmlParser {
     }
 
     private static void parseProperties(final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
+        assertNoAttributes(reader);
         // xsd:choice
         int eventType;
         while ((eventType = reader.nextTag()) != END_DOCUMENT) {
@@ -852,6 +934,7 @@ final class ModuleXmlParser {
                     return;
                 }
                 case START_TAG: {
+                    validateNamespace(reader);
                     switch (reader.getName()) {
                         case E_PROPERTY: {
                             parseProperty(reader, specBuilder);
@@ -875,12 +958,13 @@ final class ModuleXmlParser {
         final Set<String> required = new HashSet<>(Arrays.asList(A_NAME));
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
+            validateAttributeNamespace(reader, i);
             final String attribute = reader.getAttributeName(i);
             required.remove(attribute);
             switch (attribute) {
                 case A_NAME: name = reader.getAttributeValue(i); break;
                 case A_VALUE: value = reader.getAttributeValue(i); break;
-                default: throw unknownAttribute(reader, attribute);
+                default: throw unknownAttribute(reader, i);
             }
         }
         if (! required.isEmpty()) {
@@ -896,6 +980,7 @@ final class ModuleXmlParser {
     }
 
     private static void parsePermissions(final XmlPullParser reader, final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
+        assertNoAttributes(reader);
         // xsd:choice
         ArrayList<PermissionFactory> list = new ArrayList<>();
         int eventType;
@@ -906,6 +991,7 @@ final class ModuleXmlParser {
                     return;
                 }
                 case START_TAG: {
+                    validateNamespace(reader);
                     switch (reader.getName()) {
                         case E_GRANT: {
                             parseGrant(reader, moduleLoader, moduleIdentifier, list);
@@ -930,13 +1016,14 @@ final class ModuleXmlParser {
         final Set<String> required = new HashSet<>(Arrays.asList(A_PERMISSION, A_NAME));
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
+            validateAttributeNamespace(reader, i);
             final String attribute = reader.getAttributeName(i);
             required.remove(attribute);
             switch (attribute) {
                 case A_PERMISSION: permission = reader.getAttributeValue(i); break;
                 case A_NAME: name = reader.getAttributeValue(i); break;
                 case A_ACTIONS: actions = reader.getAttributeValue(i); break;
-                default: throw unknownAttribute(reader, attribute);
+                default: throw unknownAttribute(reader, i);
             }
         }
         if (! required.isEmpty()) {
