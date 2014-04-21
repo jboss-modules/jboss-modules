@@ -44,9 +44,12 @@ import java.util.logging.LogManager;
 
 import java.util.jar.Manifest;
 import java.util.prefs.Preferences;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.jboss.modules.log.JDKModuleLogger;
 
+import static java.security.AccessController.doPrivileged;
 import static org.jboss.modules.SecurityActions.setContextClassLoader;
 
 /**
@@ -207,7 +210,7 @@ public final class Main {
                         }
                         classpathDefined = true;
                         classpath = args[++i];
-                        AccessController.doPrivileged(new PropertyWriteAction("java.class.path", classpath));
+                        doPrivileged(new PropertyWriteAction("java.class.path", classpath));
                     } else if ("-dep".equals(arg) || "-dependencies".equals(arg)) {
                         if (deps != null) {
                             System.err.println("-dep or -dependencies may only be specified once.");
@@ -388,6 +391,15 @@ public final class Main {
             e.printStackTrace(System.err);
             System.exit(1);
             return;
+        }
+        final String ourJavaVersion = doPrivileged(new PropertyReadAction("java.specification.version", "1.6"));
+        final String requireJavaVersion = module.getProperty("jboss.require-java-version", ourJavaVersion);
+        final Pattern versionPattern = Pattern.compile("1\\.(\\d+)");
+        final Matcher requireMatcher = versionPattern.matcher(requireJavaVersion);
+        final Matcher ourMatcher = versionPattern.matcher(ourJavaVersion);
+        if (requireMatcher.matches() && ourMatcher.matches() && Integer.valueOf(requireMatcher.group(1)) > Integer.valueOf(ourMatcher.group(1))) {
+            System.err.printf("This application requires Java specification version %s or later to run (this Java virtual machine implements specification version %s)%n", requireJavaVersion, ourJavaVersion);
+            System.exit(1);
         }
 
         ModularURLStreamHandlerFactory.addHandlerModule(module);
