@@ -56,19 +56,19 @@ public class ModuleIdentifierTest {
     public void testInvalidCharacters() throws Exception {
         try {
             ModuleIdentifier.fromString("test.module\\test");
-            fail("Should have thrown IllegalArgumentException");
-        } catch (IllegalArgumentException expected) {
+        } catch (IllegalArgumentException unexpected) {
+            fail("Should not have thrown IllegalArgumentException");
         }
         try {
             ModuleIdentifier.fromString("test/module/test");
+        } catch (IllegalArgumentException unexpected) {
             fail("Should have thrown IllegalArgumentException");
-        } catch (IllegalArgumentException expected) {
         }
 
         try {
             ModuleIdentifier.fromString("test,module,test");
+        } catch (IllegalArgumentException unexpected) {
             fail("Should have thrown IllegalArgumentException");
-        } catch (IllegalArgumentException expected) {
         }
 
     }

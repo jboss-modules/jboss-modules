@@ -28,7 +28,6 @@ import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.util.regex.Pattern;
 
 /**
  * A unique identifier for a module within a module loader.
@@ -43,9 +42,7 @@ public final class ModuleIdentifier implements Serializable {
 
     private static final long serialVersionUID = 118533026624827995L;
 
-    private static Pattern MODULE_NAME_PATTERN = Pattern.compile("[a-zA-Z0-9_](?:[-a-zA-Z0-9_]*[a-zA-Z0-9_])?(?:\\.[a-zA-Z0-9_](?:[-a-zA-Z0-9_]*[a-zA-Z0-9_])?)*");
-    private static Pattern SLOT_PATTERN = Pattern.compile("[-a-zA-Z0-9_+*.]+");
-    private static String DEFAULT_SLOT = "main";
+    private static final String DEFAULT_SLOT = "main";
 
     private final String name;
     private final String slot;
@@ -142,7 +139,7 @@ public final class ModuleIdentifier implements Serializable {
      */
     @Override
     public String toString() {
-        return name + ":" + slot;
+        return escapeName(name) + ":" + escapeSlot(slot);
     }
 
     private void readObject(ObjectInputStream ois) throws ClassNotFoundException, IOException {
@@ -152,6 +149,43 @@ public final class ModuleIdentifier implements Serializable {
         } catch (IllegalAccessException e) {
             throw new IllegalAccessError(e.getMessage());
         }
+    }
+
+    private static String escapeName(String name) {
+        final StringBuilder b = new StringBuilder();
+        boolean escaped = false;
+        int c;
+        for (int i = 0; i < name.length(); i = name.offsetByCodePoints(i, 1)) {
+            c = name.codePointAt(i);
+            switch (c) {
+                case '\\':
+                case ':':
+                    escaped = true;
+                    b.append('\\');
+                    // fall thru
+                default:
+                    b.append(c);
+            }
+        }
+        return escaped ? b.toString() : name;
+    }
+
+    private static String escapeSlot(String slot) {
+        final StringBuilder b = new StringBuilder();
+        boolean escaped = false;
+        int c;
+        for (int i = 0; i < slot.length(); i = slot.offsetByCodePoints(i, 1)) {
+            c = slot.codePointAt(i);
+            switch (c) {
+                case '\\':
+                    escaped = true;
+                    b.append('\\');
+                    // fall thru
+                default:
+                    b.append(c);
+            }
+        }
+        return escaped ? b.toString() : slot;
     }
 
     /**
@@ -169,26 +203,42 @@ public final class ModuleIdentifier implements Serializable {
             throw new IllegalArgumentException("Empty module specification");
         }
 
-        final int c1 = moduleSpec.lastIndexOf(':');
-        final String name;
-        final String slot;
-        if (c1 != -1) {
-            name = moduleSpec.substring(0, c1);
-            slot = moduleSpec.substring(c1 + 1);
-
-            if (!SLOT_PATTERN.matcher(slot).matches()) {
-                throw new IllegalArgumentException("Slot has invalid characters or is empty");
+        int c;
+        final StringBuilder b = new StringBuilder();
+        int i = 0;
+        while (i < moduleSpec.length()) {
+            c = moduleSpec.codePointAt(i);
+            if (c == '\\') {
+                b.appendCodePoint(c);
+                i = moduleSpec.offsetByCodePoints(i, 1);
+                if (i < moduleSpec.length()) {
+                    c = moduleSpec.codePointAt(i);
+                    b.appendCodePoint(c);
+                } else {
+                    throw new IllegalArgumentException("Name has an unterminated escape");
+                }
+            } else if (c == ':') {
+                i = moduleSpec.offsetByCodePoints(i, 1);
+                if (i == moduleSpec.length()) {
+                    throw new IllegalArgumentException("Slot is empty");
+                }
+                // end of name, now comes the slot
+                break;
+            } else {
+                b.appendCodePoint(c);
             }
-        } else {
-            name = moduleSpec;
-            slot = DEFAULT_SLOT;
+            i = moduleSpec.offsetByCodePoints(i, 1);
         }
-
-        if (!MODULE_NAME_PATTERN.matcher(name).matches()) {
-            throw new IllegalArgumentException("Module name contains invalid characters, or empty segments");
+        final String name = b.toString();
+        b.setLength(0);
+        if (i < moduleSpec.length()) do {
+            c = moduleSpec.codePointAt(i);
+            b.appendCodePoint(c);
+            i = moduleSpec.offsetByCodePoints(i, 1);
+        } while (i < moduleSpec.length()); else {
+            return new ModuleIdentifier(name, DEFAULT_SLOT);
         }
-
-        return new ModuleIdentifier(name, slot);
+        return new ModuleIdentifier(name, b.toString());
     }
 
     /**
