@@ -39,11 +39,15 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLStreamHandler;
+import java.security.CodeSigner;
 import java.security.CodeSource;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.TreeSet;
 import java.util.jar.JarEntry;
@@ -66,6 +70,9 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
     private final URL rootUrl;
     private final String relativePath;
     private final File fileOfJar;
+
+    // protected by {@code this}
+    private final Map<CodeSigners, CodeSource> codeSources = new HashMap<>();
 
     JarFileResourceLoader(final String rootName, final JarFile jarFile) {
         this(rootName, jarFile, null);
@@ -128,6 +135,12 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
         final long size = entry.getSize();
         final InputStream is = jarFile.getInputStream(entry);
         try {
+            final CodeSigner[] entryCodeSigners = entry.getCodeSigners();
+            final CodeSigners codeSigners = entryCodeSigners == null || entryCodeSigners.length == 0 ? EMPTY_CODE_SIGNERS : new CodeSigners(entryCodeSigners);
+            CodeSource codeSource = codeSources.get(codeSigners);
+            if (codeSource == null) {
+                codeSources.put(codeSigners, codeSource = new CodeSource(rootUrl, entryCodeSigners));
+            }
             if (size == -1) {
                 // size unknown
                 final ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -140,7 +153,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
                 baos.close();
                 is.close();
                 spec.setBytes(baos.toByteArray());
-                spec.setCodeSource(new CodeSource(rootUrl, entry.getCodeSigners()));
+                spec.setCodeSource(codeSource);
                 return spec;
             } else if (size <= (long) Integer.MAX_VALUE) {
                 final int castSize = (int) size;
@@ -154,7 +167,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
                 // done
                 is.close();
                 spec.setBytes(bytes);
-                spec.setCodeSource(new CodeSource(rootUrl, entry.getCodeSigners()));
+                spec.setCodeSource(codeSource);
                 return spec;
             } else {
                 throw new IOException("Resource is too large to be a valid class file");
@@ -475,5 +488,30 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
             out.write(buf, 0, len);
         }
         out.flush();
+    }
+
+    private static final CodeSigners EMPTY_CODE_SIGNERS = new CodeSigners(new CodeSigner[0]);
+
+    static final class CodeSigners {
+
+        private final CodeSigner[] codeSigners;
+        private final int hashCode;
+
+        public CodeSigners(final CodeSigner[] codeSigners) {
+            this.codeSigners = codeSigners;
+            hashCode = Arrays.hashCode(codeSigners);
+        }
+
+        public boolean equals(final Object obj) {
+            return obj instanceof CodeSigners && equals((CodeSigners) obj);
+        }
+
+        private boolean equals(final CodeSigners other) {
+            return Arrays.equals(codeSigners, other.codeSigners);
+        }
+
+        public int hashCode() {
+            return hashCode;
+        }
     }
 }
