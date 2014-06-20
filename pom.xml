@@ -33,7 +33,7 @@
     <parent>
         <groupId>org.jboss</groupId>
         <artifactId>jboss-parent</artifactId>
-        <version>12</version>
+        <version>14</version>
     </parent>
 
     <licenses>
@@ -47,8 +47,6 @@
     <properties>
         <skip.enforcer>false</skip.enforcer>
         <skip.compile>false</skip.compile>
-        <maven.compiler.target>1.7</maven.compiler.target>
-        <maven.compiler.source>1.7</maven.compiler.source>
     </properties>
 
     <build>
@@ -122,50 +120,19 @@
                     <skip>${skip.enforcer}</skip>
                 </configuration>
             </plugin>
-
-            <!-- Backwards compat -->
-            <plugin>
-                <groupId>org.jboss.seven2six</groupId>
-                <artifactId>seven2six</artifactId>
-                <version>1.1.Final</version>
-                <executions>
-                    <execution>
-                        <id>weave</id>
-                        <phase>process-classes</phase>
-                        <goals>
-                            <goal>transform</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>weave-test</id>
-                        <phase>process-test-classes</phase>
-                        <goals>
-                            <goal>transform</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${project.build.testOutputDirectory}</outputDirectory>
-                        </configuration>
-                    </execution>
-                </executions>
-
-                <configuration>
-                    <skip>${skip.compile}</skip>
-                </configuration>
-
-            </plugin>
         </plugins>
     </build>
     <dependencies>
         <dependency>
             <groupId>org.jboss.shrinkwrap</groupId>
             <artifactId>shrinkwrap-impl-base</artifactId>
-            <version>1.0.0</version>
+            <version>1.2.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.7</version>
+            <version>4.11</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
