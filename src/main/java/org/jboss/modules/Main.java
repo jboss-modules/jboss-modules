@@ -258,7 +258,7 @@ public final class Main {
                 usage();
                 System.exit(1);
             }
-            if (modulePath != null) {
+            if (jaxpModuleIdentifier != null) {
                 System.err.println("-jaxpModuleIdentifier may not be used with -addindex");
                 usage();
                 System.exit(1);
