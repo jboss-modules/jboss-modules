@@ -18,7 +18,7 @@
 
 package org.jboss.modules;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.jboss.modules.util.Util;
 import org.junit.Before;
 import org.junit.Rule;
@@ -44,12 +44,11 @@ public class MavenResourceTest {
     @Before
     public void setupRepo() throws Exception {
         final File repoRoot = Util.getResourceFile(getClass(), "test/repo");
-        ;
         moduleLoader = new LocalModuleLoader(new File[] { repoRoot });
     }
 
     @Test
-    public void testIt() throws Exception {
+    public void testWithPassedRepository() throws Exception {
         System.setProperty("local.maven.repo.path", tmpdir.newFolder("repository").getAbsolutePath());
         System.setProperty("remote.maven.repo", "http://repository.jboss.org/nexus/content/groups/public/");
         try {
@@ -61,5 +60,17 @@ public class MavenResourceTest {
             System.clearProperty("local.repository.path");
             System.clearProperty("remote.repository");
         }
+    }
+
+    /**
+     * we test if it uses repostiory user has configured in user.home/.m2/settings.xml
+     * @throws Exception
+     */
+    @Test
+    public void testCustomRepository() throws Exception{
+        //MavenArtifactUtil.resolveJarArtifact("org.wildfly.core:wildfly-controller:1.0.0.Alpha2");
+        MavenArtifactUtil.resolveJarArtifact("org.wildfly:wildfly-clustering-infinispan:9.0.0.Alpha1-SNAPSHOT");
+        //moduleLoader.loadModule(ModuleIdentifier.fromString("${org.wildfly.core:wildfly-controller}"));
+
     }
 }
