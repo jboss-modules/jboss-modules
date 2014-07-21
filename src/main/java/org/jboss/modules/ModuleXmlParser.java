@@ -157,7 +157,7 @@ final class ModuleXmlParser {
         }
     }
 
-    private static XmlPullParserException unexpectedContent(final XmlPullParser reader) {
+    protected static XmlPullParserException unexpectedContent(final XmlPullParser reader) {
         final String kind;
         switch (reader.getEventType()) {
             case CDSECT: kind = "cdata"; break;
@@ -183,7 +183,7 @@ final class ModuleXmlParser {
         return new XmlPullParserException(b.toString(), reader, null);
     }
 
-    private static XmlPullParserException endOfDocument(final XmlPullParser reader) {
+    protected static XmlPullParserException endOfDocument(final XmlPullParser reader) {
         return new XmlPullParserException("Unexpected end of document", reader, null);
     }
 
@@ -1050,7 +1050,7 @@ final class ModuleXmlParser {
         throw endOfDocument(reader);
     }
 
-    private static void parseEndDocument(final XmlPullParser reader) throws XmlPullParserException, IOException {
+    static void parseEndDocument(final XmlPullParser reader) throws XmlPullParserException, IOException {
         int eventType;
         while ((eventType = reader.nextToken()) != END_DOCUMENT) {
             switch (eventType) {

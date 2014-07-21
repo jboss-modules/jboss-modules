@@ -22,6 +22,13 @@
 
 package org.jboss.modules;
 
+import static org.jboss.modules.ModuleXmlParser.endOfDocument;
+import static org.jboss.modules.ModuleXmlParser.unexpectedContent;
+import static org.jboss.modules.xml.XmlPullParser.END_DOCUMENT;
+import static org.jboss.modules.xml.XmlPullParser.END_TAG;
+import static org.jboss.modules.xml.XmlPullParser.FEATURE_PROCESS_NAMESPACES;
+import static org.jboss.modules.xml.XmlPullParser.START_TAG;
+
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -29,27 +36,220 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.List;
+
+import org.jboss.modules.xml.MXParser;
+import org.jboss.modules.xml.XmlPullParser;
+import org.jboss.modules.xml.XmlPullParserException;
 
 /**
  * Helper class to resolve a maven artifact
  *
  * @author <a href="mailto:bill@burkecentral.com">Bill Burke</a>
- * @version $Revision: 1 $
+ * @author <a href="mailto:tcerar@redhat.com">Tomaz Cerar</a>
+ * @version $Revision: 2 $
  */
 class MavenArtifactUtil {
 
-    public static String[] getLocalRepositoryPaths() {
-        String localRepositoryPath = System.getProperty("local.maven.repo.path");
-        if (localRepositoryPath == null) {
-            File m2 = new File(System.getProperty("user.home"), ".m2");
-            File repository = new File(m2, "repository");
-            String path = repository.getAbsolutePath();
-            String[] rtn = { path };
-            return rtn;
-        } else {
-            return localRepositoryPath.split(File.pathSeparator);
+    private static MavenSettings mavenSettings;
+    private static final Object settingLoaderMutex = new Object();
+
+    public static MavenSettings getSettings() throws IOException {
+        if (mavenSettings != null) {
+            return mavenSettings;
+        }
+        synchronized (settingLoaderMutex) {
+            MavenSettings settings = new MavenSettings();
+
+            Path m2 = java.nio.file.Paths.get(System.getProperty("user.home"), ".m2");
+            Path settingsPath = m2.resolve("settings.xml");
+
+            if (Files.notExists(settingsPath)) {
+                String mavenHome = System.getenv("M2_HOME");
+                if (mavenHome != null) {
+                    settingsPath = java.nio.file.Paths.get(mavenHome, "conf", "settings.xml");
+                }
+            }
+            if (Files.exists(settingsPath)) {
+                parseSettingsXml(settingsPath, settings);
+            }
+            if (settings.getLocalRepository() == null) {
+                Path repository = m2.resolve("repository");
+                settings.setLocalRepository(repository);
+            }
+            settings.resolveActiveSettings();
+            mavenSettings = settings;
+            return mavenSettings;
         }
     }
+
+    private static MavenSettings parseSettingsXml(Path settings, MavenSettings mavenSettings) throws IOException {
+        try {
+            final MXParser reader = new MXParser();
+            reader.setFeature(FEATURE_PROCESS_NAMESPACES, false);
+            InputStream source = Files.newInputStream(settings, StandardOpenOption.READ);
+            reader.setInput(source, null);
+            int eventType;
+            while ((eventType = reader.next()) != END_DOCUMENT) {
+                switch (eventType) {
+                    case START_TAG: {
+                        switch (reader.getName()) {
+                            case "settings": {
+                                parseSettings(reader, mavenSettings);
+                                break;
+                            }
+                        }
+                    }
+                    default: {
+                        break;
+                    }
+                }
+            }
+            return mavenSettings;
+        } catch (XmlPullParserException e) {
+            throw new IOException("Could not parse maven settings.xml");
+        }
+
+    }
+
+    private static void parseSettings(final XmlPullParser reader, MavenSettings mavenSettings) throws XmlPullParserException, IOException {
+        int eventType;
+        while ((eventType = reader.nextTag()) != END_DOCUMENT) {
+            switch (eventType) {
+                case END_TAG: {
+                    return;
+                }
+                case START_TAG: {
+
+                    switch (reader.getName()) {
+                        case "localRepository": {
+                            String localRepository = reader.nextText();
+                            mavenSettings.setLocalRepository(java.nio.file.Paths.get(localRepository));
+                            break;
+                        }
+                        case "profiles": {
+                            while ((eventType = reader.nextTag()) != END_DOCUMENT) {
+                                if (eventType == START_TAG) {
+                                    switch (reader.getName()) {
+                                        case "profile": {
+                                            parseProfile(reader, mavenSettings);
+                                            break;
+                                        }
+                                    }
+                                } else {
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+                        case "activeProfiles": {
+                            while ((eventType = reader.nextTag()) != END_DOCUMENT) {
+                                if (eventType == START_TAG) {
+                                    switch (reader.getName()) {
+                                        case "activeProfile": {
+                                            mavenSettings.addActiveProfile(reader.nextText());
+                                            break;
+                                        }
+                                    }
+                                } else {
+                                    break;
+                                }
+
+                            }
+                            break;
+                        }
+                        default: {
+                            skip(reader);
+
+                        }
+                    }
+                    break;
+                }
+                default: {
+                    throw unexpectedContent(reader);
+                }
+            }
+        }
+        throw endOfDocument(reader);
+    }
+
+    private static void parseProfile(final XmlPullParser reader, MavenSettings mavenSettings) throws XmlPullParserException, IOException {
+        int eventType;
+        MavenSettings.Profile profile = new MavenSettings.Profile();
+        while ((eventType = reader.nextTag()) != END_DOCUMENT) {
+            if (eventType == START_TAG) {
+                switch (reader.getName()) {
+                    case "id": {
+                        profile.setId(reader.nextText());
+                        break;
+                    }
+                    case "repositories": {
+                        while ((eventType = reader.nextTag()) != END_DOCUMENT) {
+                            if (eventType == START_TAG) {
+                                switch (reader.getName()) {
+                                    case "repository": {
+                                        parseRepository(reader, profile);
+                                        break;
+                                    }
+                                }
+                            } else {
+                                break;
+                            }
+
+                        }
+                        break;
+                    }
+                    default: {
+                        skip(reader);
+                    }
+                }
+            } else {
+                break;
+            }
+        }
+        mavenSettings.addProfile(profile);
+    }
+
+    private static void parseRepository(final XmlPullParser reader, MavenSettings.Profile profile) throws XmlPullParserException, IOException {
+        int eventType;
+        while ((eventType = reader.nextTag()) != END_DOCUMENT) {
+            if (eventType == START_TAG) {
+                switch (reader.getName()) {
+                    case "url": {
+                        profile.addRepository(reader.nextText());
+                        break;
+                    }
+                    default: {
+                        skip(reader);
+                    }
+                }
+            } else {
+                break;
+            }
+
+        }
+    }
+
+    private static void skip(XmlPullParser parser) throws XmlPullParserException, IOException {
+        if (parser.getEventType() != XmlPullParser.START_TAG) {
+            throw new IllegalStateException();
+        }
+        int depth = 1;
+        while (depth != 0) {
+            switch (parser.next()) {
+                case XmlPullParser.END_TAG:
+                    depth--;
+                    break;
+                case XmlPullParser.START_TAG:
+                    depth++;
+                    break;
+            }
+        }
+    }
+
 
     private static final Object artifactLock = new Object();
 
@@ -66,9 +266,7 @@ class MavenArtifactUtil {
      * "false"
      *
      * @param qualifier group:artifact:version[:classifier]
-     *
      * @return absolute path to artifact, null if none exists
-     *
      * @throws Exception
      */
     public static File resolveJarArtifact(String qualifier) throws IOException {
@@ -80,30 +278,38 @@ class MavenArtifactUtil {
         String artifactId = split[1];
         String version = split[2];
         String classifier = "";
-        if (split.length >= 4) classifier = "-" + split[3];
+        if (split.length >= 4) { classifier = "-" + split[3]; }
 
         String artifactRelativePath = relativeArtifactPath(groupId, artifactId, version);
-        String[] localRepositoryPaths = getLocalRepositoryPaths();
+        final MavenSettings settings = getSettings();
+        final Path localRepository = settings.getLocalRepository();
 
         // serialize artifact lookup because we want to prevent parallel download
         synchronized (artifactLock) {
             String jarPath = artifactRelativePath + classifier + ".jar";
-            for (String localRepository : localRepositoryPaths) {
-                File fp = new File(localRepository, jarPath);
-                if (fp.exists()) return fp;
+            Path fp = java.nio.file.Paths.get(localRepository.toString(), jarPath);
+            if (Files.exists(fp)) {
+                return fp.toFile();
             }
 
-            String remoteRepository = System.getProperty("remote.maven.repo");
-            if (remoteRepository == null) return null;
-            if (!remoteRepository.endsWith("/")) remoteRepository += "/";
+            List<String> remoteRepos = mavenSettings.getRemoteRepositories();
+            if (remoteRepos.isEmpty()) {
+                return null;
+            }
 
-            File jarFile = new File(localRepositoryPaths[0], jarPath);
-            File pomFile = new File(localRepositoryPaths[0], artifactRelativePath + ".pom");
-            String remotePomPath = remoteRepository + relativeArtifactHttpPath(groupId, artifactId, version) + ".pom";
-            String remoteJarPath = remoteRepository + relativeArtifactHttpPath(groupId, artifactId, version) + classifier + ".jar";
-            downloadFile(qualifier + ":pom", remotePomPath, pomFile);
-            downloadFile(qualifier + ":jar", remoteJarPath, jarFile);
-            return jarFile;
+            File jarFile = new File(localRepository.toFile(), jarPath);
+            File pomFile = new File(localRepository.toFile(), artifactRelativePath + ".pom");
+            for (String remoteRepository : remoteRepos) {
+                String remotePomPath = remoteRepository + relativeArtifactHttpPath(groupId, artifactId, version) + ".pom";
+                String remoteJarPath = remoteRepository + relativeArtifactHttpPath(groupId, artifactId, version) + classifier + ".jar";
+                downloadFile(qualifier + ":pom", remotePomPath, pomFile);
+                downloadFile(qualifier + ":jar", remoteJarPath, jarFile);
+                if (jarFile.exists()) { //download successful
+                    return jarFile;
+                }
+            }
+            //could not find it in remote
+            return null;
         }
     }
 
@@ -132,7 +338,7 @@ class MavenArtifactUtil {
             FileOutputStream fos = new FileOutputStream(dest);
             BufferedOutputStream bos = new BufferedOutputStream(fos);
             try {
-                if (message) System.out.println("Downloading " + artifact);
+                if (message) { System.out.println("Downloading " + artifact); }
                 StreamUtil.copy(bis, bos);
             } finally {
                 StreamUtil.safeClose(fos);
