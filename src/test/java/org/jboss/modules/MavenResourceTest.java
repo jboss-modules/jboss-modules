@@ -21,6 +21,7 @@ package org.jboss.modules;
 import org.junit.Assert;
 import org.jboss.modules.util.Util;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -63,10 +64,11 @@ public class MavenResourceTest {
     }
 
     /**
-     * we test if it uses repostiory user has configured in user.home/.m2/settings.xml
+     * we test if it uses repostiory user has configured in user.home/.m2/settings.xml or M2_HOME/conf/settings.xml
      * @throws Exception
      */
     @Test
+    @Ignore("Test artifact must exists in local repo but nowhere else, mostly meant for manual testing")
     public void testCustomRepository() throws Exception{
         //MavenArtifactUtil.resolveJarArtifact("org.wildfly.core:wildfly-controller:1.0.0.Alpha2");
         MavenArtifactUtil.resolveJarArtifact("org.wildfly:wildfly-clustering-infinispan:9.0.0.Alpha1-SNAPSHOT");
