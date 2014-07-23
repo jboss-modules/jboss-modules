@@ -71,6 +71,56 @@ public class ModuleIteratorTest extends AbstractModuleTestCase {
         Assert.assertFalse("No other resource", itres.hasNext());
     }
 
+    @Test
+    public void testIterateModules() throws Exception {
+        IterableModuleFinder fakeFinder = new IterableModuleFinder() {
+            private ModuleIdentifier[] modules = { ModuleIdentifier.create("a"), ModuleIdentifier.create("b")};
+
+            @Override
+            public Iterator<ModuleIdentifier> iterateModules(ModuleIdentifier baseIdentifier, boolean recursive) {
+                return new Iterator<ModuleIdentifier>() {
+                    private int pos = 0;
+
+                    @Override
+                    public boolean hasNext() {
+                        return pos < modules.length;
+                    }
+
+                    @Override
+                    public ModuleIdentifier next() {
+                        return modules[pos++];
+                    }
+
+                    @Override
+                    public void remove() {
+                        throw new UnsupportedOperationException();
+                    }
+                };
+            }
+
+            @Override
+            public ModuleSpec findModule(ModuleIdentifier identifier, ModuleLoader delegateLoader)
+                throws ModuleLoadException {
+                for (ModuleIdentifier m : modules) {
+                    if (m.equals(identifier)) {
+                        return ModuleSpec.build(m).create();
+                    }
+                }
+                return null;
+            }
+        };
+
+        ModuleLoader loader = new ModuleLoader(new ModuleFinder[]{fakeFinder});
+
+        Iterator<ModuleIdentifier> it = loader.iterateModules(null, true);
+        int count = 0;
+        while (it.hasNext()) {
+            it.next();
+            count++;
+        }
+
+        Assert.assertEquals(2, count);
+    }
 
     private JarFile toJarFile(JavaArchive archive) throws IOException {
         ZipExporter exporter = archive.as(ZipExporter.class);

@@ -268,14 +268,15 @@ public class ModuleLoader {
                         }
                         final ModuleFinder finder = finders[idx++];
                         if (finder instanceof IterableModuleFinder) {
-                            final Iterator<ModuleIdentifier> iterator = ((IterableModuleFinder) finder).iterateModules(baseIdentifier, recursive);
-                            if (iterator.hasNext()) {
-                                nested = iterator;
-                                return true;
-                            }
+                            nested = ((IterableModuleFinder) finder).iterateModules(baseIdentifier, recursive);
                         }
                     }
-                    if (! nested.hasNext()) nested = null;
+
+                    if (! nested.hasNext()) {
+                        nested = null;
+                    } else {
+                        return true;
+                    }
                 }
             }
 
