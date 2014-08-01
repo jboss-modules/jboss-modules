@@ -64,11 +64,19 @@ final class ModulesPolicy extends Policy {
     }
 
     public PermissionCollection getPermissions(final ProtectionDomain domain) {
-        return domain.getCodeSource().equals(ourCodeSource) ? getAllPermission() : policy.getPermissions(domain);
+        CodeSource codeSource = domain.getCodeSource();
+        if (codeSource != null)
+            return codeSource.equals(ourCodeSource) ? getAllPermission() : policy.getPermissions(domain);
+        else
+            return policy.getPermissions(domain);
     }
 
     public boolean implies(final ProtectionDomain domain, final Permission permission) {
-        return domain.getCodeSource().equals(ourCodeSource) || policy.implies(domain, permission);
+        CodeSource codeSource = domain.getCodeSource();
+        if (codeSource != null)
+            return codeSource.equals(ourCodeSource) || policy.implies(domain, permission);
+        else
+            return policy.implies(domain, permission);
     }
 
     public void refresh() {
