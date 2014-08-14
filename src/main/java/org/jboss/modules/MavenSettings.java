@@ -87,6 +87,9 @@ final class MavenSettings {
         }
 
         public void addRepository(String url) {
+            if (!url.endsWith("/")) {
+                url += "/";
+            }
             repositories.add(url);
         }
 
