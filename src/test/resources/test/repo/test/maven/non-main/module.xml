@@ -18,10 +18,10 @@
   ~ limitations under the License.
   -->
 
-<module xmlns="urn:jboss:module:1.3" name="test.maven">
+<module xmlns="urn:jboss:module:1.3" name="test.maven" slot="non-main">
     <resources>
-        <artifact name="org.jboss.resteasy:resteasy-jackson-provider:3.0.4.Final"/>
-        <artifact name="org.jboss.ws.cxf:jbossws-cxf-resources:4.1.3.Final:jboss711"/>
+        <artifact name="org.jboss.resteasy:resteasy-jackson-provider:3.0.5.Final"/>
+        <artifact name="org.jboss.ws.cxf:jbossws-cxf-resources:4.3.0.Final:wildfly800"/>
     </resources>
 
     <dependencies/>
