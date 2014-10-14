@@ -23,8 +23,11 @@ import java.security.AllPermission;
 import java.security.PermissionCollection;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
 /**
  * A {@code Module} specification which is used by a {@code ModuleLoader} to define new modules.
@@ -57,10 +60,12 @@ public abstract class ModuleSpec {
             private final List<ResourceLoaderSpec> resourceLoaders = new ArrayList<ResourceLoaderSpec>(0);
             private final List<DependencySpec> dependencies = new ArrayList<DependencySpec>();
             private final Map<String, String> properties = new LinkedHashMap<String, String>(0);
+            private final Set<String> hideProperties = new LinkedHashSet<>(0);
             private LocalLoader fallbackLoader;
             private ModuleClassLoaderFactory moduleClassLoaderFactory;
             private ClassFileTransformer classFileTransformer;
             private PermissionCollection permissionCollection;
+            private Properties defaults;
 
             @Override
             public Builder setFallbackLoader(final LocalLoader fallbackLoader) {
@@ -106,7 +111,21 @@ public abstract class ModuleSpec {
 
             @Override
             public Builder addProperty(final String name, final String value) {
+                hideProperties.remove(name);
                 properties.put(name, value);
+                return this;
+            }
+
+            @Override
+            public Builder hideProperty(final String name) {
+                properties.remove(name);
+                hideProperties.add(name);
+                return this;
+            }
+
+            @Override
+            public Builder setPropertyDefaults(final Properties defaults) {
+                this.defaults = defaults;
                 return this;
             }
 
@@ -118,7 +137,7 @@ public abstract class ModuleSpec {
 
             @Override
             public ModuleSpec create() {
-                return new ConcreteModuleSpec(moduleIdentifier, mainClass, assertionSetting, resourceLoaders.toArray(new ResourceLoaderSpec[resourceLoaders.size()]), dependencies.toArray(new DependencySpec[dependencies.size()]), fallbackLoader, moduleClassLoaderFactory, classFileTransformer, properties, permissionCollection);
+                return new ConcreteModuleSpec(moduleIdentifier, mainClass, assertionSetting, resourceLoaders.toArray(new ResourceLoaderSpec[resourceLoaders.size()]), dependencies.toArray(new DependencySpec[dependencies.size()]), fallbackLoader, moduleClassLoaderFactory, classFileTransformer, properties, defaults, permissionCollection);
             }
 
             @Override
@@ -252,6 +271,22 @@ public abstract class ModuleSpec {
          * @return this builder
          */
         ModuleSpec.Builder addProperty(String name, String value);
+
+        /**
+         * Hide a property in this module specification.
+         *
+         * @param name the property name
+         * @return this builder
+         */
+        ModuleSpec.Builder hideProperty(String name);
+
+        /**
+         * Set the defaults property map for this module.
+         *
+         * @param defaults the defaults property map
+         * @return this builder
+         */
+        ModuleSpec.Builder setPropertyDefaults(Properties defaults);
 
         /**
          * Set the permission collection for this module specification.  If none is given, a collection implying

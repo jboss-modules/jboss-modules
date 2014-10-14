@@ -21,6 +21,7 @@ package org.jboss.modules;
 import java.lang.instrument.ClassFileTransformer;
 import java.security.PermissionCollection;
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * A {@code Module} specification for a concrete module implementation.
@@ -40,9 +41,10 @@ public final class ConcreteModuleSpec extends ModuleSpec {
     private final ModuleClassLoaderFactory moduleClassLoaderFactory;
     private final ClassFileTransformer classFileTransformer;
     private final Map<String, String> properties;
+    private final Properties defaults;
     private final PermissionCollection permissionCollection;
 
-    ConcreteModuleSpec(final ModuleIdentifier moduleIdentifier, final String mainClass, final AssertionSetting assertionSetting, final ResourceLoaderSpec[] resourceLoaders, final DependencySpec[] dependencies, final LocalLoader fallbackLoader, final ModuleClassLoaderFactory moduleClassLoaderFactory, final ClassFileTransformer classFileTransformer, final Map<String, String> properties, final PermissionCollection permissionCollection) {
+    ConcreteModuleSpec(final ModuleIdentifier moduleIdentifier, final String mainClass, final AssertionSetting assertionSetting, final ResourceLoaderSpec[] resourceLoaders, final DependencySpec[] dependencies, final LocalLoader fallbackLoader, final ModuleClassLoaderFactory moduleClassLoaderFactory, final ClassFileTransformer classFileTransformer, final Map<String, String> properties, final Properties defaults, final PermissionCollection permissionCollection) {
         super(moduleIdentifier);
         this.mainClass = mainClass;
         this.assertionSetting = assertionSetting;
@@ -52,6 +54,7 @@ public final class ConcreteModuleSpec extends ModuleSpec {
         this.moduleClassLoaderFactory = moduleClassLoaderFactory;
         this.classFileTransformer = classFileTransformer;
         this.properties = properties;
+        this.defaults = defaults;
         this.permissionCollection = permissionCollection;
     }
 
@@ -89,6 +92,10 @@ public final class ConcreteModuleSpec extends ModuleSpec {
 
     Map<String, String> getProperties() {
         return properties;
+    }
+
+    Properties getDefaults() {
+        return defaults;
     }
 
     PermissionCollection getPermissionCollection() {

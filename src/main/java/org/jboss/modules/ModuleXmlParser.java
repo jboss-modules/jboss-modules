@@ -97,6 +97,7 @@ final class ModuleXmlParser {
     private static final String E_MODULE_ABSENT = "module-absent";
     private static final String E_PROPERTIES = "properties";
     private static final String E_PROPERTY = "property";
+    private static final String E_HIDE_PROPERTY = "hide-property";
     private static final String E_PERMISSIONS = "permissions";
     private static final String E_GRANT = "grant";
 
@@ -936,6 +937,10 @@ final class ModuleXmlParser {
                             parseProperty(reader, specBuilder);
                             break;
                         }
+                        case E_HIDE_PROPERTY: {
+                            parseHideProperty(reader, specBuilder);
+                            break;
+                        }
                         default: throw unexpectedContent(reader);
                     }
                     break;
@@ -969,6 +974,31 @@ final class ModuleXmlParser {
         specBuilder.addProperty(name, value == null ? "true" : value);
         if ("jboss.assertions".equals(name)) try {
             specBuilder.setAssertionSetting(AssertionSetting.valueOf(value.toUpperCase(Locale.US)));
+        } catch (IllegalArgumentException ignored) {}
+
+        // consume remainder of element
+        parseNoContent(reader);
+    }
+
+    private static void parseHideProperty(final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
+        String name = null;
+        final Set<String> required = new HashSet<>(Arrays.asList(A_NAME));
+        final int count = reader.getAttributeCount();
+        for (int i = 0; i < count; i ++) {
+            validateAttributeNamespace(reader, i);
+            final String attribute = reader.getAttributeName(i);
+            required.remove(attribute);
+            switch (attribute) {
+                case A_NAME: name = reader.getAttributeValue(i); break;
+                default: throw unknownAttribute(reader, i);
+            }
+        }
+        if (! required.isEmpty()) {
+            throw missingAttributes(reader, required);
+        }
+        specBuilder.hideProperty(name);
+        if ("jboss.assertions".equals(name)) try {
+            specBuilder.setAssertionSetting(null);
         } catch (IllegalArgumentException ignored) {}
 
         // consume remainder of element

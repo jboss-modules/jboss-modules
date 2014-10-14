@@ -46,7 +46,7 @@ class CallerContext {
     });
 
     static Class<?> getCallingClass() {
-        Class<?> stack[] = hack.getClassContext();
+        Class<?>[] stack = hack.getClassContext();
         int i = 3;
         while (stack[i] == stack[2]) {
             // skip nested calls front the same class
@@ -55,5 +55,19 @@ class CallerContext {
         }
 
         return stack[i];
+    }
+
+    static Class<?> getCallingClass(Class<?>... excludes) {
+        //  0: this class
+        //  1: JBoss Modules code
+        //  2: ???
+        Class<?>[] stack = hack.getClassContext();
+        for (int i = 2; i < stack.length; i ++) {
+            final Class<?> item = stack[i];
+            for (Class<?> exclude : excludes) {
+                if (item != exclude) return item;
+            }
+        }
+        return null;
     }
 }
