@@ -371,7 +371,7 @@ public final class Module {
     public static Module forClassLoader(ClassLoader cl, boolean search) {
         if (cl instanceof ModuleClassLoader) {
             return ((ModuleClassLoader) cl).getModule();
-        } else if (search) {
+        } else if (search && cl != null) {
             return forClassLoader(cl.getParent(), true);
         } else {
             return null;
