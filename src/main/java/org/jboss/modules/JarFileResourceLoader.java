@@ -132,12 +132,6 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
         final long size = entry.getSize();
         final InputStream is = jarFile.getInputStream(entry);
         try {
-            final CodeSigner[] entryCodeSigners = entry.getCodeSigners();
-            final CodeSigners codeSigners = entryCodeSigners == null || entryCodeSigners.length == 0 ? EMPTY_CODE_SIGNERS : new CodeSigners(entryCodeSigners);
-            CodeSource codeSource = codeSources.get(codeSigners);
-            if (codeSource == null) {
-                codeSources.put(codeSigners, codeSource = new CodeSource(rootUrl, entryCodeSigners));
-            }
             if (size == -1) {
                 // size unknown
                 final ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -147,6 +141,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
                     baos.write(buf, 0, res);
                 }
                 // done
+                CodeSource codeSource = createCodeSource(entry);
                 baos.close();
                 is.close();
                 spec.setBytes(baos.toByteArray());
@@ -162,6 +157,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
                 // consume remainder so that cert check doesn't fail in case of wonky JARs
                 while (is.read() != -1);
                 // done
+                CodeSource codeSource = createCodeSource(entry);
                 is.close();
                 spec.setBytes(bytes);
                 spec.setCodeSource(codeSource);
@@ -172,6 +168,17 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
         } finally {
             StreamUtil.safeClose(is);
         }
+    }
+
+    // this MUST only be called after the input stream is fully read (see MODULES-201)
+    private CodeSource createCodeSource(final JarEntry entry) {
+        final CodeSigner[] entryCodeSigners = entry.getCodeSigners();
+        final CodeSigners codeSigners = entryCodeSigners == null || entryCodeSigners.length == 0 ? EMPTY_CODE_SIGNERS : new CodeSigners(entryCodeSigners);
+        CodeSource codeSource = codeSources.get(codeSigners);
+        if (codeSource == null) {
+            codeSources.put(codeSigners, codeSource = new CodeSource(rootUrl, entryCodeSigners));
+        }
+        return codeSource;
     }
 
     private JarEntry getJarEntry(final String fileName) {
