@@ -21,6 +21,8 @@ final class MavenSettings {
     }
 
     void configureDefaults() {
+        //always add maven central
+        remoteRepositories.add("https://repo1.maven.org/maven2/");
         String localRepositoryPath = System.getProperty("local.maven.repo.path");
         if (localRepositoryPath != null) {
             System.out.println("Please use 'maven.repo.local' instead of 'local.maven.repo.path'");
