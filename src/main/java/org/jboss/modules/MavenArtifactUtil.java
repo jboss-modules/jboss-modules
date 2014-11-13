@@ -25,7 +25,6 @@ import static org.jboss.modules.xml.XmlPullParser.END_TAG;
 import static org.jboss.modules.xml.XmlPullParser.FEATURE_PROCESS_NAMESPACES;
 import static org.jboss.modules.xml.XmlPullParser.START_TAG;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -34,6 +33,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 
@@ -263,7 +263,7 @@ class MavenArtifactUtil {
      *
      * @param qualifier group:artifact:version[:classifier]
      * @return absolute path to artifact, null if none exists
-     * @throws Exception
+     * @throws IOException
      */
     public static File resolveJarArtifact(String qualifier) throws IOException {
         String[] split = qualifier.split(":");
@@ -293,18 +293,24 @@ class MavenArtifactUtil {
                 return null;
             }
 
-            File jarFile = new File(localRepository.toFile(), jarPath);
-            File pomFile = new File(localRepository.toFile(), artifactRelativePath + ".pom");
+            final File jarFile = new File(localRepository.toFile(), jarPath);
+            final File pomFile = new File(localRepository.toFile(), artifactRelativePath + ".pom");
             for (String remoteRepository : remoteRepos) {
-                String remotePomPath = remoteRepository + relativeArtifactHttpPath(groupId, artifactId, version) + ".pom";
-                String remoteJarPath = remoteRepository + relativeArtifactHttpPath(groupId, artifactId, version) + classifier + ".jar";
-                downloadFile(qualifier + ":pom", remotePomPath, pomFile);
-                downloadFile(qualifier + ":jar", remoteJarPath, jarFile);
-                if (jarFile.exists()) { //download successful
-                    return jarFile;
+                try {
+                    String remotePomPath = remoteRepository + artifactRelativePath + ".pom";
+                    String remoteJarPath = remoteRepository + artifactRelativePath + classifier + ".jar";
+                    downloadFile(qualifier + ":pom", remotePomPath, pomFile);
+                    downloadFile(qualifier + ":jar", remoteJarPath, jarFile);
+                    if (jarFile.exists()) { //download successful
+                        return jarFile;
+                    }
+                } catch (IOException e) {
+                    Module.log.trace(e, "Could not download '%s' from '%s' repository", artifactRelativePath, remoteRepository);
+                    //
                 }
             }
             //could not find it in remote
+            Module.log.trace("Could not find in any remote repository");
             return null;
         }
     }
@@ -326,16 +332,15 @@ class MavenArtifactUtil {
     public static void downloadFile(String artifact, String src, File dest) throws IOException {
         final URL url = new URL(src);
         final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        boolean message = Boolean.parseBoolean(System.getProperty("maven.download.message", "true"));
+        boolean message = Boolean.getBoolean("maven.download.message");
 
         InputStream bis = connection.getInputStream();
         try {
             dest.getParentFile().mkdirs();
             FileOutputStream fos = new FileOutputStream(dest);
-            BufferedOutputStream bos = new BufferedOutputStream(fos);
             try {
                 if (message) { System.out.println("Downloading " + artifact); }
-                StreamUtil.copy(bis, bos);
+                Files.copy(bis,dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
             } finally {
                 StreamUtil.safeClose(fos);
             }
