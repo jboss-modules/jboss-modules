@@ -59,6 +59,8 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
  */
 public class ModuleClassLoader extends ConcurrentClassLoader {
 
+    private static final boolean POLICY_REFRESHABLE;
+
     private static final boolean POLICY_PERMISSIONS;
 
     static final AtomicBoolean POLICY_READY = new AtomicBoolean();
@@ -72,6 +74,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         if (! parallelOk) {
             throw new Error("Failed to register " + ModuleClassLoader.class.getName() + " as parallel-capable");
         }
+        POLICY_REFRESHABLE = Boolean.parseBoolean(System.getProperty("jboss.modules.policy-refreshable", "false"));
         POLICY_PERMISSIONS = Boolean.parseBoolean(System.getProperty("jboss.modules.policy-permissions", "false"));
     }
 
@@ -388,7 +391,9 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
             ProtectionDomain protectionDomain = map.get(codeSource);
             if (protectionDomain == null) {
                 final PermissionCollection permissions = module.getPermissionCollection();
-                if (POLICY_PERMISSIONS && POLICY_READY.get()) {
+                if (POLICY_REFRESHABLE) {
+                    protectionDomain = new ProtectionDomain(codeSource, permissions, this, null); // staticPermission=false
+                }else if (POLICY_PERMISSIONS && POLICY_READY.get()) {
                     final Policy policy = AccessController.doPrivileged(GET_POLICY_ACTION);
                     if (policy != null) {
                         final PermissionCollection policyPermissions = policy.getPermissions(codeSource);
