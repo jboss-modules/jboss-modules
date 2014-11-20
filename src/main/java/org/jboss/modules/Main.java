@@ -392,6 +392,15 @@ public final class Main {
         ModularURLStreamHandlerFactory.addHandlerModule(module);
         ModularContentHandlerFactory.addHandlerModule(module);
 
+        // at this point, having a security manager already installed will prevent correct operation.
+
+        final SecurityManager existingSecMgr = System.getSecurityManager();
+        if (existingSecMgr != null) {
+            System.err.println("An existing security manager was detected.  You must use the -secmgr switch to start with a security manager.");
+            System.exit(1);
+            return; // not reached
+        }
+
         try {
             final Iterator<Policy> iterator = module.loadService(Policy.class).iterator();
             if (iterator.hasNext()) {
