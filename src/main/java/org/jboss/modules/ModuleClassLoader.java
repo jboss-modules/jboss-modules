@@ -18,12 +18,7 @@
 
 package org.jboss.modules;
 
-import java.security.AccessController;
-import java.security.Permission;
 import java.security.PermissionCollection;
-import java.security.Permissions;
-import java.security.Policy;
-import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
@@ -44,7 +39,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 /**
@@ -59,10 +53,6 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
  */
 public class ModuleClassLoader extends ConcurrentClassLoader {
 
-    private static final boolean POLICY_PERMISSIONS;
-
-    static final AtomicBoolean POLICY_READY = new AtomicBoolean();
-
     static {
         boolean parallelOk = true;
         try {
@@ -72,7 +62,6 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         if (! parallelOk) {
             throw new Error("Failed to register " + ModuleClassLoader.class.getName() + " as parallel-capable");
         }
-        POLICY_PERMISSIONS = Boolean.parseBoolean(System.getProperty("jboss.modules.policy-permissions", "false"));
     }
 
     static final ResourceLoaderSpec[] NO_RESOURCE_LOADERS = new ResourceLoaderSpec[0];
@@ -376,55 +365,13 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
 
     private final IdentityHashMap<CodeSource, ProtectionDomain> protectionDomains = new IdentityHashMap<CodeSource, ProtectionDomain>();
 
-    private static final PrivilegedAction<Policy> GET_POLICY_ACTION = new PrivilegedAction<Policy>() {
-        public Policy run() {
-            return Policy.getPolicy();
-        }
-    };
-
     private ProtectionDomain getProtectionDomain(CodeSource codeSource) {
         final IdentityHashMap<CodeSource, ProtectionDomain> map = protectionDomains;
         synchronized (map) {
             ProtectionDomain protectionDomain = map.get(codeSource);
             if (protectionDomain == null) {
                 final PermissionCollection permissions = module.getPermissionCollection();
-                if (POLICY_PERMISSIONS && POLICY_READY.get()) {
-                    final Policy policy = AccessController.doPrivileged(GET_POLICY_ACTION);
-                    if (policy != null) {
-                        final PermissionCollection policyPermissions = policy.getPermissions(codeSource);
-                        if (policyPermissions != null && policyPermissions != Policy.UNSUPPORTED_EMPTY_COLLECTION) {
-                            if (permissions == null) {
-                                protectionDomain = new ProtectionDomain(codeSource, policyPermissions);
-                            } else {
-                                final Enumeration<Permission> e2 = policyPermissions.elements();
-                                final Enumeration<Permission> e1 = permissions.elements();
-                                if (e2.hasMoreElements()) {
-                                    if (e1.hasMoreElements()) {
-                                        final Permissions combined = new Permissions();
-                                        do {
-                                            combined.add(e1.nextElement());
-                                        } while (e1.hasMoreElements());
-                                        while (e2.hasMoreElements()) {
-                                            combined.add(e2.nextElement());
-                                        }
-                                        combined.setReadOnly();
-                                        protectionDomain = new ProtectionDomain(codeSource, combined);
-                                    } else {
-                                        protectionDomain = new ProtectionDomain(codeSource, policyPermissions);
-                                    }
-                                } else {
-                                    protectionDomain = new ProtectionDomain(codeSource, permissions);
-                                }
-                            }
-                        } else {
-                            protectionDomain = new ProtectionDomain(codeSource, permissions);
-                        }
-                    } else {
-                        protectionDomain = new ProtectionDomain(codeSource, permissions);
-                    }
-                } else {
-                    protectionDomain = new ProtectionDomain(codeSource, permissions);
-                }
+                protectionDomain = new ProtectionDomain(codeSource, permissions);
                 map.put(codeSource, protectionDomain);
             }
             return protectionDomain;
