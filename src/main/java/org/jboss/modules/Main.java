@@ -29,7 +29,6 @@ import java.io.PrintWriter;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
-import java.security.AccessController;
 import java.security.Policy;
 import java.util.Enumeration;
 import java.util.Iterator;
@@ -420,10 +419,6 @@ public final class Main {
         // configure policy so that if SM is enabled, modules can still function
         final ModulesPolicy policy = new ModulesPolicy(Policy.getPolicy());
         Policy.setPolicy(policy);
-
-        // these two lines really needed for post EAP 6.x
-        ModuleClassLoader.POLICY_READY.set(true);
-        policy.refresh();
 
         if (secMgrModule != null) {
             final Module loadedModule;
