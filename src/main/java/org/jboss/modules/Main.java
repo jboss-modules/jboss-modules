@@ -43,6 +43,8 @@ import java.util.jar.JarFile;
 import java.util.logging.LogManager;
 
 import java.util.jar.Manifest;
+
+import org.jboss.modules._private.StartupSecurityManager;
 import org.jboss.modules.log.JDKModuleLogger;
 
 import static org.jboss.modules.SecurityActions.setContextClassLoader;
@@ -395,7 +397,9 @@ public final class Main {
         // at this point, having a security manager already installed will prevent correct operation.
 
         final SecurityManager existingSecMgr = System.getSecurityManager();
-        if (existingSecMgr != null) {
+        if (existingSecMgr instanceof StartupSecurityManager) {
+            System.setSecurityManager(null);
+        } else if (existingSecMgr != null) {
             System.err.println("An existing security manager was detected.  You must use the -secmgr switch to start with a security manager.");
             System.exit(1);
             return; // not reached
