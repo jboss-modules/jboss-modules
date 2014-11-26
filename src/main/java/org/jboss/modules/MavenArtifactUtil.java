@@ -124,7 +124,9 @@ class MavenArtifactUtil {
                     switch (reader.getName()) {
                         case "localRepository": {
                             String localRepository = reader.nextText();
-                            mavenSettings.setLocalRepository(java.nio.file.Paths.get(localRepository));
+                            if (!"".equals(localRepository)) {
+                                mavenSettings.setLocalRepository(java.nio.file.Paths.get(localRepository));
+                            }
                             break;
                         }
                         case "profiles": {
@@ -278,6 +280,7 @@ class MavenArtifactUtil {
         if (split.length >= 4) { classifier = "-" + split[3]; }
 
         String artifactRelativePath = relativeArtifactPath(groupId, artifactId, version);
+        String artifactRelativeHttpPath = relativeArtifactHttpPath(groupId, artifactId, version);
         final MavenSettings settings = getSettings();
         final Path localRepository = settings.getLocalRepository();
 
@@ -298,8 +301,8 @@ class MavenArtifactUtil {
             final File pomFile = new File(localRepository.toFile(), artifactRelativePath + ".pom");
             for (String remoteRepository : remoteRepos) {
                 try {
-                    String remotePomPath = remoteRepository + artifactRelativePath + ".pom";
-                    String remoteJarPath = remoteRepository + artifactRelativePath + classifier + ".jar";
+                    String remotePomPath = remoteRepository + artifactRelativeHttpPath + ".pom";
+                    String remoteJarPath = remoteRepository + artifactRelativeHttpPath + classifier + ".jar";
                     downloadFile(qualifier + ":pom", remotePomPath, pomFile);
                     downloadFile(qualifier + ":jar", remoteJarPath, jarFile);
                     if (jarFile.exists()) { //download successful
@@ -331,22 +334,17 @@ class MavenArtifactUtil {
     }
 
     public static void downloadFile(String artifact, String src, File dest) throws IOException {
+        if (dest.exists()){
+            return;
+        }
         final URL url = new URL(src);
         final URLConnection connection = url.openConnection();
         boolean message = Boolean.getBoolean("maven.download.message");
 
-        InputStream bis = connection.getInputStream();
-        try {
+        try (InputStream bis = connection.getInputStream()){
             dest.getParentFile().mkdirs();
-            FileOutputStream fos = new FileOutputStream(dest);
-            try {
-                if (message) { System.out.println("Downloading " + artifact); }
-                Files.copy(bis,dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            } finally {
-                StreamUtil.safeClose(fos);
-            }
-        } finally {
-            StreamUtil.safeClose(bis);
+            if (message) { System.out.println("Downloading " + artifact); }
+            Files.copy(bis, dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
         }
     }
 }
