@@ -33,12 +33,11 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Properties;
-import java.util.PropertyPermission;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
@@ -190,7 +189,7 @@ public final class Module {
     /**
      * The properties map specified when this module was defined.
      */
-    private final ModuleProperties properties;
+    private final Map<String, String> properties;
     /**
      * The assigned permission collection.
      */
@@ -233,9 +232,8 @@ public final class Module {
         if (factory != null) moduleClassLoader = factory.create(configuration);
         if (moduleClassLoader == null) moduleClassLoader = new ModuleClassLoader(configuration);
         this.moduleClassLoader = moduleClassLoader;
-        final Properties defaults = spec.getDefaults();
-        this.properties = new ModuleProperties(defaults == null ? GlobalProperties.getRootProperties() : defaults);
-        properties.putAll(spec.getProperties());
+        final Map<String, String> properties = spec.getProperties();
+        this.properties = properties.isEmpty() ? Collections.<String, String>emptyMap() : new LinkedHashMap<String, String>(properties);
     }
 
     LocalLoader getFallbackLoader() {
@@ -856,11 +854,7 @@ public final class Module {
      * @return the property value
      */
     public String getProperty(String name) {
-        final SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
-            sm.checkPermission(new PropertyPermission(name, "read"));
-        }
-        return properties.getProperty(name);
+        return properties.get(name);
     }
 
     /**
@@ -871,11 +865,7 @@ public final class Module {
      * @return the property value
      */
     public String getProperty(String name, String defaultVal) {
-        final SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
-            sm.checkPermission(new PropertyPermission(name, "read"));
-        }
-        return properties.getProperty(name, defaultVal);
+        return properties.containsKey(name) ? properties.get(name) : defaultVal;
     }
 
     /**
@@ -884,15 +874,7 @@ public final class Module {
      * @return the property names list
      */
     public List<String> getPropertyNames() {
-        final SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
-            sm.checkPermission(new PropertyPermission("*", "read"));
-        }
-        return properties.stringPropertyNamesAsList();
-    }
-
-    ModuleProperties getProperties0() {
-        return properties;
+        return new ArrayList<String>(properties.keySet());
     }
 
     /**
