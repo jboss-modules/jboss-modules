@@ -26,7 +26,9 @@ import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLConnection;
 import java.security.AccessController;
+import java.security.Permission;
 import java.security.PermissionCollection;
+import java.security.Permissions;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -211,6 +213,8 @@ public final class Module {
     private static final RuntimePermission ADD_CONTENT_HANDLER_FACTORY;
     private static final RuntimePermission ADD_URL_STREAM_HANDLER_FACTORY;
 
+    private static final PermissionCollection NO_PERMISSIONS = noPermissions();
+
     /**
      * Construct a new instance from a module specification.
      *
@@ -224,7 +228,8 @@ public final class Module {
         identifier = spec.getModuleIdentifier();
         mainClassName = spec.getMainClass();
         fallbackLoader = spec.getFallbackLoader();
-        permissionCollection = spec.getPermissionCollection();
+        final PermissionCollection permissionCollection = spec.getPermissionCollection();
+        this.permissionCollection = permissionCollection == null ? NO_PERMISSIONS : permissionCollection.isReadOnly() ? permissionCollection : copyPermissions(permissionCollection);
         //noinspection ThisEscapedInObjectConstruction
         final ModuleClassLoader.Configuration configuration = new ModuleClassLoader.Configuration(this, spec.getAssertionSetting(), spec.getResourceLoaders(), spec.getClassFileTransformer());
         final ModuleClassLoaderFactory factory = spec.getModuleClassLoaderFactory();
@@ -234,6 +239,22 @@ public final class Module {
         this.moduleClassLoader = moduleClassLoader;
         final Map<String, String> properties = spec.getProperties();
         this.properties = properties.isEmpty() ? Collections.<String, String>emptyMap() : new LinkedHashMap<String, String>(properties);
+    }
+
+    private static PermissionCollection noPermissions() {
+        final Permissions permissions = new Permissions();
+        permissions.setReadOnly();
+        return permissions;
+    }
+
+    private static PermissionCollection copyPermissions(PermissionCollection permissionCollection) {
+        final Permissions permissions = new Permissions();
+        final Enumeration<Permission> elements = permissionCollection.elements();
+        while (elements.hasMoreElements()) {
+            permissions.add(elements.nextElement());
+        }
+        permissions.setReadOnly();
+        return permissions;
     }
 
     LocalLoader getFallbackLoader() {
@@ -978,7 +999,12 @@ public final class Module {
         return NativeLibraryResourceLoader.getArchName();
     }
 
-    PermissionCollection getPermissionCollection() {
+    /**
+     * Get the module's configured permission collection.
+     *
+     * @return the module permission collection
+     */
+    public PermissionCollection getPermissionCollection() {
         return permissionCollection;
     }
 
