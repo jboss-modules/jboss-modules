@@ -20,20 +20,12 @@ package org.jboss.modules;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Field;
 import java.net.URL;
-import java.security.AccessControlContext;
-import java.security.AccessController;
-import java.security.PrivilegedExceptionAction;
 import java.security.ProtectionDomain;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
-import java.util.Locale;
-import java.util.Queue;
-import sun.misc.Unsafe;
 
 /**
  * A classloader which can delegate to multiple other classloaders without risk of deadlock.  A concurrent class loader
@@ -45,22 +37,12 @@ import sun.misc.Unsafe;
  */
 public abstract class ConcurrentClassLoader extends ClassLoader {
 
-    private static final boolean LOCKLESS;
-    private static final boolean SAFE_JDK;
-    private static final boolean JDK7_PLUS;
-
     private static final ClassLoader definingLoader = ConcurrentClassLoader.class.getClassLoader();
 
     private static final ThreadLocal<Boolean> GET_PACKAGE_SUPPRESSOR = new ThreadLocal<Boolean>();
 
     static {
-        boolean jdk7plus = false;
-        boolean parallelOk = true;
-        try {
-            jdk7plus = parallelOk = ClassLoader.registerAsParallelCapable();
-        } catch (Throwable ignored) {
-        }
-        if (! parallelOk) {
+        if (! ClassLoader.registerAsParallelCapable()) {
             throw new Error("Failed to register " + ConcurrentClassLoader.class.getName() + " as parallel-capable");
         }
         /*
@@ -69,21 +51,6 @@ public abstract class ConcurrentClassLoader extends ClassLoader {
          the Package.pkgs lock and one holds the Classloader lock.
         */
         Package.getPackages();
-        // Determine whether to run in lockless mode
-        boolean hasUnsafe = false;
-        // For 1.6, we require Unsafe to perform lockless stuff
-        if (! jdk7plus) try {
-            Class.forName("sun.misc.Unsafe", false, null);
-            hasUnsafe = true;
-        } catch (Throwable t) {
-            // ignored
-        }
-        final boolean isJRockit = AccessController.doPrivileged(new PropertyReadAction("java.vm.name", "")).toUpperCase(Locale.US).contains("JROCKIT");
-        // But the user is always right, so if they override, respect it
-        LOCKLESS = Boolean.parseBoolean(AccessController.doPrivileged(new PropertyReadAction("jboss.modules.lockless", Boolean.toString(! jdk7plus && hasUnsafe && ! isJRockit))));
-        // If the JDK has safe CL, set this flag
-        SAFE_JDK = Boolean.parseBoolean(AccessController.doPrivileged(new PropertyReadAction("jboss.modules.safe-jdk", Boolean.toString(jdk7plus || isJRockit))));
-        JDK7_PLUS = jdk7plus;
     }
 
     /**
@@ -99,10 +66,8 @@ public abstract class ConcurrentClassLoader extends ClassLoader {
      */
     protected ConcurrentClassLoader(final ConcurrentClassLoader parent) {
         super(parent == null ? ConcurrentClassLoader.class.getClassLoader() : parent);
-        if (JDK7_PLUS) {
-            if (getClassLoadingLock("$TEST$") == this) {
-                throw new Error("Cannot instantiate non-parallel subclass");
-            }
+        if (getClassLoadingLock("$TEST$") == this) {
+            throw new Error("Cannot instantiate non-parallel subclass");
         }
     }
 
@@ -111,10 +76,8 @@ public abstract class ConcurrentClassLoader extends ClassLoader {
      */
     protected ConcurrentClassLoader() {
         super(ConcurrentClassLoader.class.getClassLoader());
-        if (JDK7_PLUS) {
-            if (getClassLoadingLock("$TEST$") == this) {
-                throw new Error("Cannot instantiate non-parallel subclass");
-            }
+        if (getClassLoadingLock("$TEST$") == this) {
+            throw new Error("Cannot instantiate non-parallel subclass");
         }
     }
 
@@ -382,64 +345,6 @@ public abstract class ConcurrentClassLoader extends ClassLoader {
                 return definingLoader != null ? definingLoader.loadClass(className) : findSystemClass(className);
             }
         }
-        return performLoadClassChecked(className, exportsOnly, resolve);
-    }
-
-    /**
-     * Perform a class load operation.  This method checks to see if the class loader object is locked; if so, it
-     * unlocks it and submits the request to the class loader thread.  Otherwise, it will load the class itself by
-     * delegating to {@link #findClass(String, boolean, boolean)}.
-     * <p>
-     * If the {@code jboss.modules.unsafe-locks} system property is set to {@code true}, then rather than using the
-     * class loading thread, the lock is forcibly broken and the load retried.
-     *
-     * @param className the class name
-     * @param exportsOnly {@code true} to consider only exported resources or {@code false} to consider all resources
-     * @param resolve {@code true} to resolve the loaded class
-     * @return the class returned by {@link #findClass(String, boolean, boolean)}
-     * @throws ClassNotFoundException if {@link #findClass(String, boolean, boolean)} throws this exception
-     */
-    private Class<?> performLoadClassChecked(final String className, final boolean exportsOnly, final boolean resolve) throws ClassNotFoundException {
-        if (SAFE_JDK) {
-            return performLoadClassUnchecked(className, exportsOnly, resolve);
-        } else if (Thread.holdsLock(this)) {
-            if (LOCKLESS) {
-                final Unsafe unsafe = UnsafeHolder.UNSAFE;
-                unsafe.monitorExit(this);
-                try {
-                    return performLoadClassChecked(className, exportsOnly, resolve);
-                } finally {
-                    unsafe.monitorEnter(this);
-                }
-            }
-            if (Thread.currentThread() != LoaderThreadHolder.LOADER_THREAD) {
-                // Only the classloader thread may take this lock; use a condition to relinquish it
-                final LoadRequest req = new LoadRequest(className, resolve, exportsOnly, this, AccessController.getContext());
-                final Queue<LoadRequest> queue = LoaderThreadHolder.REQUEST_QUEUE;
-                synchronized (queue) {
-                    queue.add(req);
-                    queue.notify();
-                }
-                boolean intr = false;
-                try {
-                    while (!req.done) try {
-                        wait();
-                    } catch (InterruptedException e) {
-                        intr = true;
-                    }
-                } finally {
-                    if (intr) Thread.currentThread().interrupt();
-                }
-
-                final Class<?> result = req.result;
-                if (result == null) {
-                    final String message = req.message;
-                    throw new ClassNotFoundException(message == null ? className : message);
-                }
-                return result;
-            }
-        }
-        // no deadlock risk!  Either the lock isn't held, or we're inside the class loader thread.
         return performLoadClassUnchecked(className, exportsOnly, resolve);
     }
 
@@ -538,113 +443,6 @@ public abstract class ConcurrentClassLoader extends ClassLoader {
             return existing != null ? existing : pkg;
         } finally {
             suppressor.remove();
-        }
-    }
-
-    static final class LoaderThreadHolder {
-
-        static final Thread LOADER_THREAD;
-        static final Queue<LoadRequest> REQUEST_QUEUE = new ArrayDeque<LoadRequest>();
-
-        static {
-            Thread thr = new LoaderThread();
-            thr.setName("ClassLoader Thread");
-            // This thread will always run as long as the VM is alive.
-            thr.setDaemon(true);
-            thr.start();
-            LOADER_THREAD = thr;
-        }
-
-        private LoaderThreadHolder() {
-        }
-    }
-
-    static class LoadRequest {
-        private final String className;
-        private final boolean resolve;
-        private final ConcurrentClassLoader requester;
-        private final AccessControlContext context;
-        Class<?> result;
-        String message;
-        private boolean exportsOnly;
-
-        boolean done;
-
-        LoadRequest(final String className, final boolean resolve, final boolean exportsOnly, final ConcurrentClassLoader requester, final AccessControlContext context) {
-            this.className = className;
-            this.resolve = resolve;
-            this.exportsOnly = exportsOnly;
-            this.requester = requester;
-            this.context = context;
-        }
-    }
-
-    static class LoaderThread extends Thread {
-
-        @Override
-        public void interrupt() {
-            // no interruption
-        }
-
-        @Override
-        public void run() {
-            final Queue<LoadRequest> queue = LoaderThreadHolder.REQUEST_QUEUE;
-            for (; ;) {
-                try {
-                    LoadRequest request;
-                    synchronized (queue) {
-                        while ((request = queue.poll()) == null) {
-                            queue.wait();
-                        }
-                    }
-
-                    final ConcurrentClassLoader loader = request.requester;
-                    Class<?> result = null;
-                    synchronized (loader) {
-                        try {
-                            final SecurityManager sm = System.getSecurityManager();
-                            if (sm != null) {
-                                final LoadRequest localRequest = request;
-                                result = AccessController.doPrivileged(new PrivilegedExceptionAction<Class<?>>() {
-                                    public Class<?> run() throws ClassNotFoundException {
-                                        return loader.performLoadClassChecked(localRequest.className, localRequest.exportsOnly, localRequest.resolve);
-                                    }
-                                }, request.context);
-                            } else try {
-                                result = loader.performLoadClassChecked(request.className, request.exportsOnly, request.resolve);
-                            } catch (ClassNotFoundException e) {
-                                request.message = e.getMessage();
-                            }
-                        } finally {
-                            // no matter what, the requester MUST be notified
-                            request.result = result;
-                            request.done = true;
-                            loader.notifyAll();
-                        }
-                    }
-                } catch (Throwable t) {
-                    // ignore
-                }
-            }
-        }
-    }
-
-    private static final class UnsafeHolder {
-        static Unsafe UNSAFE;
-
-        static {
-            try {
-                final Field field = Unsafe.class.getDeclaredField("theUnsafe");
-                field.setAccessible(true);
-                UNSAFE = (Unsafe) field.get(null);
-            } catch (IllegalAccessException e) {
-                throw new IllegalAccessError(e.getMessage());
-            } catch (NoSuchFieldException e) {
-                throw new NoSuchFieldError(e.getMessage());
-            }
-        }
-
-        private UnsafeHolder() {
         }
     }
 }
