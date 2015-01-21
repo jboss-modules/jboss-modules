@@ -39,7 +39,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * A module classloader.  Instances of this class implement the complete view of classes and resources available in a
@@ -69,7 +69,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
     private final Module module;
     private final ClassFileTransformer transformer;
 
-    private volatile Paths<ResourceLoader, ResourceLoaderSpec> paths;
+    private final AtomicReference<Paths<ResourceLoader, ResourceLoaderSpec>> paths = new AtomicReference<>(Paths.<ResourceLoader, ResourceLoaderSpec>none());
 
     private final LocalLoader localLoader = new IterableLocalLoader() {
         public Class<?> loadClassLocal(final String name, final boolean resolve) {
@@ -104,14 +104,6 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         }
     };
 
-    private static final AtomicReferenceFieldUpdater<ModuleClassLoader, Paths<ResourceLoader, ResourceLoaderSpec>> pathsUpdater
-            = unsafeCast(AtomicReferenceFieldUpdater.newUpdater(ModuleClassLoader.class, Paths.class, "paths"));
-
-    @SuppressWarnings({ "unchecked" })
-    private static <A, B> AtomicReferenceFieldUpdater<A, B> unsafeCast(AtomicReferenceFieldUpdater<?, ?> updater) {
-        return (AtomicReferenceFieldUpdater<A, B>) updater;
-    }
-
     /**
      * Construct a new instance.
      *
@@ -119,7 +111,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
      */
     protected ModuleClassLoader(final Configuration configuration) {
         module = configuration.getModule();
-        paths = new Paths<ResourceLoader, ResourceLoaderSpec>(configuration.getResourceLoaders(), Collections.<String, List<ResourceLoader>>emptyMap());
+        paths.lazySet(new Paths<>(configuration.getResourceLoaders(), Collections.<String, List<ResourceLoader>>emptyMap()));
         final AssertionSetting setting = configuration.getAssertionSetting();
         if (setting != AssertionSetting.INHERIT) {
             setDefaultAssertionStatus(setting == AssertionSetting.ENABLED);
@@ -134,7 +126,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
      *  before the calling thread
      */
     boolean recalculate() {
-        final Paths<ResourceLoader, ResourceLoaderSpec> paths = this.paths;
+        final Paths<ResourceLoader, ResourceLoaderSpec> paths = this.paths.get();
         return setResourceLoaders(paths, paths.getSourceList(NO_RESOURCE_LOADERS));
     }
 
@@ -146,7 +138,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
      *  before the calling thread
      */
     boolean setResourceLoaders(final ResourceLoaderSpec[] resourceLoaders) {
-        return setResourceLoaders(paths, resourceLoaders);
+        return setResourceLoaders(paths.get(), resourceLoaders);
     }
 
     private boolean setResourceLoaders(final Paths<ResourceLoader, ResourceLoaderSpec> paths, final ResourceLoaderSpec[] resourceLoaders) {
@@ -167,7 +159,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
                 }
             }
         }
-        return pathsUpdater.compareAndSet(this, paths, new Paths<ResourceLoader, ResourceLoaderSpec>(resourceLoaders, allPaths));
+        return this.paths.compareAndSet(paths, new Paths<>(resourceLoaders, allPaths));
     }
 
     /**
@@ -239,7 +231,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
             return loadedClass;
         }
 
-        final Map<String, List<ResourceLoader>> paths = this.paths.getAllPaths();
+        final Map<String, List<ResourceLoader>> paths = this.paths.get().getAllPaths();
 
         log.trace("Loading class %s locally from %s", className, module);
 
@@ -302,7 +294,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
      */
     Resource loadResourceLocal(final String root, final String name) {
 
-        final Map<String, List<ResourceLoader>> paths = this.paths.getAllPaths();
+        final Map<String, List<ResourceLoader>> paths = this.paths.get().getAllPaths();
 
         final String path = Module.pathOf(name);
 
@@ -328,7 +320,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
      * @return the list of resources
      */
     public List<Resource> loadResourceLocal(final String name) {
-        final Map<String, List<ResourceLoader>> paths = this.paths.getAllPaths();
+        final Map<String, List<ResourceLoader>> paths = this.paths.get().getAllPaths();
 
         final String path = Module.pathOf(name);
 
@@ -509,7 +501,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         final ModuleLogger log = Module.log;
         log.trace("Attempting to load native library %s from %s", libname, module);
 
-        for (ResourceLoaderSpec loader : paths.getSourceList(NO_RESOURCE_LOADERS)) {
+        for (ResourceLoaderSpec loader : paths.get().getSourceList(NO_RESOURCE_LOADERS)) {
             final String library = loader.getResourceLoader().getLibrary(libname);
             if (library != null) {
                 return library;
@@ -560,7 +552,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
     }
 
     Set<String> getPaths() {
-        return paths.getAllPaths().keySet();
+        return paths.get().getAllPaths().keySet();
     }
 
     /** {@inheritDoc} */
@@ -634,7 +626,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
     }
 
     ResourceLoader[] getResourceLoaders() {
-        final ResourceLoaderSpec[] specs = paths.getSourceList(NO_RESOURCE_LOADERS);
+        final ResourceLoaderSpec[] specs = paths.get().getSourceList(NO_RESOURCE_LOADERS);
         final int length = specs.length;
         final ResourceLoader[] loaders = new ResourceLoader[length];
         for (int i = 0; i < length; i++) {
@@ -664,7 +656,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         } else {
             filter = PathFilters.is(realStartName);
         }
-        final Map<String, List<ResourceLoader>> paths = this.paths.getAllPaths();
+        final Map<String, List<ResourceLoader>> paths = this.paths.get().getAllPaths();
         final Iterator<Map.Entry<String, List<ResourceLoader>>> iterator = paths.entrySet().iterator();
         return new Iterator<Resource>() {
 
@@ -730,7 +722,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
      * @return the set of local paths
      */
     public final Set<String> getLocalPaths() {
-        return Collections.unmodifiableSet(paths.getAllPaths().keySet());
+        return Collections.unmodifiableSet(paths.get().getAllPaths().keySet());
     }
 
     /**
