@@ -184,7 +184,7 @@ public final class __TransformerFactory extends SAXTransformerFactory {
     public TransformerHandler newTransformerHandler(Source src) throws TransformerConfigurationException {
         if (saxtual == null)
             throw new TransformerConfigurationException("Provider is not a SAXTransformerFactory");
-        return saxtual.newTransformerHandler();
+        return saxtual.newTransformerHandler(src);
     }
 
     public TransformerHandler newTransformerHandler(Templates templates) throws TransformerConfigurationException {
