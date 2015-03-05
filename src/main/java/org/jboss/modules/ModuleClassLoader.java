@@ -730,7 +730,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
      *
      * @apiviz.exclude
      */
-    protected static final class Configuration {
+    public static final class Configuration {
         private final Module module;
         private final AssertionSetting assertionSetting;
         private final ResourceLoaderSpec[] resourceLoaders;
