@@ -160,7 +160,7 @@ public final class ModuleIdentifier implements Serializable {
                     b.append('\\');
                     // fall thru
                 default:
-                    b.append(c);
+                    b.appendCodePoint(c);
             }
         }
         return escaped ? b.toString() : name;
@@ -178,7 +178,7 @@ public final class ModuleIdentifier implements Serializable {
                     b.append('\\');
                     // fall thru
                 default:
-                    b.append(c);
+                    b.appendCodePoint(c);
             }
         }
         return escaped ? b.toString() : slot;
