@@ -247,7 +247,8 @@ final class ModuleXmlParser {
 
     private static ModuleSpec parseDocument(final ResourceRootFactory factory, final String rootPath, XmlPullParser reader, final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier) throws XmlPullParserException, IOException {
         int eventType;
-        while ((eventType = reader.nextTag()) != END_DOCUMENT) {
+        for (;;) {
+            eventType = reader.nextTag();
             switch (eventType) {
                 case START_DOCUMENT: {
                     return parseRootElement(factory, rootPath, reader, moduleLoader, moduleIdentifier);
@@ -280,7 +281,6 @@ final class ModuleXmlParser {
                 }
             }
         }
-        throw endOfDocument(reader);
     }
 
     private static ModuleSpec parseRootElement(final ResourceRootFactory factory, final String rootPath, final XmlPullParser reader, final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier) throws XmlPullParserException, IOException {
@@ -346,7 +346,8 @@ final class ModuleXmlParser {
             throw invalidModuleName(reader, moduleIdentifier);
         }
         int eventType;
-        while ((eventType = reader.nextTag()) != END_DOCUMENT) {
+        for (;;) {
+            eventType = reader.nextTag();
             switch (eventType) {
                 case END_TAG: {
                     return ModuleSpec.buildAlias(moduleIdentifier, ModuleIdentifier.create(targetName, targetSlot)).create();
@@ -356,7 +357,6 @@ final class ModuleXmlParser {
                 }
             }
         }
-        throw endOfDocument(reader);
     }
 
     private static void parseModuleAbsentContents(final XmlPullParser reader, final ModuleIdentifier moduleIdentifier) throws XmlPullParserException, IOException {
@@ -381,7 +381,8 @@ final class ModuleXmlParser {
             throw invalidModuleName(reader, moduleIdentifier);
         }
         int eventType;
-        while ((eventType = reader.nextTag()) != END_DOCUMENT) {
+        for (;;) {
+            eventType = reader.nextTag();
             switch (eventType) {
                 case END_TAG: {
                     return;
@@ -391,7 +392,6 @@ final class ModuleXmlParser {
                 }
             }
         }
-        throw endOfDocument(reader);
     }
 
     private static void parseModuleContents(final XmlPullParser reader, final ResourceRootFactory factory, final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier, final ModuleSpec.Builder specBuilder, final String rootPath) throws XmlPullParserException, IOException {
@@ -421,7 +421,8 @@ final class ModuleXmlParser {
         int eventType;
         boolean gotPerms = false;
         specBuilder.addDependency(DependencySpec.createLocalDependencySpec(PathFilters.acceptAll(), exportsBuilder.create()));
-        while ((eventType = reader.nextTag()) != END_DOCUMENT) {
+        for (;;) {
+            eventType = reader.nextTag();
             switch (eventType) {
                 case END_TAG: {
                     if (! gotPerms) specBuilder.setPermissionCollection(ModulesPolicy.DEFAULT_PERMISSION_COLLECTION);
@@ -450,14 +451,14 @@ final class ModuleXmlParser {
                 }
             }
         }
-        throw endOfDocument(reader);
     }
 
     private static void parseDependencies(final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
         assertNoAttributes(reader);
         // xsd:choice
         int eventType;
-        while ((eventType = reader.nextTag()) != END_DOCUMENT) {
+        for (;;) {
+            eventType = reader.nextTag();
             switch (eventType) {
                 case END_TAG: {
                     return;
@@ -476,7 +477,6 @@ final class ModuleXmlParser {
                 }
             }
         }
-        throw endOfDocument(reader);
     }
 
     private static void parseModuleDependency(final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
@@ -516,7 +516,8 @@ final class ModuleXmlParser {
         final MultiplePathFilterBuilder importBuilder = PathFilters.multiplePathFilterBuilder(true);
         final MultiplePathFilterBuilder exportBuilder = PathFilters.multiplePathFilterBuilder(export);
         int eventType;
-        while ((eventType = reader.nextTag()) != END_DOCUMENT) {
+        for (;;) {
+            eventType = reader.nextTag();
             switch (eventType) {
                 case END_TAG: {
                     assert services.equals(D_NONE) || services.equals(D_EXPORT) || services.equals(D_IMPORT);
@@ -574,7 +575,8 @@ final class ModuleXmlParser {
         Set<String> paths = Collections.emptySet();
         final MultiplePathFilterBuilder exportBuilder = PathFilters.multiplePathFilterBuilder(export);
         int eventType;
-        while ((eventType = reader.nextTag()) != END_DOCUMENT) {
+        for (;;) {
+            eventType = reader.nextTag();
             switch (eventType) {
                 case END_TAG: {
                     final PathFilter exportFilter = exportBuilder.create();
@@ -626,7 +628,8 @@ final class ModuleXmlParser {
         assertNoAttributes(reader);
         // xsd:choice
         int eventType;
-        while ((eventType = reader.nextTag()) != END_DOCUMENT) {
+        for (;;) {
+            eventType = reader.nextTag();
             switch (eventType) {
                 case END_TAG: {
                     specBuilder.addResourceRoot(new ResourceLoaderSpec(new NativeLibraryResourceLoader(new File(rootPath, "lib")), PathFilters.rejectAll()));
@@ -656,7 +659,6 @@ final class ModuleXmlParser {
                 }
             }
         }
-        throw endOfDocument(reader);
     }
 
     static ResourceLoader createMavenArtifactLoader(final String name) throws IOException
@@ -698,7 +700,8 @@ final class ModuleXmlParser {
         }
 
         int eventType;
-        while ((eventType = reader.nextTag()) != END_DOCUMENT) {
+        for (;;) {
+            eventType = reader.nextTag();
             switch (eventType) {
                 case END_TAG: {
                     try {
@@ -737,7 +740,8 @@ final class ModuleXmlParser {
 
         ResourceLoader resourceLoader;
         int eventType;
-        while ((eventType = reader.nextTag()) != END_DOCUMENT) {
+        for (;;) {
+            eventType = reader.nextTag();
             switch (eventType) {
                 case END_TAG: {
                     try {
@@ -784,7 +788,8 @@ final class ModuleXmlParser {
 
         final Set<String> encountered = new HashSet<>();
         int eventType;
-        while ((eventType = reader.nextTag()) != END_DOCUMENT) {
+        for (;;) {
+            eventType = reader.nextTag();
             switch (eventType) {
                 case END_TAG: {
                     try {
@@ -816,7 +821,8 @@ final class ModuleXmlParser {
         assertNoAttributes(reader);
         // xsd:choice
         int eventType;
-        while ((eventType = reader.nextTag()) != END_DOCUMENT) {
+        for (;;) {
+            eventType = reader.nextTag();
             switch (eventType) {
                 case END_TAG: {
                     return;
@@ -837,7 +843,6 @@ final class ModuleXmlParser {
                 }
             }
         }
-        throw endOfDocument(reader);
     }
 
     private static void parsePath(final XmlPullParser reader, final boolean include, final MultiplePathFilterBuilder builder) throws XmlPullParserException, IOException {
@@ -877,7 +882,8 @@ final class ModuleXmlParser {
         final Set<String> set = new FastCopyHashSet<>();
         // xsd:choice
         int eventType;
-        while ((eventType = reader.nextTag()) != END_DOCUMENT) {
+        for (;;) {
+            eventType = reader.nextTag();
             switch (eventType) {
                 case END_TAG: {
                     return set;
@@ -891,7 +897,6 @@ final class ModuleXmlParser {
                 }
             }
         }
-        return set;
     }
 
     private static void parseSet(final XmlPullParser reader, final boolean include, final MultiplePathFilterBuilder builder) throws XmlPullParserException, IOException {
@@ -924,7 +929,8 @@ final class ModuleXmlParser {
         assertNoAttributes(reader);
         // xsd:choice
         int eventType;
-        while ((eventType = reader.nextTag()) != END_DOCUMENT) {
+        for (;;) {
+            eventType = reader.nextTag();
             switch (eventType) {
                 case END_TAG: {
                     return;
@@ -945,7 +951,6 @@ final class ModuleXmlParser {
                 }
             }
         }
-        throw endOfDocument(reader);
     }
 
     private static void parseProperty(final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
@@ -980,7 +985,8 @@ final class ModuleXmlParser {
         // xsd:choice
         ArrayList<PermissionFactory> list = new ArrayList<>();
         int eventType;
-        while ((eventType = reader.nextTag()) != END_DOCUMENT) {
+        for (;;) {
+            eventType = reader.nextTag();
             switch (eventType) {
                 case END_TAG: {
                     specBuilder.setPermissionCollection(new FactoryPermissionCollection(list.toArray(new PermissionFactory[list.size()])));
@@ -1002,7 +1008,6 @@ final class ModuleXmlParser {
                 }
             }
         }
-        throw endOfDocument(reader);
     }
 
     private static void parseGrant(final XmlPullParser reader, final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier, final ArrayList<PermissionFactory> list) throws XmlPullParserException, IOException {
@@ -1033,7 +1038,8 @@ final class ModuleXmlParser {
 
     private static void parseNoContent(final XmlPullParser reader) throws XmlPullParserException, IOException {
         int eventType;
-        while ((eventType = reader.nextTag()) != END_DOCUMENT) {
+        for (;;) {
+            eventType = reader.nextTag();
             switch (eventType) {
                 case END_TAG: {
                     return;
@@ -1043,12 +1049,12 @@ final class ModuleXmlParser {
                 }
             }
         }
-        throw endOfDocument(reader);
     }
 
     static void parseEndDocument(final XmlPullParser reader) throws XmlPullParserException, IOException {
         int eventType;
-        while ((eventType = reader.nextToken()) != END_DOCUMENT) {
+        for (;;) {
+            eventType = reader.nextToken();
             switch (eventType) {
                 case END_DOCUMENT: {
                     return;
@@ -1071,6 +1077,5 @@ final class ModuleXmlParser {
                 }
             }
         }
-        return;
     }
 }
