@@ -417,14 +417,18 @@ final class ModuleXmlParser {
         }
         // xsd:all
         MultiplePathFilterBuilder exportsBuilder = PathFilters.multiplePathFilterBuilder(true);
+        ArrayList<DependencySpec> dependencies = new ArrayList<>();
         Set<String> visited = new HashSet<>();
         int eventType;
         boolean gotPerms = false;
-        specBuilder.addDependency(DependencySpec.createLocalDependencySpec(PathFilters.acceptAll(), exportsBuilder.create()));
         for (;;) {
             eventType = reader.nextTag();
             switch (eventType) {
                 case END_TAG: {
+                    specBuilder.addDependency(DependencySpec.createLocalDependencySpec(PathFilters.acceptAll(), exportsBuilder.create()));
+                    for (DependencySpec dependency : dependencies) {
+                        specBuilder.addDependency(dependency);
+                    }
                     if (! gotPerms) specBuilder.setPermissionCollection(ModulesPolicy.DEFAULT_PERMISSION_COLLECTION);
                     return;
                 }
@@ -437,7 +441,7 @@ final class ModuleXmlParser {
                     visited.add(element);
                     switch (element) {
                         case E_EXPORTS:      parseFilterList(reader, exportsBuilder); break;
-                        case E_DEPENDENCIES: parseDependencies(reader, specBuilder); break;
+                        case E_DEPENDENCIES: parseDependencies(reader, dependencies); break;
                         case E_MAIN_CLASS:   parseMainClass(reader, specBuilder); break;
                         case E_RESOURCES:    parseResources(factory, rootPath, reader, specBuilder); break;
                         case E_PROPERTIES:   parseProperties(reader, specBuilder); break;
@@ -453,7 +457,7 @@ final class ModuleXmlParser {
         }
     }
 
-    private static void parseDependencies(final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
+    private static void parseDependencies(final XmlPullParser reader, final ArrayList<DependencySpec> dependencies) throws XmlPullParserException, IOException {
         assertNoAttributes(reader);
         // xsd:choice
         int eventType;
@@ -466,8 +470,8 @@ final class ModuleXmlParser {
                 case START_TAG: {
                     validateNamespace(reader);
                     switch (reader.getName()) {
-                        case E_MODULE: parseModuleDependency(reader, specBuilder); break;
-                        case E_SYSTEM: parseSystemDependency(reader, specBuilder); break;
+                        case E_MODULE: parseModuleDependency(reader, dependencies); break;
+                        case E_SYSTEM: parseSystemDependency(reader, dependencies); break;
                         default: throw unexpectedContent(reader);
                     }
                     break;
@@ -479,7 +483,7 @@ final class ModuleXmlParser {
         }
     }
 
-    private static void parseModuleDependency(final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
+    private static void parseModuleDependency(final XmlPullParser reader, final ArrayList<DependencySpec> dependencies) throws XmlPullParserException, IOException {
         String name = null;
         String slot = null;
         boolean export = false;
@@ -542,7 +546,7 @@ final class ModuleXmlParser {
                         importBuilder.addFilter(PathFilters.getMetaInfFilter(), false);
                         importFilter = importBuilder.create();
                     }
-                    specBuilder.addDependency(DependencySpec.createModuleDependencySpec(importFilter, exportFilter, null, ModuleIdentifier.create(name, slot), optional));
+                    dependencies.add(DependencySpec.createModuleDependencySpec(importFilter, exportFilter, null, ModuleIdentifier.create(name, slot), optional));
                     return;
                 }
                 case START_TAG: {
@@ -561,7 +565,7 @@ final class ModuleXmlParser {
         }
     }
 
-    private static void parseSystemDependency(final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
+    private static void parseSystemDependency(final XmlPullParser reader, final ArrayList<DependencySpec> dependencies) throws XmlPullParserException, IOException {
         boolean export = false;
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
@@ -580,7 +584,7 @@ final class ModuleXmlParser {
             switch (eventType) {
                 case END_TAG: {
                     final PathFilter exportFilter = exportBuilder.create();
-                    specBuilder.addDependency(DependencySpec.createSystemDependencySpec(PathFilters.acceptAll(), exportFilter, paths));
+                    dependencies.add(DependencySpec.createSystemDependencySpec(PathFilters.acceptAll(), exportFilter, paths));
                     return;
                 }
                 case START_TAG: {
