@@ -340,6 +340,9 @@ public abstract class ConcurrentClassLoader extends ClassLoader {
         if (className == null) {
             throw new IllegalArgumentException("name is null");
         }
+        if (className.length() == 0) {
+            throw new IllegalArgumentException("name is empty");
+        }
         for (String s : Module.systemPackages) {
             if (className.startsWith(s)) {
                 return definingLoader != null ? definingLoader.loadClass(className) : findSystemClass(className);
