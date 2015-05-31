@@ -18,8 +18,6 @@
 
 package org.jboss.modules;
 
-import __redirected.__JAXPRedirected;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -89,8 +87,6 @@ public final class Main {
         System.out.println("    -deptree      Print the dependency tree of the given module instead of running it");
         System.out.println("    -jar          Specify that the final argument is the name of a");
         System.out.println("                  JAR file to run as a module; not compatible with -class");
-        System.out.println("    -jaxpmodule <module-spec>");
-        System.out.println("                  The default JAXP implementation to use of the JDK");
         System.out.println("    -secmgr       Run with a security manager installed; not compatible with -secmgrmodule");
         System.out.println("    -secmgrmodule <module-spec>");
         System.out.println("                  Run with a security manager module; not compatible with -secmgr");
@@ -373,11 +369,6 @@ public final class Main {
             moduleIdentifier = ModuleIdentifier.fromString(nameArgument);
         }
         Module.initBootModuleLoader(loader);
-        if (jaxpModuleIdentifier != null) {
-            __JAXPRedirected.changeAll(jaxpModuleIdentifier, Module.getBootModuleLoader());
-        } else {
-            __JAXPRedirected.changeAll(moduleIdentifier, Module.getBootModuleLoader());
-        }
 
         final Module module;
         try {
