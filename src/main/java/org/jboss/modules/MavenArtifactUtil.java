@@ -34,8 +34,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -329,7 +329,7 @@ class MavenArtifactUtil {
 
     public static void downloadFile(String artifact, String src, File dest) throws IOException {
         final URL url = new URL(src);
-        final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        final URLConnection connection = url.openConnection();
         boolean message = Boolean.parseBoolean(System.getProperty("maven.download.message", "true"));
 
         InputStream bis = connection.getInputStream();
