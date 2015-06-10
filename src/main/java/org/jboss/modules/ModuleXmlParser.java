@@ -363,7 +363,7 @@ final class ModuleXmlParser {
         final int count = reader.getAttributeCount();
         String name = null;
         String slot = null;
-        final Set<String> required = new HashSet<>(Arrays.asList(A_NAME, A_TARGET_NAME));
+        final Set<String> required = new HashSet<>(Arrays.asList(A_NAME, A_SLOT));
         for (int i = 0; i < count; i ++) {
             validateAttributeNamespace(reader, i);
             final String attribute = reader.getAttributeName(i);
