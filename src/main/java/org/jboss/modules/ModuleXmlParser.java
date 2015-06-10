@@ -468,7 +468,7 @@ final class ModuleXmlParser {
         final int count = reader.getAttributeCount();
         String name = null;
         String slot = null;
-        final Set<Attribute> required = EnumSet.of(Attribute.NAME, Attribute.TARGET_NAME);
+        final Set<Attribute> required = EnumSet.of(Attribute.NAME, Attribute.SLOT);
         for (int i = 0; i < count; i ++) {
             final Attribute attribute = Attribute.of(reader.getAttributeName(i));
             required.remove(attribute);
