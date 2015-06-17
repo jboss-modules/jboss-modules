@@ -43,6 +43,7 @@ public final class FactoryPermissionCollection extends PermissionCollection {
      */
     public FactoryPermissionCollection(final PermissionFactory... factories) {
         this.factories = factories.clone();
+        setReadOnly();
     }
 
     public void add(final Permission permission) {
