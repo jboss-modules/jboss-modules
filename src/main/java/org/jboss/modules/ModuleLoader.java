@@ -42,6 +42,10 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
+
 import org.jboss.modules.log.ModuleLogger;
 import org.jboss.modules.management.DependencyInfo;
 import org.jboss.modules.management.ModuleInfo;
@@ -51,10 +55,6 @@ import org.jboss.modules.management.ResourceLoaderInfo;
 import org.jboss.modules.ref.Reaper;
 import org.jboss.modules.ref.Reference;
 import org.jboss.modules.ref.WeakReference;
-
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
 
 /**
  * A repository for modules, from which a module may be loaded by identifier.  Module loaders may additionally
@@ -674,6 +674,14 @@ public class ModuleLoader {
                 notifyAll();
             }
         }
+    }
+
+    /**
+     *
+     * @return ModuleLoaderMXBean with mgmt data about modules
+     */
+    public ModuleLoaderMXBean getMxBean() {
+        return mxBean;
     }
 
     private static final Reaper<ModuleLoader, ObjectName> reaper = new Reaper<ModuleLoader, ObjectName>() {
