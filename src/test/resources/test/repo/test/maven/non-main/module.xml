@@ -22,6 +22,7 @@
     <resources>
         <artifact name="org.jboss.resteasy:resteasy-jackson-provider:3.0.5.Final"/>
         <artifact name="org.jboss.ws.cxf:jbossws-cxf-resources:4.3.0.Final:wildfly800"/>
+        <artifact name="xerces:xercesImpl:2.9.1-jbossas-2"/>
     </resources>
 
     <dependencies/>
