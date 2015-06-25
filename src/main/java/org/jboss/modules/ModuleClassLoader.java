@@ -18,6 +18,7 @@
 
 package org.jboss.modules;
 
+import java.lang.reflect.InvocationTargetException;
 import java.security.PermissionCollection;
 import java.security.ProtectionDomain;
 import java.util.IdentityHashMap;
@@ -424,16 +425,20 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
                 newClass = doDefineOrLoadClass(name, bytes, 0, bytes.length, protectionDomain);
                 module.getModuleLoader().addClassLoadTime(Metrics.getCurrentCPUTime() - start);
                 log.classDefined(name, module);
-            } catch (NoClassDefFoundError e) {
+            } catch (LinkageError e) {
                 // Prepend the current class name, so that transitive class definition issues are clearly expressed
-                final LinkageError ne = new LinkageError("Failed to link " + name.replace('.', '/') + " (" + module + ")");
-                ne.initCause(e);
+                Error ne;
+                try {
+                    final String oldMsg = e.getMessage();
+                    final String newMsg = "Failed to link " + name.replace('.', '/') + " (" + module + ")";
+                    ne = e.getClass().getConstructor(String.class).newInstance(oldMsg == null || oldMsg.isEmpty() ? newMsg : newMsg + ": " + oldMsg);
+                } catch (InstantiationException | NoSuchMethodException | InvocationTargetException | IllegalAccessException ignored) {
+                    // just throw the original
+                    throw e;
+                }
                 throw ne;
             }
-        } catch (Error e) {
-            log.classDefineFailed(e, name, module);
-            throw e;
-        } catch (RuntimeException e) {
+        } catch (Error | RuntimeException e) {
             log.classDefineFailed(e, name, module);
             throw e;
         }
