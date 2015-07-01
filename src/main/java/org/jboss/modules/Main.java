@@ -28,6 +28,8 @@ import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.security.Policy;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.ServiceLoader;
@@ -474,8 +476,16 @@ public final class Main {
 
         ModuleLoader.installMBeanServer();
 
+        final ArrayList<String> argsList = new ArrayList<>(moduleArgs.length);
+        Collections.addAll(argsList, moduleArgs);
+
+        final ServiceLoader<PreMain> preMainServiceLoader = ServiceLoader.load(PreMain.class, bootClassLoader);
+        for (PreMain preMain : preMainServiceLoader) {
+            preMain.run(argsList);
+        }
+
         try {
-            module.run(moduleArgs);
+            module.run(argsList.toArray(new String[argsList.size()]));
         } catch (InvocationTargetException e) {
             throw e.getCause();
         }
