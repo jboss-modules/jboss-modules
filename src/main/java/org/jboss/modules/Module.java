@@ -52,6 +52,7 @@ import org.jboss.modules.filter.PathFilters;
 import org.jboss.modules.log.ModuleLogger;
 import org.jboss.modules.log.NoopModuleLogger;
 
+import __redirected.__JAXPRedirected;
 import org.jboss.modules.security.ModularPermissionFactory;
 
 /**
@@ -126,6 +127,8 @@ public final class Module {
                 } catch (Throwable t) {
                     // todo log a warning or something
                 }
+
+                __JAXPRedirected.initAll();
 
                 return null;
             }
