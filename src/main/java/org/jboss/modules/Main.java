@@ -45,6 +45,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.jboss.modules.log.JDKModuleLogger;
+import org.jboss.modules.log.StreamModuleLogger;
 
 import static java.security.AccessController.doPrivileged;
 import static org.jboss.modules.SecurityActions.setContextClassLoader;
@@ -89,6 +90,7 @@ public final class Main {
         System.out.println("                  A list of module dependencies to add to the class path;");
         System.out.println("                  requires -class or -cp");
         System.out.println("    -deptree      Print the dependency tree of the given module instead of running it");
+        System.out.println("    -debuglog     Enable debug mode output to System.out during bootstrap before any logging manager is installed");
         System.out.println("    -jar          Specify that the final argument is the name of a");
         System.out.println("                  JAR file to run as a module; not compatible with -class");
         System.out.println("    -jaxpmodule <module-spec>");
@@ -125,6 +127,7 @@ public final class Main {
         String secMgrModule = null;
         boolean addIndex = false;
         boolean modifyInPlace = false;
+        boolean debuglog = false;
         for (int i = 0, argsLength = argsLen; i < argsLength; i++) {
             final String arg = args[i];
             try {
@@ -168,6 +171,8 @@ public final class Main {
                             System.exit(1);
                         }
                         depTree = true;
+                    } else if ("-debuglog".equals(arg)) {
+                        debuglog = true;
                     } else if ("-jaxpmodule".equals(arg)) {
                         jaxpModuleIdentifier = ModuleIdentifier.fromString(args[++i]);
                     } else if ("-jar".equals(arg)) {
@@ -358,6 +363,11 @@ public final class Main {
         if (depTree) {
             DependencyTreeViewer.print(new PrintWriter(System.out), ModuleIdentifier.fromString(nameArgument), LocalModuleFinder.getRepoRoots(true));
             System.exit(0);
+        }
+
+        if(debuglog) {
+            // Install the StreamModuleLogger on System.out to capture bootstrap messages
+            Module.setModuleLogger(new StreamModuleLogger(System.out));
         }
 
         final ModuleLoader loader;
