@@ -94,12 +94,16 @@ final class FileResourceLoader extends NativeLibraryResourceLoader implements It
     }
 
     private static Manifest readManifestFile(final File manifestFile) {
-        try {
-            return manifestFile.exists() ? new Manifest(new FileInputStream(manifestFile)) : null;
-        } catch (IOException e) {
-            return null;
-        }
-    }
+	try {
+	    if (manifestFile.isFile()) {
+		try (FileInputStream fis = new FileInputStream(manifestFile)) {
+		    return new Manifest(fis);
+		}
+	    }
+	} catch (IOException e) {
+	}
+	return null;
+    }    
 
     public String getRootName() {
         return rootName;
