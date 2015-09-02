@@ -62,8 +62,7 @@ public final class LoadedPermissionFactory implements PermissionFactory {
             }
             try {
                 final Class<? extends Permission> permissionClass = classLoader.loadClass(className).asSubclass(Permission.class);
-                final Constructor<? extends Permission> constructor = permissionClass.getConstructor(String.class, String.class);
-                return instance = constructor.newInstance(targetName, permissionActions);
+                return instance = PermissionFactory.constructFromClass(permissionClass, targetName, permissionActions);
             } catch (Throwable t) {
                 instance = null;
                 return null;

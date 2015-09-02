@@ -18,7 +18,6 @@
 
 package org.jboss.modules.security;
 
-import java.lang.reflect.Constructor;
 import java.security.Permission;
 import org.jboss.modules.Module;
 import org.jboss.modules.ModuleIdentifier;
@@ -78,8 +77,7 @@ public final class ModularPermissionFactory implements PermissionFactory {
             try {
                 final Module module = moduleLoader.loadModule(moduleIdentifier);
                 final Class<? extends Permission> permissionClass = access.getClassLoaderOf(module).loadClass(className, true).asSubclass(Permission.class);
-                final Constructor<? extends Permission> constructor = permissionClass.getConstructor(String.class, String.class);
-                return instance = constructor.newInstance(targetName, permissionActions);
+                return instance = PermissionFactory.constructFromClass(permissionClass, targetName, permissionActions);
             } catch (Throwable t) {
                 instance = null;
                 return null;
