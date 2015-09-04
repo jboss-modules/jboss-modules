@@ -25,8 +25,8 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 /**
- *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  */
 final class JarEntryResource implements Resource {
     private final JarFile jarFile;
@@ -49,6 +49,10 @@ final class JarEntryResource implements Resource {
 
     public InputStream openStream() throws IOException {
         return jarFile.getInputStream(entry);
+    }
+
+    public boolean isDirectory() {
+        return entry.isDirectory();
     }
 
     public long getSize() {

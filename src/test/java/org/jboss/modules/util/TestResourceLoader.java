@@ -172,6 +172,11 @@ public class TestResourceLoader extends AbstractResourceLoader {
                 public long getSize() {
                     return 0L;
                 }
+
+                @Override
+                public boolean isDirectory() {
+                    return false;
+                }
             });
             return this;
         }
@@ -197,6 +202,11 @@ public class TestResourceLoader extends AbstractResourceLoader {
                 @Override
                 public long getSize() {
                     return resource.length();
+                }
+
+                @Override
+                public boolean isDirectory() {
+                    return resource.isDirectory();
                 }
             });
             return this;

@@ -23,6 +23,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.net.URL;
+import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
@@ -32,6 +33,7 @@ import java.util.List;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  */
 final class ClassLoaderLocalLoader implements LocalLoader {
 
@@ -40,6 +42,7 @@ final class ClassLoaderLocalLoader implements LocalLoader {
     private static final Method getPackage;
 
     private final ClassLoader classLoader;
+    private final AccessControlContext accessControlContext;
 
     static {
         getPackage = AccessController.doPrivileged(new PrivilegedAction<Method>() {
@@ -65,6 +68,7 @@ final class ClassLoaderLocalLoader implements LocalLoader {
      */
     ClassLoaderLocalLoader(final ClassLoader classLoader) {
         this.classLoader = classLoader;
+        this.accessControlContext = AccessController.getContext();
     }
 
     // Public members
@@ -116,7 +120,7 @@ final class ClassLoaderLocalLoader implements LocalLoader {
         }
         final List<Resource> list = new ArrayList<Resource>();
         while (urls.hasMoreElements()) {
-            list.add(new URLResource(urls.nextElement()));
+            list.add(new URLResource(urls.nextElement(), accessControlContext));
         }
         return list;
     }
