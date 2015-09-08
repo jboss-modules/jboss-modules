@@ -31,16 +31,18 @@ import java.util.jar.JarFile;
 final class JarEntryResource implements Resource {
     private final JarFile jarFile;
     private final JarEntry entry;
+    private final String relativePath;
     private final URL resourceURL;
 
-    JarEntryResource(final JarFile jarFile, final JarEntry entry, final URL resourceURL) {
+    JarEntryResource(final JarFile jarFile, final JarEntry entry, final String relativePath, final URL resourceURL) {
         this.jarFile = jarFile;
         this.entry = entry;
         this.resourceURL = resourceURL;
+        this.relativePath = relativePath;
     }
 
     public String getName() {
-        return entry.getName();
+        return relativePath == null ? entry.getName() : entry.getName().substring(relativePath.length() + 1);
     }
 
     public URL getURL() {
