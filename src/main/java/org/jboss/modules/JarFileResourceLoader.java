@@ -54,6 +54,7 @@ import java.util.zip.ZipOutputStream;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  * @author Thomas.Diesler@jboss.com
+ * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  */
 final class JarFileResourceLoader extends AbstractResourceLoader implements IterableResourceLoader {
     private static final String INDEX_FILE = "META-INF/PATHS.LIST";
@@ -81,7 +82,8 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
         fileOfJar = new File(jarFile.getName());
         this.jarFile = jarFile;
         this.rootName = rootName;
-        final String realPath = relativePath == null ? null : PathUtils.canonicalize(relativePath);
+        String realPath = relativePath == null ? null : PathUtils.canonicalize(relativePath);
+        if (realPath != null && realPath.endsWith("/")) realPath = realPath.substring(0, realPath.length() - 1);
         this.relativePath = realPath;
         try {
             rootUrl = getJarURI(fileOfJar.toURI(), realPath).toURL();
@@ -235,7 +237,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
             } catch (URISyntaxException x) {
                 throw new IllegalStateException(x);
             }
-            return new JarEntryResource(jarFile, entry, new URL(null, getJarURI(uri, entry.getName()).toString(), (URLStreamHandler) null));
+            return new JarEntryResource(jarFile, entry, relativePath, new URL(null, getJarURI(uri, entry.getName()).toString(), (URLStreamHandler) null));
         } catch (MalformedURLException e) {
             // must be invalid...?  (todo: check this out)
             return null;
@@ -245,8 +247,9 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
         }
     }
 
-    public Iterator<Resource> iterateResources(final String startPath, final boolean recursive) {
+    public Iterator<Resource> iterateResources(String startPath, final boolean recursive) {
         final JarFile jarFile = this.jarFile;
+        if (relativePath != null) startPath = startPath.equals("") ? relativePath : relativePath + "/" + startPath;
         final String startName = PathUtils.canonicalize(PathUtils.relativize(startPath));
         final Enumeration<JarEntry> entries = jarFile.entries();
         return new Iterator<Resource>() {
@@ -262,7 +265,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
                     if ((recursive ? PathUtils.isChild(startName, name) : PathUtils.isDirectChild(startName, name))) {
                         if (!entry.isDirectory()) {
                             try {
-                                next = new JarEntryResource(jarFile, entry, getJarURI(new File(jarFile.getName()).toURI(), entry.getName()).toURL());
+                                next = new JarEntryResource(jarFile, entry, relativePath, getJarURI(new File(jarFile.getName()).toURI(), entry.getName()).toURL());
                             } catch (Exception ignored) {
                             }
                         }
