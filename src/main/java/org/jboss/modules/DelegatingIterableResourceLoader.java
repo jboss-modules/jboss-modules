@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2014 Red Hat, Inc., and individual contributors
+ * Copyright 2015 Red Hat, Inc., and individual contributors
  * as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,49 +20,62 @@ package org.jboss.modules;
 
 import java.io.IOException;
 import java.util.Collection;
-import org.jboss.modules.filter.PathFilter;
+import java.util.Iterator;
 
 /**
- * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * IterableResourceLoader that delegates all method calls to its delegate.
+ *
  * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  */
-final class FilteredResourceLoader implements ResourceLoader {
+class DelegatingIterableResourceLoader implements IterableResourceLoader {
 
-    private final PathFilter filter;
-    private final ResourceLoader loader;
+    private final IterableResourceLoader delegate;
 
-    FilteredResourceLoader(final PathFilter filter, final ResourceLoader loader) {
-        this.filter = filter;
-        this.loader = loader;
+    DelegatingIterableResourceLoader(final IterableResourceLoader delegate) {
+        this.delegate = delegate;
     }
 
+    final IterableResourceLoader getDelegate() {
+        return delegate;
+    }
+
+    @Override
+    public Iterator<Resource> iterateResources(final String startPath, final boolean recursive) {
+        return getDelegate().iterateResources(startPath, recursive);
+    }
+
+    @Override
     public String getRootName() {
-        return loader.getRootName();
+        return getDelegate().getRootName();
     }
 
+    @Override
     public ClassSpec getClassSpec(final String fileName) throws IOException {
-        final String canonicalFileName = PathUtils.canonicalize(PathUtils.relativize(fileName));
-        return filter.accept(canonicalFileName) ? loader.getClassSpec(canonicalFileName) : null;
+        return getDelegate().getClassSpec(fileName);
     }
 
+    @Override
     public PackageSpec getPackageSpec(final String name) throws IOException {
-        return loader.getPackageSpec(PathUtils.canonicalize(PathUtils.relativize(name)));
+        return getDelegate().getPackageSpec(name);
     }
 
+    @Override
     public Resource getResource(final String name) {
-        final String canonicalFileName = PathUtils.canonicalize(PathUtils.relativize(name));
-        return filter.accept(canonicalFileName) ? loader.getResource(canonicalFileName) : null;
+        return getDelegate().getResource(name);
     }
 
+    @Override
     public String getLibrary(final String name) {
-        return loader.getLibrary(PathUtils.canonicalize(PathUtils.relativize(name)));
+        return getDelegate().getLibrary(name);
     }
 
+    @Override
     public Collection<String> getPaths() {
-        return loader.getPaths();
+        return getDelegate().getPaths();
     }
 
+    @Override
     public void close() throws IOException {
-        loader.close();
+        getDelegate().close();
     }
 }

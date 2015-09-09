@@ -146,8 +146,18 @@ public final class ResourceLoaders {
             throw new IllegalArgumentException("Subresource '" + subResPath + "' does not exist");
         }
         IterableResourceLoader loader = originalLoader;
+        while (true) {
+            if (loader instanceof FilteredIterableResourceLoader) {
+                loader = ((FilteredIterableResourceLoader)loader).getLoader();
+                continue;
+            }
+            if (loader instanceof DelegatingIterableResourceLoader) {
+                loader = ((DelegatingIterableResourceLoader)loader).getDelegate();
+                continue;
+            }
+            break;
+        }
         if (resource.isDirectory()) {
-            while (loader instanceof FilteredIterableResourceLoader) loader = ((FilteredIterableResourceLoader)loader).getLoader();
             if (loader instanceof FileResourceLoader) {
                 return new FileResourceLoader(name, new File(resource.getURL().getFile()), AccessController.getContext());
             } else if (loader instanceof JarFileResourceLoader) {
@@ -156,14 +166,21 @@ public final class ResourceLoaders {
                 throw new UnsupportedOperationException();
             }
         } else {
-            while (loader instanceof FilteredIterableResourceLoader) loader = ((FilteredIterableResourceLoader)loader).getLoader();
             if (loader instanceof FileResourceLoader) {
                 return new JarFileResourceLoader(name, new JarFile(resource.getURL().getFile()));
             } else if (loader instanceof JarFileResourceLoader) {
                 final File tempFile = new File(TMP_ROOT, getLastToken(subResPath) + ".tmp" + System.currentTimeMillis());
                 IOUtils.copyAndClose(resource.openStream(), new FileOutputStream(tempFile));
-                // TODO: wrap returned JarFileRL with IterableResourceLoader that will remove created temp file on close.
-                return new JarFileResourceLoader(name, new JarFile(tempFile));
+                return new DelegatingIterableResourceLoader(new JarFileResourceLoader(name, new JarFile(tempFile))) {
+                    @Override
+                    public void close() throws IOException {
+                        try {
+                            super.close();
+                        } finally {
+                            tempFile.delete();
+                        }
+                    }
+                };
             } else {
                 throw new UnsupportedOperationException();
             }

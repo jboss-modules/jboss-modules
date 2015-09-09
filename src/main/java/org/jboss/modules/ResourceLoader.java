@@ -25,8 +25,9 @@ import java.util.Collection;
  * A loader for resources from a specific resource root within a module.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  */
-public interface ResourceLoader {
+public interface ResourceLoader extends AutoCloseable {
 
     /**
      * Get the name of the root represented by this resource loader.
@@ -82,4 +83,7 @@ public interface ResourceLoader {
      * @return the resource paths
      */
     Collection<String> getPaths();
+
+    @Override
+    void close() throws IOException;
 }
