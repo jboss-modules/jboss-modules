@@ -28,6 +28,7 @@ import java.util.jar.Manifest;
  * An abstract resource loader implementation.
  *
  * @author <a href="mailto:cdewolf@redhat.com">Carlo de Wolf</a>
+ * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  */
 public abstract class AbstractResourceLoader implements ResourceLoader {
     private static String getDefinedAttribute(Attributes.Name name, Attributes entryAttribute, Attributes mainAttribute) {
@@ -63,77 +64,28 @@ public abstract class AbstractResourceLoader implements ResourceLoader {
         return spec;
     }
 
-    /**
-     * Get the name of the root represented by this resource loader.  Returns an empty string by default.
-     *
-     * @return the name of the root
-     */
     public String getRootName() {
         return "";
     }
 
-    /**
-     * Get the class specification for the given class name.  If no matching class is found, {@code null} is returned.
-     * Returns {@code null} by default.
-     *
-     * @param fileName the fileName of the class, e.g. for the class <code>org.jboss.modules.ResourceLoader</code> the
-     * fileName will be <code>org/jboss/modules/ResourceLoader.class</code>
-     *
-     * @return the class specification, or {@code null} if the named class is not found
-     *
-     * @throws java.io.IOException if an I/O error occurs
-     */
     public ClassSpec getClassSpec(final String fileName) throws IOException {
         return null;
     }
 
-    /**
-     * Get the package specification for the given directory name.  Always returns a package specification; this method
-     * cannot be used to test for the existence of a package.  A package spec should always be acquired from the same
-     * resource loader which provided the class specification.  The directory name will always be specified using "{@code
-     * /}" separators.  Returns {@code null} by default.
-     *
-     * @param name the directory name
-     *
-     * @return the package specification
-     *
-     * @throws java.io.IOException if an I/O error occurs
-     */
     public PackageSpec getPackageSpec(final String name) throws IOException {
         return null;
     }
 
-    /**
-     * Get a resource with the given name.  If no such resource is available, {@code null} is returned. The resource name
-     * will always be specified using "{@code /}" separators for the directory segments.  Returns {@code null} by default.
-     *
-     * @param name the resource name
-     *
-     * @return the resource, or {@code null} if it is not available
-     */
     public Resource getResource(final String name) {
         return null;
     }
 
-    /**
-     * Get the absolute physical filesystem path for a library with the given name.  The resultant path should be
-     * path-separated using "{@code /}" characters.  Returns {@code null} by default.
-     *
-     * @param name the name
-     *
-     * @return the path or {@code null} if the library is not present
-     */
     public String getLibrary(final String name) {
         return null;
     }
 
-    /**
-     * Get the collection of resource paths.  Called one time only when the resource loader is initialized.  The paths
-     * should use "{@code /}" characters to separate the path segments.  Returns an empty set by default.
-     *
-     * @return the resource paths
-     */
     public Collection<String> getPaths() {
         return Collections.emptySet();
     }
+
 }

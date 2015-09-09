@@ -22,6 +22,10 @@ import java.io.IOException;
 import java.util.Collection;
 import org.jboss.modules.filter.PathFilter;
 
+/**
+ * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
+ */
 final class FilteredResourceLoader implements ResourceLoader {
 
     private final PathFilter filter;
@@ -56,5 +60,9 @@ final class FilteredResourceLoader implements ResourceLoader {
 
     public Collection<String> getPaths() {
         return loader.getPaths();
+    }
+
+    public void close() {
+        loader.close();
     }
 }
