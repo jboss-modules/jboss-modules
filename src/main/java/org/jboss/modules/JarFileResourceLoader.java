@@ -94,6 +94,10 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
         }
     }
 
+    File getFile() {
+        return fileOfJar;
+    }
+
     private static URI getJarURI(final URI original, final String nestedPath) throws URISyntaxException {
         final StringBuilder b = new StringBuilder();
         b.append("file:");
