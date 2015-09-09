@@ -63,4 +63,9 @@ final class FilteredIterableResourceLoader implements IterableResourceLoader {
     public Iterator<Resource> iterateResources(final String startPath, final boolean recursive) {
         return PathFilters.filtered(filter, loader.iterateResources(PathUtils.relativize(PathUtils.canonicalize(startPath)), recursive));
     }
+
+    public void close() {
+        loader.close();
+    }
+
 }

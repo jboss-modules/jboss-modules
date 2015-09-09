@@ -328,6 +328,19 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
         return index;
     }
 
+    @Override
+    public void close() {
+        try {
+            super.close();
+        } finally {
+            try {
+                jarFile.close();
+            } catch (IOException e) {
+                // ignored
+            }
+        }
+    }
+
     static void extractJarPaths(final JarFile jarFile, String relativePath,
             final Collection<String> index) {
         index.add("");
