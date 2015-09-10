@@ -25,22 +25,24 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 /**
- *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  */
 final class JarEntryResource implements Resource {
     private final JarFile jarFile;
     private final JarEntry entry;
+    private final String relativePath;
     private final URL resourceURL;
 
-    JarEntryResource(final JarFile jarFile, final JarEntry entry, final URL resourceURL) {
+    JarEntryResource(final JarFile jarFile, final JarEntry entry, final String relativePath, final URL resourceURL) {
         this.jarFile = jarFile;
         this.entry = entry;
         this.resourceURL = resourceURL;
+        this.relativePath = relativePath;
     }
 
     public String getName() {
-        return entry.getName();
+        return relativePath == null ? entry.getName() : entry.getName().substring(relativePath.length() + 1);
     }
 
     public URL getURL() {
@@ -49,6 +51,10 @@ final class JarEntryResource implements Resource {
 
     public InputStream openStream() throws IOException {
         return jarFile.getInputStream(entry);
+    }
+
+    public boolean isDirectory() {
+        return entry.isDirectory();
     }
 
     public long getSize() {

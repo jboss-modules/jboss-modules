@@ -24,6 +24,10 @@ import java.util.Iterator;
 import org.jboss.modules.filter.PathFilter;
 import org.jboss.modules.filter.PathFilters;
 
+/**
+ * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
+ */
 final class FilteredIterableResourceLoader implements IterableResourceLoader {
 
     private final PathFilter filter;
@@ -63,4 +67,13 @@ final class FilteredIterableResourceLoader implements IterableResourceLoader {
     public Iterator<Resource> iterateResources(final String startPath, final boolean recursive) {
         return PathFilters.filtered(filter, loader.iterateResources(PathUtils.relativize(PathUtils.canonicalize(startPath)), recursive));
     }
+
+    public void close() throws IOException {
+        loader.close();
+    }
+
+    IterableResourceLoader getLoader() {
+        return loader;
+    }
+
 }

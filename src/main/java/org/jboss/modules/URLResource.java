@@ -18,18 +18,27 @@
 
 package org.jboss.modules;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.security.AccessControlContext;
+import java.security.PrivilegedAction;
+
+import static java.security.AccessController.doPrivileged;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  */
 final class URLResource implements Resource {
     private final URL url;
+    private final AccessControlContext context;
 
-    public URLResource(final URL url) {
+    public URLResource(final URL url, final AccessControlContext context) {
         this.url = url;
+        this.context = context;
     }
 
     public String getName() {
@@ -42,6 +51,20 @@ final class URLResource implements Resource {
 
     public InputStream openStream() throws IOException {
         return url.openStream();
+    }
+
+    public boolean isDirectory() {
+        final File file = new File(url.getFile());
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            return doPrivileged(new PrivilegedAction<Boolean>() {
+                public Boolean run() {
+                    return file.isDirectory();
+                }
+            }, context).booleanValue();
+        } else {
+            return file.isDirectory();
+        }
     }
 
     public long getSize() {

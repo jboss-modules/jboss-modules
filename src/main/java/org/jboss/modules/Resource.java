@@ -26,6 +26,7 @@ import java.net.URL;
  * A single resource from a {@link ResourceLoader}.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  */
 public interface Resource {
     /**
@@ -41,6 +42,13 @@ public interface Resource {
      * @return the URL
      */
     URL getURL();
+
+    /**
+     * Returns true if this is a directory entry.
+     *
+     * @return true if this is a directory entry.
+     */
+    boolean isDirectory();
 
     /**
      * Open an input stream to this resource.

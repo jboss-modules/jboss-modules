@@ -32,9 +32,8 @@ import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 
 /**
- * A file entry resource.
- *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  */
 final class FileEntryResource implements Resource {
 
@@ -60,6 +59,19 @@ final class FileEntryResource implements Resource {
             }, context).longValue();
         } else {
             return file.length();
+        }
+    }
+
+    public boolean isDirectory() {
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            return doPrivileged(new PrivilegedAction<Boolean>() {
+                public Boolean run() {
+                    return file.isDirectory();
+                }
+            }, context).booleanValue();
+        } else {
+            return file.isDirectory();
         }
     }
 
