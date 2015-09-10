@@ -25,22 +25,24 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 /**
- *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  */
 final class JarEntryResource implements Resource {
     private final JarFile jarFile;
     private final JarEntry entry;
+    private final String entryName;
     private final URL resourceURL;
 
-    JarEntryResource(final JarFile jarFile, final JarEntry entry, final URL resourceURL) {
+    JarEntryResource(final JarFile jarFile, final JarEntry entry, final String relativePath, final URL resourceURL) {
         this.jarFile = jarFile;
         this.entry = entry;
+        this.entryName = relativePath == null ? entry.getName() : entry.getName().substring(relativePath.length() + 1);
         this.resourceURL = resourceURL;
     }
 
     public String getName() {
-        return entry.getName();
+        return entryName;
     }
 
     public URL getURL() {

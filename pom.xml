@@ -43,6 +43,8 @@
     <properties>
         <skip.enforcer>false</skip.enforcer>
         <skip.compile>false</skip.compile>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
     </properties>
 
     <build>
