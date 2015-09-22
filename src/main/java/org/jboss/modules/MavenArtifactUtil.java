@@ -26,10 +26,8 @@ import static org.jboss.modules.xml.XmlPullParser.FEATURE_PROCESS_NAMESPACES;
 import static org.jboss.modules.xml.XmlPullParser.START_TAG;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Files;
@@ -37,6 +35,8 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.jboss.modules.xml.MXParser;
 import org.jboss.modules.xml.XmlPullParser;
@@ -47,12 +47,14 @@ import org.jboss.modules.xml.XmlPullParserException;
  *
  * @author <a href="mailto:bill@burkecentral.com">Bill Burke</a>
  * @author <a href="mailto:tcerar@redhat.com">Tomaz Cerar</a>
+ * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  * @version $Revision: 2 $
  */
 class MavenArtifactUtil {
 
     private static MavenSettings mavenSettings;
     private static final Object settingLoaderMutex = new Object();
+    private static final Pattern snapshotPattern = Pattern.compile("-\\d{8}\\.\\d+-\\d+$");
 
     public static MavenSettings getSettings() throws IOException {
         if (mavenSettings != null) {
@@ -329,7 +331,16 @@ class MavenArtifactUtil {
 
     private static String relativeArtifactPath(char separator, String groupId, String artifactId, String version) {
         StringBuilder builder = new StringBuilder(groupId.replace('.', separator));
-        builder.append(separator).append(artifactId).append(separator).append(version).append(separator).append(artifactId).append('-').append(version);
+        builder.append(separator).append(artifactId).append(separator);
+        String pathVersion;
+        final Matcher versionMatcher = snapshotPattern.matcher(version);
+        if (versionMatcher.lookingAt()) {
+            // it's really a snapshot
+            pathVersion = version.substring(0, versionMatcher.start()) + "-SNAPSHOT";
+        } else {
+            pathVersion = version;
+        }
+        builder.append(pathVersion).append(separator).append(artifactId).append('-').append(version);
         return builder.toString();
     }
 
