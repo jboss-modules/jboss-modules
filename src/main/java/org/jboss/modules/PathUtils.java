@@ -217,6 +217,7 @@ public final class PathUtils {
      */
     public static boolean isChild(final String parent, final String child) {
         String cp = canonicalize(parent);
+        cp = cp.endsWith("/") ? cp.substring(0, cp.length() - 1) : cp;
         String cc = canonicalize(child);
         if (isRelative(cp) != isRelative(cc)) {
             throw new IllegalArgumentException("Cannot compare relative and absolute paths");
@@ -234,6 +235,7 @@ public final class PathUtils {
      */
     public static boolean isDirectChild(final String parent, final String child) {
         String cp = canonicalize(parent);
+        cp = cp.endsWith("/") ? cp.substring(0, cp.length() - 1) : cp;
         String cc = canonicalize(child);
         if (isRelative(cp) != isRelative(cc)) {
             throw new IllegalArgumentException("Cannot compare relative and absolute paths");
