@@ -29,7 +29,7 @@
     <parent>
         <groupId>org.jboss</groupId>
         <artifactId>jboss-parent</artifactId>
-        <version>15</version>
+        <version>19</version>
     </parent>
 
     <licenses>
