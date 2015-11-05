@@ -126,7 +126,13 @@ final class ModuleXmlParser {
         try {
             return parseModuleXml(new ResourceRootFactory() {
                 public ResourceLoader createResourceLoader(final String rootPath, final String loaderPath, final String loaderName) throws IOException {
-                    File file = new File(rootPath, loaderPath);
+                    final File file;
+                    final File loaderFile = new File(loaderPath);
+                    if (loaderFile.isAbsolute()) {
+                        file = loaderFile;
+                    } else {
+                        file = new File(rootPath, loaderPath);
+                    }
                     if (file.isDirectory()) {
                         return new FileResourceLoader(loaderName, file, context);
                     } else {
