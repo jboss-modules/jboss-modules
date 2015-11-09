@@ -21,6 +21,8 @@ package org.jboss.modules;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.util.jar.Attributes;
@@ -80,14 +82,25 @@ public final class JarModuleFinder implements ModuleFinder {
                         // invalid
                         continue;
                     }
+                    File root = null;
+                    try {
+                        File path = new File(new URI(entry));
+                        if (path.isAbsolute()) {
+                          root = path;
+                        } else {
+                          root = new File(jarFile.getName(), path.getPath());
+                        }
+                    } catch (URISyntaxException e) {
+                        // invalid, will probably fail anyway
+                        root = new File(jarFile.getName(), entry);
+                    }
+
                     if (entry.endsWith("/")) {
                         // directory reference
-                        File root = new File(jarFile.getName(), entry);
                         FileResourceLoader resourceLoader = new FileResourceLoader(entry, root, context);
                         builder.addResourceRoot(ResourceLoaderSpec.createResourceLoaderSpec(resourceLoader));
                     } else {
                         // assume a JAR
-                        File root = new File(jarFile.getName(), entry);
                         JarFile childJarFile;
                         try {
                             childJarFile = new JarFile(root, true);
