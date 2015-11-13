@@ -44,7 +44,7 @@ final class ClassPathModuleLoader extends ModuleLoader {
             classPath = System.getenv().getOrDefault("CLASSPATH","");
         }
         this.classPath = classPath;
-       	AccessController.doPrivileged(new PropertyWriteAction("java.class.path", classPath));
+        AccessController.doPrivileged(new PropertyWriteAction("java.class.path", classPath));
         this.mainClass = mainClass;
     }
 
