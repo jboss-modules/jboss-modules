@@ -748,7 +748,10 @@ final class ModuleXmlParser {
             throw missingAttributes(reader, required);
         }
 
-        ResourceLoader resourceLoader;
+        final MultiplePathFilterBuilder filterBuilder = PathFilters.multiplePathFilterBuilder(true);
+        final ResourceLoader resourceLoader;
+
+        final Set<String> encountered = new HashSet<>();
         int eventType;
         for (;;) {
             eventType = reader.nextTag();
@@ -760,11 +763,18 @@ final class ModuleXmlParser {
                         throw new XmlPullParserException(String.format("Failed to add artifact '%s'", name), reader, e);
                     }
                     if (resourceLoader == null) throw new XmlPullParserException(String.format("Failed to resolve artifact '%s'", name), reader, null);
-                    specBuilder.addResourceRoot(ResourceLoaderSpec.createResourceLoaderSpec(resourceLoader));
+                    specBuilder.addResourceRoot(new ResourceLoaderSpec(resourceLoader, filterBuilder.create()));
                     return;
                 }
                 case START_TAG: {
-                    throw unexpectedContent(reader);
+                    validateNamespace(reader);
+                    final String element = reader.getName();
+                    if (! encountered.add(element)) throw unexpectedContent(reader);
+                    switch (element) {
+                        case E_FILTER: parseFilterList(reader, filterBuilder); break;
+                        default: throw unexpectedContent(reader);
+                    }
+                    break;
                 }
                 default: {
                     throw unexpectedContent(reader);
