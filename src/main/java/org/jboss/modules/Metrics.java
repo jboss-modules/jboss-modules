@@ -22,8 +22,6 @@
 
 package org.jboss.modules;
 
-import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadMXBean;
 import java.security.AccessController;
 
 /**
@@ -31,13 +29,12 @@ import java.security.AccessController;
  */
 final class Metrics {
     static final boolean ENABLED;
-    static final ThreadMXBean THREAD_MX_BEAN = ManagementFactory.getThreadMXBean();
 
     private Metrics() {
     }
 
     static long getCurrentCPUTime() {
-        return ENABLED ? false ? THREAD_MX_BEAN.getCurrentThreadCpuTime() : System.nanoTime() : 0L;
+        return ENABLED ? System.nanoTime() : 0L;
     }
 
     static {
