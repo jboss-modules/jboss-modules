@@ -75,6 +75,8 @@ final class ModuleXmlParser {
     private static final String MODULE_1_1 = "urn:jboss:module:1.1";
     private static final String MODULE_1_2 = "urn:jboss:module:1.2";
     private static final String MODULE_1_3 = "urn:jboss:module:1.3";
+    // there is no 1.4
+    private static final String MODULE_1_5 = "urn:jboss:module:1.5";
 
     private static final String E_MODULE = "module";
     private static final String E_ARTIFACT = "artifact";
@@ -233,6 +235,7 @@ final class ModuleXmlParser {
             case MODULE_1_1:
             case MODULE_1_2:
             case MODULE_1_3:
+            case MODULE_1_5:
                 break;
             default: throw unexpectedContent(reader);
         }
