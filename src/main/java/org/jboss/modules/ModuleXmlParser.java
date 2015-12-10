@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.jar.JarFile;
@@ -118,6 +119,13 @@ final class ModuleXmlParser {
     private static final String D_IMPORT = "import";
     private static final String D_EXPORT = "export";
 
+    private static final List<String> LIST_A_NAME = Collections.singletonList(A_NAME);
+    private static final List<String> LIST_A_PATH = Collections.singletonList(A_PATH);
+
+    private static final List<String> LIST_A_NAME_A_SLOT = Arrays.asList(A_NAME, A_SLOT);
+    private static final List<String> LIST_A_NAME_A_TARGET_NAME = Arrays.asList(A_NAME, A_TARGET_NAME);
+    private static final List<String> LIST_A_PERMISSION_A_NAME = Arrays.asList(A_PERMISSION, A_NAME);
+
     static ModuleSpec parseModuleXml(final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier, final File root, final File moduleInfoFile, final AccessControlContext context) throws ModuleLoadException, IOException {
         final FileInputStream fis;
         try {
@@ -126,21 +134,19 @@ final class ModuleXmlParser {
             throw new ModuleLoadException("No module.xml file found at " + moduleInfoFile);
         }
         try {
-            return parseModuleXml(new ResourceRootFactory() {
-                public ResourceLoader createResourceLoader(final String rootPath, final String loaderPath, final String loaderName) throws IOException {
-                    final File file;
-                    final File loaderFile = new File(loaderPath);
-                    if (loaderFile.isAbsolute()) {
-                        file = loaderFile;
-                    } else {
-                        file = new File(rootPath, loaderPath);
-                    }
-                    if (file.isDirectory()) {
-                        return new FileResourceLoader(loaderName, file, context);
-                    } else {
-                        final JarFile jarFile = new JarFile(file, true);
-                        return new JarFileResourceLoader(loaderName, jarFile);
-                    }
+            return parseModuleXml((rootPath, loaderPath, loaderName) -> {
+                final File file;
+                final File loaderFile = new File(loaderPath);
+                if (loaderFile.isAbsolute()) {
+                    file = loaderFile;
+                } else {
+                    file = new File(rootPath, loaderPath);
+                }
+                if (file.isDirectory()) {
+                    return new FileResourceLoader(loaderName, file, context);
+                } else {
+                    final JarFile jarFile = new JarFile(file, true);
+                    return new JarFileResourceLoader(loaderName, jarFile);
                 }
             }, root.getPath(), new BufferedInputStream(fis), moduleInfoFile.getPath(), moduleLoader, moduleIdentifier);
         } finally {
@@ -335,7 +341,7 @@ final class ModuleXmlParser {
         String slot = null;
         String targetName = null;
         String targetSlot = null;
-        final Set<String> required = new HashSet<>(Arrays.asList(A_NAME, A_TARGET_NAME));
+        final Set<String> required = new HashSet<>(LIST_A_NAME_A_TARGET_NAME);
         for (int i = 0; i < count; i ++) {
             validateAttributeNamespace(reader, i);
             final String attribute = reader.getAttributeName(i);
@@ -372,7 +378,7 @@ final class ModuleXmlParser {
         final int count = reader.getAttributeCount();
         String name = null;
         String slot = null;
-        final Set<String> required = new HashSet<>(Arrays.asList(A_NAME, A_SLOT));
+        final Set<String> required = new HashSet<>(LIST_A_NAME_A_SLOT);
         for (int i = 0; i < count; i ++) {
             validateAttributeNamespace(reader, i);
             final String attribute = reader.getAttributeName(i);
@@ -407,7 +413,7 @@ final class ModuleXmlParser {
         final int count = reader.getAttributeCount();
         String name = null;
         String slot = null;
-        final Set<String> required = new HashSet<>(Arrays.asList(A_NAME));
+        final Set<String> required = new HashSet<>(LIST_A_NAME);
         for (int i = 0; i < count; i ++) {
             validateAttributeNamespace(reader, i);
             final String attribute = reader.getAttributeName(i);
@@ -498,7 +504,7 @@ final class ModuleXmlParser {
         boolean export = false;
         boolean optional = false;
         String services = D_NONE;
-        final Set<String> required = new HashSet<>(Arrays.asList(A_NAME));
+        final Set<String> required = new HashSet<>(LIST_A_NAME);
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
             validateAttributeNamespace(reader, i);
@@ -618,7 +624,7 @@ final class ModuleXmlParser {
 
     private static void parseMainClass(final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
         String name = null;
-        final Set<String> required = new HashSet<>(Arrays.asList(A_NAME));
+        final Set<String> required = new HashSet<>(LIST_A_NAME);
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
             validateAttributeNamespace(reader, i);
@@ -697,7 +703,7 @@ final class ModuleXmlParser {
 
     private static void parseNativeArtifact(final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
         String name = null;
-        final Set<String> required = new HashSet<>(Arrays.asList(A_NAME));
+        final Set<String> required = new HashSet<>(LIST_A_NAME);
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
             validateAttributeNamespace(reader, i);
@@ -736,7 +742,7 @@ final class ModuleXmlParser {
 
     private static void parseArtifact(final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
         String name = null;
-        final Set<String> required = new HashSet<>(Arrays.asList(A_NAME));
+        final Set<String> required = new HashSet<>(LIST_A_NAME);
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
             validateAttributeNamespace(reader, i);
@@ -789,7 +795,7 @@ final class ModuleXmlParser {
     private static void parseResourceRoot(final ResourceRootFactory factory, final String rootPath, final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
         String name = null;
         String path = null;
-        final Set<String> required = new HashSet<>(Arrays.asList(A_PATH));
+        final Set<String> required = new HashSet<>(LIST_A_PATH);
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
             validateAttributeNamespace(reader, i);
@@ -870,7 +876,7 @@ final class ModuleXmlParser {
 
     private static void parsePath(final XmlPullParser reader, final boolean include, final MultiplePathFilterBuilder builder) throws XmlPullParserException, IOException {
         String path = null;
-        final Set<String> required = new HashSet<>(Arrays.asList(A_PATH));
+        final Set<String> required = new HashSet<>(LIST_A_PATH);
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
             validateAttributeNamespace(reader, i);
@@ -928,7 +934,7 @@ final class ModuleXmlParser {
 
     private static void parsePathName(final XmlPullParser reader, final Set<String> set) throws XmlPullParserException, IOException {
         String name = null;
-        final Set<String> required = new HashSet<>(Arrays.asList(A_NAME));
+        final Set<String> required = new HashSet<>(LIST_A_NAME);
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
             validateAttributeNamespace(reader, i);
@@ -979,7 +985,7 @@ final class ModuleXmlParser {
     private static void parseProperty(final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
         String name = null;
         String value = null;
-        final Set<String> required = new HashSet<>(Arrays.asList(A_NAME));
+        final Set<String> required = new HashSet<>(LIST_A_NAME);
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
             validateAttributeNamespace(reader, i);
@@ -1037,7 +1043,7 @@ final class ModuleXmlParser {
         String permission = null;
         String name = null;
         String actions = null;
-        final Set<String> required = new HashSet<>(Arrays.asList(A_PERMISSION, A_NAME));
+        final Set<String> required = new HashSet<>(LIST_A_PERMISSION_A_NAME);
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
             validateAttributeNamespace(reader, i);
