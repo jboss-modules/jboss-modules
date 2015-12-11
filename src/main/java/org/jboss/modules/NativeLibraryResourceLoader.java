@@ -19,6 +19,7 @@
 package org.jboss.modules;
 
 import java.io.File;
+import java.net.URI;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
@@ -298,6 +299,10 @@ public class NativeLibraryResourceLoader extends AbstractResourceLoader {
             }
         }
         return null;
+    }
+
+    public URI getLocation() {
+        return root.toURI();
     }
 
     /**

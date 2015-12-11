@@ -19,6 +19,7 @@
 package org.jboss.modules;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.Collection;
 
 /**
@@ -91,4 +92,13 @@ public interface ResourceLoader extends AutoCloseable {
      */
     default void close() {}
 
+    /**
+     * Get the base location of the resources in this loader (if any).  If the location is not known, or the resource
+     * loader does not support locations, or the resource loader does not support this method, {@code null} is returned.
+     *
+     * @return the base location of the resources in this loader, or {@code null} if not available
+     */
+    default URI getLocation() {
+        return null;
+    }
 }

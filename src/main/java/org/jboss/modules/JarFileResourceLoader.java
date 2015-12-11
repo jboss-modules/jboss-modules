@@ -341,6 +341,14 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
         }
     }
 
+    public URI getLocation() {
+        try {
+            return getJarURI(fileOfJar.toURI(), "");
+        } catch (URISyntaxException e) {
+            return null;
+        }
+    }
+
     static void extractJarPaths(final JarFile jarFile, String relativePath,
             final Collection<String> index) {
         index.add("");

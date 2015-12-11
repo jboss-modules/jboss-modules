@@ -19,6 +19,7 @@
 package org.jboss.modules;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.Collection;
 import java.util.Iterator;
 import org.jboss.modules.filter.PathFilter;
@@ -68,4 +69,7 @@ final class FilteredIterableResourceLoader implements IterableResourceLoader {
         loader.close();
     }
 
+    public URI getLocation() {
+        return loader.getLocation();
+    }
 }

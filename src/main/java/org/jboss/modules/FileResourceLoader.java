@@ -31,6 +31,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.security.AccessControlContext;
 import java.security.CodeSigner;
@@ -355,6 +356,10 @@ final class FileResourceLoader extends NativeLibraryResourceLoader implements It
             }
         }
         return index;
+    }
+
+    public URI getLocation() {
+        return getRoot().toURI();
     }
 
     private void buildIndex(final List<String> index, final File root, final String pathBase) {
