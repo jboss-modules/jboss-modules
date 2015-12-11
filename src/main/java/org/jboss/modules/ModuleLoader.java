@@ -40,9 +40,8 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+
 import org.jboss.modules.log.ModuleLogger;
 import org.jboss.modules.management.DependencyInfo;
 import org.jboss.modules.management.ModuleInfo;
@@ -855,7 +854,7 @@ public class ModuleLoader {
             final ResourceLoader[] loaders = classLoader.getResourceLoaders();
             final ArrayList<ResourceLoaderInfo> list = new ArrayList<ResourceLoaderInfo>(loaders.length);
             for (ResourceLoader resourceLoader : loaders) {
-                list.add(new ResourceLoaderInfo(resourceLoader.getClass().getName(), new ArrayList<String>(resourceLoader.getPaths())));
+                list.add(new ResourceLoaderInfo(resourceLoader.getClass().getName(), resourceLoader.getLocation().toString(), new ArrayList<>(resourceLoader.getPaths())));
             }
             return list;
         }

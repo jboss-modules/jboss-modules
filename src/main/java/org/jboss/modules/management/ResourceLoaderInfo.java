@@ -28,17 +28,20 @@ import java.util.List;
  */
 public final class ResourceLoaderInfo {
     private final String type;
+    private final String location;
     private final List<String> paths;
 
     /**
      * Construct a new instance.
      *
      * @param type the type name
+     * @param location the physical location of the resource loader (if any)
      * @param paths the paths list
      */
-    @ConstructorProperties({"type", "paths"})
-    public ResourceLoaderInfo(final String type, final List<String> paths) {
+    @ConstructorProperties({"type", "location", "paths"})
+    public ResourceLoaderInfo(final String type, final String location, final List<String> paths) {
         this.type = type;
+        this.location = location;
         this.paths = paths;
     }
 
@@ -49,6 +52,15 @@ public final class ResourceLoaderInfo {
      */
     public String getType() {
         return type;
+    }
+
+    /**
+     * Get the resource loader location.
+     *
+     * @return the resource loader location
+     */
+    public String getLocation() {
+        return location;
     }
 
     /**
