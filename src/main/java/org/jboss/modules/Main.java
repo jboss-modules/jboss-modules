@@ -389,7 +389,7 @@ public final class Main {
         }
         final String ourJavaVersion = doPrivileged(new PropertyReadAction("java.specification.version", "1.6"));
         final String requireJavaVersion = module.getProperty("jboss.require-java-version", ourJavaVersion);
-        final Pattern versionPattern = Pattern.compile("1\\.(\\d+)");
+        final Pattern versionPattern = Pattern.compile("(?:1\\.)?(\\d+)");
         final Matcher requireMatcher = versionPattern.matcher(requireJavaVersion);
         final Matcher ourMatcher = versionPattern.matcher(ourJavaVersion);
         if (requireMatcher.matches() && ourMatcher.matches() && Integer.valueOf(requireMatcher.group(1)) > Integer.valueOf(ourMatcher.group(1))) {
