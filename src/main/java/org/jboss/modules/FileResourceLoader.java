@@ -33,7 +33,6 @@ import java.lang.reflect.UndeclaredThrowableException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.AccessControlContext;
-import java.security.AccessController;
 import java.security.CodeSigner;
 import java.security.CodeSource;
 import java.security.PrivilegedAction;
@@ -94,16 +93,16 @@ final class FileResourceLoader extends NativeLibraryResourceLoader implements It
     }
 
     private static Manifest readManifestFile(final File manifestFile) {
-	try {
-	    if (manifestFile.isFile()) {
-		try (FileInputStream fis = new FileInputStream(manifestFile)) {
-		    return new Manifest(fis);
-		}
-	    }
-	} catch (IOException e) {
-	}
-	return null;
-    }    
+        try {
+            if (manifestFile.isFile()) {
+                try (FileInputStream fis = new FileInputStream(manifestFile)) {
+                    return new Manifest(fis);
+                }
+            }
+        } catch (IOException e) {
+        }
+        return null;
+    }
 
     public String getRootName() {
         return rootName;
