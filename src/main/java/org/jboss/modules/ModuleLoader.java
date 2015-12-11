@@ -41,6 +41,7 @@ import java.util.TreeMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import org.jboss.modules.log.ModuleLogger;
 import org.jboss.modules.management.DependencyInfo;
@@ -89,25 +90,12 @@ public class ModuleLoader {
     private final boolean canRedefine;
     private final ModuleLoaderMXBean mxBean;
 
-    @SuppressWarnings({"unused", "VolatileLongOrDoubleField"})
-    private volatile long linkTime;
-    @SuppressWarnings({"unused", "VolatileLongOrDoubleField"})
-    private volatile long loadTime;
-    @SuppressWarnings({"unused", "VolatileLongOrDoubleField"})
-    private volatile long classLoadTime;
-    @SuppressWarnings("unused")
-    private volatile int scanCount;
-    @SuppressWarnings("unused")
-    private volatile int raceCount;
-    @SuppressWarnings("unused")
-    private volatile int classCount;
-
-    private static final AtomicLongFieldUpdater<ModuleLoader> linkTimeUpdater = AtomicLongFieldUpdater.newUpdater(ModuleLoader.class, "linkTime");
-    private static final AtomicLongFieldUpdater<ModuleLoader> loadTimeUpdater = AtomicLongFieldUpdater.newUpdater(ModuleLoader.class, "loadTime");
-    private static final AtomicLongFieldUpdater<ModuleLoader> classLoadTimeUpdater = AtomicLongFieldUpdater.newUpdater(ModuleLoader.class, "classLoadTime");
-    private static final AtomicIntegerFieldUpdater<ModuleLoader> scanCountUpdater = AtomicIntegerFieldUpdater.newUpdater(ModuleLoader.class, "scanCount");
-    private static final AtomicIntegerFieldUpdater<ModuleLoader> raceCountUpdater = AtomicIntegerFieldUpdater.newUpdater(ModuleLoader.class, "raceCount");
-    private static final AtomicIntegerFieldUpdater<ModuleLoader> classCountUpdater = AtomicIntegerFieldUpdater.newUpdater(ModuleLoader.class, "classCount");
+    private final AtomicLong linkTime = new AtomicLong();
+    private final AtomicLong loadTime = new AtomicLong();
+    private final AtomicLong classLoadTime = new AtomicLong();
+    private final AtomicInteger scanCount = new AtomicInteger();
+    private final AtomicInteger raceCount = new AtomicInteger();
+    private final AtomicInteger classCount = new AtomicInteger();
 
     ModuleLoader(boolean canRedefine, boolean skipRegister) {
         this(canRedefine, skipRegister, NO_FINDERS);
@@ -353,7 +341,7 @@ public class ModuleLoader {
             log.trace("Locally loading module %s from %s", identifier, this);
             final long startTime = Metrics.getCurrentCPUTime();
             final ModuleSpec moduleSpec = findModule(identifier);
-            loadTimeUpdater.addAndGet(this, Metrics.getCurrentCPUTime() - startTime);
+            loadTime.addAndGet(Metrics.getCurrentCPUTime() - startTime);
             if (moduleSpec == null) {
                 log.trace("Module %s not found from %s", identifier, this);
                 return null;
@@ -619,23 +607,23 @@ public class ModuleLoader {
     }
 
     void addLinkTime(long amount) {
-        if (amount != 0L) linkTimeUpdater.addAndGet(this, amount);
+        if (amount != 0L) linkTime.addAndGet(amount);
     }
 
     void addClassLoadTime(final long time) {
-        if (time != 0L) classLoadTimeUpdater.addAndGet(this, time);
+        if (time != 0L) classLoadTime.addAndGet(time);
     }
 
     void incScanCount() {
-        if (Metrics.ENABLED) scanCountUpdater.getAndIncrement(this);
+        if (Metrics.ENABLED) scanCount.getAndIncrement();
     }
 
     void incRaceCount() {
-        if (Metrics.ENABLED) raceCountUpdater.getAndIncrement(this);
+        if (Metrics.ENABLED) raceCount.getAndIncrement();
     }
 
     void incClassCount() {
-        if (Metrics.ENABLED) classCountUpdater.getAndIncrement(this);
+        if (Metrics.ENABLED) classCount.getAndIncrement();
     }
 
     private static final class FutureModule {
@@ -694,19 +682,19 @@ public class ModuleLoader {
         }
 
         public long getLinkTime() {
-            return getModuleLoader().linkTime;
+            return getModuleLoader().linkTime.get();
         }
 
         public long getLoadTime() {
-            return getModuleLoader().loadTime;
+            return getModuleLoader().loadTime.get();
         }
 
         public long getClassDefineTime() {
-            return getModuleLoader().classLoadTime;
+            return getModuleLoader().classLoadTime.get();
         }
 
         public int getScanCount() {
-            return getModuleLoader().scanCount;
+            return getModuleLoader().scanCount.get();
         }
 
         public int getLoadedModuleCount() {
@@ -714,11 +702,11 @@ public class ModuleLoader {
         }
 
         public int getRaceCount() {
-            return getModuleLoader().raceCount;
+            return getModuleLoader().raceCount.get();
         }
 
         public int getClassCount() {
-            return getModuleLoader().classCount;
+            return getModuleLoader().classCount.get();
         }
 
         public List<String> queryLoadedModuleNames() {
