@@ -255,22 +255,35 @@ class MavenArtifactUtil {
     private static final Object artifactLock = new Object();
 
     /**
-     * Tries to find a maven jar artifact from the system property "local.maven.repo.path" This property is a list of
-     * platform separated directory names.  If not specified, then it looks in ${user.home}/.m2/repository by default.
-     * <p/>
-     * If it can't find it in local paths, then will try to download from a remote repository from the system property
-     * "remote.maven.repo".  There is no default remote repository.  It will download both the pom and jar and put it
-     * into the first directory listed in "local.maven.repo.path" (or the default dir).  This directory will be created
-     * if it doesn't exist.
-     * <p/>
-     * Finally, if you do not want a message to console, then set the system property "maven.download.message" to
-     * "false"
+     * Try to resolve a Maven JAR artifact.  Calling this method is identical to calling
+     * {@code resolveJarArtifact(qualifier, "jar")}.
      *
-     * @param qualifier group:artifact:version[:classifier]
-     * @return absolute path to artifact, null if none exists
-     * @throws IOException
+     * @param qualifier a non-{@code null} string in the form of {@code group:artifact:version[:classifier]}
+     * @return the absolute path to the artifact, or {@code null} if none exists
+     * @throws IOException if acquiring the artifact path failed for some reason
      */
     public static File resolveJarArtifact(String qualifier) throws IOException {
+        return resolveJarArtifact(qualifier, "jar");
+    }
+
+    /**
+     * Tries to find a maven jar artifact from the system property {@code "maven.repo.local"} This property is a list of
+     * platform separated directory names.  If not specified, then it looks in {@code ${user.home}/.m2/repository} by default.
+     * <p>
+     * If it can't find it in local paths, then will try to download from a remote repository from the system property
+     * {@code "remote.maven.repo"}.  There is no default remote repository.  It will download both the pom and jar and put it
+     * into the first directory listed in {@code "maven.repo.local"} (or the default directory).  This directory will be
+     * created if it doesn't exist.
+     * <p>
+     * Finally, if you do not want a message to console, then set the system property {@code "maven.download.message"} to
+     * {@code "false"}.
+     *
+     * @param qualifier a non-{@code null} string in the form of {@code group:artifact:version[:classifier]}
+     * @param packaging a non-{@code null} string with the exact packaging type desired (e.g. {@code pom}, {@code jar}, etc.)
+     * @return the absolute path to the artifact, or {@code null} if none exists
+     * @throws IOException if acquiring the artifact path failed for some reason
+     */
+    public static File resolveJarArtifact(String qualifier, String packaging) throws IOException {
         String[] split = qualifier.split(":");
         if (split.length < 3) {
             throw new IllegalArgumentException("Illegal artifact " + qualifier);
@@ -288,8 +301,8 @@ class MavenArtifactUtil {
 
         // serialize artifact lookup because we want to prevent parallel download
         synchronized (artifactLock) {
-            String jarPath = artifactRelativePath + classifier + ".jar";
-            Path fp = java.nio.file.Paths.get(localRepository.toString(), jarPath);
+            String artifactPath = artifactRelativePath + classifier + "." + packaging;
+            Path fp = java.nio.file.Paths.get(localRepository.toString(), artifactPath);
             if (Files.exists(fp)) {
                 return fp.toFile();
             }
@@ -299,16 +312,18 @@ class MavenArtifactUtil {
                 return null;
             }
 
-            final File jarFile = new File(localRepository.toFile(), jarPath);
+            final File artifactFile = new File(localRepository.toFile(), artifactPath);
             final File pomFile = new File(localRepository.toFile(), artifactRelativePath + ".pom");
             for (String remoteRepository : remoteRepos) {
                 try {
                     String remotePomPath = remoteRepository + artifactRelativeHttpPath + ".pom";
-                    String remoteJarPath = remoteRepository + artifactRelativeHttpPath + classifier + ".jar";
-                    downloadFile(qualifier + ":pom", remotePomPath, pomFile);
-                    downloadFile(qualifier + ":jar", remoteJarPath, jarFile);
-                    if (jarFile.exists()) { //download successful
-                        return jarFile;
+                    String remoteArtifactPath = remoteRepository + artifactRelativeHttpPath + classifier + "." + packaging;
+                    if (! packaging.equals("pom")) {
+                        downloadFile(qualifier + ":pom", remotePomPath, pomFile);
+                    }
+                    downloadFile(qualifier + ":" + packaging, remoteArtifactPath, artifactFile);
+                    if (artifactFile.exists()) { //download successful
+                        return artifactFile;
                     }
                 } catch (IOException e) {
                     Module.log.trace(e, "Could not download '%s' from '%s' repository", artifactRelativePath, remoteRepository);
