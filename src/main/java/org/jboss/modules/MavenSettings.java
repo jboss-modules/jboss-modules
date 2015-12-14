@@ -1,7 +1,7 @@
 package org.jboss.modules;
 
 import java.io.File;
-import java.nio.file.*;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -35,10 +35,12 @@ final class MavenSettings {
         }
         String remoteRepository = System.getProperty("remote.maven.repo");
         if (remoteRepository != null) {
-            if (!remoteRepository.endsWith("/")) {
-                remoteRepository += "/";
+            for (String repo : remoteRepository.split(",")) {
+                if (!repo.endsWith("/")) {
+                    repo += "/";
+                }
+                remoteRepositories.add(repo);
             }
-            remoteRepositories.add(remoteRepository);
         }
     }
 

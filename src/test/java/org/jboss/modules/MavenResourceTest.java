@@ -20,6 +20,7 @@ package org.jboss.modules;
 
 import java.io.File;
 import java.net.URL;
+import java.util.List;
 
 import org.jboss.modules.util.Util;
 import org.junit.Assert;
@@ -52,12 +53,20 @@ public class MavenResourceTest {
     @Test
     public void testWithPassedRepository() throws Exception {
         System.setProperty("maven.repo.local", tmpdir.newFolder("repository").getAbsolutePath());
-        System.setProperty("remote.maven.repo", "http://repository.jboss.org/nexus/content/groups/public/");
+        System.setProperty("remote.maven.repo", "http://repository.jboss.org/nexus/content/groups/public/,https://maven-central.storage.googleapis.com/");
         try {
             Module module = moduleLoader.loadModule(MODULE_ID);
             URL url = module.getResource("org/jboss/resteasy/plugins/providers/jackson/ResteasyJacksonProvider.class");
             System.out.println(url);
             Assert.assertNotNull(url);
+
+            MavenSettings settings = MavenArtifactUtil.getSettings();
+            List<String> remoteRepos = settings.getRemoteRepositories();
+            Assert.assertTrue(remoteRepos.size() >= 3); //at least 3 must be present, other can come from settings.xml
+            Assert.assertTrue(remoteRepos.contains("https://repo1.maven.org/maven2/"));
+            Assert.assertTrue(remoteRepos.contains("http://repository.jboss.org/nexus/content/groups/public/"));
+            Assert.assertTrue(remoteRepos.contains("https://maven-central.storage.googleapis.com/"));
+
         } finally {
             System.clearProperty("maven.repo.local");
             System.clearProperty("remote.repository");
