@@ -43,20 +43,19 @@ import org.jboss.modules.xml.XmlPullParser;
 import org.jboss.modules.xml.XmlPullParserException;
 
 /**
- * Helper class to resolve a maven artifact
+ * Helper class to resolve a maven artifact.
  *
  * @author <a href="mailto:bill@burkecentral.com">Bill Burke</a>
  * @author <a href="mailto:tcerar@redhat.com">Tomaz Cerar</a>
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
- * @version $Revision: 2 $
  */
-class MavenArtifactUtil {
+public final class MavenArtifactUtil {
 
     private static MavenSettings mavenSettings;
     private static final Object settingLoaderMutex = new Object();
     private static final Pattern snapshotPattern = Pattern.compile("-\\d{8}\\.\\d+-\\d+$");
 
-    public static MavenSettings getSettings() throws IOException {
+    static MavenSettings getSettings() throws IOException {
         if (mavenSettings != null) {
             return mavenSettings;
         }
@@ -85,7 +84,7 @@ class MavenArtifactUtil {
         }
     }
 
-    private static MavenSettings parseSettingsXml(Path settings, MavenSettings mavenSettings) throws IOException {
+    static MavenSettings parseSettingsXml(Path settings, MavenSettings mavenSettings) throws IOException {
         try {
             final MXParser reader = new MXParser();
             reader.setFeature(FEATURE_PROCESS_NAMESPACES, false);
@@ -114,7 +113,7 @@ class MavenArtifactUtil {
 
     }
 
-    private static void parseSettings(final XmlPullParser reader, MavenSettings mavenSettings) throws XmlPullParserException, IOException {
+    static void parseSettings(final XmlPullParser reader, MavenSettings mavenSettings) throws XmlPullParserException, IOException {
         int eventType;
         while ((eventType = reader.nextTag()) != END_DOCUMENT) {
             switch (eventType) {
@@ -177,7 +176,7 @@ class MavenArtifactUtil {
         throw endOfDocument(reader);
     }
 
-    private static void parseProfile(final XmlPullParser reader, MavenSettings mavenSettings) throws XmlPullParserException, IOException {
+    static void parseProfile(final XmlPullParser reader, MavenSettings mavenSettings) throws XmlPullParserException, IOException {
         int eventType;
         MavenSettings.Profile profile = new MavenSettings.Profile();
         while ((eventType = reader.nextTag()) != END_DOCUMENT) {
@@ -214,7 +213,7 @@ class MavenArtifactUtil {
         mavenSettings.addProfile(profile);
     }
 
-    private static void parseRepository(final XmlPullParser reader, MavenSettings.Profile profile) throws XmlPullParserException, IOException {
+    static void parseRepository(final XmlPullParser reader, MavenSettings.Profile profile) throws XmlPullParserException, IOException {
         int eventType;
         while ((eventType = reader.nextTag()) != END_DOCUMENT) {
             if (eventType == START_TAG) {
@@ -234,7 +233,7 @@ class MavenArtifactUtil {
         }
     }
 
-    private static void skip(XmlPullParser parser) throws XmlPullParserException, IOException {
+    static void skip(XmlPullParser parser) throws XmlPullParserException, IOException {
         if (parser.getEventType() != XmlPullParser.START_TAG) {
             throw new IllegalStateException();
         }
@@ -294,8 +293,8 @@ class MavenArtifactUtil {
         String classifier = "";
         if (split.length >= 4) { classifier = "-" + split[3]; }
 
-        String artifactRelativePath = relativeArtifactPath(groupId, artifactId, version);
-        String artifactRelativeHttpPath = relativeArtifactHttpPath(groupId, artifactId, version);
+        String artifactRelativePath = relativeArtifactPath(File.separatorChar, groupId, artifactId, version);
+        String artifactRelativeHttpPath = relativeArtifactPath('/', groupId, artifactId, version);
         final MavenSettings settings = getSettings();
         final Path localRepository = settings.getLocalRepository();
 
@@ -336,15 +335,7 @@ class MavenArtifactUtil {
         }
     }
 
-    public static String relativeArtifactPath(String groupId, String artifactId, String version) {
-        return relativeArtifactPath(File.separatorChar, groupId, artifactId, version);
-    }
-
-    public static String relativeArtifactHttpPath(String groupId, String artifactId, String version) {
-        return relativeArtifactPath('/', groupId, artifactId, version);
-    }
-
-    private static String relativeArtifactPath(char separator, String groupId, String artifactId, String version) {
+    static String relativeArtifactPath(char separator, String groupId, String artifactId, String version) {
         StringBuilder builder = new StringBuilder(groupId.replace('.', separator));
         builder.append(separator).append(artifactId).append(separator);
         String pathVersion;
@@ -359,7 +350,7 @@ class MavenArtifactUtil {
         return builder.toString();
     }
 
-    public static void downloadFile(String artifact, String src, File dest) throws IOException {
+    static void downloadFile(String artifact, String src, File dest) throws IOException {
         if (dest.exists()){
             return;
         }
