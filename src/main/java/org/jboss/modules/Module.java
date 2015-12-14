@@ -366,6 +366,30 @@ public final class Module {
     }
 
     /**
+     * Load a service loader from this module, without looking at dependencies.
+     *
+     * @param serviceType the service type class
+     * @param <S> the service type
+     * @return the service loader
+     */
+    public <S> ServiceLoader<S> loadServiceDirectly(Class<S> serviceType) {
+        return ServiceLoader.load(serviceType, new ClassLoader(null) {
+            public Enumeration<URL> getResources(final String name) throws IOException {
+                final Enumeration<Resource> resourceEnumeration = Collections.enumeration(getClassLoader().getLocalLoader().loadResourceLocal(name));
+                return new Enumeration<URL>() {
+                    public boolean hasMoreElements() {
+                        return resourceEnumeration.hasMoreElements();
+                    }
+
+                    public URL nextElement() {
+                        return resourceEnumeration.nextElement().getURL();
+                    }
+                };
+            }
+        });
+    }
+
+    /**
      * Load a service loader from a module in the caller's module loader. The caller's
      * module loader refers to the loader of the module of the class that calls this method.
      * Note that {@link #loadService(Class)} is more efficient since it does not need to crawl
