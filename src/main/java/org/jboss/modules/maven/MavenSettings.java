@@ -29,12 +29,10 @@ import static org.jboss.modules.xml.XmlPullParser.START_TAG;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.UndeclaredThrowableException;
-import java.nio.file.*;
-import java.security.AccessControlContext;
-import java.security.AccessController;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -275,10 +273,12 @@ final class MavenSettings {
         }
         String remoteRepository = System.getProperty("remote.maven.repo");
         if (remoteRepository != null) {
-            if (!remoteRepository.endsWith("/")) {
-                remoteRepository += "/";
+            for (String repo : remoteRepository.split(",")) {
+                if (!repo.endsWith("/")) {
+                    repo += "/";
+                }
+                remoteRepositories.add(repo);
             }
-            remoteRepositories.add(remoteRepository);
         }
     }
 
