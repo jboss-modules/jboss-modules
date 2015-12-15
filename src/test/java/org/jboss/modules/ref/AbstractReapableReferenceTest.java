@@ -22,7 +22,7 @@ import org.jboss.modules.ref.util.Assert;
 
 /**
  * Super class for all test cases that apply to reapable references.
- * 
+ *
  * @author <a href="mailto:flavia.rainone@jboss.com">Flavia Rainone</a>
  * @see Reapable
  */

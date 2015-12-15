@@ -279,7 +279,7 @@ public final class Main {
                 System.exit(1);
             }
         }
-        
+
         if (modifyInPlace && ! addIndex) {
             System.err.println("-modify requires -addindex");
             usage();

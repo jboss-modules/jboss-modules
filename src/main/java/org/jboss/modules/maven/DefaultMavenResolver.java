@@ -18,16 +18,12 @@
 
 package org.jboss.modules.maven;
 
-import static java.security.AccessController.doPrivileged;
 import static org.jboss.modules.maven.MavenArtifactUtil.doIo;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.UndeclaredThrowableException;
 import java.security.AccessControlContext;
 import java.security.AccessController;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
 
 final class DefaultMavenResolver implements MavenResolver {
     private final AccessControlContext context;

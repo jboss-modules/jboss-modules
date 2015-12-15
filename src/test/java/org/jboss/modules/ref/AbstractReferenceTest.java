@@ -30,7 +30,7 @@ import org.junit.Test;
 /**
  * Super class for all reference test cases, contains a few tests for functionality common to all
  * references, and a reference assertion method.
- * 
+ *
  * @author <a href="mailto:flavia.rainone@jboss.com">Flavia Rainone</a>
  */
 public abstract class AbstractReferenceTest {
@@ -40,10 +40,10 @@ public abstract class AbstractReferenceTest {
 
     @Test
     public void referenceEqualsReference() {
-        final Reference<StringBuffer, Number> reference1 = createReference(new StringBuffer().append("some text text"), (Number) Long.valueOf(5l));
+        final Reference<StringBuffer, Number> reference1 = createReference(new StringBuffer().append("some text text"), (Number) Long.valueOf(5L));
         final Reference<StringBuffer, Number> reference2 = createReference(new StringBuffer().append("some text"), (Number) Double.valueOf(5.5));
         final Reference<StringBuffer, Number> reference3 = createReference(null, null);
-        final Reference<StringBuffer, Number> reference4 = createReference(new StringBuffer().append("some text text"), (Number) Long.valueOf(5l));
+        final Reference<StringBuffer, Number> reference4 = createReference(new StringBuffer().append("some text text"), (Number) Long.valueOf(5L));
 
         assertEquals(reference1, reference1);
         assertEquals(reference1.hashCode(), reference1.hashCode());

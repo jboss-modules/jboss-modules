@@ -37,7 +37,7 @@ import org.junit.Test;
 
 /**
  * Test for {@link References} class and internal classes.
- * 
+ *
  * @author <a href="mailto:flavia.rainone@jboss.com">Flavia Rainone</a>
  */
 public class ReferencesTestCase {
@@ -192,7 +192,7 @@ public class ReferencesTestCase {
 
     private static final class UnreapableWeakReference extends java.lang.ref.WeakReference<Object> implements Reference<Object, Void> {
 
-        public UnreapableWeakReference(Object referent) {
+        UnreapableWeakReference(Object referent) {
             super(referent, ReaperThread.REAPER_QUEUE);
         }
 

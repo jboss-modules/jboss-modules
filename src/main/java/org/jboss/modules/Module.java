@@ -840,7 +840,7 @@ public final class Module {
      * @return the set of paths
      * @throws ModuleLoadException if the module was previously unlinked, and there was an exception while linking
      */
-    public final Set<String> getImportedPaths() throws ModuleLoadException {
+    public Set<String> getImportedPaths() throws ModuleLoadException {
         return Collections.unmodifiableSet(getPaths().keySet());
     }
 

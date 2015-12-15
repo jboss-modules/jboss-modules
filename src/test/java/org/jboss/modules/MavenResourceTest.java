@@ -20,7 +20,6 @@ package org.jboss.modules;
 
 import java.io.File;
 import java.net.URL;
-import java.util.List;
 
 import org.jboss.modules.maven.ArtifactCoordinates;
 import org.jboss.modules.maven.MavenArtifactUtil;

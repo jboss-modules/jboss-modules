@@ -45,10 +45,16 @@ public class XmlPullParserException extends Exception {
         this.detail = chain;
     }
 
-    public Throwable getDetail() { return detail; }
+    public Throwable getDetail() {
+        return detail;
+    }
     //    public void setDetail(Throwable cause) { this.detail = cause; }
-    public int getLineNumber() { return row; }
-    public int getColumnNumber() { return column; }
+    public int getLineNumber() {
+        return row;
+    }
+    public int getColumnNumber() {
+        return column;
+    }
 
     /*
     public String getMessage() {

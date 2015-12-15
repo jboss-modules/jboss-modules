@@ -29,14 +29,14 @@ import org.jboss.modules.ref.Reference.Type;
 
 /**
  * Assertion methods used by reference tests.
- * 
+ *
  * @author <a href="mailto:flavia.rainone@jboss.com">Flavia Rainone</a>
  */
 public class Assert {
 
     /**
      * Assert that {@code reference} contains {@code referent}, {@code attachment}, and that its type is {@code type}.
-     * 
+     *
      * @param <T>         the type of referent
      * @param <A>         the type of attachment
      * @param reference   the reference that needs to be checked
@@ -55,9 +55,9 @@ public class Assert {
      * Assert that {@code reference} contains {@code referent}, {@code attachment}, and that its type is {@code type}.
      * Also asserts that {@code reaper} is the reaper used by {@code referent}.
      * <p>
-     * Call this method only for {@link org.jboss.msc.ref.Reapable Reapable} references. This method assumes that 
+     * Call this method only for {@link org.jboss.msc.ref.Reapable Reapable} references. This method assumes that
      * {@code reference} has a method called {@code getReaper} that will return the reaper.
-     * 
+     *
      * @param <T>         the type of referent
      * @param <A>         the type of attachment
      * @param reference   the {@code Reapable} reference that needs to be checked

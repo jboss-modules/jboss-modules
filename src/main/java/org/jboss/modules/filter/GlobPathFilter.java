@@ -22,7 +22,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Default implementation of PathFilter.  Uses glob based includes and excludes to determine whether to export.  
+ * Default implementation of PathFilter.  Uses glob based includes and excludes to determine whether to export.
  *
  * @author John E. Bailey
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>

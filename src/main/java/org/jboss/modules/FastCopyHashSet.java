@@ -95,7 +95,7 @@ class FastCopyHashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable, Se
      */
     private transient int hashCode;
 
-    public FastCopyHashSet(int initialCapacity, float loadFactor) {
+    FastCopyHashSet(int initialCapacity, float loadFactor) {
         if (initialCapacity < 0)
             throw new IllegalArgumentException("Can not have a negative size table!");
 
@@ -109,7 +109,7 @@ class FastCopyHashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable, Se
         init(initialCapacity, loadFactor);
     }
 
-    public FastCopyHashSet(Set<? extends E> set) {
+    FastCopyHashSet(Set<? extends E> set) {
         if (set instanceof FastCopyHashSet) {
             FastCopyHashSet<? extends E> fast = (FastCopyHashSet<? extends E>) set;
             table = fast.table.clone();
@@ -139,11 +139,11 @@ class FastCopyHashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable, Se
         table = (E[]) new Object[c];
     }
 
-    public FastCopyHashSet(int initialCapacity) {
+    FastCopyHashSet(int initialCapacity) {
         this(initialCapacity, DEFAULT_LOAD_FACTOR);
     }
 
-    public FastCopyHashSet() {
+    FastCopyHashSet() {
         this(DEFAULT_CAPACITY);
     }
 

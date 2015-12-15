@@ -30,7 +30,7 @@ import org.junit.Test;
 
 /**
  * Test for {@link WeakReference}.
- * 
+ *
  * @author <a href="mailto:flavia.rainone@jboss.com">Flavia Rainone</a>
  */
 public class WeakReferenceTestCase extends AbstractReapableReferenceTest {

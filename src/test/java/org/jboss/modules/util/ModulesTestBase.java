@@ -42,7 +42,7 @@ import static org.junit.Assert.fail;
 
 /**
  * Test low level modules use cases.
- * 
+ *
  * @author Thomas.Diesler@jboss.com
  * @since 15-Sep-2010
  */

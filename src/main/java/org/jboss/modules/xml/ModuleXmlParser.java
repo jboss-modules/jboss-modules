@@ -754,8 +754,7 @@ public final class ModuleXmlParser {
         }
     }
 
-    private static void createMavenNativeArtifactLoader(final MavenResolver mavenResolver, final String name, final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws IOException, XmlPullParserException
-    {
+    private static void createMavenNativeArtifactLoader(final MavenResolver mavenResolver, final String name, final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws IOException, XmlPullParserException {
         File fp = mavenResolver.resolveJarArtifact(ArtifactCoordinates.fromString(name));
         if (fp == null) throw new XmlPullParserException(String.format("Failed to resolve native artifact '%s'", name), reader, null);
         File lib = new File(fp.getParentFile(), "lib");
@@ -1173,7 +1172,7 @@ public final class ModuleXmlParser {
         }
     }
 
-    private static final void unzip(File src, File destDir) throws IOException {
+    private static void unzip(File src, File destDir) throws IOException {
         final String absolutePath = destDir.getAbsolutePath();
         final ZipFile zip = new ZipFile(src);
 

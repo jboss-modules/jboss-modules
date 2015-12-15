@@ -28,7 +28,7 @@ import org.junit.Test;
 
 /**
  * Test for {@link SoftReference}.
- * 
+ *
  * @author <a href="mailto:flavia.rainone@jboss.com">Flavia Rainone</a>
  */
 public class SoftReferenceTestCase extends AbstractReapableReferenceTest {
