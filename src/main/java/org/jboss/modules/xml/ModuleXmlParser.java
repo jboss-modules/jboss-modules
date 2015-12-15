@@ -43,7 +43,7 @@ import java.util.zip.ZipFile;
 
 import org.jboss.modules.AssertionSetting;
 import org.jboss.modules.DependencySpec;
-import org.jboss.modules.MavenArtifactUtil;
+import org.jboss.modules.maven.MavenArtifactUtil;
 import org.jboss.modules.ModuleIdentifier;
 import org.jboss.modules.ModuleLoadException;
 import org.jboss.modules.ModuleLoader;

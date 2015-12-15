@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.jboss.modules;
+package org.jboss.modules.maven;
 
 import static org.jboss.modules.xml.ModuleXmlParser.endOfDocument;
 import static org.jboss.modules.xml.ModuleXmlParser.unexpectedContent;
@@ -39,6 +39,9 @@ import java.util.jar.JarFile;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.jboss.modules.Module;
+import org.jboss.modules.ResourceLoader;
+import org.jboss.modules.ResourceLoaders;
 import org.jboss.modules.xml.MXParser;
 import org.jboss.modules.xml.XmlPullParser;
 import org.jboss.modules.xml.XmlPullParserException;
@@ -326,12 +329,12 @@ public final class MavenArtifactUtil {
                         return artifactFile;
                     }
                 } catch (IOException e) {
-                    Module.log.trace(e, "Could not download '%s' from '%s' repository", artifactRelativePath, remoteRepository);
+                    Module.getModuleLogger().trace(e, "Could not download '%s' from '%s' repository", artifactRelativePath, remoteRepository);
                     //
                 }
             }
             //could not find it in remote
-            Module.log.trace("Could not find in any remote repository");
+            Module.getModuleLogger().trace("Could not find in any remote repository");
             return null;
         }
     }

@@ -21,6 +21,7 @@ package org.jboss.modules;
 import java.io.File;
 import java.net.URL;
 
+import org.jboss.modules.maven.MavenArtifactUtil;
 import org.jboss.modules.util.Util;
 import org.junit.Assert;
 import org.junit.Before;
