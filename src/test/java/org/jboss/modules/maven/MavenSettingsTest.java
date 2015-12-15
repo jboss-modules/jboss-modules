@@ -1,5 +1,6 @@
 package org.jboss.modules.maven;
 
+import java.nio.file.Paths;
 import java.util.List;
 
 import org.junit.Assert;
@@ -35,4 +36,12 @@ public class MavenSettingsTest {
         }
     }
 
+    @Test
+    public void testEmptyLocalRepo() throws Exception {
+        MavenSettings settings = new MavenSettings();
+
+        MavenSettings.parseSettingsXml(Paths.get(MavenSettingsTest.class.getResource("settings-empty-local-repo.xml").toURI()), settings);
+        Assert.assertNull(settings.getLocalRepository());//local repo shouldn't be set
+
+    }
 }

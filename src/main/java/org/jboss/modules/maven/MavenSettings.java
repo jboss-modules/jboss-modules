@@ -50,7 +50,7 @@ final class MavenSettings {
 
     private static volatile MavenSettings mavenSettings;
 
-    private Path localRepository;
+    private Path localRepository = null;
     private final List<String> remoteRepositories = new LinkedList<>();
     private final Map<String, Profile> profiles = new HashMap<>();
     private final List<String> activeProfileNames = new LinkedList<>();
@@ -133,7 +133,7 @@ final class MavenSettings {
                     switch (reader.getName()) {
                         case "localRepository": {
                             String localRepository = reader.nextText();
-                            if (!"".equals(localRepository)) {
+                            if (localRepository != null && !localRepository.trim().isEmpty()) {
                                 mavenSettings.setLocalRepository(Paths.get(localRepository));
                             }
                             break;
@@ -262,7 +262,7 @@ final class MavenSettings {
         //always add maven central
         remoteRepositories.add("https://repo1.maven.org/maven2/");
         String localRepositoryPath = System.getProperty("local.maven.repo.path");
-        if (localRepositoryPath != null) {
+        if (localRepositoryPath != null && !localRepositoryPath.trim().isEmpty()) {
             System.out.println("Please use 'maven.repo.local' instead of 'local.maven.repo.path'");
             localRepository = java.nio.file.Paths.get(localRepositoryPath.split(File.pathSeparator)[0]);
         }
