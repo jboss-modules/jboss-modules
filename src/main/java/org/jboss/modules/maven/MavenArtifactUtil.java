@@ -55,7 +55,7 @@ import org.jboss.modules.xml.XmlPullParserException;
  */
 public final class MavenArtifactUtil {
 
-    private static MavenSettings mavenSettings;
+    private static volatile MavenSettings mavenSettings;
     private static final Object settingLoaderMutex = new Object();
     private static final Pattern snapshotPattern = Pattern.compile("-\\d{8}\\.\\d+-\\d+$");
 
@@ -261,12 +261,12 @@ public final class MavenArtifactUtil {
      * Try to resolve a Maven JAR artifact.  Calling this method is identical to calling
      * {@code resolveJarArtifact(qualifier, "jar")}.
      *
-     * @param qualifier a non-{@code null} string in the form of {@code group:artifact:version[:classifier]}
+     * @param coordinates the non-{@code null} Maven coordinates object
      * @return the absolute path to the artifact, or {@code null} if none exists
      * @throws IOException if acquiring the artifact path failed for some reason
      */
-    public static File resolveJarArtifact(String qualifier) throws IOException {
-        return resolveJarArtifact(qualifier, "jar");
+    public static File resolveJarArtifact(final ArtifactCoordinates coordinates) throws IOException {
+        return resolveArtifact(coordinates, "jar");
     }
 
     /**
@@ -281,21 +281,16 @@ public final class MavenArtifactUtil {
      * Finally, if you do not want a message to console, then set the system property {@code "maven.download.message"} to
      * {@code "false"}.
      *
-     * @param qualifier a non-{@code null} string in the form of {@code group:artifact:version[:classifier]}
+     * @param coordinates the non-{@code null} Maven coordinates object
      * @param packaging a non-{@code null} string with the exact packaging type desired (e.g. {@code pom}, {@code jar}, etc.)
      * @return the absolute path to the artifact, or {@code null} if none exists
      * @throws IOException if acquiring the artifact path failed for some reason
      */
-    public static File resolveJarArtifact(String qualifier, String packaging) throws IOException {
-        String[] split = qualifier.split(":");
-        if (split.length < 3) {
-            throw new IllegalArgumentException("Illegal artifact " + qualifier);
-        }
-        String groupId = split[0];
-        String artifactId = split[1];
-        String version = split[2];
-        String classifier = "";
-        if (split.length >= 4) { classifier = "-" + split[3]; }
+    public static File resolveArtifact(final ArtifactCoordinates coordinates, final String packaging) throws IOException {
+        String groupId = coordinates.getGroupId();
+        String artifactId = coordinates.getArtifactId();
+        String version = coordinates.getVersion();
+        String classifier = "-" + coordinates.getClassifier();
 
         String artifactRelativePath = relativeArtifactPath(File.separatorChar, groupId, artifactId, version);
         String artifactRelativeHttpPath = relativeArtifactPath('/', groupId, artifactId, version);
@@ -322,9 +317,9 @@ public final class MavenArtifactUtil {
                     String remotePomPath = remoteRepository + artifactRelativeHttpPath + ".pom";
                     String remoteArtifactPath = remoteRepository + artifactRelativeHttpPath + classifier + "." + packaging;
                     if (! packaging.equals("pom")) {
-                        downloadFile(qualifier + ":pom", remotePomPath, pomFile);
+                        downloadFile(coordinates + ":pom", remotePomPath, pomFile);
                     }
-                    downloadFile(qualifier + ":" + packaging, remoteArtifactPath, artifactFile);
+                    downloadFile(coordinates + ":" + packaging, remoteArtifactPath, artifactFile);
                     if (artifactFile.exists()) { //download successful
                         return artifactFile;
                     }
@@ -377,7 +372,7 @@ public final class MavenArtifactUtil {
      * @throws IOException if the artifact could not be resolved
      */
     public static ResourceLoader createMavenArtifactLoader(final String name) throws IOException {
-        File fp = resolveJarArtifact(name);
+        File fp = resolveJarArtifact(ArtifactCoordinates.fromString(name));
         if (fp == null) return null;
         JarFile jarFile = new JarFile(fp, true);
         return ResourceLoaders.createJarResourceLoader(name, jarFile);

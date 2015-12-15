@@ -43,6 +43,7 @@ import java.util.zip.ZipFile;
 
 import org.jboss.modules.AssertionSetting;
 import org.jboss.modules.DependencySpec;
+import org.jboss.modules.maven.ArtifactCoordinates;
 import org.jboss.modules.maven.MavenArtifactUtil;
 import org.jboss.modules.ModuleIdentifier;
 import org.jboss.modules.ModuleLoadException;
@@ -736,7 +737,7 @@ public final class ModuleXmlParser {
 
     private static void createMavenNativeArtifactLoader(final String name, final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws IOException, XmlPullParserException
     {
-        File fp = MavenArtifactUtil.resolveJarArtifact(name);
+        File fp = MavenArtifactUtil.resolveJarArtifact(ArtifactCoordinates.fromString(name));
         if (fp == null) throw new XmlPullParserException(String.format("Failed to resolve native artifact '%s'", name), reader, null);
         File lib = new File(fp.getParentFile(), "lib");
         if (!lib.exists()) {

@@ -21,6 +21,7 @@ package org.jboss.modules;
 import java.io.File;
 import java.net.URL;
 
+import org.jboss.modules.maven.ArtifactCoordinates;
 import org.jboss.modules.maven.MavenArtifactUtil;
 import org.jboss.modules.util.Util;
 import org.junit.Assert;
@@ -82,7 +83,6 @@ public class MavenResourceTest {
     @Test
     @Ignore("Test artifact must exists in local repo but nowhere else, mostly meant for manual testing")
     public void testCustomRepository() throws Exception {
-        MavenArtifactUtil.resolveJarArtifact("org.wildfly:wildfly-clustering-infinispan:9.0.0.Alpha1-SNAPSHOT");
-
+        MavenArtifactUtil.resolveJarArtifact(ArtifactCoordinates.fromString("org.wildfly:wildfly-clustering-infinispan:9.0.0.Alpha1-SNAPSHOT"));
     }
 }
