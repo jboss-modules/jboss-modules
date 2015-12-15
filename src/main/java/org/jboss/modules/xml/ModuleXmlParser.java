@@ -16,33 +16,49 @@
  * limitations under the License.
  */
 
-package org.jboss.modules;
+package org.jboss.modules.xml;
 
 import java.io.BufferedInputStream;
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.AccessControlContext;
+import java.io.OutputStream;
+import java.security.AllPermission;
+import java.security.Permissions;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.jar.JarFile;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
+import org.jboss.modules.AssertionSetting;
+import org.jboss.modules.DependencySpec;
+import org.jboss.modules.MavenArtifactUtil;
+import org.jboss.modules.ModuleIdentifier;
+import org.jboss.modules.ModuleLoadException;
+import org.jboss.modules.ModuleLoader;
+import org.jboss.modules.ModuleSpec;
+import org.jboss.modules.NativeLibraryResourceLoader;
+import org.jboss.modules.PathUtils;
+import org.jboss.modules.ResourceLoader;
+import org.jboss.modules.ResourceLoaderSpec;
+import org.jboss.modules.ResourceLoaders;
 import org.jboss.modules.filter.MultiplePathFilterBuilder;
 import org.jboss.modules.filter.PathFilter;
 import org.jboss.modules.filter.PathFilters;
 import org.jboss.modules.security.FactoryPermissionCollection;
 import org.jboss.modules.security.ModularPermissionFactory;
 import org.jboss.modules.security.PermissionFactory;
-import org.jboss.modules.xml.MXParser;
-import org.jboss.modules.xml.XmlPullParser;
-import org.jboss.modules.xml.XmlPullParserException;
 
 import static org.jboss.modules.xml.XmlPullParser.CDSECT;
 import static org.jboss.modules.xml.XmlPullParser.COMMENT;
@@ -58,14 +74,18 @@ import static org.jboss.modules.xml.XmlPullParser.START_TAG;
 import static org.jboss.modules.xml.XmlPullParser.TEXT;
 
 /**
- * A fast, validating module.xml parser.
+ * A fast, validating {@code module.xml} parser.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  * @author thomas.diesler@jboss.com
  */
-final class ModuleXmlParser {
+public final class ModuleXmlParser {
 
-    interface ResourceRootFactory {
+    /**
+     * A factory for resource roots, based on a root path, loader path, and loader name.  Normally it is sufficient to
+     * accept the default.
+     */
+    public interface ResourceRootFactory {
         ResourceLoader createResourceLoader(final String rootPath, final String loaderPath, final String loaderName) throws IOException;
     }
 
@@ -126,7 +146,18 @@ final class ModuleXmlParser {
     private static final List<String> LIST_A_NAME_A_TARGET_NAME = Arrays.asList(A_NAME, A_TARGET_NAME);
     private static final List<String> LIST_A_PERMISSION_A_NAME = Arrays.asList(A_PERMISSION, A_NAME);
 
-    static ModuleSpec parseModuleXml(final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier, final File root, final File moduleInfoFile, final AccessControlContext context) throws ModuleLoadException, IOException {
+    /**
+     * Parse a {@code module.xml} file.
+     *
+     * @param moduleLoader the module loader to use for dependency specifications
+     * @param moduleIdentifier the module identifier of the module to load
+     * @param root the module path root
+     * @param moduleInfoFile the {@code File} of the {@code module.xml} content
+     * @return a module specification
+     * @throws ModuleLoadException if a dependency could not be established or another error occurs
+     * @throws IOException if I/O fails
+     */
+    public static ModuleSpec parseModuleXml(final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier, final File root, final File moduleInfoFile) throws ModuleLoadException, IOException {
         final FileInputStream fis;
         try {
             fis = new FileInputStream(moduleInfoFile);
@@ -143,18 +174,31 @@ final class ModuleXmlParser {
                     file = new File(rootPath, loaderPath);
                 }
                 if (file.isDirectory()) {
-                    return new FileResourceLoader(loaderName, file, context);
+                    return ResourceLoaders.createFileResourceLoader(loaderName, file);
                 } else {
                     final JarFile jarFile = new JarFile(file, true);
-                    return new JarFileResourceLoader(loaderName, jarFile);
+                    return ResourceLoaders.createJarResourceLoader(loaderName, jarFile);
                 }
             }, root.getPath(), new BufferedInputStream(fis), moduleInfoFile.getPath(), moduleLoader, moduleIdentifier);
         } finally {
-            StreamUtil.safeClose(fis);
+            safeClose(fis);
         }
     }
 
-    static ModuleSpec parseModuleXml(final ResourceRootFactory factory, final String rootPath, InputStream source, final String moduleInfoFile, final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier) throws ModuleLoadException, IOException {
+    /**
+     * Parse a {@code module.xml} file.
+     *
+     * @param factory the resource root factory to use (must not be {@code null})
+     * @param rootPath the root path to send in to the resource root factory (must not be {@code null})
+     * @param source a stream of the {@code module.xml} content (must not be {@code null})
+     * @param moduleInfoFile the {@code File} of the {@code module.xml} content (must not be {@code null})
+     * @param moduleLoader the module loader to use for dependency specifications (must not be {@code null})
+     * @param moduleIdentifier the module identifier of the module to load
+     * @return a module specification
+     * @throws ModuleLoadException if a dependency could not be established or another error occurs
+     * @throws IOException if I/O fails
+     */
+    public static ModuleSpec parseModuleXml(final ResourceRootFactory factory, final String rootPath, InputStream source, final String moduleInfoFile, final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier) throws ModuleLoadException, IOException {
         try {
             final MXParser parser = new MXParser();
             parser.setFeature(FEATURE_PROCESS_NAMESPACES, true);
@@ -163,11 +207,11 @@ final class ModuleXmlParser {
         } catch (XmlPullParserException e) {
             throw new ModuleLoadException("Error loading module from " + moduleInfoFile, e);
         } finally {
-            StreamUtil.safeClose(source);
+            safeClose(source);
         }
     }
 
-    protected static XmlPullParserException unexpectedContent(final XmlPullParser reader) {
+    public static XmlPullParserException unexpectedContent(final XmlPullParser reader) {
         final String kind;
         switch (reader.getEventType()) {
             case CDSECT: kind = "cdata"; break;
@@ -193,7 +237,7 @@ final class ModuleXmlParser {
         return new XmlPullParserException(b.toString(), reader, null);
     }
 
-    protected static XmlPullParserException endOfDocument(final XmlPullParser reader) {
+    public static XmlPullParserException endOfDocument(final XmlPullParser reader) {
         return new XmlPullParserException("Unexpected end of document", reader, null);
     }
 
@@ -409,6 +453,16 @@ final class ModuleXmlParser {
         }
     }
 
+    private static final AllPermission ALL_PERMISSION = new AllPermission();
+
+    static final Permissions DEFAULT_PERMISSION_COLLECTION = getAllPermission();
+
+    private static Permissions getAllPermission() {
+        final Permissions permissions = new Permissions();
+        permissions.add(ALL_PERMISSION);
+        return permissions;
+    }
+
     private static void parseModuleContents(final XmlPullParser reader, final ResourceRootFactory factory, final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier, final ModuleSpec.Builder specBuilder, final String rootPath) throws XmlPullParserException, IOException {
         final int count = reader.getAttributeCount();
         String name = null;
@@ -444,7 +498,7 @@ final class ModuleXmlParser {
                     for (DependencySpec dependency : dependencies) {
                         specBuilder.addDependency(dependency);
                     }
-                    if (! gotPerms) specBuilder.setPermissionCollection(ModulesPolicy.DEFAULT_PERMISSION_COLLECTION);
+                    if (! gotPerms) specBuilder.setPermissionCollection(DEFAULT_PERMISSION_COLLECTION);
                     return;
                 }
                 case START_TAG: {
@@ -651,7 +705,7 @@ final class ModuleXmlParser {
             eventType = reader.nextTag();
             switch (eventType) {
                 case END_TAG: {
-                    specBuilder.addResourceRoot(new ResourceLoaderSpec(new NativeLibraryResourceLoader(new File(rootPath, "lib")), PathFilters.rejectAll()));
+                    specBuilder.addResourceRoot(ResourceLoaderSpec.createResourceLoaderSpec(new NativeLibraryResourceLoader(new File(rootPath, "lib")), PathFilters.rejectAll()));
                     return;
                 }
                 case START_TAG: {
@@ -680,26 +734,17 @@ final class ModuleXmlParser {
         }
     }
 
-    static ResourceLoader createMavenArtifactLoader(final String name) throws IOException
-    {
-        File fp = MavenArtifactUtil.resolveJarArtifact(name);
-        if (fp == null) return null;
-        JarFile jarFile = new JarFile(fp, true);
-        return new JarFileResourceLoader(name, jarFile);
-    }
-
-    static void createMavenNativeArtifactLoader(final String name, final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws IOException, XmlPullParserException
+    private static void createMavenNativeArtifactLoader(final String name, final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws IOException, XmlPullParserException
     {
         File fp = MavenArtifactUtil.resolveJarArtifact(name);
         if (fp == null) throw new XmlPullParserException(String.format("Failed to resolve native artifact '%s'", name), reader, null);
         File lib = new File(fp.getParentFile(), "lib");
         if (!lib.exists()) {
             if (!fp.getParentFile().canWrite()) throw new XmlPullParserException(String.format("Native artifact '%s' cannot be unpacked", name), reader, null);
-            StreamUtil.unzip(fp, fp.getParentFile());
+            unzip(fp, fp.getParentFile());
         }
-        specBuilder.addResourceRoot(new ResourceLoaderSpec(new NativeLibraryResourceLoader(lib), PathFilters.rejectAll()));
+        specBuilder.addResourceRoot(ResourceLoaderSpec.createResourceLoaderSpec(new NativeLibraryResourceLoader(lib), PathFilters.rejectAll()));
     }
-
 
     private static void parseNativeArtifact(final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
         String name = null;
@@ -767,12 +812,12 @@ final class ModuleXmlParser {
             switch (eventType) {
                 case END_TAG: {
                     try {
-                        resourceLoader = createMavenArtifactLoader(name);
+                        resourceLoader = MavenArtifactUtil.createMavenArtifactLoader(name);
                     } catch (IOException e) {
                         throw new XmlPullParserException(String.format("Failed to add artifact '%s'", name), reader, e);
                     }
                     if (resourceLoader == null) throw new XmlPullParserException(String.format("Failed to resolve artifact '%s'", name), reader, null);
-                    specBuilder.addResourceRoot(new ResourceLoaderSpec(resourceLoader, filterBuilder.create()));
+                    specBuilder.addResourceRoot(ResourceLoaderSpec.createResourceLoaderSpec(resourceLoader, filterBuilder.create()));
                     return;
                 }
                 case START_TAG: {
@@ -826,7 +871,7 @@ final class ModuleXmlParser {
                     } catch (IOException e) {
                         throw new XmlPullParserException(String.format("Failed to add resource root '%s' at path '%s'", name, path), reader, e);
                     }
-                    specBuilder.addResourceRoot(new ResourceLoaderSpec(resourceLoader, filterBuilder.create()));
+                    specBuilder.addResourceRoot(ResourceLoaderSpec.createResourceLoaderSpec(resourceLoader, filterBuilder.create()));
                     return;
                 }
                 case START_TAG: {
@@ -908,7 +953,7 @@ final class ModuleXmlParser {
 
     private static Set<String> parseSet(final XmlPullParser reader) throws XmlPullParserException, IOException {
         assertNoAttributes(reader);
-        final Set<String> set = new FastCopyHashSet<>();
+        final Set<String> set = new HashSet<>();
         // xsd:choice
         int eventType;
         for (;;) {
@@ -1080,7 +1125,7 @@ final class ModuleXmlParser {
         }
     }
 
-    static void parseEndDocument(final XmlPullParser reader) throws XmlPullParserException, IOException {
+    private static void parseEndDocument(final XmlPullParser reader) throws XmlPullParserException, IOException {
         int eventType;
         for (;;) {
             eventType = reader.nextToken();
@@ -1106,5 +1151,55 @@ final class ModuleXmlParser {
                 }
             }
         }
+    }
+
+    private static final void unzip(File src, File destDir) throws IOException {
+        final String absolutePath = destDir.getAbsolutePath();
+        final ZipFile zip = new ZipFile(src);
+
+        try {
+            final Enumeration<? extends ZipEntry> entries = zip.entries();
+
+            while (entries.hasMoreElements()) {
+                final ZipEntry entry = entries.nextElement();
+                if (entry.isDirectory()) {
+                    continue;
+                }
+
+                final File fp = new File(absolutePath, PathUtils.canonicalize(PathUtils.relativize(entry.getName())));
+                final File parent = fp.getParentFile();
+                if (! parent.exists()) {
+                    parent.mkdirs();
+                }
+                final InputStream is = zip.getInputStream(entry);
+                try {
+                    final FileOutputStream os = new FileOutputStream(fp);
+                    try {
+                        copy(is, os);
+                    } finally {
+                        safeClose(os);
+                    }
+                } finally {
+                    safeClose(is);
+                }
+            }
+        } finally {
+            safeClose(zip);
+        }
+    }
+
+    private static void copy(InputStream in, OutputStream out) throws IOException {
+        byte[] buf = new byte[16384];
+        int len;
+        while ((len = in.read(buf)) > 0) {
+            out.write(buf, 0, len);
+        }
+        out.flush();
+    }
+
+    private static void safeClose(Closeable closeable) {
+        if (closeable != null) try {
+            closeable.close();
+        } catch (Throwable ignored) {}
     }
 }

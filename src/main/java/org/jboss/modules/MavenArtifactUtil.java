@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2014 Red Hat, Inc., and individual contributors
+ * Copyright 2015 Red Hat, Inc., and individual contributors
  * as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,8 +18,8 @@
 
 package org.jboss.modules;
 
-import static org.jboss.modules.ModuleXmlParser.endOfDocument;
-import static org.jboss.modules.ModuleXmlParser.unexpectedContent;
+import static org.jboss.modules.xml.ModuleXmlParser.endOfDocument;
+import static org.jboss.modules.xml.ModuleXmlParser.unexpectedContent;
 import static org.jboss.modules.xml.XmlPullParser.END_DOCUMENT;
 import static org.jboss.modules.xml.XmlPullParser.END_TAG;
 import static org.jboss.modules.xml.XmlPullParser.FEATURE_PROCESS_NAMESPACES;
@@ -35,6 +35,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
+import java.util.jar.JarFile;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -363,5 +364,19 @@ public final class MavenArtifactUtil {
             if (message) { System.out.println("Downloading " + artifact); }
             Files.copy(bis, dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
         }
+    }
+
+    /**
+     * A utility method to create a Maven artifact resource loader for the given artifact name.
+     *
+     * @param name the artifact name
+     * @return the resource loader
+     * @throws IOException if the artifact could not be resolved
+     */
+    public static ResourceLoader createMavenArtifactLoader(final String name) throws IOException {
+        File fp = resolveJarArtifact(name);
+        if (fp == null) return null;
+        JarFile jarFile = new JarFile(fp, true);
+        return ResourceLoaders.createJarResourceLoader(name, jarFile);
     }
 }

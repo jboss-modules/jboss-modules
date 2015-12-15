@@ -47,46 +47,4 @@ final class StreamUtil {
             closeable.close();
         } catch (Throwable ignored) {}
     }
-
-    // ZipFile didn't implement Closeable in 1.6
-    static void safeClose(ZipFile closeable) {
-        if (closeable != null) try {
-            closeable.close();
-        } catch (Throwable ignored) {}
-    }
-
-    static final void unzip(File src, File destDir) throws IOException {
-        final String absolutePath = destDir.getAbsolutePath();
-        final ZipFile zip = new ZipFile(src);
-
-        try {
-            final Enumeration<? extends ZipEntry> entries = zip.entries();
-
-            while (entries.hasMoreElements()) {
-                final ZipEntry entry = entries.nextElement();
-                if (entry.isDirectory()) {
-                    continue;
-                }
-
-                final File fp = new File(absolutePath, PathUtils.canonicalize(PathUtils.relativize(entry.getName())));
-                final File parent = fp.getParentFile();
-                if (! parent.exists()) {
-                    parent.mkdirs();
-                }
-                final InputStream is = zip.getInputStream(entry);
-                try {
-                    final FileOutputStream os = new FileOutputStream(fp);
-                    try {
-                        copy(is, os);
-                    } finally {
-                        safeClose(os);
-                    }
-                } finally {
-                    safeClose(is);
-                }
-            }
-        } finally {
-            safeClose(zip);
-        }
-    }
 }

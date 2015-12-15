@@ -31,6 +31,7 @@ import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import org.jboss.modules.filter.MultiplePathFilterBuilder;
 import org.jboss.modules.filter.PathFilters;
+import org.jboss.modules.xml.ModuleXmlParser;
 
 /**
  * A module finder which uses a JAR file as a module repository.
@@ -149,11 +150,7 @@ public final class JarModuleFinder implements ModuleFinder {
             try {
                 InputStream inputStream = jarFile.getInputStream(moduleXmlEntry);
                 try {
-                    moduleSpec = ModuleXmlParser.parseModuleXml(new ModuleXmlParser.ResourceRootFactory() {
-                       public ResourceLoader createResourceLoader(final String rootPath, final String loaderPath, final String loaderName) throws IOException {
-                            return new JarFileResourceLoader(loaderName, jarFile, loaderPath);
-                        }
-                    }, basePath, inputStream, moduleXmlEntry.getName(), delegateLoader, identifier);
+                    moduleSpec = ModuleXmlParser.parseModuleXml((rootPath, loaderPath, loaderName) -> new JarFileResourceLoader(loaderName, jarFile, loaderPath), basePath, inputStream, moduleXmlEntry.getName(), delegateLoader, identifier);
                 } finally {
                     StreamUtil.safeClose(inputStream);
                 }

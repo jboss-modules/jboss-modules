@@ -28,9 +28,9 @@ import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import org.jboss.modules.filter.PathFilter;
 import org.jboss.modules.filter.PathFilters;
+import org.jboss.modules.xml.ModuleXmlParser;
 
 import static java.security.AccessController.doPrivileged;
-import static java.security.AccessController.getContext;
 
 /**
  * A module finder which locates module specifications which are stored in a local module
@@ -141,19 +141,17 @@ public final class LocalModuleFinder implements ModuleFinder {
         final String child = toPathString(identifier);
         if (pathFilter.accept(child)) {
             try {
-                return doPrivileged(new PrivilegedExceptionAction<ModuleSpec>() {
-                    public ModuleSpec run() throws Exception {
-                        for (File root : repoRoots) {
-                            final File file = new File(root, child);
-                            final File moduleXml = new File(file, "module.xml");
-                            if (moduleXml.exists()) {
-                                final ModuleSpec spec = ModuleXmlParser.parseModuleXml(delegateLoader, identifier, file, moduleXml, accessControlContext);
-                                if (spec == null) break;
-                                return spec;
-                            }
+                return doPrivileged((PrivilegedExceptionAction<ModuleSpec>) () -> {
+                    for (File root : repoRoots) {
+                        final File file = new File(root, child);
+                        final File moduleXml = new File(file, "module.xml");
+                        if (moduleXml.exists()) {
+                            final ModuleSpec spec = ModuleXmlParser.parseModuleXml(delegateLoader, identifier, file, moduleXml);
+                            if (spec == null) break;
+                            return spec;
                         }
-                        return null;
                     }
+                    return null;
                 }, accessControlContext);
             } catch (PrivilegedActionException e) {
                 try {
@@ -188,7 +186,7 @@ public final class LocalModuleFinder implements ModuleFinder {
             final File file = new File(root, child);
             final File moduleXml = new File(file, "module.xml");
             if (moduleXml.exists()) {
-                final ModuleSpec spec = ModuleXmlParser.parseModuleXml(delegateLoader, identifier, file, moduleXml, getContext());
+                final ModuleSpec spec = ModuleXmlParser.parseModuleXml(delegateLoader, identifier, file, moduleXml);
                 if (spec == null) break;
                 return spec;
             }
