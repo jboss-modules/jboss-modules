@@ -195,7 +195,19 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
 
         log.trace("Class %s not found from %s", className, module);
 
-        throw new ClassNotFoundException(className + " from [" + module + "]");
+        throw new ClassNotFoundException(getClassNotFoundExceptionMessage(className, module));
+    }
+
+    /**
+     * Returns an exception message used when producing instances of ClassNotFoundException. This can be overridden
+     * by subclasses to customise the error message.
+     *
+     * @param className the name of the class which is missing
+     * @param fromModule the module from which the class could not be found
+     * @return an exception message used when producing instances of ClassNotFoundException
+     */
+    protected String getClassNotFoundExceptionMessage(String className, Module fromModule){
+        return className + " from [" + fromModule + "]";
     }
 
     /**
