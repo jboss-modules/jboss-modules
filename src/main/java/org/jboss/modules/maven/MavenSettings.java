@@ -29,12 +29,10 @@ import static org.jboss.modules.xml.XmlPullParser.START_TAG;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.UndeclaredThrowableException;
-import java.nio.file.*;
-import java.security.AccessControlContext;
-import java.security.AccessController;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -52,7 +50,7 @@ final class MavenSettings {
 
     private static volatile MavenSettings mavenSettings;
 
-    private Path localRepository;
+    private Path localRepository = null;
     private final List<String> remoteRepositories = new LinkedList<>();
     private final Map<String, Profile> profiles = new HashMap<>();
     private final List<String> activeProfileNames = new LinkedList<>();
@@ -135,7 +133,7 @@ final class MavenSettings {
                     switch (reader.getName()) {
                         case "localRepository": {
                             String localRepository = reader.nextText();
-                            if (!"".equals(localRepository)) {
+                            if (localRepository != null && !localRepository.trim().isEmpty()) {
                                 mavenSettings.setLocalRepository(Paths.get(localRepository));
                             }
                             break;
@@ -264,7 +262,7 @@ final class MavenSettings {
         //always add maven central
         remoteRepositories.add("https://repo1.maven.org/maven2/");
         String localRepositoryPath = System.getProperty("local.maven.repo.path");
-        if (localRepositoryPath != null) {
+        if (localRepositoryPath != null && !localRepositoryPath.trim().isEmpty()) {
             System.out.println("Please use 'maven.repo.local' instead of 'local.maven.repo.path'");
             localRepository = java.nio.file.Paths.get(localRepositoryPath.split(File.pathSeparator)[0]);
         }
@@ -275,10 +273,12 @@ final class MavenSettings {
         }
         String remoteRepository = System.getProperty("remote.maven.repo");
         if (remoteRepository != null) {
-            if (!remoteRepository.endsWith("/")) {
-                remoteRepository += "/";
+            for (String repo : remoteRepository.split(",")) {
+                if (!repo.endsWith("/")) {
+                    repo += "/";
+                }
+                remoteRepositories.add(repo);
             }
-            remoteRepositories.add(remoteRepository);
         }
     }
 
