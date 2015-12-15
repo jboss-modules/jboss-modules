@@ -57,6 +57,7 @@ import org.jboss.modules.ResourceLoaders;
 import org.jboss.modules.filter.MultiplePathFilterBuilder;
 import org.jboss.modules.filter.PathFilter;
 import org.jboss.modules.filter.PathFilters;
+import org.jboss.modules.maven.MavenResolver;
 import org.jboss.modules.security.FactoryPermissionCollection;
 import org.jboss.modules.security.ModularPermissionFactory;
 import org.jboss.modules.security.PermissionFactory;
@@ -200,11 +201,29 @@ public final class ModuleXmlParser {
      * @throws IOException if I/O fails
      */
     public static ModuleSpec parseModuleXml(final ResourceRootFactory factory, final String rootPath, InputStream source, final String moduleInfoFile, final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier) throws ModuleLoadException, IOException {
+        return parseModuleXml(factory, MavenResolver.createDefaultResolver(), rootPath, source, moduleInfoFile, moduleLoader, moduleIdentifier);
+    }
+
+    /**
+     * Parse a {@code module.xml} file.
+     *
+     * @param factory the resource root factory to use (must not be {@code null})
+     * @param mavenResolver the Maven artifact resolver to use (must not be {@code null})
+     * @param rootPath the root path to send in to the resource root factory (must not be {@code null})
+     * @param source a stream of the {@code module.xml} content (must not be {@code null})
+     * @param moduleInfoFile the {@code File} of the {@code module.xml} content (must not be {@code null})
+     * @param moduleLoader the module loader to use for dependency specifications (must not be {@code null})
+     * @param moduleIdentifier the module identifier of the module to load
+     * @return a module specification
+     * @throws ModuleLoadException if a dependency could not be established or another error occurs
+     * @throws IOException if I/O fails
+     */
+    public static ModuleSpec parseModuleXml(final ResourceRootFactory factory, final MavenResolver mavenResolver, final String rootPath, InputStream source, final String moduleInfoFile, final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier) throws ModuleLoadException, IOException {
         try {
             final MXParser parser = new MXParser();
             parser.setFeature(FEATURE_PROCESS_NAMESPACES, true);
             parser.setInput(source, null);
-            return parseDocument(factory, rootPath, parser, moduleLoader, moduleIdentifier);
+            return parseDocument(mavenResolver, factory, rootPath, parser, moduleLoader, moduleIdentifier);
         } catch (XmlPullParserException e) {
             throw new ModuleLoadException("Error loading module from " + moduleInfoFile, e);
         } finally {
@@ -305,20 +324,20 @@ public final class ModuleXmlParser {
         }
     }
 
-    private static ModuleSpec parseDocument(final ResourceRootFactory factory, final String rootPath, XmlPullParser reader, final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier) throws XmlPullParserException, IOException {
+    private static ModuleSpec parseDocument(final MavenResolver mavenResolver, final ResourceRootFactory factory, final String rootPath, XmlPullParser reader, final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier) throws XmlPullParserException, IOException {
         int eventType;
         for (;;) {
             eventType = reader.nextTag();
             switch (eventType) {
                 case START_DOCUMENT: {
-                    return parseRootElement(factory, rootPath, reader, moduleLoader, moduleIdentifier);
+                    return parseRootElement(mavenResolver, factory, rootPath, reader, moduleLoader, moduleIdentifier);
                 }
                 case START_TAG: {
                     final String element = reader.getName();
                     switch (element) {
                         case E_MODULE: {
                             final ModuleSpec.Builder specBuilder = ModuleSpec.build(moduleIdentifier);
-                            parseModuleContents(reader, factory, moduleLoader, moduleIdentifier, specBuilder, rootPath);
+                            parseModuleContents(mavenResolver, reader, factory, moduleLoader, moduleIdentifier, specBuilder, rootPath);
                             parseEndDocument(reader);
                             return specBuilder.create();
                         }
@@ -343,7 +362,7 @@ public final class ModuleXmlParser {
         }
     }
 
-    private static ModuleSpec parseRootElement(final ResourceRootFactory factory, final String rootPath, final XmlPullParser reader, final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier) throws XmlPullParserException, IOException {
+    private static ModuleSpec parseRootElement(final MavenResolver mavenResolver, final ResourceRootFactory factory, final String rootPath, final XmlPullParser reader, final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier) throws XmlPullParserException, IOException {
         assertNoAttributes(reader);
         int eventType;
         while ((eventType = reader.nextTag()) != END_DOCUMENT) {
@@ -354,7 +373,7 @@ public final class ModuleXmlParser {
                     switch (element) {
                         case E_MODULE: {
                             final ModuleSpec.Builder specBuilder = ModuleSpec.build(moduleIdentifier);
-                            parseModuleContents(reader, factory, moduleLoader, moduleIdentifier, specBuilder, rootPath);
+                            parseModuleContents(mavenResolver, reader, factory, moduleLoader, moduleIdentifier, specBuilder, rootPath);
                             parseEndDocument(reader);
                             return specBuilder.create();
                         }
@@ -464,7 +483,7 @@ public final class ModuleXmlParser {
         return permissions;
     }
 
-    private static void parseModuleContents(final XmlPullParser reader, final ResourceRootFactory factory, final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier, final ModuleSpec.Builder specBuilder, final String rootPath) throws XmlPullParserException, IOException {
+    private static void parseModuleContents(final MavenResolver mavenResolver, final XmlPullParser reader, final ResourceRootFactory factory, final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier, final ModuleSpec.Builder specBuilder, final String rootPath) throws XmlPullParserException, IOException {
         final int count = reader.getAttributeCount();
         String name = null;
         String slot = null;
@@ -513,7 +532,7 @@ public final class ModuleXmlParser {
                         case E_EXPORTS:      parseFilterList(reader, exportsBuilder); break;
                         case E_DEPENDENCIES: parseDependencies(reader, dependencies); break;
                         case E_MAIN_CLASS:   parseMainClass(reader, specBuilder); break;
-                        case E_RESOURCES:    parseResources(factory, rootPath, reader, specBuilder); break;
+                        case E_RESOURCES:    parseResources(mavenResolver, factory, rootPath, reader, specBuilder); break;
                         case E_PROPERTIES:   parseProperties(reader, specBuilder); break;
                         case E_PERMISSIONS:  parsePermissions(reader, moduleLoader, moduleIdentifier, specBuilder); gotPerms = true; break;
                         default: throw unexpectedContent(reader);
@@ -698,7 +717,7 @@ public final class ModuleXmlParser {
         parseNoContent(reader);
     }
 
-    private static void parseResources(final ResourceRootFactory factory, final String rootPath, final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
+    private static void parseResources(final MavenResolver mavenResolver, final ResourceRootFactory factory, final String rootPath, final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
         assertNoAttributes(reader);
         // xsd:choice
         int eventType;
@@ -717,11 +736,11 @@ public final class ModuleXmlParser {
                             break;
                         }
                         case E_ARTIFACT: {
-                            parseArtifact(reader, specBuilder);
+                            parseArtifact(mavenResolver, reader, specBuilder);
                             break;
                         }
                         case E_NATIVE_ARTIFACT: {
-                            parseNativeArtifact(reader, specBuilder);
+                            parseNativeArtifact(mavenResolver, reader, specBuilder);
                             break;
                         }
                         default: throw unexpectedContent(reader);
@@ -735,9 +754,9 @@ public final class ModuleXmlParser {
         }
     }
 
-    private static void createMavenNativeArtifactLoader(final String name, final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws IOException, XmlPullParserException
+    private static void createMavenNativeArtifactLoader(final MavenResolver mavenResolver, final String name, final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws IOException, XmlPullParserException
     {
-        File fp = MavenArtifactUtil.resolveJarArtifact(ArtifactCoordinates.fromString(name));
+        File fp = mavenResolver.resolveJarArtifact(ArtifactCoordinates.fromString(name));
         if (fp == null) throw new XmlPullParserException(String.format("Failed to resolve native artifact '%s'", name), reader, null);
         File lib = new File(fp.getParentFile(), "lib");
         if (!lib.exists()) {
@@ -747,7 +766,7 @@ public final class ModuleXmlParser {
         specBuilder.addResourceRoot(ResourceLoaderSpec.createResourceLoaderSpec(new NativeLibraryResourceLoader(lib), PathFilters.rejectAll()));
     }
 
-    private static void parseNativeArtifact(final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
+    private static void parseNativeArtifact(final MavenResolver mavenResolver, final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
         String name = null;
         final Set<String> required = new HashSet<>(LIST_A_NAME);
         final int count = reader.getAttributeCount();
@@ -770,7 +789,7 @@ public final class ModuleXmlParser {
             switch (eventType) {
                 case END_TAG: {
                     try {
-                        createMavenNativeArtifactLoader(name, reader, specBuilder);
+                        createMavenNativeArtifactLoader(mavenResolver, name, reader, specBuilder);
                     } catch (IOException e) {
                         throw new XmlPullParserException(String.format("Failed to add artifact '%s'", name), reader, e);
                     }
@@ -786,7 +805,7 @@ public final class ModuleXmlParser {
         }
     }
 
-    private static void parseArtifact(final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
+    private static void parseArtifact(final MavenResolver mavenResolver, final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
         String name = null;
         final Set<String> required = new HashSet<>(LIST_A_NAME);
         final int count = reader.getAttributeCount();
@@ -813,7 +832,7 @@ public final class ModuleXmlParser {
             switch (eventType) {
                 case END_TAG: {
                     try {
-                        resourceLoader = MavenArtifactUtil.createMavenArtifactLoader(name);
+                        resourceLoader = MavenArtifactUtil.createMavenArtifactLoader(mavenResolver, name);
                     } catch (IOException e) {
                         throw new XmlPullParserException(String.format("Failed to add artifact '%s'", name), reader, e);
                     }

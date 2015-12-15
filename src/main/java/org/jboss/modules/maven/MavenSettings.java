@@ -18,17 +18,40 @@
 
 package org.jboss.modules.maven;
 
+import static org.jboss.modules.maven.MavenArtifactUtil.doIo;
+import static org.jboss.modules.xml.ModuleXmlParser.endOfDocument;
+import static org.jboss.modules.xml.ModuleXmlParser.unexpectedContent;
+import static org.jboss.modules.xml.XmlPullParser.END_DOCUMENT;
+import static org.jboss.modules.xml.XmlPullParser.END_TAG;
+import static org.jboss.modules.xml.XmlPullParser.FEATURE_PROCESS_NAMESPACES;
+import static org.jboss.modules.xml.XmlPullParser.START_TAG;
+
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.UndeclaredThrowableException;
 import java.nio.file.*;
+import java.security.AccessControlContext;
+import java.security.AccessController;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.jboss.modules.xml.MXParser;
+import org.jboss.modules.xml.XmlPullParser;
+import org.jboss.modules.xml.XmlPullParserException;
+
 /**
  * @author Tomaz Cerar (c) 2014 Red Hat Inc.
  */
 final class MavenSettings {
+    private static final Object settingLoaderMutex = new Object();
+
+    private static volatile MavenSettings mavenSettings;
+
     private Path localRepository;
     private final List<String> remoteRepositories = new LinkedList<>();
     private final Map<String, Profile> profiles = new HashMap<>();
@@ -36,6 +59,205 @@ final class MavenSettings {
 
     MavenSettings() {
         configureDefaults();
+    }
+
+    static MavenSettings getSettings() throws IOException {
+        if (mavenSettings != null) {
+            return mavenSettings;
+        }
+        synchronized (settingLoaderMutex) {
+            if (mavenSettings != null) {
+                return mavenSettings;
+            }
+            return mavenSettings = doIo(() -> {
+                MavenSettings settings = new MavenSettings();
+
+                Path m2 = Paths.get(System.getProperty("user.home"), ".m2");
+                Path settingsPath = m2.resolve("settings.xml");
+
+                if (Files.notExists(settingsPath)) {
+                    String mavenHome = System.getenv("M2_HOME");
+                    if (mavenHome != null) {
+                        settingsPath = Paths.get(mavenHome, "conf", "settings.xml");
+                    }
+                }
+                if (Files.exists(settingsPath)) {
+                    parseSettingsXml(settingsPath, settings);
+                }
+                if (settings.getLocalRepository() == null) {
+                    Path repository = m2.resolve("repository");
+                    settings.setLocalRepository(repository);
+                }
+                settings.resolveActiveSettings();
+                return settings;
+            });
+        }
+    }
+
+    static MavenSettings parseSettingsXml(Path settings, MavenSettings mavenSettings) throws IOException {
+        try {
+            final MXParser reader = new MXParser();
+            reader.setFeature(FEATURE_PROCESS_NAMESPACES, false);
+            InputStream source = Files.newInputStream(settings, StandardOpenOption.READ);
+            reader.setInput(source, null);
+            int eventType;
+            while ((eventType = reader.next()) != END_DOCUMENT) {
+                switch (eventType) {
+                    case START_TAG: {
+                        switch (reader.getName()) {
+                            case "settings": {
+                                parseSettings(reader, mavenSettings);
+                                break;
+                            }
+                        }
+                    }
+                    default: {
+                        break;
+                    }
+                }
+            }
+            return mavenSettings;
+        } catch (XmlPullParserException e) {
+            throw new IOException("Could not parse maven settings.xml");
+        }
+
+    }
+
+    static void parseSettings(final XmlPullParser reader, MavenSettings mavenSettings) throws XmlPullParserException, IOException {
+        int eventType;
+        while ((eventType = reader.nextTag()) != END_DOCUMENT) {
+            switch (eventType) {
+                case END_TAG: {
+                    return;
+                }
+                case START_TAG: {
+
+                    switch (reader.getName()) {
+                        case "localRepository": {
+                            String localRepository = reader.nextText();
+                            if (!"".equals(localRepository)) {
+                                mavenSettings.setLocalRepository(Paths.get(localRepository));
+                            }
+                            break;
+                        }
+                        case "profiles": {
+                            while ((eventType = reader.nextTag()) != END_DOCUMENT) {
+                                if (eventType == START_TAG) {
+                                    switch (reader.getName()) {
+                                        case "profile": {
+                                            parseProfile(reader, mavenSettings);
+                                            break;
+                                        }
+                                    }
+                                } else {
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+                        case "activeProfiles": {
+                            while ((eventType = reader.nextTag()) != END_DOCUMENT) {
+                                if (eventType == START_TAG) {
+                                    switch (reader.getName()) {
+                                        case "activeProfile": {
+                                            mavenSettings.addActiveProfile(reader.nextText());
+                                            break;
+                                        }
+                                    }
+                                } else {
+                                    break;
+                                }
+
+                            }
+                            break;
+                        }
+                        default: {
+                            skip(reader);
+
+                        }
+                    }
+                    break;
+                }
+                default: {
+                    throw unexpectedContent(reader);
+                }
+            }
+        }
+        throw endOfDocument(reader);
+    }
+
+    static void parseProfile(final XmlPullParser reader, MavenSettings mavenSettings) throws XmlPullParserException, IOException {
+        int eventType;
+        Profile profile = new Profile();
+        while ((eventType = reader.nextTag()) != END_DOCUMENT) {
+            if (eventType == START_TAG) {
+                switch (reader.getName()) {
+                    case "id": {
+                        profile.setId(reader.nextText());
+                        break;
+                    }
+                    case "repositories": {
+                        while ((eventType = reader.nextTag()) != END_DOCUMENT) {
+                            if (eventType == START_TAG) {
+                                switch (reader.getName()) {
+                                    case "repository": {
+                                        parseRepository(reader, profile);
+                                        break;
+                                    }
+                                }
+                            } else {
+                                break;
+                            }
+
+                        }
+                        break;
+                    }
+                    default: {
+                        skip(reader);
+                    }
+                }
+            } else {
+                break;
+            }
+        }
+        mavenSettings.addProfile(profile);
+    }
+
+    static void parseRepository(final XmlPullParser reader, Profile profile) throws XmlPullParserException, IOException {
+        int eventType;
+        while ((eventType = reader.nextTag()) != END_DOCUMENT) {
+            if (eventType == START_TAG) {
+                switch (reader.getName()) {
+                    case "url": {
+                        profile.addRepository(reader.nextText());
+                        break;
+                    }
+                    default: {
+                        skip(reader);
+                    }
+                }
+            } else {
+                break;
+            }
+
+        }
+    }
+
+    static void skip(XmlPullParser parser) throws XmlPullParserException, IOException {
+        if (parser.getEventType() != XmlPullParser.START_TAG) {
+            throw new IllegalStateException();
+        }
+        int depth = 1;
+        while (depth != 0) {
+            switch (parser.next()) {
+                case XmlPullParser.END_TAG:
+                    depth--;
+                    break;
+                case XmlPullParser.START_TAG:
+                    depth++;
+                    break;
+            }
+        }
     }
 
     void configureDefaults() {
