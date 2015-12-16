@@ -46,7 +46,7 @@ class CallerContext {
     });
 
     static Class<?> getCallingClass() {
-        Class<?> stack[] = hack.getClassContext();
+        Class<?>[] stack = hack.getClassContext();
         int i = 3;
         while (stack[i] == stack[2]) {
             // skip nested calls front the same class

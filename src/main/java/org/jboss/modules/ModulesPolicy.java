@@ -43,7 +43,7 @@ final class ModulesPolicy extends Policy {
         return permissions;
     }
 
-    public ModulesPolicy(final Policy policy) {
+    ModulesPolicy(final Policy policy) {
         this.policy = policy;
     }
 

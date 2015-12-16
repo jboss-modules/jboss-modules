@@ -43,7 +43,7 @@ public class JarResourceLoaderTest extends AbstractResourceLoaderTestCase {
         File fileResourceRoot = getResource("test/fileresourceloader");
         // Copy the classfile over
         copyResource("org/jboss/modules/test/TestClass.class", "test/fileresourceloader", "org/jboss/modules/test");
-        
+
         // Build a jar to match the fileresource loader
         final File outputFile = new File(getResource("test"), "jarresourceloader/test.jar");
         outputFile.getParentFile().mkdirs();

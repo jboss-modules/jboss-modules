@@ -52,7 +52,7 @@ final class UnlockedReadHashMap<K, V> extends AbstractMap<K, V> implements Concu
     // Raw fields (reads and writes protected by {@link #writeLock}
     private int threshold;
 
-    public UnlockedReadHashMap(int initialCapacity, final float loadFactor) {
+    UnlockedReadHashMap(int initialCapacity, final float loadFactor) {
         if (initialCapacity < 0) {
             throw new IllegalArgumentException("Initial capacity must be > 0");
         }
@@ -76,15 +76,15 @@ final class UnlockedReadHashMap<K, V> extends AbstractMap<K, V> implements Concu
         }
     }
 
-    public UnlockedReadHashMap(final float loadFactor) {
+    UnlockedReadHashMap(final float loadFactor) {
         this(DEFAULT_INITIAL_CAPACITY, loadFactor);
     }
 
-    public UnlockedReadHashMap(final int initialCapacity) {
+    UnlockedReadHashMap(final int initialCapacity) {
         this(initialCapacity, DEFAULT_LOAD_FACTOR);
     }
 
-    public UnlockedReadHashMap() {
+    UnlockedReadHashMap() {
         this(DEFAULT_INITIAL_CAPACITY, DEFAULT_LOAD_FACTOR);
     }
 

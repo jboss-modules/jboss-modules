@@ -1107,7 +1107,6 @@ public interface XmlPullParser {
      */
     int nextTag() throws XmlPullParserException, IOException;
 
-    
 //    /**
 //     * Skip sub tree on which the parser is currently positioned on.
 //     * <br>NOTE: parser must be on START_TAG and when function returns
@@ -1128,6 +1127,4 @@ public interface XmlPullParser {
 //     * </code>
 //     */
 //    public void skipSubTree() throws XmlPullParserException, IOException;
-    
 }
-

@@ -18,7 +18,6 @@
 
 package org.jboss.modules.security;
 
-import java.lang.reflect.Constructor;
 import java.security.Permission;
 
 /**

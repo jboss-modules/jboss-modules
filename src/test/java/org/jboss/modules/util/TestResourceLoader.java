@@ -39,7 +39,6 @@ import java.util.jar.Manifest;
 
 import static org.junit.Assert.assertTrue;
 import static org.jboss.modules.util.Util.getClassBytes;
-import static org.junit.Assert.assertTrue;
 
 /**
  * A test resource loader that simple retrieves resources frm maps.  This allows tests to build

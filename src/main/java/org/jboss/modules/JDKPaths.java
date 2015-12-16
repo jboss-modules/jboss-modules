@@ -113,7 +113,7 @@ final class JDKPaths {
             } else {
                 String packagePath = entry.getParent();
                 if (packagePath != null) {
-                    packagePath = packagePath.substring(pathBase.length()).replace('\\', '/');;
+                    packagePath = packagePath.substring(pathBase.length()).replace('\\', '/');
                     if(packagePath.startsWith("/")) {
                         packagePath = packagePath.substring(1);
                     }

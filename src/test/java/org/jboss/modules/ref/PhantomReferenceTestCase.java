@@ -32,7 +32,7 @@ import org.junit.Test;
 
 /**
  * Test for PhantomReference.
- * 
+ *
  * @author <a href="mailto:flavia.rainone@jboss.com">Flavia Rainone</a>
  * @see PhantomReference
  */

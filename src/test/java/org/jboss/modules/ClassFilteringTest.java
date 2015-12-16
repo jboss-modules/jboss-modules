@@ -36,7 +36,7 @@ import static org.jboss.modules.util.TestResourceLoader.TestResourceLoaderBuilde
 
 /**
  * [MODULES-69] Allow for OSGi style Class Filtering
- * 
+ *
  * @author Thomas.Diesler@jboss.com
  * @since 28-Apr-2011
  */

@@ -89,7 +89,7 @@ class IdentityHashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable, Se
      */
     private transient int modCount;
 
-    public IdentityHashSet(int initialCapacity, float loadFactor) {
+    IdentityHashSet(int initialCapacity, float loadFactor) {
         if (initialCapacity < 0)
             throw new IllegalArgumentException("Can not have a negative size table!");
 
@@ -104,7 +104,7 @@ class IdentityHashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable, Se
     }
 
     @SuppressWarnings("unchecked")
-    public IdentityHashSet(Set<? extends E> set) {
+    IdentityHashSet(Set<? extends E> set) {
         if (set instanceof IdentityHashSet) {
             IdentityHashSet<? extends E> fast = (IdentityHashSet<? extends E>) set;
             table = fast.table.clone();
@@ -120,7 +120,9 @@ class IdentityHashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable, Se
 
     private void init(int initialCapacity, float loadFactor) {
         int c = 1;
-        for (; c < initialCapacity; c <<= 1);
+        for (; c < initialCapacity; c <<= 1){
+            //
+        }
         threshold = (int) (c * loadFactor);
 
         // Include the load factor when sizing the table for the first time
@@ -132,11 +134,11 @@ class IdentityHashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable, Se
         table = new Object[c];
     }
 
-    public IdentityHashSet(int initialCapacity) {
+    IdentityHashSet(int initialCapacity) {
         this(initialCapacity, DEFAULT_LOAD_FACTOR);
     }
 
-    public IdentityHashSet() {
+    IdentityHashSet() {
         this(DEFAULT_CAPACITY);
     }
 
@@ -252,7 +254,9 @@ class IdentityHashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable, Se
                 size = MAXIMUM_CAPACITY;
 
             int length = table.length;
-            for (; length < size; length <<= 1);
+            for (; length < size; length <<= 1){
+
+            }
 
             resize(length);
         }
@@ -464,13 +468,13 @@ class IdentityHashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable, Se
         private int expectedCount = modCount;
         private int current = -1;
         private boolean hasNext;
-        Object table[] = IdentityHashSet.this.table;
+        Object[] table = IdentityHashSet.this.table;
 
         public boolean hasNext() {
             if (hasNext == true)
                 return true;
 
-            Object table[] = this.table;
+            Object[] table = this.table;
             for (int i = next; i < table.length; i++) {
                 if (table[i] != null) {
                     next = i;

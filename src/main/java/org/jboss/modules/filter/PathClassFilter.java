@@ -25,7 +25,7 @@ class PathClassFilter implements ClassFilter {
 
     private final PathFilter resourcePathFilter;
 
-    public PathClassFilter(final PathFilter resourcePathFilter) {
+    PathClassFilter(final PathFilter resourcePathFilter) {
         this.resourcePathFilter = resourcePathFilter;
     }
 

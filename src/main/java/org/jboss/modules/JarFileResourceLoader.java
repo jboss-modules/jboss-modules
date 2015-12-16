@@ -153,7 +153,9 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
                     a += res;
                 }
                 // consume remainder so that cert check doesn't fail in case of wonky JARs
-                while (is.read() != -1);
+                while (is.read() != -1) {
+                    //
+                }
                 // done
                 CodeSource codeSource = createCodeSource(entry);
                 is.close();
@@ -492,7 +494,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
         private final CodeSigner[] codeSigners;
         private final int hashCode;
 
-        public CodeSigners(final CodeSigner[] codeSigners) {
+        CodeSigners(final CodeSigner[] codeSigners) {
             this.codeSigners = codeSigners;
             hashCode = Arrays.hashCode(codeSigners);
         }

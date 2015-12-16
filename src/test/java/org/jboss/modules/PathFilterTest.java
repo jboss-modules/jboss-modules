@@ -28,7 +28,7 @@ import static org.junit.Assert.assertTrue;
 
 /**
  * Test to verify the PathFilter functionality.
- * 
+ *
  * @author John E. Bailey
  */
 public class PathFilterTest {

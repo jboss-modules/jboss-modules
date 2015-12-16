@@ -86,7 +86,7 @@ final class ModularURLStreamHandlerFactory implements URLStreamHandlerFactory {
 
     private ModularURLStreamHandlerFactory() {
     }
-    
+
     private URLStreamHandler locateHandler(final String protocol) {
         for (Module module : modules) {
             ServiceLoader<URLStreamHandlerFactory> loader = module.loadService(URLStreamHandlerFactory.class);
@@ -101,9 +101,9 @@ final class ModularURLStreamHandlerFactory implements URLStreamHandlerFactory {
                 }
             }
         }
-        
+
         return null;
-    } 
+    }
 
     public URLStreamHandler createURLStreamHandler(final String protocol) {
         final Set<String> set = reentered.get();

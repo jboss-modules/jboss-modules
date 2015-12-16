@@ -28,7 +28,7 @@ import java.net.URL;
 final class URLResource implements Resource {
     private final URL url;
 
-    public URLResource(final URL url) {
+    URLResource(final URL url) {
         this.url = url;
     }
 

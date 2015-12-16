@@ -29,7 +29,7 @@ import org.jboss.modules.ref.Reference;
 
 /**
  * Reaper used by tests.
- * 
+ *
  * @author <a href="mailto:flavia.rainone@jboss.com">Flavia Rainone</a>
  *
  */
@@ -66,7 +66,7 @@ public class TestReaper<T, A> implements Reaper<T, A>, Future<Reference<T, A>> {
     @Override
     public Reference<T, A> get() throws InterruptedException, ExecutionException {
         try {
-            return get(30l, TimeUnit.SECONDS);
+            return get(30L, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             throw new RuntimeException("Could not get reaped in 30 second timeout.");
         }

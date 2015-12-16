@@ -23,7 +23,7 @@ import org.junit.Test;
 
 /**
  * Test for {@link StrongReference}.
- * 
+ *
  * @author <a href="mailto:flavia.rainone@jboss.com">Flavia Rainone</a>
  */
 public class StrongReferenceTestCase extends AbstractReferenceTest{
