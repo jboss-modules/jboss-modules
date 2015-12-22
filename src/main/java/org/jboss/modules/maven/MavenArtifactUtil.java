@@ -86,43 +86,73 @@ public final class MavenArtifactUtil {
         String groupId = coordinates.getGroupId();
         String artifactId = coordinates.getArtifactId();
         String version = coordinates.getVersion();
-        final String coordinatesClassifier = coordinates.getClassifier();
-        String classifier = coordinatesClassifier.isEmpty() ? "" : "-" + coordinatesClassifier;
 
         String artifactRelativePath = relativeArtifactPath(File.separatorChar, groupId, artifactId, version);
         String artifactRelativeHttpPath = relativeArtifactPath('/', groupId, artifactId, version);
         final MavenSettings settings = MavenSettings.getSettings();
         final Path localRepository = settings.getLocalRepository();
+        final File localRepositoryFile = localRepository.toFile();
+
+        final String pomPath = artifactRelativePath + ".pom";
 
         // serialize artifact lookup because we want to prevent parallel download
         synchronized (artifactLock) {
-            String artifactPath = artifactRelativePath + classifier + "." + packaging;
-            Path fp = java.nio.file.Paths.get(localRepository.toString(), artifactPath);
-            if (Files.exists(fp)) {
-                return fp.toFile();
-            }
+            if ("pom".equals(packaging)) {
+                // ignore classifier
+                Path fp = localRepository.resolve(pomPath);
+                if (Files.exists(fp)) {
+                    return fp.toFile();
+                }
+                List<String> remoteRepos = settings.getRemoteRepositories();
+                if (remoteRepos.isEmpty()) {
+                    return null;
+                }
+                final File pomFile = new File(localRepositoryFile, pomPath);
+                for (String remoteRepository : remoteRepos) {
+                    try {
+                        String remotePomPath = remoteRepository + artifactRelativeHttpPath + ".pom";
+                        downloadFile(coordinates + ":" + packaging, remotePomPath, pomFile);
+                        if (pomFile.exists()) { //download successful
+                            return pomFile;
+                        }
+                    } catch (IOException e) {
+                        Module.getModuleLogger().trace(e, "Could not download '%s' from '%s' repository", artifactRelativePath, remoteRepository);
+                        // try next one
+                    }
+                }
+            } else {
+                final String coordinatesClassifier = coordinates.getClassifier();
+                String classifier = coordinatesClassifier.isEmpty() ? "" : "-" + coordinatesClassifier;
+                String artifactPath = artifactRelativePath + classifier + "." + packaging;
+                Path fp = localRepository.resolve(artifactPath);
+                if (Files.exists(fp)) {
+                    return fp.toFile();
+                }
 
-            List<String> remoteRepos = settings.getRemoteRepositories();
-            if (remoteRepos.isEmpty()) {
-                return null;
-            }
+                List<String> remoteRepos = settings.getRemoteRepositories();
+                if (remoteRepos.isEmpty()) {
+                    return null;
+                }
 
-            final File artifactFile = new File(localRepository.toFile(), artifactPath);
-            final File pomFile = new File(localRepository.toFile(), artifactRelativePath + ".pom");
-            for (String remoteRepository : remoteRepos) {
-                try {
-                    String remotePomPath = remoteRepository + artifactRelativeHttpPath + ".pom";
-                    String remoteArtifactPath = remoteRepository + artifactRelativeHttpPath + classifier + "." + packaging;
-                    if (! packaging.equals("pom")) {
+                final File artifactFile = new File(localRepositoryFile, artifactPath);
+                final File pomFile = new File(localRepositoryFile, pomPath);
+                for (String remoteRepository : remoteRepos) {
+                    try {
+                        String remotePomPath = remoteRepository + artifactRelativeHttpPath + ".pom";
+                        String remoteArtifactPath = remoteRepository + artifactRelativeHttpPath + classifier + "." + packaging;
                         downloadFile(coordinates + ":pom", remotePomPath, pomFile);
+                        if (! pomFile.exists()) {
+                            // no POM; skip it
+                            continue;
+                        }
+                        downloadFile(coordinates + ":" + packaging, remoteArtifactPath, artifactFile);
+                        if (artifactFile.exists()) { //download successful
+                            return artifactFile;
+                        }
+                    } catch (IOException e) {
+                        Module.getModuleLogger().trace(e, "Could not download '%s' from '%s' repository", artifactRelativePath, remoteRepository);
+                        //
                     }
-                    downloadFile(coordinates + ":" + packaging, remoteArtifactPath, artifactFile);
-                    if (artifactFile.exists()) { //download successful
-                        return artifactFile;
-                    }
-                } catch (IOException e) {
-                    Module.getModuleLogger().trace(e, "Could not download '%s' from '%s' repository", artifactRelativePath, remoteRepository);
-                    //
                 }
             }
             //could not find it in remote
