@@ -81,8 +81,10 @@ public class MavenResourceTest {
      * @throws Exception
      */
     @Test
-    @Ignore("Test artifact must exists in local repo but nowhere else, mostly meant for manual testing")
+    @Ignore("Test is mostly meant for manual testing, as snapshot are not parmanent")
     public void testCustomRepository() throws Exception {
-        MavenArtifactUtil.resolveJarArtifact(ArtifactCoordinates.fromString("org.wildfly:wildfly-clustering-infinispan:9.0.0.Alpha1-SNAPSHOT"));
+        File f = MavenArtifactUtil.resolveJarArtifact(ArtifactCoordinates.fromString("org.wildfly.core:wildfly-version:2.0.5.Final-20151222.144931-1"));
+        Assert.assertNotNull("Should resolve", f);
+        System.out.println("f = " + f);
     }
 }
