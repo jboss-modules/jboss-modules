@@ -49,7 +49,7 @@ import org.jboss.modules.ResourceLoaders;
  */
 public final class MavenArtifactUtil {
 
-    private static final Pattern snapshotPattern = Pattern.compile("-\\d{8}\\.\\d+-\\d+$");
+    private static final Pattern snapshotPattern = Pattern.compile("-\\d{8}\\.\\d{6}-\\d+$");
 
     static final Object artifactLock = new Object();
 
