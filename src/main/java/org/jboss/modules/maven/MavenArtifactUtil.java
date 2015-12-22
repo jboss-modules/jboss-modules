@@ -166,7 +166,7 @@ public final class MavenArtifactUtil {
         builder.append(separator).append(artifactId).append(separator);
         String pathVersion;
         final Matcher versionMatcher = snapshotPattern.matcher(version);
-        if (versionMatcher.lookingAt()) {
+        if (versionMatcher.find()) {
             // it's really a snapshot
             pathVersion = version.substring(0, versionMatcher.start()) + "-SNAPSHOT";
         } else {
