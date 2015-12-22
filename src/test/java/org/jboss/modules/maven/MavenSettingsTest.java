@@ -44,4 +44,15 @@ public class MavenSettingsTest {
         Assert.assertNull(settings.getLocalRepository());//local repo shouldn't be set
 
     }
+
+    /**
+     * testing is snapshot resolving works properly, as in case of snapshot version, we need to use different path than exact version.
+     * @throws Exception
+     */
+    @Test
+    public void testSnapshotResolving()throws Exception{
+        ArtifactCoordinates coordinates = ArtifactCoordinates.fromString("org.wildfly.core:wildfly-version:2.0.5.Final-20151222.144931-1");
+        String path = MavenArtifactUtil.relativeArtifactPath('/', coordinates.getGroupId(), coordinates.getArtifactId(), coordinates.getVersion());
+        Assert.assertEquals("org/wildfly/core/wildfly-version/2.0.5.Final-SNAPSHOT/wildfly-version-2.0.5.Final-20151222.144931-1", path);
+    }
 }
