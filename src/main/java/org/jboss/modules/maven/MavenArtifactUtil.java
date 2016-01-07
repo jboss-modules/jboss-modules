@@ -83,12 +83,8 @@ public final class MavenArtifactUtil {
      * @throws IOException if acquiring the artifact path failed for some reason
      */
     public static File resolveArtifact(final ArtifactCoordinates coordinates, final String packaging) throws IOException {
-        String groupId = coordinates.getGroupId();
-        String artifactId = coordinates.getArtifactId();
-        String version = coordinates.getVersion();
-
-        String artifactRelativePath = relativeArtifactPath(File.separatorChar, groupId, artifactId, version);
-        String artifactRelativeHttpPath = relativeArtifactPath('/', groupId, artifactId, version);
+        String artifactRelativePath = relativeArtifactPath(File.separatorChar, coordinates);
+        String artifactRelativeHttpPath = relativeArtifactPath('/', coordinates);
         final MavenSettings settings = MavenSettings.getSettings();
         final Path localRepository = settings.getLocalRepository();
         final File localRepositoryFile = localRepository.toFile();
@@ -161,8 +157,17 @@ public final class MavenArtifactUtil {
         }
     }
 
-    static String relativeArtifactPath(char separator, String groupId, String artifactId, String version) {
-        StringBuilder builder = new StringBuilder(groupId.replace('.', separator));
+    /**
+     * Create a relative repository path for the given artifact coordinates.
+     *
+     * @param separator the separator character to use (typically {@code '/'} or {@link File#separatorChar})
+     * @param artifactCoordinates the artifact coordinates (must not be {@code null})
+     * @return the path string
+     */
+    public static String relativeArtifactPath(char separator, ArtifactCoordinates artifactCoordinates) {
+        String artifactId = artifactCoordinates.getArtifactId();
+        String version = artifactCoordinates.getVersion();
+        StringBuilder builder = new StringBuilder(artifactCoordinates.getGroupId().replace('.', separator));
         builder.append(separator).append(artifactId).append(separator);
         String pathVersion;
         final Matcher versionMatcher = snapshotPattern.matcher(version);
