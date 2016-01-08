@@ -18,6 +18,7 @@
 
 package org.jboss.modules.maven;
 
+import java.io.File;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,6 +29,7 @@ import java.util.regex.Pattern;
  */
 public final class ArtifactCoordinates {
 
+    static final Pattern snapshotPattern = Pattern.compile("-\\d{8}\\.\\d{6}-\\d+$");
     private static final Pattern VALID_PATTERN = Pattern.compile("^([-_a-zA-Z0-9.]+):([-_a-zA-Z0-9.]+):([-_a-zA-Z0-9.]+)(?::([-_a-zA-Z0-9.]+))?$");
 
     private final String groupId;
@@ -116,6 +118,38 @@ public final class ArtifactCoordinates {
      */
     public String getClassifier() {
         return classifier;
+    }
+
+    /**
+     * Create a relative repository path for the given artifact coordinates.
+     *
+     * @param separator the separator character to use (typically {@code '/'} or {@link File#separatorChar})
+     * @return the path string
+     */
+    public String relativeArtifactPath(char separator) {
+        String artifactId1 = getArtifactId();
+        String version1 = getVersion();
+        StringBuilder builder = new StringBuilder(getGroupId().replace('.', separator));
+        builder.append(separator).append(artifactId1).append(separator);
+        String pathVersion;
+        final Matcher versionMatcher = snapshotPattern.matcher(version1);
+        if (versionMatcher.find()) {
+            // it's really a snapshot
+            pathVersion = version1.substring(0, versionMatcher.start()) + "-SNAPSHOT";
+        } else {
+            pathVersion = version1;
+        }
+        builder.append(pathVersion).append(separator).append(artifactId1).append('-').append(version1);
+        return builder.toString();
+    }
+
+    /**
+     * Create a relative repository path for the given artifact coordinates with a {@code '/'} separator.
+     *
+     * @return the path string
+     */
+    public String relativeArtifactPath() {
+        return relativeArtifactPath('/');
     }
 
     /**

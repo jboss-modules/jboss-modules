@@ -52,7 +52,7 @@ public class MavenSettingsTest {
     @Test
     public void testSnapshotResolving()throws Exception{
         ArtifactCoordinates coordinates = ArtifactCoordinates.fromString("org.wildfly.core:wildfly-version:2.0.5.Final-20151222.144931-1");
-        String path = MavenArtifactUtil.relativeArtifactPath('/', coordinates);
+        String path = coordinates.relativeArtifactPath('/');
         Assert.assertEquals("org/wildfly/core/wildfly-version/2.0.5.Final-SNAPSHOT/wildfly-version-2.0.5.Final-20151222.144931-1", path);
     }
 }

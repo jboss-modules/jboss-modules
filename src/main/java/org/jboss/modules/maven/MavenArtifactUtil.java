@@ -33,8 +33,6 @@ import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.List;
 import java.util.jar.JarFile;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.jboss.modules.Module;
 import org.jboss.modules.ResourceLoader;
@@ -48,8 +46,6 @@ import org.jboss.modules.ResourceLoaders;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class MavenArtifactUtil {
-
-    private static final Pattern snapshotPattern = Pattern.compile("-\\d{8}\\.\\d{6}-\\d+$");
 
     static final Object artifactLock = new Object();
 
@@ -83,8 +79,8 @@ public final class MavenArtifactUtil {
      * @throws IOException if acquiring the artifact path failed for some reason
      */
     public static File resolveArtifact(final ArtifactCoordinates coordinates, final String packaging) throws IOException {
-        String artifactRelativePath = relativeArtifactPath(File.separatorChar, coordinates);
-        String artifactRelativeHttpPath = relativeArtifactPath('/', coordinates);
+        String artifactRelativePath = coordinates.relativeArtifactPath(File.separatorChar);
+        String artifactRelativeHttpPath = coordinates.relativeArtifactPath('/');
         final MavenSettings settings = MavenSettings.getSettings();
         final Path localRepository = settings.getLocalRepository();
         final File localRepositoryFile = localRepository.toFile();
@@ -155,30 +151,6 @@ public final class MavenArtifactUtil {
             Module.getModuleLogger().trace("Could not find in any remote repository");
             return null;
         }
-    }
-
-    /**
-     * Create a relative repository path for the given artifact coordinates.
-     *
-     * @param separator the separator character to use (typically {@code '/'} or {@link File#separatorChar})
-     * @param artifactCoordinates the artifact coordinates (must not be {@code null})
-     * @return the path string
-     */
-    public static String relativeArtifactPath(char separator, ArtifactCoordinates artifactCoordinates) {
-        String artifactId = artifactCoordinates.getArtifactId();
-        String version = artifactCoordinates.getVersion();
-        StringBuilder builder = new StringBuilder(artifactCoordinates.getGroupId().replace('.', separator));
-        builder.append(separator).append(artifactId).append(separator);
-        String pathVersion;
-        final Matcher versionMatcher = snapshotPattern.matcher(version);
-        if (versionMatcher.find()) {
-            // it's really a snapshot
-            pathVersion = version.substring(0, versionMatcher.start()) + "-SNAPSHOT";
-        } else {
-            pathVersion = version;
-        }
-        builder.append(pathVersion).append(separator).append(artifactId).append('-').append(version);
-        return builder.toString();
     }
 
     static void downloadFile(String artifact, String src, File dest) throws IOException {
