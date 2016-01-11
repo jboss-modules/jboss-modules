@@ -1,5 +1,7 @@
 package org.jboss.modules.maven;
 
+import java.lang.reflect.Field;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
@@ -13,6 +15,12 @@ import org.junit.rules.TemporaryFolder;
  */
 public class MavenSettingsTest {
 
+    void clearCachedSettings() throws Exception {
+        Field mavenSettings = MavenSettings.class.getDeclaredField("mavenSettings");
+        mavenSettings.setAccessible(true);
+        mavenSettings.set(null, null);
+    }
+
     @Rule
     public TemporaryFolder tmpdir = new TemporaryFolder();
 
@@ -22,7 +30,7 @@ public class MavenSettingsTest {
         System.setProperty("remote.maven.repo", "http://repository.jboss.org/nexus/content/groups/public/,https://maven-central.storage.googleapis.com/");
 
         try {
-
+            clearCachedSettings();
             MavenSettings settings = MavenSettings.getSettings();
             List<String> remoteRepos = settings.getRemoteRepositories();
             Assert.assertTrue(remoteRepos.size() >= 3); //at least 3 must be present, other can come from settings.xml
@@ -33,6 +41,23 @@ public class MavenSettingsTest {
         } finally {
             System.clearProperty("maven.repo.local");
             System.clearProperty("remote.repository");
+        }
+    }
+
+    @Test
+    public void testWithEmptyPassedRepository() throws Exception {
+        Path userRepo = tmpdir.newFolder(".m2", "repository").toPath();
+        String userHome = System.getProperty("user.home");
+        System.setProperty("user.home", tmpdir.getRoot().getAbsolutePath());
+        System.setProperty("maven.repo.local", "");
+
+        try {
+            clearCachedSettings();
+            MavenSettings settings = MavenSettings.getSettings();
+            Assert.assertEquals(userRepo, settings.getLocalRepository());
+        } finally {
+            System.setProperty("user.home", userHome);
+            System.clearProperty("maven.repo.local");
         }
     }
 
