@@ -268,7 +268,7 @@ final class MavenSettings {
         }
 
         localRepositoryPath = System.getProperty("maven.repo.local");
-        if (localRepositoryPath != null) {
+        if (localRepositoryPath != null && !localRepositoryPath.trim().isEmpty()) {
             localRepository = java.nio.file.Paths.get(localRepositoryPath);
         }
         String remoteRepository = System.getProperty("remote.maven.repo");
