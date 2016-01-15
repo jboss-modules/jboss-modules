@@ -432,7 +432,7 @@ public class ModuleLoader {
         }
         final ModuleIdentifier id = module.getIdentifier();
         final FutureModule futureModule = moduleMap.get(id);
-        if (futureModule.module == module) {
+        if (futureModule != null && futureModule.module == module) {
             moduleMap.remove(id, futureModule);
         }
     }
@@ -645,8 +645,8 @@ public class ModuleLoader {
     private static final class FutureModule {
         private static final Object NOT_FOUND = new Object();
 
-        private final ModuleIdentifier identifier;
-        private volatile Object module;
+        final ModuleIdentifier identifier;
+        volatile Object module;
 
         FutureModule(final ModuleIdentifier identifier) {
             this.identifier = identifier;
