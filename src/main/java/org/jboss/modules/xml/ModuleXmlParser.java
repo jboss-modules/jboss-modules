@@ -1123,10 +1123,19 @@ public final class ModuleXmlParser {
         if (! required.isEmpty()) {
             throw missingAttributes(reader, required);
         }
-        list.add(new ModularPermissionFactory(moduleLoader, moduleIdentifier, permission, name, actions));
+        expandName(moduleLoader, moduleIdentifier, list, permission, name, actions);
 
         // consume remainder of element
         parseNoContent(reader);
+    }
+
+    private static void expandName(final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier,
+            final ArrayList<PermissionFactory> list, String permission, String name, String actions) {
+        String expandedName = PolicyExpander.expand(name);
+        //If a property can't be expanded in a permission entry that entry is ignored.
+        //https://docs.oracle.com/javase/8/docs/technotes/guides/security/PolicyFiles.html#PropertyExp
+        if(expandedName != null)
+            list.add(new ModularPermissionFactory(moduleLoader, moduleIdentifier, permission, expandedName, actions));
     }
 
     private static void parseNoContent(final XmlPullParser reader) throws XmlPullParserException, IOException {
