@@ -65,6 +65,7 @@ import org.jboss.modules.security.ModularPermissionFactory;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
  * @author <a href="mailto:flavia.rainone@jboss.com">Flavia Rainone</a>
+ * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  * @author Jason T. Greene
  * @author thomas.diesler@jboss.com
  *
@@ -1414,6 +1415,14 @@ public final class Module {
         } finally {
             moduleLoader.addLinkTime(Metrics.getCurrentCPUTime() - start - subtractTime);
         }
+    }
+
+    void remove() {
+        this.linkage = new Linkage(Linkage.State.REMOVED);
+    }
+
+    boolean isRemoved() {
+        return linkage.getState() == Linkage.State.REMOVED;
     }
 
     void relinkIfNecessary() throws ModuleLoadException {
