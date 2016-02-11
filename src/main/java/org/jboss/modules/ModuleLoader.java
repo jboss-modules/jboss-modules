@@ -64,6 +64,7 @@ import javax.management.ObjectName;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
+ * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  * @author Jason T. Greene
  *
  * @apiviz.landmark
@@ -276,7 +277,12 @@ public class ModuleLoader {
     protected final Module loadModuleLocal(ModuleIdentifier identifier) throws ModuleLoadException {
         FutureModule futureModule = moduleMap.get(identifier);
         if (futureModule != null) {
-            return futureModule.getModule();
+            Module fModule = futureModule.getModule();
+            if (fModule.isRemoved()) {
+                moduleMap.remove(identifier, futureModule); // clean up obsolete alias modules
+            } else {
+                return futureModule.getModule();
+            }
         }
 
         FutureModule newFuture = new FutureModule(identifier);
@@ -366,6 +372,8 @@ public class ModuleLoader {
         final ModuleIdentifier id = module.getIdentifier();
         final FutureModule futureModule = moduleMap.get(id);
         if (futureModule != null && futureModule.module == module) {
+            final Module fModule = (Module) futureModule.module;
+            fModule.remove();
             moduleMap.remove(id, futureModule);
         }
     }

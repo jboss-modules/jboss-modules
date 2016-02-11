@@ -30,6 +30,7 @@ import java.util.Map;
  * The linkage state of a module.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  */
 final class Linkage {
 
@@ -40,12 +41,17 @@ final class Linkage {
         UNLINKED,
         LINKING,
         LINKED,
+        REMOVED,
         ;
     }
 
     private final Dependency[] sourceList;
     private final State state;
     private final Map<String, List<LocalLoader>> allPaths;
+
+    Linkage(final State state) {
+        this(null, state, null);
+    }
 
     Linkage(final Dependency[] sourceList, final State state) {
         this(sourceList, state, Collections.<String, List<LocalLoader>>emptyMap());
