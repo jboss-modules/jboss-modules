@@ -27,6 +27,7 @@ import java.util.NoSuchElementException;
 import org.jboss.modules.filter.PathFilter;
 import org.jboss.modules.filter.PathFilters;
 import org.jboss.modules.log.ModuleLogger;
+import org.jboss.modules.security.ModularProtectionDomain;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -376,7 +377,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
             ProtectionDomain protectionDomain = map.get(codeSource);
             if (protectionDomain == null) {
                 final PermissionCollection permissions = module.getPermissionCollection();
-                protectionDomain = new ProtectionDomain(codeSource, permissions);
+                protectionDomain = new ModularProtectionDomain(codeSource, permissions, this);
                 map.put(codeSource, protectionDomain);
             }
             return protectionDomain;
