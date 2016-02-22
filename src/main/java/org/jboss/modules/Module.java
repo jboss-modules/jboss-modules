@@ -106,14 +106,15 @@ public final class Module {
                 }
             } while (nc != -1);
         }
-        systemPackages = list.toArray(list.toArray(new String[list.size()]));
+        final String[] noStrings = new String[0];
+        systemPackages = list.toArray(noStrings);
         final ListIterator<String> iterator = list.listIterator();
         // http://youtrack.jetbrains.net/issue/IDEA-72097
         //noinspection WhileLoopReplaceableByForEach
         while (iterator.hasNext()) {
             iterator.set(iterator.next().replace('.', '/'));
         }
-        systemPaths = list.toArray(list.toArray(new String[list.size()]));
+        systemPaths = list.toArray(noStrings);
 
         AccessController.doPrivileged(new PrivilegedAction<Void>() {
             public Void run() {
