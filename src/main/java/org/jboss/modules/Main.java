@@ -541,16 +541,9 @@ public final class Main {
         String versionString = "(unknown)";
         try (InputStream stream = Main.class.getResourceAsStream("version.properties")) {
             if (stream != null) try (InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
-                try {
-                    versionProps.load(reader);
-                    jarName = versionProps.getProperty("jarName", jarName);
-                    versionString = versionProps.getProperty("version", versionString);
-                } finally {
-                    try {
-                        reader.close();
-                    } catch (Throwable ignored) {
-                    }
-                }
+                versionProps.load(reader);
+                jarName = versionProps.getProperty("jarName", jarName);
+                versionString = versionProps.getProperty("version", versionString);
             }
         } catch (IOException ignored) {
         }
