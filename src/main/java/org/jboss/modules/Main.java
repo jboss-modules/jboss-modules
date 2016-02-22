@@ -28,18 +28,16 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
-import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.security.Policy;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.Iterator;
+import java.util.Properties;
 import java.util.ServiceLoader;
-import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.logging.LogManager;
 
-import java.util.jar.Manifest;
 import java.util.prefs.Preferences;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -538,29 +536,24 @@ public final class Main {
     private static final String VERSION_STRING;
 
     static {
-        final Enumeration<URL> resources;
+        Properties versionProps = new Properties();
         String jarName = "(unknown)";
         String versionString = "(unknown)";
-        try {
-            final ClassLoader classLoader = Main.class.getClassLoader();
-            resources = classLoader == null ? ModuleClassLoader.getSystemResources("META-INF/MANIFEST.MF") : classLoader.getResources("META-INF/MANIFEST.MF");
-            while (resources.hasMoreElements()) {
-                final URL url = resources.nextElement();
+        try (InputStream stream = Main.class.getResourceAsStream("version.properties")) {
+            if (stream != null) try (InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
                 try {
-                    final InputStream stream = url.openStream();
-                    if (stream != null) try {
-                        final Manifest manifest = new Manifest(stream);
-                        final Attributes mainAttributes = manifest.getMainAttributes();
-                        if (mainAttributes != null && "JBoss Modules".equals(mainAttributes.getValue("Specification-Title"))) {
-                            jarName = mainAttributes.getValue("Jar-Name");
-                            versionString = mainAttributes.getValue("Jar-Version");
-                        }
-                    } finally {
-                        StreamUtil.safeClose(stream);
+                    versionProps.load(reader);
+                    jarName = versionProps.getProperty("jarName", jarName);
+                    versionString = versionProps.getProperty("version", versionString);
+                } finally {
+                    try {
+                        reader.close();
+                    } catch (Throwable ignored) {
                     }
-                } catch (IOException ignored) {}
+                }
             }
-        } catch (IOException ignored) {}
+        } catch (IOException ignored) {
+        }
         JAR_NAME = jarName;
         VERSION_STRING = versionString;
     }
