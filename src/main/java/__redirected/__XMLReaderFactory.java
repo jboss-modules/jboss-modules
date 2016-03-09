@@ -20,6 +20,7 @@ package __redirected;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 
 import org.jboss.modules.ModuleIdentifier;
@@ -59,6 +60,18 @@ public final class __XMLReaderFactory implements XMLReader {
         // Work around the problem by using the System CL, although in the future we may want to just "inherit"
         // the environment's TCCL
         thread.setContextClassLoader(ClassLoader.getSystemClassLoader());
+        // MODULES-248: XMLReaderFactory fields tracking if jar files were already scanned needs to reset
+        // before and after switching class loader
+        try {
+            Field clsFromJar = XMLReaderFactory.class.getDeclaredField("_clsFromJar");
+            clsFromJar.setAccessible(true);
+            clsFromJar.set(XMLReaderFactory.class, null);
+            Field jarread = XMLReaderFactory.class.getDeclaredField("_jarread");
+            jarread.setAccessible(true);
+            jarread.setBoolean(XMLReaderFactory.class, false);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw __RedirectedUtils.wrapped(new RuntimeException(e.getMessage()), e);
+        }
         try {
             if (System.getProperty(SAX_DRIVER, "").equals(__XMLReaderFactory.class.getName())) {
                 System.clearProperty(SAX_DRIVER);
@@ -73,6 +86,16 @@ public final class __XMLReaderFactory implements XMLReader {
         } catch (SAXException e) {
              throw __RedirectedUtils.wrapped(new RuntimeException(e.getMessage()), e);
         } finally {
+            try {
+                Field clsFromJar = XMLReaderFactory.class.getDeclaredField("_clsFromJar");
+                clsFromJar.setAccessible(true);
+                clsFromJar.set(XMLReaderFactory.class, null);
+                Field jarread = XMLReaderFactory.class.getDeclaredField("_jarread");
+                jarread.setAccessible(true);
+                jarread.setBoolean(XMLReaderFactory.class, false);
+            } catch (NoSuchFieldException | IllegalAccessException e) {
+                throw __RedirectedUtils.wrapped(new RuntimeException(e.getMessage()), e);
+            }
             thread.setContextClassLoader(old);
         }
     }
