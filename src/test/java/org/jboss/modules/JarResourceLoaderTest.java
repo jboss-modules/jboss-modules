@@ -59,14 +59,14 @@ public class JarResourceLoaderTest extends AbstractResourceLoaderTestCase {
         Assert.assertEquals(entry.getSize(), resource.getSize());
     }
 
-    private void buildJar(final File source, final File targetFile) throws IOException {
+    static void buildJar(final File source, final File targetFile) throws IOException {
         final JarOutputStream target = new JarOutputStream(new FileOutputStream(targetFile));
         final String sourceBase = source.getPath();
         add(sourceBase, source, target);
         target.close();
     }
 
-    private void add(final String sourceBase, final File source, final JarOutputStream target) throws IOException {
+    private static void add(final String sourceBase, final File source, final JarOutputStream target) throws IOException {
         BufferedInputStream in = null;
         String entryName = source.getPath().replace(sourceBase, "").replace("\\", "/");
         if(entryName.startsWith("/"))

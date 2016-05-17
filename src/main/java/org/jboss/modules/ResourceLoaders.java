@@ -19,6 +19,7 @@
 package org.jboss.modules;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.security.AccessController;
 import java.util.jar.JarFile;
 import org.jboss.modules.filter.PathFilter;
@@ -125,5 +126,16 @@ public final class ResourceLoaders {
      */
     public static IterableResourceLoader createIterableFilteredResourceLoader(final PathFilter pathFilter, final IterableResourceLoader originalLoader) {
         return new FilteredIterableResourceLoader(pathFilter, originalLoader);
+    }
+
+    /**
+     * Create a NIO2 Path-backed iterable resource loader.
+     *
+     * @param name the name of the resource root
+     * @param path the root path of the resource loader
+     * @return the resource loader
+     */
+    public static IterableResourceLoader createPathResourceLoader(final String name, final Path path) {
+        return new PathResourceLoader(name, path);
     }
 }
