@@ -54,7 +54,7 @@ public abstract class AbstractResourceLoaderTestCase extends AbstractModuleTestC
     }
 
     protected abstract ResourceLoader createLoader(final PathFilter exportFilter) throws Exception;
-    protected abstract void assertResource(final Resource resource, final String fileName);
+    protected abstract void assertResource(final Resource resource, final String fileName) throws Exception;
 
     @Test
     public void testBasicResource() throws Exception {
