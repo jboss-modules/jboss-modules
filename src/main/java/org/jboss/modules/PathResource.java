@@ -19,10 +19,13 @@ package org.jboss.modules;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
+import java.lang.reflect.UndeclaredThrowableException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.AccessControlContext;
+
+import static org.jboss.modules.PathResourceLoader.doPrivilegedIfNeeded;
 
 /**
  * Java NIO Path-based Resource
@@ -32,9 +35,11 @@ import java.nio.file.Path;
 class PathResource implements Resource {
 
     private final Path path;
+    private final AccessControlContext context;
 
-    PathResource(Path path) {
+    PathResource(Path path, AccessControlContext context) {
         this.path = path;
+        this.context = context;
     }
 
     @Override
@@ -44,24 +49,32 @@ class PathResource implements Resource {
 
     @Override
     public URL getURL() {
-        try {
-            return path.toUri().toURL();
-        } catch (MalformedURLException e) {
-            throw new RuntimeException(e);
-        }
+        return doPrivilegedIfNeeded(context, () -> path.toUri().toURL());
     }
 
     @Override
     public InputStream openStream() throws IOException {
-        return Files.newInputStream(path);
+        try {
+            return doPrivilegedIfNeeded(context, () -> Files.newInputStream(path));
+        } catch (UndeclaredThrowableException e) {
+            if (e.getUndeclaredThrowable() instanceof IOException) {
+                throw (IOException) e.getUndeclaredThrowable();
+            } else {
+                throw e;
+            }
+        }
     }
 
     @Override
     public long getSize() {
         try {
-            return Files.size(path);
-        } catch (IOException e) {
-            return 0;
+            return doPrivilegedIfNeeded(context, () -> Files.size(path));
+        } catch (UndeclaredThrowableException e) {
+            if (e.getUndeclaredThrowable() instanceof IOException) {
+                return 0;
+            } else {
+                throw e;
+            }
         }
     }
 }
