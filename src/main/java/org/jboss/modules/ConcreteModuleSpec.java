@@ -41,8 +41,9 @@ public final class ConcreteModuleSpec extends ModuleSpec {
     private final ClassFileTransformer classFileTransformer;
     private final Map<String, String> properties;
     private final PermissionCollection permissionCollection;
+    private final Version version;
 
-    ConcreteModuleSpec(final ModuleIdentifier moduleIdentifier, final String mainClass, final AssertionSetting assertionSetting, final ResourceLoaderSpec[] resourceLoaders, final DependencySpec[] dependencies, final LocalLoader fallbackLoader, final ModuleClassLoaderFactory moduleClassLoaderFactory, final ClassFileTransformer classFileTransformer, final Map<String, String> properties, final PermissionCollection permissionCollection) {
+    ConcreteModuleSpec(final ModuleIdentifier moduleIdentifier, final String mainClass, final AssertionSetting assertionSetting, final ResourceLoaderSpec[] resourceLoaders, final DependencySpec[] dependencies, final LocalLoader fallbackLoader, final ModuleClassLoaderFactory moduleClassLoaderFactory, final ClassFileTransformer classFileTransformer, final Map<String, String> properties, final PermissionCollection permissionCollection, final Version version) {
         super(moduleIdentifier);
         this.mainClass = mainClass;
         this.assertionSetting = assertionSetting;
@@ -53,6 +54,7 @@ public final class ConcreteModuleSpec extends ModuleSpec {
         this.classFileTransformer = classFileTransformer;
         this.properties = properties;
         this.permissionCollection = permissionCollection;
+        this.version = version;
     }
 
     public String getMainClass() {
@@ -93,5 +95,9 @@ public final class ConcreteModuleSpec extends ModuleSpec {
 
     PermissionCollection getPermissionCollection() {
         return permissionCollection;
+    }
+
+    public Version getVersion() {
+        return version;
     }
 }
