@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A classloader which can delegate to multiple other classloaders without risk of deadlock.  A concurrent class loader
@@ -363,7 +364,7 @@ public abstract class ConcurrentClassLoader extends ClassLoader {
         return findClass(className, exportsOnly, resolve);
     }
 
-    private final UnlockedReadHashMap<String, Package> packages = new UnlockedReadHashMap<String, Package>(64);
+    private final ConcurrentHashMap<String, Package> packages = new ConcurrentHashMap<>();
 
     /**
      * Load a package which is visible to this class loader.
