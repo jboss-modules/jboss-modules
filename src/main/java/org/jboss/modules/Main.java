@@ -29,7 +29,12 @@ import java.io.PrintWriter;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
+import java.security.AccessControlContext;
 import java.security.Policy;
+import java.security.PrivilegedAction;
+import java.security.ProtectionDomain;
+import java.security.Provider;
+import java.security.Security;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -489,6 +494,16 @@ public final class Main {
             System.setProperty("javax.management.builder.initial", mbeanServerBuilderName);
             // Initialize the platform mbean server
             ManagementFactory.getPlatformMBeanServer();
+        }
+
+        final ServiceLoader<Provider> providerServiceLoader = ServiceLoader.load(Provider.class, bootClassLoader);
+        for (Provider provider : providerServiceLoader) {
+            final Class<? extends Provider> providerClass = provider.getClass();
+            // each provider needs permission to install itself
+            doPrivileged((PrivilegedAction<Void>) () -> {
+                Security.addProvider(provider);
+                return null;
+            }, new AccessControlContext(new ProtectionDomain[] { providerClass.getProtectionDomain() }));
         }
 
         ModuleLoader.installMBeanServer();
