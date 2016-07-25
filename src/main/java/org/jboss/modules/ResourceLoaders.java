@@ -136,6 +136,6 @@ public final class ResourceLoaders {
      * @return the resource loader
      */
     public static IterableResourceLoader createPathResourceLoader(final String name, final Path path) {
-        return new PathResourceLoader(name, path);
+        return new PathResourceLoader(name, path, AccessController.getContext());
     }
 }
