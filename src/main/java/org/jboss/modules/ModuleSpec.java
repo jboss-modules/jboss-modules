@@ -61,6 +61,7 @@ public abstract class ModuleSpec {
             private ModuleClassLoaderFactory moduleClassLoaderFactory;
             private ClassFileTransformer classFileTransformer;
             private PermissionCollection permissionCollection;
+            private Version version;
 
             @Override
             public Builder setFallbackLoader(final LocalLoader fallbackLoader) {
@@ -117,8 +118,14 @@ public abstract class ModuleSpec {
             }
 
             @Override
+            public Builder setVersion(Version version) {
+                this.version = version;
+                return this;
+            }
+
+            @Override
             public ModuleSpec create() {
-                return new ConcreteModuleSpec(moduleIdentifier, mainClass, assertionSetting, resourceLoaders.toArray(new ResourceLoaderSpec[resourceLoaders.size()]), dependencies.toArray(new DependencySpec[dependencies.size()]), fallbackLoader, moduleClassLoaderFactory, classFileTransformer, properties, permissionCollection);
+                return new ConcreteModuleSpec(moduleIdentifier, mainClass, assertionSetting, resourceLoaders.toArray(new ResourceLoaderSpec[resourceLoaders.size()]), dependencies.toArray(new DependencySpec[dependencies.size()]), fallbackLoader, moduleClassLoaderFactory, classFileTransformer, properties, permissionCollection, version);
             }
 
             @Override
@@ -261,6 +268,14 @@ public abstract class ModuleSpec {
          * @return this builder
          */
         ModuleSpec.Builder setPermissionCollection(PermissionCollection permissionCollection);
+
+        /**
+         * Set the version for this module specification, or {@code null} to set no version for this module.
+         *
+         * @param version the module version
+         * @return this builder
+         */
+        ModuleSpec.Builder setVersion(Version version);
     }
 
     /**

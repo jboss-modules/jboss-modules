@@ -43,6 +43,7 @@ import java.util.zip.ZipFile;
 
 import org.jboss.modules.AssertionSetting;
 import org.jboss.modules.DependencySpec;
+import org.jboss.modules.Version;
 import org.jboss.modules.maven.ArtifactCoordinates;
 import org.jboss.modules.maven.MavenArtifactUtil;
 import org.jboss.modules.ModuleIdentifier;
@@ -100,6 +101,7 @@ public final class ModuleXmlParser {
     private static final String MODULE_1_3 = "urn:jboss:module:1.3";
     // there is no 1.4
     private static final String MODULE_1_5 = "urn:jboss:module:1.5";
+    private static final String MODULE_1_6 = "urn:jboss:module:1.6";
 
     private static final String E_MODULE = "module";
     private static final String E_ARTIFACT = "artifact";
@@ -136,6 +138,7 @@ public final class ModuleXmlParser {
     private static final String A_VALUE = "value";
     private static final String A_PERMISSION = "permission";
     private static final String A_ACTIONS = "actions";
+    private static final String A_VERSION = "version";
 
     private static final String D_NONE = "none";
     private static final String D_IMPORT = "import";
@@ -306,6 +309,7 @@ public final class ModuleXmlParser {
             case MODULE_1_2:
             case MODULE_1_3:
             case MODULE_1_5:
+            case MODULE_1_6:
                 break;
             default: throw unexpectedContent(reader);
         }
@@ -487,6 +491,7 @@ public final class ModuleXmlParser {
         final int count = reader.getAttributeCount();
         String name = null;
         String slot = null;
+        Version version = null;
         final Set<String> required = new HashSet<>(LIST_A_NAME);
         for (int i = 0; i < count; i ++) {
             validateAttributeNamespace(reader, i);
@@ -495,6 +500,13 @@ public final class ModuleXmlParser {
             switch (attribute) {
                 case A_NAME:    name = reader.getAttributeValue(i); break;
                 case A_SLOT:    slot = reader.getAttributeValue(i); break;
+                case A_VERSION:
+                    try {
+                        version = Version.parse(reader.getAttributeValue(i));
+                        break;
+                    } catch (IllegalArgumentException ex) {
+                        throw new XmlPullParserException(ex.getMessage(), reader, ex);
+                    }
                 default: throw unknownAttribute(reader, i);
             }
         }
@@ -504,6 +516,7 @@ public final class ModuleXmlParser {
         if (! specBuilder.getIdentifier().equals(ModuleIdentifier.create(name, slot))) {
             throw invalidModuleName(reader, specBuilder.getIdentifier());
         }
+        specBuilder.setVersion(version);
         // xsd:all
         MultiplePathFilterBuilder exportsBuilder = PathFilters.multiplePathFilterBuilder(true);
         ArrayList<DependencySpec> dependencies = new ArrayList<>();

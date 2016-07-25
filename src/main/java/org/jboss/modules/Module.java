@@ -198,6 +198,10 @@ public final class Module {
      * The assigned permission collection.
      */
     private final PermissionCollection permissionCollection;
+    /**
+     * The (optional) module version.
+     */
+    private final Version version;
 
     // mutable properties
 
@@ -241,6 +245,7 @@ public final class Module {
         this.moduleClassLoader = moduleClassLoader;
         final Map<String, String> properties = spec.getProperties();
         this.properties = properties.isEmpty() ? Collections.<String, String>emptyMap() : new LinkedHashMap<String, String>(properties);
+        this.version = spec.getVersion();
     }
 
     private static PermissionCollection noPermissions() {
@@ -925,13 +930,30 @@ public final class Module {
     }
 
     /**
+     * Get the module version.
+     *
+     * @return the module version, or {@code null} if none was set
+     */
+    public Version getVersion() {
+        return version;
+    }
+
+    /**
      * Get the string representation of this module.
      *
      * @return the string representation
      */
     @Override
     public String toString() {
-        return "Module \"" + identifier + "\"" + " from " + moduleLoader.toString();
+        StringBuilder b = new StringBuilder();
+        b.append("Module \"");
+        b.append(identifier);
+        b.append("\"");
+        if (version != null) {
+            b.append(" version ").append(version);
+        }
+        b.append(" from ").append(moduleLoader);
+        return b.toString();
     }
 
     /**

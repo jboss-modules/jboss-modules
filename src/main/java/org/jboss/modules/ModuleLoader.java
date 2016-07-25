@@ -38,6 +38,7 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -83,7 +84,7 @@ public class ModuleLoader {
      */
     public static final ModuleFinder[] NO_FINDERS = new ModuleFinder[0];
 
-    private final ConcurrentMap<ModuleIdentifier, FutureModule> moduleMap = new UnlockedReadHashMap<ModuleIdentifier, FutureModule>(256);
+    private final ConcurrentMap<ModuleIdentifier, FutureModule> moduleMap = new ConcurrentHashMap<>();
     private final ModuleFinder[] finders;
 
     private final boolean canRedefine;
