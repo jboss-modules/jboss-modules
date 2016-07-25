@@ -68,19 +68,15 @@ class PathResourceLoader extends AbstractResourceLoader implements IterableResou
         manifest = readManifestFile(manifestFile);
 
         try {
-            codeSource = doPrivilegedIfNeeded(context, () -> new CodeSource(root.toUri().toURL(), (CodeSigner[]) null));
-        } catch (UndeclaredThrowableException e) {
-            if (e.getUndeclaredThrowable() instanceof MalformedURLException) {
-                throw new IllegalArgumentException("Invalid root file specified", e);
-            } else {
-                throw e;
-            }
+            codeSource = doPrivilegedIfNeeded(context, MalformedURLException.class, () -> new CodeSource(root.toUri().toURL(), (CodeSigner[]) null));
+        } catch (MalformedURLException e) {
+            throw new IllegalArgumentException("Invalid root file specified", e);
         }
     }
 
     private Manifest readManifestFile(final Path manifestFile) {
         try {
-            return doPrivilegedIfNeeded(context, () -> {
+            return doPrivilegedIfNeeded(context, IOException.class, () -> {
                 if (Files.isDirectory(manifestFile)) {
                     return null;
                 }
@@ -89,12 +85,8 @@ class PathResourceLoader extends AbstractResourceLoader implements IterableResou
                     return new Manifest(is);
                 }
             });
-        } catch (UndeclaredThrowableException e) {
-            if (e.getUndeclaredThrowable() instanceof IOException) {
-                return null;
-            } else {
-                throw e;
-            }
+        } catch (IOException e) {
+            return null;
         }
     }
 
@@ -119,37 +111,21 @@ class PathResourceLoader extends AbstractResourceLoader implements IterableResou
     public ClassSpec getClassSpec(final String fileName) throws IOException {
         final Path file = root.resolve(fileName);
 
-        try {
-            return doPrivilegedIfNeeded(context, () -> {
-                if (!Files.exists(file)) {
-                    return null;
-                }
-                final ClassSpec spec = new ClassSpec();
-                spec.setCodeSource(codeSource);
-                spec.setBytes(Files.readAllBytes(file));
-                return spec;
-            });
-        } catch (UndeclaredThrowableException e) {
-            if (e.getUndeclaredThrowable() instanceof IOException) {
-                throw (IOException) e.getUndeclaredThrowable();
-            } else {
-                throw e;
+        return doPrivilegedIfNeeded(context, IOException.class, () -> {
+            if (!Files.exists(file)) {
+                return null;
             }
-        }
+            final ClassSpec spec = new ClassSpec();
+            spec.setCodeSource(codeSource);
+            spec.setBytes(Files.readAllBytes(file));
+            return spec;
+        });
     }
 
     @Override
     public PackageSpec getPackageSpec(final String name) throws IOException {
-        try {
-            URL rootUrl = doPrivilegedIfNeeded(context, () -> root.toUri().toURL());
-            return getPackageSpec(name, manifest, rootUrl);
-        } catch (UndeclaredThrowableException e) {
-            if (e.getUndeclaredThrowable() instanceof IOException) {
-                throw (IOException) e.getUndeclaredThrowable();
-            } else {
-                throw e;
-            }
-        }
+        URL rootUrl = doPrivilegedIfNeeded(context, IOException.class, () -> root.toUri().toURL());
+        return getPackageSpec(name, manifest, rootUrl);
     }
 
     @Override
@@ -182,27 +158,21 @@ class PathResourceLoader extends AbstractResourceLoader implements IterableResou
         try {
             final String separator = root.getFileSystem().getSeparator();
 
-            return doPrivilegedIfNeeded(context, () -> {
-                return Files.walk(root)
-                        .filter(Files::isDirectory)
-                        .map(dir -> {
-                            final String result = root.relativize(dir).toString();
+            return doPrivilegedIfNeeded(context, IOException.class, () -> Files.walk(root)
+                    .filter(Files::isDirectory)
+                    .map(dir -> {
+                        final String result = root.relativize(dir).toString();
 
-                            // JBoss modules expect folders not to end with a slash, so we have to strip it.
-                            if (result.endsWith(separator)) {
-                                return result.substring(0, result.length() - separator.length());
-                            } else {
-                                return result;
-                            }
-                        })
-                        .collect(Collectors.toList());
-            });
-        } catch (UndeclaredThrowableException e) {
-            if (e.getUndeclaredThrowable() instanceof IOException) {
-                return Collections.emptyList();
-            } else {
-                throw e;
-            }
+                        // JBoss modules expect folders not to end with a slash, so we have to strip it.
+                        if (result.endsWith(separator)) {
+                            return result.substring(0, result.length() - separator.length());
+                        } else {
+                            return result;
+                        }
+                    })
+                    .collect(Collectors.toList()));
+        } catch (IOException e) {
+            return Collections.emptyList();
         }
     }
 
@@ -211,12 +181,46 @@ class PathResourceLoader extends AbstractResourceLoader implements IterableResou
         return doPrivilegedIfNeeded(context, root::toUri);
     }
 
+    static <T, E extends Throwable> T doPrivilegedIfNeeded(AccessControlContext context, Class<E> exceptionType, PrivilegedExceptionAction<T> action) throws E {
+        SecurityManager sm = System.getSecurityManager();
+
+        if (sm == null) {
+            try {
+                return action.run();
+            } catch (RuntimeException re) {
+                throw re;
+            } catch (Exception e) {
+                if (exceptionType.isInstance(e)) {
+                    throw exceptionType.cast(e);
+                }
+                throw new UndeclaredThrowableException(e);
+            }
+        } else {
+            try {
+                return AccessController.doPrivileged(action, context);
+            } catch (PrivilegedActionException e) {
+                try {
+                    throw e.getException();
+                } catch (RuntimeException re) {
+                    throw re;
+                } catch (Exception e1) {
+                    if (exceptionType.isInstance(e1)) {
+                        throw exceptionType.cast(e1);
+                    }
+                    throw new UndeclaredThrowableException(e1);
+                }
+            }
+        }
+    }
+
     static <T> T doPrivilegedIfNeeded(AccessControlContext context, PrivilegedExceptionAction<T> action) {
         SecurityManager sm = System.getSecurityManager();
 
         if (sm == null) {
             try {
                 return action.run();
+            } catch (RuntimeException re) {
+                throw re;
             } catch (Exception e) {
                 throw new UndeclaredThrowableException(e);
             }
@@ -226,6 +230,8 @@ class PathResourceLoader extends AbstractResourceLoader implements IterableResou
             } catch (PrivilegedActionException e) {
                 try {
                     throw e.getException();
+                } catch (RuntimeException re) {
+                    throw re;
                 } catch (Exception e1) {
                     throw new UndeclaredThrowableException(e1);
                 }

@@ -19,7 +19,6 @@ package org.jboss.modules;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.UndeclaredThrowableException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -54,27 +53,15 @@ class PathResource implements Resource {
 
     @Override
     public InputStream openStream() throws IOException {
-        try {
-            return doPrivilegedIfNeeded(context, () -> Files.newInputStream(path));
-        } catch (UndeclaredThrowableException e) {
-            if (e.getUndeclaredThrowable() instanceof IOException) {
-                throw (IOException) e.getUndeclaredThrowable();
-            } else {
-                throw e;
-            }
-        }
+        return doPrivilegedIfNeeded(context, IOException.class, () -> Files.newInputStream(path));
     }
 
     @Override
     public long getSize() {
         try {
-            return doPrivilegedIfNeeded(context, () -> Files.size(path));
-        } catch (UndeclaredThrowableException e) {
-            if (e.getUndeclaredThrowable() instanceof IOException) {
-                return 0;
-            } else {
-                throw e;
-            }
+            return doPrivilegedIfNeeded(context, IOException.class, () -> Files.size(path));
+        } catch (IOException e) {
+            return 0;
         }
     }
 }
