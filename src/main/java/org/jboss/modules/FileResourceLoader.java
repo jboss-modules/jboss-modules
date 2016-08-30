@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.AccessControlContext;
-import java.util.ArrayList;
 import java.util.Collection;
 
 /**
@@ -37,7 +36,6 @@ final class FileResourceLoader extends PathResourceLoader {
     }
 
     public Collection<String> getPaths() {
-        new ArrayList<String>();
         final Path indexFile = root.resolveSibling(root.getFileName() + ".index");
         if (ResourceLoaders.USE_INDEXES) {
             // First check for an index file
