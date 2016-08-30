@@ -43,7 +43,12 @@ class PathResource implements Resource {
 
     @Override
     public String getName() {
-        return path.toString();
+        final String separator = path.getFileSystem().getSeparator();
+        if (separator.equals("/")) {
+            return path.toString();
+        } else {
+            return path.toString().replace(separator, "/");
+        }
     }
 
     @Override

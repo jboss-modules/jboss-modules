@@ -172,11 +172,24 @@ public final class ModuleXmlParser {
         try {
             return parseModuleXml((rootPath, loaderPath, loaderName) -> {
                 final File file;
-                final File loaderFile = new File(loaderPath);
+                final File loaderFile;
+                final String loaderFileName;
+                if (File.separatorChar == '/') {
+                    loaderFileName = loaderPath;
+                } else {
+                    loaderFileName = loaderPath.replace('/', File.separatorChar);
+                }
+                loaderFile = new File(loaderFileName);
                 if (loaderFile.isAbsolute()) {
                     file = loaderFile;
                 } else {
-                    file = new File(rootPath, loaderPath);
+                    final String rootPathName;
+                    if (File.separatorChar == '/') {
+                        rootPathName = rootPath;
+                    } else {
+                        rootPathName = rootPath.replace('/', File.separatorChar);
+                    }
+                    file = new File(rootPathName, loaderFileName);
                 }
                 if (file.isDirectory()) {
                     return ResourceLoaders.createFileResourceLoader(loaderName, file);
