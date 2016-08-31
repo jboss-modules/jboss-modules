@@ -20,6 +20,14 @@ package org.jboss.modules;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.FileSystems;
+import java.nio.file.FileVisitor;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.security.AccessController;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -27,22 +35,38 @@ import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import static java.nio.file.FileVisitResult.CONTINUE;
+import static java.nio.file.FileVisitResult.SKIP_SUBTREE;
+
 /**
  * A utility class which maintains the set of JDK paths.  Makes certain assumptions about the disposition of the
  * class loader used to load JBoss Modules; thus this class should only be used when booted up via the "-jar" or "-cp"
  * switches.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  */
 final class JDKPaths {
     static final Set<String> JDK;
+    static final boolean isJDK9orAbove;
+    private static final String JDK9_CLASS = "java.lang.reflect.Module";
 
     static {
-        final Set<String> pathSet = new FastCopyHashSet<String>(1024);
-        final Set<String> jarSet = new FastCopyHashSet<String>(1024);
-        final String sunBootClassPath = AccessController.doPrivileged(new PropertyReadAction("sun.boot.class.path"));
+        Class<?> moduleClass = null;
+        try {
+            moduleClass = JDKPaths.class.getClassLoader().loadClass(JDK9_CLASS);
+        } catch (final Throwable ignored) {}
+        isJDK9orAbove = moduleClass != null;
+        final Set<String> pathSet = new FastCopyHashSet<>(1024);
+        final Set<String> jarSet = new FastCopyHashSet<>(1024);
+        if (isJDK9orAbove) {
+            processRuntimeImages(pathSet);
+        } else {
+            final String sunBootClassPath = AccessController.doPrivileged(new PropertyReadAction("sun.boot.class.path"));
+            processClassPathItem(sunBootClassPath, jarSet, pathSet);
+        }
+        if (pathSet.size() == 0) throw new IllegalStateException("Something went wrong with system paths set up");
         final String javaClassPath = AccessController.doPrivileged(new PropertyReadAction("java.class.path"));
-        processClassPathItem(sunBootClassPath, jarSet, pathSet);
         processClassPathItem(javaClassPath, jarSet, pathSet);
         pathSet.add("org/jboss/modules");
         pathSet.add("org/jboss/modules/filter");
@@ -53,6 +77,51 @@ final class JDKPaths {
     }
 
     private JDKPaths() {
+    }
+
+    private static void processRuntimeImages(final Set<String> jarSet) {
+        try {
+            for (final Path root : FileSystems.getFileSystem(new URI("jrt:/")).getRootDirectories()) {
+                Files.walkFileTree(root, new JrtFileVisitor(jarSet));
+            }
+        } catch (final URISyntaxException|IOException e) {
+            throw new IllegalStateException("Unable to process java runtime images");
+        }
+    }
+
+    private static class JrtFileVisitor implements FileVisitor<Path> {
+
+        private final String SLASH = "/";
+        private final String PACKAGES = "/packages";
+        private final Set<String> jarSet;
+
+        private JrtFileVisitor(final Set<String> jarSet) {
+            this.jarSet = jarSet;
+        }
+
+        @Override
+        public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs) throws IOException {
+            final String d = dir.toString();
+            return d.equals(SLASH) || d.startsWith(PACKAGES) ? CONTINUE : SKIP_SUBTREE;
+        }
+
+        @Override
+        public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) throws IOException {
+            String f = file.toString();
+            String packageName = f.substring(PACKAGES.length() + 1, f.lastIndexOf(SLASH)).replace('.', '/');
+            jarSet.add(packageName);
+            return CONTINUE;
+        }
+
+        @Override
+        public FileVisitResult visitFileFailed(final Path file, final IOException exc) throws IOException {
+            return CONTINUE;
+        }
+
+        @Override
+        public FileVisitResult postVisitDirectory(final Path dir, final IOException exc) throws IOException {
+            return CONTINUE;
+        }
     }
 
     private static void processClassPathItem(final String classPath, final Set<String> jarSet, final Set<String> pathSet) {
@@ -106,7 +175,7 @@ final class JDKPaths {
         }
     }
 
-    static void processDirectory1(final Set<String> pathSet, final File file, final String pathBase) {
+    private static void processDirectory1(final Set<String> pathSet, final File file, final String pathBase) {
         for (File entry : file.listFiles()) {
             if (entry.isDirectory()) {
                 processDirectory1(pathSet, entry, pathBase);
