@@ -179,4 +179,31 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <!-- Profiles -->
+    <profiles>
+        <!--
+          Name: modularizedJdk
+          Descr: various workarounds activation for modularized JDK
+        -->
+        <profile>
+            <id>modularizedJdk</id>
+            <activation>
+                <jdk>9</jdk>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <!-- java.activation module not active by default in JDK9
+                                 (like all other SE and EE shared technologies) -->
+                            <argLine>--add-modules java.activation</argLine>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
 </project>
