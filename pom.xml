@@ -29,7 +29,7 @@
     <parent>
         <groupId>org.jboss</groupId>
         <artifactId>jboss-parent</artifactId>
-        <version>20</version>
+        <version>21</version>
     </parent>
 
     <licenses>
@@ -41,12 +41,8 @@
     </licenses>
 
     <properties>
-        <skip.enforcer>false</skip.enforcer>
         <skip.compile>false</skip.compile>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <version.org.wildfly.checkstyle-config>1.0.4.Final</version.org.wildfly.checkstyle-config>
-        <version.checkstyle>6.13</version.checkstyle>
+        <version.org.wildfly.checkstyle-config>1.0.5.Final</version.org.wildfly.checkstyle-config>
     </properties>
 
     <build>
@@ -93,7 +89,9 @@
         <plugins>
             <!-- Compiler -->
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>${version.compiler.plugin}</version>
                 <configuration>
                     <showDeprecation>true</showDeprecation>
                     <showWarnings>true</showWarnings>
@@ -133,14 +131,11 @@
                 </configuration>
             </plugin>
 
-            <!-- Source -->
-            <plugin>
-                <artifactId>maven-source-plugin</artifactId>
-            </plugin>
-
             <!-- Javadoc -->
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
+                <version>${version.javadoc.plugin}</version>
                 <configuration>
                     <doclet>net.gleamynode.apiviz.APIviz</doclet>
                     <docletArtifact>
@@ -155,13 +150,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
-            </plugin>
-            <!-- Enforcer -->
-            <plugin>
-                <artifactId>maven-enforcer-plugin</artifactId>
-                <configuration>
-                    <skip>${skip.enforcer}</skip>
-                </configuration>
             </plugin>
         </plugins>
     </build>
