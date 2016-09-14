@@ -265,6 +265,19 @@ public abstract class ConcurrentClassLoader extends ClassLoader {
     }
 
     /**
+     * Find the resource with the given name in specified java module.
+     *
+     * @see #getResource(String)
+     *
+     * @param moduleName java module name
+     * @param name the resource name
+     * @return the resource URL
+     */
+    protected final URL findResource(final String moduleName, final String name) throws IOException {
+        return findResource(name, false);
+    }
+
+    /**
      * Finds the resources with the given name and exported status.
      *
      * @see #getResources(String)

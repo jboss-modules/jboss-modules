@@ -212,29 +212,6 @@ public class JAXPModuleTest extends AbstractModuleTestCase {
     }
 
     @Test
-    public void testJVMDefault() throws Exception {
-        ModuleClassLoader cl = moduleLoader.loadModule(ModuleIdentifier.fromString("test-jaxp")).getClassLoader();
-        ClassLoader old = Thread.currentThread().getContextClassLoader();
-        try {
-            Thread.currentThread().setContextClassLoader(cl);
-            Class<?> clazz = cl.loadClass("org.jboss.modules.test.JAXPCaller");
-            checkDom(clazz, false);
-            checkSax(clazz, false);
-            checkTransformer(clazz, false);
-            checkSAXTransformer(clazz, false);
-            checkXPath(clazz, false);
-            checkXmlEvent(clazz, false);
-            checkXmlInput(clazz, false);
-            checkXmlOutput(clazz, false);
-            checkDatatype(clazz, false);
-            checkSchema(clazz, false);
-            checkXMLReader(clazz, false);
-        } finally {
-            Thread.currentThread().setContextClassLoader(old);
-        }
-    }
-
-    @Test
     public void testReplaceDefault() throws Exception {
         __JAXPRedirected.changeAll(FAKE_JAXP, moduleLoader);
 
