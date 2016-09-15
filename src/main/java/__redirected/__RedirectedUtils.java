@@ -40,7 +40,7 @@ import org.jboss.modules.log.ModuleLogger;
  * Common utilities for redirected factories
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
- * @authore Jason T. Greene
+ * @author Jason T. Greene
  */
 public final class __RedirectedUtils {
 

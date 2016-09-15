@@ -36,7 +36,7 @@ import org.xml.sax.SAXNotSupportedException;
  * A redirected SAXParserFactory
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
- * @authore Jason T. Greene
+ * @author Jason T. Greene
  */
 public final class __SAXParserFactory extends SAXParserFactory {
     private static final Constructor<? extends SAXParserFactory> PLATFORM_FACTORY;

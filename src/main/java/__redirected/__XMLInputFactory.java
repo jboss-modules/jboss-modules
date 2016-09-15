@@ -41,7 +41,7 @@ import org.jboss.modules.ModuleLoader;
  * A redirected XMLInputFactory
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
- * @authore Jason T. Greene
+ * @author Jason T. Greene
  */
 public final class __XMLInputFactory extends XMLInputFactory {
     private static final Constructor<? extends XMLInputFactory> PLATFORM_FACTORY;

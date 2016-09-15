@@ -40,7 +40,7 @@ import org.xml.sax.helpers.XMLReaderFactory;
  * A redirected SAXParserFactory
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
- * @authore Jason T. Greene
+ * @author Jason T. Greene
  */
 public final class __XMLReaderFactory implements XMLReader {
     private static final Constructor<? extends XMLReader> PLATFORM_FACTORY;

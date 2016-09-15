@@ -46,7 +46,7 @@ import org.jboss.modules.ModuleLoader;
  * A redirected XMLEventFactory
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
- * @authore Jason T. Greene
+ * @author Jason T. Greene
  */
 @SuppressWarnings("unchecked")
 public final class __XMLEventFactory extends XMLEventFactory {

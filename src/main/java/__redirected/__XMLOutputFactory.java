@@ -36,7 +36,7 @@ import org.jboss.modules.ModuleLoader;
  * A redirected XMLOutputFactory
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
- * @authore Jason T. Greene
+ * @author Jason T. Greene
  */
 public final class __XMLOutputFactory extends XMLOutputFactory {
     private static final Constructor<? extends XMLOutputFactory> PLATFORM_FACTORY;
