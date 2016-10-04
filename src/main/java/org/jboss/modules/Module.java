@@ -20,9 +20,10 @@ package org.jboss.modules;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLConnection;
 import java.security.AccessController;
@@ -71,6 +72,7 @@ import org.jboss.modules.security.ModularPermissionFactory;
 public final class Module {
 
     private static final AtomicReference<ModuleLoader> BOOT_MODULE_LOADER;
+    private static final MethodType MAIN_METHOD_TYPE = MethodType.methodType(void.class, String[].class);
 
     static {
         log = NoopModuleLogger.getInstance();
@@ -154,7 +156,7 @@ public final class Module {
      * @throws SecurityException always
      */
     public static ModulesPrivateAccess getPrivateAccess() {
-        if (CallerContext.getCallingClass() == ModularPermissionFactory.class) {
+        if (JDKSpecific.getCallingClass() == ModularPermissionFactory.class) {
             return PRIVATE_ACCESS;
         }
         throw new SecurityException();
@@ -315,31 +317,31 @@ public final class Module {
      * @throws ClassNotFoundException if the main class is not found
      */
     public void run(final String[] args) throws NoSuchMethodException, InvocationTargetException, ClassNotFoundException {
+        if (mainClassName == null) {
+            throw new NoSuchMethodException("No main class defined for " + this);
+        }
+        final ClassLoader oldClassLoader = SecurityActions.setContextClassLoader(moduleClassLoader);
         try {
-            if (mainClassName == null) {
-                throw new NoSuchMethodException("No main class defined for " + this);
-            }
-            final ClassLoader oldClassLoader = SecurityActions.setContextClassLoader(moduleClassLoader);
+            final Class<?> mainClass = Class.forName(mainClassName, false, moduleClassLoader);
             try {
-                final Class<?> mainClass = Class.forName(mainClassName, false, moduleClassLoader);
-                try {
-                    Class.forName(mainClassName, true, moduleClassLoader);
-                } catch (Throwable t) {
-                    throw new InvocationTargetException(t, "Failed to initialize main class '" + mainClassName + "'");
-                }
-                final Method mainMethod = mainClass.getMethod("main", String[].class);
-                final int modifiers = mainMethod.getModifiers();
-                if (! Modifier.isStatic(modifiers)) {
-                    throw new NoSuchMethodException("Main method is not static for " + this);
-                }
-                // ignore the return value
-                mainMethod.invoke(null, new Object[] {args});
-            } finally {
-                SecurityActions.setContextClassLoader(oldClassLoader);
+                Class.forName(mainClassName, true, moduleClassLoader);
+            } catch (Throwable t) {
+                throw new InvocationTargetException(t, "Failed to initialize main class '" + mainClassName + "'");
             }
-        } catch (IllegalAccessException e) {
-            // unexpected; should be public
-            throw new IllegalAccessError(e.getMessage());
+            final MethodHandles.Lookup lookup = MethodHandles.lookup();
+            final MethodHandle methodHandle;
+            try {
+                methodHandle = lookup.findStatic(mainClass, "main", MAIN_METHOD_TYPE);
+            } catch (IllegalAccessException e) {
+                throw new NoSuchMethodException("The main method is not public");
+            }
+            try {
+                methodHandle.invokeExact(args);
+            } catch (Throwable throwable) {
+                throw new InvocationTargetException(throwable);
+            }
+        } finally {
+            SecurityActions.setContextClassLoader(oldClassLoader);
         }
     }
 
@@ -586,7 +588,7 @@ public final class Module {
      * @return the current module
      */
     public static Module getCallerModule() {
-        return forClass(CallerContext.getCallingClass());
+        return forClass(JDKSpecific.getCallingUserClass());
     }
 
     /**

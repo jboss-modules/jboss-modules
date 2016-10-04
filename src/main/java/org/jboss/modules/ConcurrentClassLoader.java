@@ -77,9 +77,13 @@ public abstract class ConcurrentClassLoader extends ClassLoader {
      */
     protected ConcurrentClassLoader() {
         super(ConcurrentClassLoader.class.getClassLoader());
-        if (getClassLoadingLock("$TEST$") == this) {
+        if (! JDKSpecific.isParallelCapable(this)) {
             throw new Error("Cannot instantiate non-parallel subclass");
         }
+    }
+
+    static Object getLockForClass(ConcurrentClassLoader cl, String name) {
+        return cl.getClassLoadingLock(name);
     }
 
     /**

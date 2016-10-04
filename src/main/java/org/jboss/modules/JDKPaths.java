@@ -57,22 +57,23 @@ final class JDKPaths {
             moduleClass = JDKPaths.class.getClassLoader().loadClass(JDK9_CLASS);
         } catch (final Throwable ignored) {}
         isJDK9orAbove = moduleClass != null;
-        final Set<String> pathSet = new FastCopyHashSet<>(1024);
+        final Set<String> pathSet;
         final Set<String> jarSet = new FastCopyHashSet<>(1024);
         if (isJDK9orAbove) {
+            // TODO: Remove this to the JDK9 supplement
+            pathSet = new FastCopyHashSet<>(1024);
             processRuntimeImages(pathSet);
+            final String javaClassPath = AccessController.doPrivileged(new PropertyReadAction("java.class.path"));
+            processClassPathItem(javaClassPath, jarSet, pathSet);
+            pathSet.add("org/jboss/modules");
+            pathSet.add("org/jboss/modules/filter");
+            pathSet.add("org/jboss/modules/log");
+            pathSet.add("org/jboss/modules/management");
+            pathSet.add("org/jboss/modules/ref");
         } else {
-            final String sunBootClassPath = AccessController.doPrivileged(new PropertyReadAction("sun.boot.class.path"));
-            processClassPathItem(sunBootClassPath, jarSet, pathSet);
+            pathSet = JDKSpecific.getJDKPaths();
         }
         if (pathSet.size() == 0) throw new IllegalStateException("Something went wrong with system paths set up");
-        final String javaClassPath = AccessController.doPrivileged(new PropertyReadAction("java.class.path"));
-        processClassPathItem(javaClassPath, jarSet, pathSet);
-        pathSet.add("org/jboss/modules");
-        pathSet.add("org/jboss/modules/filter");
-        pathSet.add("org/jboss/modules/log");
-        pathSet.add("org/jboss/modules/management");
-        pathSet.add("org/jboss/modules/ref");
         JDK = Collections.unmodifiableSet(pathSet);
     }
 
