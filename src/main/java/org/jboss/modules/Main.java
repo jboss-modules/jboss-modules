@@ -125,7 +125,7 @@ public final class Main {
         boolean classDefined = false;
         boolean depTree = false;
         String nameArgument = null;
-        ModuleIdentifier jaxpModuleIdentifier = null;
+        String jaxpModuleName = null;
         boolean defaultSecMgr = false;
         String secMgrModule = null;
         boolean addIndex = false;
@@ -177,7 +177,7 @@ public final class Main {
                     } else if ("-debuglog".equals(arg)) {
                         debuglog = true;
                     } else if ("-jaxpmodule".equals(arg)) {
-                        jaxpModuleIdentifier = ModuleIdentifier.fromString(args[++i]);
+                        jaxpModuleName = args[++i];
                     } else if ("-jar".equals(arg)) {
                         if (jar) {
                             System.err.println("-jar flag may only be specified once");
@@ -300,8 +300,8 @@ public final class Main {
                 usage();
                 System.exit(1);
             }
-            if (jaxpModuleIdentifier != null) {
-                System.err.println("-jaxpModuleIdentifier may not be used with -addindex");
+            if (jaxpModuleName != null) {
+                System.err.println("-jaxpModuleName may not be used with -addindex");
                 usage();
                 System.exit(1);
             }
@@ -364,7 +364,7 @@ public final class Main {
         }
 
         if (depTree) {
-            DependencyTreeViewer.print(new PrintWriter(System.out), ModuleIdentifier.fromString(nameArgument), LocalModuleFinder.getRepoRoots(true));
+            DependencyTreeViewer.print(new PrintWriter(System.out), nameArgument, LocalModuleFinder.getRepoRoots(true));
             System.exit(0);
         }
 
@@ -376,27 +376,27 @@ public final class Main {
         final ModuleLoader loader;
         final ModuleLoader environmentLoader;
         environmentLoader = DefaultBootModuleLoaderHolder.INSTANCE;
-        final ModuleIdentifier moduleIdentifier;
+        final String moduleName;
         if (jar) {
             loader = new JarModuleLoader(environmentLoader, new JarFile(nameArgument));
-            moduleIdentifier = ((JarModuleLoader) loader).getMyIdentifier();
+            moduleName = ((JarModuleLoader) loader).getMyName();
         } else if (classpathDefined || classDefined) {
             loader = new ClassPathModuleLoader(environmentLoader, nameArgument, classpath, deps);
-            moduleIdentifier = ModuleIdentifier.CLASSPATH;
+            moduleName = ClassPathModuleLoader.CLASSPATH_STRING;
         } else {
             loader = environmentLoader;
-            moduleIdentifier = ModuleIdentifier.fromString(nameArgument);
+            moduleName = nameArgument;
         }
         Module.initBootModuleLoader(loader);
-        if (jaxpModuleIdentifier != null) {
-            __JAXPRedirected.changeAll(jaxpModuleIdentifier, Module.getBootModuleLoader());
+        if (jaxpModuleName != null) {
+            __JAXPRedirected.changeAll(jaxpModuleName, Module.getBootModuleLoader());
         } else {
-            __JAXPRedirected.changeAll(moduleIdentifier, Module.getBootModuleLoader());
+            __JAXPRedirected.changeAll(moduleName, Module.getBootModuleLoader());
         }
 
         final Module module;
         try {
-            module = loader.loadModule(moduleIdentifier);
+            module = loader.loadModule(moduleName);
         } catch (ModuleNotFoundException e) {
             e.printStackTrace(System.err);
             System.exit(1);
@@ -438,7 +438,7 @@ public final class Main {
         if (secMgrModule != null) {
             final Module loadedModule;
             try {
-                loadedModule = loader.loadModule(ModuleIdentifier.fromString(secMgrModule));
+                loadedModule = loader.loadModule(secMgrModule);
             } catch (ModuleNotFoundException e) {
                 e.printStackTrace(System.err);
                 System.exit(1);

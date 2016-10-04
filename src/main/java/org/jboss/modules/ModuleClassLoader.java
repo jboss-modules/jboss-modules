@@ -560,6 +560,15 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
     }
 
     /**
+     * Get the name of this module.  This method is used by Java 9 in debug output and delegates to {@link Module#getName()}.
+     *
+     * @return the name of this module
+     */
+    public final String getName() {
+        return module.getName();
+    }
+
+    /**
      * Get a string representation of this class loader.
      *
      * @return the string

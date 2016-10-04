@@ -52,7 +52,12 @@ public interface ModuleLogger {
 
     void greeting();
 
-    void moduleDefined(ModuleIdentifier identifier, final ModuleLoader moduleLoader);
+    default void moduleDefined(String name, final ModuleLoader moduleLoader) {
+        moduleDefined(ModuleIdentifier.fromString(name), moduleLoader);
+    }
+
+    default void moduleDefined(ModuleIdentifier identifier, final ModuleLoader moduleLoader) {
+    }
 
     void classDefineFailed(Throwable throwable, String className, Module module);
 

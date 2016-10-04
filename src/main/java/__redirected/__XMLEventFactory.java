@@ -81,7 +81,12 @@ public final class __XMLEventFactory extends XMLEventFactory {
         }
     }
 
+    @Deprecated
     public static void changeDefaultFactory(ModuleIdentifier id, ModuleLoader loader) {
+        changeDefaultFactory(id.toString(), loader);
+    }
+
+    public static void changeDefaultFactory(String id, ModuleLoader loader) {
         Class<? extends XMLEventFactory> clazz = __RedirectedUtils.loadProvider(id, XMLEventFactory.class, loader);
         if (clazz != null) {
             try {

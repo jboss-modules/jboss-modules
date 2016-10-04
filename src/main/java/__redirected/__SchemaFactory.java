@@ -74,7 +74,12 @@ public final class __SchemaFactory extends SchemaFactory {
         }
     }
 
+    @Deprecated
     public static void changeDefaultFactory(ModuleIdentifier id, ModuleLoader loader) {
+        changeDefaultFactory(id.toString(), loader);
+    }
+
+    public static void changeDefaultFactory(String id, ModuleLoader loader) {
         Class<? extends SchemaFactory> clazz = __RedirectedUtils.loadProvider(id, SchemaFactory.class, loader);
         if (clazz != null) {
             try {

@@ -171,9 +171,9 @@ public final class Module {
     // immutable properties
 
     /**
-     * The identifier of this module.
+     * The name of this module.
      */
-    private final ModuleIdentifier identifier;
+    private final String name;
     /**
      * The name of the main class, if any (may be {@code null}).
      */
@@ -231,7 +231,7 @@ public final class Module {
         this.moduleLoader = moduleLoader;
 
         // Initialize state from the spec.
-        identifier = spec.getModuleIdentifier();
+        name = spec.getName();
         mainClassName = spec.getMainClass();
         fallbackLoader = spec.getFallbackLoader();
         final PermissionCollection permissionCollection = spec.getPermissionCollection();
@@ -347,9 +347,20 @@ public final class Module {
      * Get this module's identifier.
      *
      * @return the identifier
+     * @deprecated Use {@link #getName()} instead.
      */
+    @Deprecated
     public ModuleIdentifier getIdentifier() {
-        return identifier;
+        return ModuleIdentifier.fromString(getName());
+    }
+
+    /**
+     * Get this module's name.
+     *
+     * @return this module's name
+     */
+    public String getName() {
+        return name;
     }
 
     /**
@@ -407,9 +418,27 @@ public final class Module {
      * @param serviceType the service type class
      * @return the loaded service from the caller's module
      * @throws ModuleLoadException if the named module failed to load
+     * @deprecated Use {@link #loadServiceFromCallerModuleLoader(String, Class)} instead.
      */
+    @Deprecated
     public static <S> ServiceLoader<S> loadServiceFromCallerModuleLoader(ModuleIdentifier identifier, Class<S> serviceType) throws ModuleLoadException {
-        return getCallerModuleLoader().loadModule(identifier).loadService(serviceType);
+        return loadServiceFromCallerModuleLoader(identifier.toString(), serviceType);
+    }
+
+    /**
+     * Load a service loader from a module in the caller's module loader. The caller's
+     * module loader refers to the loader of the module of the class that calls this method.
+     * Note that {@link #loadService(Class)} is more efficient since it does not need to crawl
+     * the stack.
+     *
+     * @param <S> the the service type
+     * @param name the module name containing the service loader
+     * @param serviceType the service type class
+     * @return the loaded service from the caller's module
+     * @throws ModuleLoadException if the named module failed to load
+     */
+    public static <S> ServiceLoader<S> loadServiceFromCallerModuleLoader(String name, Class<S> serviceType) throws ModuleLoadException {
+        return getCallerModuleLoader().loadModule(name).loadService(serviceType);
     }
 
     /**
@@ -529,9 +558,24 @@ public final class Module {
      * @param identifier the module identifier
      * @return the module
      * @throws ModuleLoadException if the module could not be loaded
+     * @deprecated Use {@link #getModuleFromCallerModuleLoader(String)} instead.
      */
+    @Deprecated
     public static Module getModuleFromCallerModuleLoader(final ModuleIdentifier identifier) throws ModuleLoadException {
-        return getCallerModuleLoader().loadModule(identifier);
+        return getModuleFromCallerModuleLoader(identifier.toString());
+    }
+
+    /**
+     * Get a module from the current module loader. Note that this must crawl the
+     * stack to determine this, so other mechanisms are more efficient.
+     * @see #getCallerModuleLoader()
+     *
+     * @param name the module name
+     * @return the module
+     * @throws ModuleLoadException if the module could not be loaded
+     */
+    public static Module getModuleFromCallerModuleLoader(final String name) throws ModuleLoadException {
+        return getCallerModuleLoader().loadModule(name);
     }
 
     /**
@@ -551,9 +595,22 @@ public final class Module {
      * @param identifier the module identifier
      * @return the module
      * @throws ModuleLoadException if an error occurs
+     * @deprecated Use {@link #getModule(String)} instead.
      */
+    @Deprecated
     public Module getModule(final ModuleIdentifier identifier) throws ModuleLoadException {
-        return moduleLoader.loadModule(identifier);
+        return getModule(identifier.toString());
+    }
+
+    /**
+     * Get the module with the given identifier from the module loader used by this module.
+     *
+     * @param name the module name
+     * @return the module
+     * @throws ModuleLoadException if an error occurs
+     */
+    public Module getModule(final String name) throws ModuleLoadException {
+        return moduleLoader.loadModule(name);
     }
 
     /**
@@ -567,10 +624,29 @@ public final class Module {
      * @return the class
      * @throws ModuleLoadException if the module could not be loaded
      * @throws ClassNotFoundException if the class could not be loaded
+     * @deprecated Use {@link #loadClassFromBootModuleLoader(String, String)} instead.
      */
+    @Deprecated
     public static Class<?> loadClassFromBootModuleLoader(final ModuleIdentifier moduleIdentifier, final String className)
             throws ModuleLoadException, ClassNotFoundException {
-        return Class.forName(className, true, getBootModuleLoader().loadModule(moduleIdentifier).getClassLoader());
+        return loadClassFromBootModuleLoader(moduleIdentifier.toString(), className);
+    }
+
+    /**
+     * Load a class from a module in the system module loader.
+     *
+     * @see #getBootModuleLoader()
+     *
+     * @param name the name of the module from which the class
+     *        should be loaded
+     * @param className the class name to load
+     * @return the class
+     * @throws ModuleLoadException if the module could not be loaded
+     * @throws ClassNotFoundException if the class could not be loaded
+     */
+    public static Class<?> loadClassFromBootModuleLoader(final String name, final String className)
+            throws ModuleLoadException, ClassNotFoundException {
+        return Class.forName(className, true, getBootModuleLoader().loadModule(name).getClassLoader());
     }
 
     /**
@@ -584,10 +660,28 @@ public final class Module {
      * @return the class
      * @throws ModuleLoadException if the module could not be loaded
      * @throws ClassNotFoundException if the class could not be loaded
+     * @deprecated Use {@link #loadClassFromCallerModuleLoader(String, String)} instead.
      */
     public static Class<?> loadClassFromCallerModuleLoader(final ModuleIdentifier moduleIdentifier, final String className)
             throws ModuleLoadException, ClassNotFoundException {
-        return Class.forName(className, true, getModuleFromCallerModuleLoader(moduleIdentifier).getClassLoader());
+        return loadClassFromCallerModuleLoader(moduleIdentifier.toString(), className);
+    }
+
+    /**
+     * Load a class from a module in the caller's module loader.
+     *
+     * @see #getCallerModuleLoader()
+     *
+     * @param name the name of the module from which the class
+     *        should be loaded
+     * @param className the class name to load
+     * @return the class
+     * @throws ModuleLoadException if the module could not be loaded
+     * @throws ClassNotFoundException if the class could not be loaded
+     */
+    public static Class<?> loadClassFromCallerModuleLoader(final String name, final String className)
+            throws ModuleLoadException, ClassNotFoundException {
+        return Class.forName(className, true, getModuleFromCallerModuleLoader(name).getClassLoader());
     }
 
     /**
@@ -947,7 +1041,7 @@ public final class Module {
     public String toString() {
         StringBuilder b = new StringBuilder();
         b.append("Module \"");
-        b.append(identifier);
+        b.append(getName());
         b.append("\"");
         if (version != null) {
             b.append(" version ").append(version);
@@ -1093,13 +1187,13 @@ public final class Module {
             if (dependency instanceof ModuleDependency) {
                 final ModuleDependency moduleDependency = (ModuleDependency) dependency;
                 final ModuleLoader moduleLoader = moduleDependency.getModuleLoader();
-                final ModuleIdentifier id = moduleDependency.getIdentifier();
+                final String name = moduleDependency.getName();
                 final Module module;
 
                 try {
                     long pauseStart = Metrics.getCurrentCPUTime();
                     try {
-                        module = moduleLoader.preloadModule(id);
+                        module = moduleLoader.preloadModule(name);
                     } finally {
                         subtract += Metrics.getCurrentCPUTime() - pauseStart;
                     }
@@ -1107,13 +1201,13 @@ public final class Module {
                     if (moduleDependency.isOptional()) {
                         continue;
                     } else {
-                        log.trace("Module %s, dependency %s preload failed: %s", getIdentifier(), moduleDependency.getIdentifier(), ex);
+                        log.trace("Module %s, dependency %s preload failed: %s", getIdentifier(), moduleDependency.getName(), ex);
                         throw ex;
                     }
                 }
                 if (module == null) {
                     if (!moduleDependency.isOptional()) {
-                        throw new ModuleNotFoundException(id.toString());
+                        throw new ModuleNotFoundException(name);
                     }
                     continue;
                 }
@@ -1244,13 +1338,13 @@ public final class Module {
                 if (dependency instanceof ModuleDependency) {
                     final ModuleDependency moduleDependency = (ModuleDependency) dependency;
                     final ModuleLoader moduleLoader = moduleDependency.getModuleLoader();
-                    final ModuleIdentifier id = moduleDependency.getIdentifier();
+                    final String name  = moduleDependency.getName();
                     final Module module;
 
                     try {
                         long pauseStart = Metrics.getCurrentCPUTime();
                         try {
-                            module = moduleLoader.preloadModule(id);
+                            module = moduleLoader.preloadModule(name);
                         } finally {
                             subtract += Metrics.getCurrentCPUTime() - pauseStart;
                         }
@@ -1258,13 +1352,13 @@ public final class Module {
                         if (moduleDependency.isOptional()) {
                             continue;
                         } else {
-                            log.trace("Module %s, dependency %s preload failed: %s", getIdentifier(), moduleDependency.getIdentifier(), ex);
+                            log.trace("Module %s, dependency %s preload failed: %s", getIdentifier(), moduleDependency.getName(), ex);
                             throw ex;
                         }
                     }
                     if (module == null) {
                         if (!moduleDependency.isOptional()) {
-                            throw new ModuleNotFoundException(id.toString());
+                            throw new ModuleNotFoundException(name);
                         }
                         continue;
                     }

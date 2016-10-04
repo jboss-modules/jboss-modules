@@ -75,7 +75,12 @@ public final class __XMLInputFactory extends XMLInputFactory {
         }
     }
 
+    @Deprecated
     public static void changeDefaultFactory(ModuleIdentifier id, ModuleLoader loader) {
+        changeDefaultFactory(id.toString(), loader);
+    }
+
+    public static void changeDefaultFactory(String id, ModuleLoader loader) {
         Class<? extends XMLInputFactory> clazz = __RedirectedUtils.loadProvider(id, XMLInputFactory.class, loader);
         if (clazz != null) {
             try {

@@ -45,26 +45,26 @@ public final class ClassifyingModuleLoader extends ModuleLoader {
         this.name = name;
     }
 
-    /** {@inheritDoc} */
-    protected Module preloadModule(final ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
-        String name = moduleIdentifier.getName();
+    /** {@inheritDoc}
+     * @param moduleIdentifier*/
+    protected Module preloadModule(String name) throws ModuleLoadException {
         int idx;
         final Map<String, ModuleLoader> delegates = this.delegates;
         for (;;) {
             final ModuleLoader loader = delegates.get(name);
             if (loader != null) {
-                return preloadModule(moduleIdentifier, loader);
+                return preloadModule(name, loader);
             }
             idx = name.lastIndexOf('.');
             if (idx == -1) {
-                return preloadModule(moduleIdentifier, defaultLoader);
+                return preloadModule(name, defaultLoader);
             }
             name = name.substring(0, idx);
         }
     }
 
     /** {@inheritDoc} */
-    protected ModuleSpec findModule(final ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
+    protected ModuleSpec findModule(final String name) throws ModuleLoadException {
         // We have no modules of our own!
         return null;
     }

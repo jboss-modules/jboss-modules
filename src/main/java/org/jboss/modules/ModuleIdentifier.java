@@ -32,8 +32,11 @@ import java.security.PrivilegedAction;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  * @author Jason T. Greene
  *
+ * @deprecated This class has been deprecated in favor of name strings; however, programs using identifiers will
+ * continue to function correctly.
  * @apiviz.landmark
  */
+@Deprecated
 public final class ModuleIdentifier implements Serializable {
 
     private static final long serialVersionUID = 118533026624827995L;
@@ -65,7 +68,7 @@ public final class ModuleIdentifier implements Serializable {
     /**
      * The class path module (only present if booted from a class path).
      */
-    public static final ModuleIdentifier CLASSPATH = new ModuleIdentifier("Classpath", DEFAULT_SLOT);
+    public static final ModuleIdentifier CLASSPATH = new ModuleIdentifier(ClassPathModuleLoader.CLASSPATH_STRING, DEFAULT_SLOT);
 
     private ModuleIdentifier(final String name, final String slot) {
         this.name = name;
@@ -135,7 +138,8 @@ public final class ModuleIdentifier implements Serializable {
      */
     @Override
     public String toString() {
-        return escapeName(name) + ":" + escapeSlot(slot);
+        final String escapeName = escapeName(name);
+        return slot.equals(DEFAULT_SLOT) ? escapeName : escapeName + ":" + escapeSlot(slot);
     }
 
     private void readObject(ObjectInputStream ois) throws ClassNotFoundException, IOException {

@@ -35,10 +35,10 @@ import java.util.Map;
  */
 public abstract class ModuleSpec {
 
-    private final ModuleIdentifier moduleIdentifier;
+    private final String name;
 
-    ModuleSpec(final ModuleIdentifier moduleIdentifier) {
-        this.moduleIdentifier = moduleIdentifier;
+    ModuleSpec(final String name) {
+        this.name = name;
     }
 
     /**
@@ -46,10 +46,22 @@ public abstract class ModuleSpec {
      *
      * @param moduleIdentifier the module identifier
      * @return the builder
+     * @deprecated Use {@link #buider(String)} instead.
      */
+    @Deprecated
     public static Builder build(final ModuleIdentifier moduleIdentifier) {
-        if (moduleIdentifier == null) {
-            throw new IllegalArgumentException("moduleIdentifier is null");
+        return build(moduleIdentifier.toString());
+    }
+
+    /**
+     * Get a builder for a new module specification.
+     *
+     * @param name the module name
+     * @return the builder
+     */
+    public static Builder build(final String name) {
+        if (name == null) {
+            throw new IllegalArgumentException("name is null");
         }
         return new Builder() {
             private String mainClass;
@@ -125,12 +137,12 @@ public abstract class ModuleSpec {
 
             @Override
             public ModuleSpec create() {
-                return new ConcreteModuleSpec(moduleIdentifier, mainClass, assertionSetting, resourceLoaders.toArray(new ResourceLoaderSpec[resourceLoaders.size()]), dependencies.toArray(new DependencySpec[dependencies.size()]), fallbackLoader, moduleClassLoaderFactory, classFileTransformer, properties, permissionCollection, version);
+                return new ConcreteModuleSpec(name, mainClass, assertionSetting, resourceLoaders.toArray(new ResourceLoaderSpec[resourceLoaders.size()]), dependencies.toArray(new DependencySpec[dependencies.size()]), fallbackLoader, moduleClassLoaderFactory, classFileTransformer, properties, permissionCollection, version);
             }
 
             @Override
-            public ModuleIdentifier getIdentifier() {
-                return moduleIdentifier;
+            public String getName() {
+                return name;
             }
         };
     }
@@ -141,25 +153,38 @@ public abstract class ModuleSpec {
      * @param moduleIdentifier the module identifier
      * @param aliasTarget the alias target identifier
      * @return the builder
+     * @deprecated Use {@link #buildAlias(String, String)} instead.
      */
+    @Deprecated
     public static AliasBuilder buildAlias(final ModuleIdentifier moduleIdentifier, final ModuleIdentifier aliasTarget) {
-        if (moduleIdentifier == null) {
-            throw new IllegalArgumentException("moduleIdentifier is null");
+        return buildAlias(moduleIdentifier.toString(), aliasTarget.toString());
+    }
+
+    /**
+     * Get a builder for a new module alias specification.
+     *
+     * @param moduleIdentifier the module identifier
+     * @param aliasTarget the alias target identifier
+     * @return the builder
+     */
+    public static AliasBuilder buildAlias(final String name, final String aliasName) {
+        if (name == null) {
+            throw new IllegalArgumentException("name is null");
         }
-        if (aliasTarget == null) {
-            throw new IllegalArgumentException("aliasTarget is null");
+        if (aliasName == null) {
+            throw new IllegalArgumentException("aliasName is null");
         }
         return new AliasBuilder() {
             public ModuleSpec create() {
-                return new AliasModuleSpec(moduleIdentifier, aliasTarget);
+                return new AliasModuleSpec(name, aliasName);
             }
 
-            public ModuleIdentifier getIdentifier() {
-                return moduleIdentifier;
+            public String getName() {
+                return null;
             }
 
-            public ModuleIdentifier getAliasTarget() {
-                return aliasTarget;
+            public String getAliasName() {
+                return null;
             }
         };
     }
@@ -168,9 +193,19 @@ public abstract class ModuleSpec {
      * Get the module identifier for the module which is specified by this object.
      *
      * @return the module identifier
+     * @deprecated Use {@link #getName()} instead.
      */
     public ModuleIdentifier getModuleIdentifier() {
-        return moduleIdentifier;
+        return ModuleIdentifier.fromString(name);
+    }
+
+    /**
+     * Get the module name for the module which is specified by this object.
+     *
+     * @return the module name
+     */
+    public String getName() {
+        return name;
     }
 
     /**
@@ -223,8 +258,19 @@ public abstract class ModuleSpec {
          * Get the identifier of the module being defined by this builder.
          *
          * @return the module identifier
+         * @deprecated use {@link #getName()} instead
          */
-        ModuleIdentifier getIdentifier();
+        @Deprecated
+        default ModuleIdentifier getIdentifier() {
+            return ModuleIdentifier.fromString(getName());
+        }
+
+        /**
+         * Get the name of the module being defined by this builder.
+         *
+         * @return the module name
+         */
+        String getName();
 
         /**
          * Sets a "fall-back" loader that will attempt to load a class if all other mechanisms
@@ -294,14 +340,36 @@ public abstract class ModuleSpec {
          * Get the identifier of the module being defined by this builder.
          *
          * @return the module identifier
+         * @deprecated Use {@link #getName()} instead.
          */
-        ModuleIdentifier getIdentifier();
+        @Deprecated
+        default ModuleIdentifier getIdentifier() {
+            return ModuleIdentifier.fromString(getName());
+        }
+
+        /**
+         * Get the name of the module being defined by this builder.
+         *
+         * @return the module name
+         */
+        String getName();
 
         /**
          * Get the identifier of the module being referenced by this builder.
          *
          * @return the module identifier
+         * @deprecated Use {@link #getAliasName()} instead.
          */
-        ModuleIdentifier getAliasTarget();
+        @Deprecated
+        default ModuleIdentifier getAliasTarget() {
+            return ModuleIdentifier.fromString(getAliasName());
+        }
+
+        /**
+         * Get the name of the module being referenced by this builder.
+         *
+         * @return the module name
+         */
+        String getAliasName();
     }
 }

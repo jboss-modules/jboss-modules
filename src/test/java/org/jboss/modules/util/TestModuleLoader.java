@@ -19,7 +19,6 @@
 package org.jboss.modules.util;
 
 import org.jboss.modules.Module;
-import org.jboss.modules.ModuleIdentifier;
 import org.jboss.modules.ModuleLoadException;
 import org.jboss.modules.ModuleLoader;
 import org.jboss.modules.ModuleSpec;
@@ -35,21 +34,21 @@ import java.util.Map;
  */
 public class TestModuleLoader extends ModuleLoader {
 
-    private final Map<ModuleIdentifier, ModuleSpec> moduleSpecs = new HashMap<ModuleIdentifier, ModuleSpec>();
+    private final Map<String, ModuleSpec> moduleSpecs = new HashMap<>();
 
-    protected Module preloadModule(final ModuleIdentifier identifier) throws ModuleLoadException {
-        return super.preloadModule(identifier);
+    protected Module preloadModule(final String name) throws ModuleLoadException {
+        return super.preloadModule(name);
     }
 
     @Override
-    protected ModuleSpec findModule(ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
-        final ModuleSpec moduleSpec = moduleSpecs.get(moduleIdentifier);
-        if(moduleSpec == null) throw new ModuleLoadException("No module spec found for module " + moduleIdentifier);
+    protected ModuleSpec findModule(String name) throws ModuleLoadException {
+        final ModuleSpec moduleSpec = moduleSpecs.get(name);
+        if(moduleSpec == null) throw new ModuleLoadException("No module spec found for module " + name);
         return moduleSpec;
     }
 
     public void addModuleSpec(final ModuleSpec moduleSpec) {
-        moduleSpecs.put(moduleSpec.getModuleIdentifier(), moduleSpec);
+        moduleSpecs.put(moduleSpec.getName(), moduleSpec);
     }
 
     public String toString() {

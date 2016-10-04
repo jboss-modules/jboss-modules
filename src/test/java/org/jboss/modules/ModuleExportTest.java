@@ -98,7 +98,7 @@ public class ModuleExportTest extends AbstractModuleTestCase {
         for (Dependency dependency : module.getDependenciesInternal()) {
             if (dependency instanceof ModuleDependency && dependency.getExportFilter() != PathFilters.rejectAll()) {
                 final ModuleDependency moduleDependency = (ModuleDependency) dependency;
-                final Module md = moduleDependency.getModuleLoader().loadModule(moduleDependency.getIdentifier());
+                final Module md = moduleDependency.getModuleLoader().loadModule(moduleDependency.getName());
                 if (md != null && moduleDependency.getExportFilter() != PathFilters.rejectAll()) {
                     if (visited.add(md)) {
                         dependencyExports.add(md.getIdentifier());

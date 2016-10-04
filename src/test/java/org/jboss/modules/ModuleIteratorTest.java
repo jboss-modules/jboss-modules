@@ -95,10 +95,10 @@ public class ModuleIteratorTest extends AbstractModuleTestCase {
             }
 
             @Override
-            public ModuleSpec findModule(ModuleIdentifier identifier, ModuleLoader delegateLoader)
+            public ModuleSpec findModule(String name, ModuleLoader delegateLoader)
                 throws ModuleLoadException {
                 for (ModuleIdentifier m : modules) {
-                    if (m.equals(identifier)) {
+                    if (m.equals(name)) {
                         return ModuleSpec.build(m).create();
                     }
                 }
@@ -108,7 +108,7 @@ public class ModuleIteratorTest extends AbstractModuleTestCase {
 
         ModuleLoader loader = new ModuleLoader(new ModuleFinder[]{fakeFinder});
 
-        Iterator<ModuleIdentifier> it = loader.iterateModules(null, true);
+        Iterator<ModuleIdentifier> it = loader.iterateModules((ModuleIdentifier) null, true);
         int count = 0;
         while (it.hasNext()) {
             it.next();

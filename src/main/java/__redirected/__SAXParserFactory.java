@@ -70,7 +70,12 @@ public final class __SAXParserFactory extends SAXParserFactory {
         }
     }
 
+    @Deprecated
     public static void changeDefaultFactory(ModuleIdentifier id, ModuleLoader loader) {
+        changeDefaultFactory(id.toString(), loader);
+    }
+
+    public static void changeDefaultFactory(String id, ModuleLoader loader) {
         Class<? extends SAXParserFactory> clazz = __RedirectedUtils.loadProvider(id, SAXParserFactory.class, loader);
         if (clazz != null) {
             try {

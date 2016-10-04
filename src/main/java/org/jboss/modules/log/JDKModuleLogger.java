@@ -23,7 +23,6 @@ import java.util.logging.Logger;
 
 import org.jboss.modules.Main;
 import org.jboss.modules.Module;
-import org.jboss.modules.ModuleIdentifier;
 import org.jboss.modules.ModuleLoader;
 
 /**
@@ -179,9 +178,9 @@ public final class JDKModuleLogger implements ModuleLogger {
     }
 
     /** {@inheritDoc} */
-    public void moduleDefined(final ModuleIdentifier identifier, final ModuleLoader moduleLoader) {
+    public void moduleDefined(final String name, final ModuleLoader moduleLoader) {
         if (logger.isLoggable(DEBUG)) {
-            doLog(DEBUG, String.format("Module %s defined by %s", identifier, moduleLoader));
+            doLog(DEBUG, String.format("Module %s defined by %s", name, moduleLoader));
         }
     }
 

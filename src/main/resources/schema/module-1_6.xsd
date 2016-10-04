@@ -107,17 +107,10 @@
                 </annotation>
             </xsd:element>
         </xsd:all>
-        <xsd:attribute name="name" type="moduleNameType" use="required">
+        <xsd:attribute name="name" type="xsd:string" use="required">
             <annotation xmlns="http://www.w3.org/2001/XMLSchema">
                 <documentation>
                     The name of this module (required).
-                </documentation>
-            </annotation>
-        </xsd:attribute>
-        <xsd:attribute name="slot" type="moduleSlotType" use="optional">
-            <annotation xmlns="http://www.w3.org/2001/XMLSchema">
-                <documentation>
-                    The version slot of this module (optional).
                 </documentation>
             </annotation>
         </xsd:attribute>
@@ -129,31 +122,6 @@
             </annotation>
         </xsd:attribute>
     </xsd:complexType>
-
-    <xsd:simpleType name="moduleNameType">
-        <annotation xmlns="http://www.w3.org/2001/XMLSchema">
-            <documentation>
-                A module name, which consists of one or more dot (.)-separated segments. Each segment must begin and end
-                with an alphanumeric or underscore (_), and may otherwise contain alphanumerics, underscores, and hyphens
-                (-).
-            </documentation>
-        </annotation>
-        <xsd:restriction base="xsd:string">
-            <xsd:pattern value="[a-zA-Z0-9_]([-a-zA-Z0-9_]*[a-zA-Z0-9_])?(\.[a-zA-Z0-9_]([-a-zA-Z0-9_]*[a-zA-Z0-9_])?)*"/>
-        </xsd:restriction>
-    </xsd:simpleType>
-
-    <xsd:simpleType name="moduleSlotType">
-        <annotation xmlns="http://www.w3.org/2001/XMLSchema">
-            <documentation>
-                A module version slot. A slot may consist of one or more alphanumerics, hyphens (-), underscores (_),
-                plus signs (+), asterisks (*), or dots (.).
-            </documentation>
-        </annotation>
-        <xsd:restriction base="xsd:string">
-            <xsd:pattern value="[-a-zA-Z0-9_+*.]+"/>
-        </xsd:restriction>
-    </xsd:simpleType>
 
     <xsd:simpleType name="moduleVersionType">
         <annotation xmlns="http://www.w3.org/2001/XMLSchema">
@@ -218,17 +186,10 @@
                 </annotation>
             </xsd:element>
         </xsd:all>
-        <xsd:attribute name="name" type="moduleNameType" use="required">
+        <xsd:attribute name="name" type="xsd:string" use="required">
             <annotation xmlns="http://www.w3.org/2001/XMLSchema">
                 <documentation>
                     The dependency module name (required).
-                </documentation>
-            </annotation>
-        </xsd:attribute>
-        <xsd:attribute name="slot" type="moduleSlotType" use="optional">
-            <annotation xmlns="http://www.w3.org/2001/XMLSchema">
-                <documentation>
-                    The dependency module version slot (optional).
                 </documentation>
             </annotation>
         </xsd:attribute>
@@ -526,31 +487,17 @@
                 A module alias type, which defines the target for a module alias.
             </documentation>
         </annotation>
-        <xsd:attribute name="name" type="moduleNameType" use="required">
+        <xsd:attribute name="name" type="xsd:string" use="required">
             <annotation xmlns="http://www.w3.org/2001/XMLSchema">
                 <documentation>
                     The name of this module alias (required).
                 </documentation>
             </annotation>
         </xsd:attribute>
-        <xsd:attribute name="slot" type="moduleSlotType" use="optional">
-            <annotation xmlns="http://www.w3.org/2001/XMLSchema">
-                <documentation>
-                    The version slot of this module alias (optional).
-                </documentation>
-            </annotation>
-        </xsd:attribute>
-        <xsd:attribute name="target-name" type="moduleNameType" use="required">
+        <xsd:attribute name="target-name" type="xsd:string" use="required">
             <annotation xmlns="http://www.w3.org/2001/XMLSchema">
                 <documentation>
                     The name of the module to which this alias refers (required).
-                </documentation>
-            </annotation>
-        </xsd:attribute>
-        <xsd:attribute name="target-slot" type="moduleSlotType" use="optional">
-            <annotation xmlns="http://www.w3.org/2001/XMLSchema">
-                <documentation>
-                    The version slot of the module to which this alias refers (optional).
                 </documentation>
             </annotation>
         </xsd:attribute>
@@ -562,17 +509,10 @@
                 An explicitly absent module.
             </documentation>
         </annotation>
-        <xsd:attribute name="name" type="moduleNameType" use="required">
+        <xsd:attribute name="name" type="xsd:string" use="required">
             <annotation xmlns="http://www.w3.org/2001/XMLSchema">
                 <documentation>
                     The name of the absent module (required).
-                </documentation>
-            </annotation>
-        </xsd:attribute>
-        <xsd:attribute name="slot" type="moduleSlotType" use="optional">
-            <annotation xmlns="http://www.w3.org/2001/XMLSchema">
-                <documentation>
-                    The version slot of the absent module (optional).
                 </documentation>
             </annotation>
         </xsd:attribute>
