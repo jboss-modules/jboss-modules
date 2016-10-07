@@ -455,7 +455,12 @@ public abstract class ConcurrentClassLoader extends ClassLoader {
             if (existing != null) {
                 return existing;
             }
-            Package pkg = super.definePackage(name, specTitle, specVersion, specVendor, implTitle, implVersion, implVendor, sealBase);
+            Package pkg;
+            try {
+                pkg = super.definePackage(name, specTitle, specVersion, specVendor, implTitle, implVersion, implVendor, sealBase);
+            } catch (final IllegalArgumentException iae) {
+                pkg = super.getPackage(name);
+            }
             existing = packages.putIfAbsent(name, pkg);
             return existing != null ? existing : pkg;
         } finally {
