@@ -32,6 +32,7 @@ import java.util.jar.JarFile;
 final class ClassPathModuleLoader extends ModuleLoader {
 
     static final String[] NO_STRINGS = new String[0];
+    static final String CLASSPATH_STRING = "Classpath";
     private final ModuleLoader delegateLoader;
     private final String classPath;
     private final String dependencies;
@@ -53,19 +54,19 @@ final class ClassPathModuleLoader extends ModuleLoader {
     }
 
     @Override
-    protected Module preloadModule(final ModuleIdentifier identifier) throws ModuleLoadException {
-        if (identifier.equals(ModuleIdentifier.CLASSPATH)) {
-            return loadModuleLocal(identifier);
+    protected Module preloadModule(final String name) throws ModuleLoadException {
+        if (name.equals(CLASSPATH_STRING)) {
+            return loadModuleLocal(name);
         } else if (delegateLoader != null) {
-            return preloadModule(identifier, delegateLoader);
+            return preloadModule(name, delegateLoader);
         } else {
             return null;
         }
     }
 
     @Override
-    protected ModuleSpec findModule(final ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
-        ModuleSpec.Builder builder = ModuleSpec.build(moduleIdentifier);
+    protected ModuleSpec findModule(final String name) throws ModuleLoadException {
+        ModuleSpec.Builder builder = ModuleSpec.build(name);
         builder.setMainClass(mainClass);
         // Process the classpath
         addClassPath(builder, classPath);
@@ -74,12 +75,11 @@ final class ClassPathModuleLoader extends ModuleLoader {
         for (String dependencyEntry : dependencyEntries) {
             dependencyEntry = dependencyEntry.trim();
             if (! dependencyEntry.isEmpty()) {
-                final ModuleIdentifier depModId = ModuleIdentifier.fromString(dependencyEntry);
                 final DependencySpec spec = DependencySpec.createModuleDependencySpec(
                         PathFilters.getMetaInfSubdirectoriesWithoutMetaInfFilter(),
                         PathFilters.rejectAll(),
                         delegateLoader,
-                        depModId,
+                        dependencyEntry,
                         false);
                 builder.addDependency(spec);
             }

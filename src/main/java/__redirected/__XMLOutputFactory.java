@@ -70,7 +70,12 @@ public final class __XMLOutputFactory extends XMLOutputFactory {
         }
     }
 
+    @Deprecated
     public static void changeDefaultFactory(ModuleIdentifier id, ModuleLoader loader) {
+        changeDefaultFactory(id.toString(), loader);
+    }
+
+    public static void changeDefaultFactory(String id, ModuleLoader loader) {
         Class<? extends XMLOutputFactory> clazz = __RedirectedUtils.loadProvider(id, XMLOutputFactory.class, loader);
         if (clazz != null) {
             try {

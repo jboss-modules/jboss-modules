@@ -26,25 +26,25 @@ import org.jboss.modules.filter.PathFilter;
  */
 final class ModuleDependency extends Dependency {
     private final ModuleLoader moduleLoader;
-    private final ModuleIdentifier identifier;
+    private final String name;
     private final boolean optional;
 
-    ModuleDependency(final PathFilter exportFilter, final PathFilter importFilter, final ModuleLoader moduleLoader, final ModuleIdentifier identifier, final boolean optional) {
+    ModuleDependency(final PathFilter exportFilter, final PathFilter importFilter, final ModuleLoader moduleLoader, final String name, final boolean optional) {
         super(exportFilter, importFilter);
         this.moduleLoader = moduleLoader;
-        this.identifier = identifier;
+        this.name = name;
         this.optional = optional;
     }
 
-    ModuleDependency(final PathFilter exportFilter, final PathFilter importFilter, final PathFilter resourceExportFilter, final PathFilter resourceImportFilter, final ClassFilter classExportFilter, final ClassFilter classImportFilter, final ModuleLoader moduleLoader, final ModuleIdentifier identifier, final boolean optional) {
+    ModuleDependency(final PathFilter exportFilter, final PathFilter importFilter, final PathFilter resourceExportFilter, final PathFilter resourceImportFilter, final ClassFilter classExportFilter, final ClassFilter classImportFilter, final ModuleLoader moduleLoader, final String name, final boolean optional) {
         super(exportFilter, importFilter, resourceExportFilter, resourceImportFilter, classExportFilter, classImportFilter);
         this.moduleLoader = moduleLoader;
-        this.identifier = identifier;
+        this.name = name;
         this.optional = optional;
     }
 
-    ModuleIdentifier getIdentifier() {
-        return identifier;
+    String getName() {
+        return name;
     }
 
     boolean isOptional() {
@@ -56,6 +56,6 @@ final class ModuleDependency extends Dependency {
     }
 
     public String toString() {
-        return (optional ? "optional " : "" ) + "dependency on " + identifier + " (" + moduleLoader + ")";
+        return (optional ? "optional " : "" ) + "dependency on " + name + " (" + moduleLoader + ")";
     }
 }

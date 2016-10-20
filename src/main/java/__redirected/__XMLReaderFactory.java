@@ -82,7 +82,12 @@ public final class __XMLReaderFactory implements XMLReader {
         }
     }
 
+    @Deprecated
     public static void changeDefaultFactory(ModuleIdentifier id, ModuleLoader loader) {
+        changeDefaultFactory(id.toString(), loader);
+    }
+
+    public static void changeDefaultFactory(String id, ModuleLoader loader) {
         Class<? extends XMLReader> clazz = __RedirectedUtils.loadProvider(id, XMLReader.class, loader, SAX_DRIVER);
         if (clazz != null) {
             try {

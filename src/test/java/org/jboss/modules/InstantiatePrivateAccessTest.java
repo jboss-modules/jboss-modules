@@ -42,21 +42,20 @@ public class InstantiatePrivateAccessTest {
 
     @Test
     public void ensureModularPermissionFactory() {
-        final ModuleIdentifier test = ModuleIdentifier.create("test");
         final ModuleLoader moduleLoader = new ModuleLoader(new ModuleFinder[]{
             new ModuleFinder() {
-                public ModuleSpec findModule(final ModuleIdentifier identifier, final ModuleLoader delegateLoader) throws ModuleLoadException {
-                    if (identifier.equals(test)) {
+                public ModuleSpec findModule(final String name, final ModuleLoader delegateLoader) throws ModuleLoadException {
+                    if (name.equals("test")) {
                         final Permissions perms = new Permissions();
                         perms.add(new AllPermission());
-                        return ModuleSpec.build(test).setPermissionCollection(perms).create();
+                        return ModuleSpec.build("test").setPermissionCollection(perms).create();
                     } else {
                         return null;
                     }
                 }
             }
         });
-        final ModularPermissionFactory factory = new ModularPermissionFactory(moduleLoader, test, RuntimePermission.class.getName(), "foo", "*");
+        final ModularPermissionFactory factory = new ModularPermissionFactory(moduleLoader, "test", RuntimePermission.class.getName(), "foo", "*");
         assertEquals(new RuntimePermission("foo", "*"), factory.construct());
     }
 }

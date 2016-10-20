@@ -42,7 +42,7 @@ public class ModuleIdentifierTest {
     @Test
     public void testToString() {
         ModuleIdentifier identifier = ModuleIdentifier.fromString("test.module");
-        assertEquals("test.module:main", identifier.toString());
+        assertEquals("test.module", identifier.toString());
 
         identifier = ModuleIdentifier.fromString("test.module:old");
         assertEquals("test.module:old", identifier.toString());

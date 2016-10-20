@@ -74,7 +74,12 @@ public final class __TransformerFactory extends SAXTransformerFactory {
         }
     }
 
+    @Deprecated
     public static void changeDefaultFactory(ModuleIdentifier id, ModuleLoader loader) {
+        changeDefaultFactory(id.toString(), loader);
+    }
+
+    public static void changeDefaultFactory(String id, ModuleLoader loader) {
         Class<? extends TransformerFactory> clazz = __RedirectedUtils.loadProvider(id, TransformerFactory.class, loader);
         if (clazz != null) {
             try {

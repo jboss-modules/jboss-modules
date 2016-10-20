@@ -137,8 +137,8 @@ public final class LocalModuleFinder implements ModuleFinder {
         return builder.toString();
     }
 
-    public ModuleSpec findModule(final ModuleIdentifier identifier, final ModuleLoader delegateLoader) throws ModuleLoadException {
-        final String child = toPathString(identifier);
+    public ModuleSpec findModule(final String name, final ModuleLoader delegateLoader) throws ModuleLoadException {
+        final String child = toPathString(ModuleIdentifier.fromString(name));
         if (pathFilter.accept(child)) {
             try {
                 return doPrivileged((PrivilegedExceptionAction<ModuleSpec>) () -> {
@@ -146,7 +146,7 @@ public final class LocalModuleFinder implements ModuleFinder {
                         final File file = new File(root, child);
                         final File moduleXml = new File(file, "module.xml");
                         if (moduleXml.exists()) {
-                            final ModuleSpec spec = ModuleXmlParser.parseModuleXml(delegateLoader, identifier, file, moduleXml);
+                            final ModuleSpec spec = ModuleXmlParser.parseModuleXml(delegateLoader, name, file, moduleXml);
                             if (spec == null) break;
                             return spec;
                         }
@@ -179,14 +179,30 @@ public final class LocalModuleFinder implements ModuleFinder {
      * @return the module specification
      * @throws IOException if reading the module file failed
      * @throws ModuleLoadException if creating the module specification failed (e.g. due to a parse error)
+     * @deprecated Use {@link #parseModuleXmlFile(String, ModuleLoader, File...)} instead.
      */
+    @Deprecated
     public static ModuleSpec parseModuleXmlFile(final ModuleIdentifier identifier, final ModuleLoader delegateLoader, final File... roots) throws IOException, ModuleLoadException {
-        final String child = toPathString(identifier);
+        return parseModuleXmlFile(identifier.toString(), delegateLoader, roots);
+    }
+
+    /**
+     * Parse a {@code module.xml} file and return the corresponding module specification.
+     *
+     * @param name the name of the module to load
+     * @param delegateLoader the delegate module loader to use for module specifications
+     * @param roots the repository root paths to search
+     * @return the module specification
+     * @throws IOException if reading the module file failed
+     * @throws ModuleLoadException if creating the module specification failed (e.g. due to a parse error)
+     */
+    public static ModuleSpec parseModuleXmlFile(final String name, final ModuleLoader delegateLoader, final File... roots) throws IOException, ModuleLoadException {
+        final String child = toPathString(ModuleIdentifier.fromString(name));
         for (File root : roots) {
             final File file = new File(root, child);
             final File moduleXml = new File(file, "module.xml");
             if (moduleXml.exists()) {
-                final ModuleSpec spec = ModuleXmlParser.parseModuleXml(delegateLoader, identifier, file, moduleXml);
+                final ModuleSpec spec = ModuleXmlParser.parseModuleXml(delegateLoader, name, file, moduleXml);
                 if (spec == null) break;
                 return spec;
             }

@@ -40,11 +40,11 @@ public final class DependencyTreeViewer {
         return Arrays.copyOf(newArray, o, oType);
     }
 
-    private static void print(PrintWriter out, String prefix, ModuleSpec spec, FastCopyHashSet<ModuleIdentifier> visited, File... roots) {
+    private static void print(PrintWriter out, String prefix, ModuleSpec spec, FastCopyHashSet<String> visited, File... roots) {
         if (spec instanceof AliasModuleSpec) {
             final AliasModuleSpec aliasModuleSpec = (AliasModuleSpec) spec;
             out.print(" -> ");
-            final ModuleIdentifier aliasTarget = aliasModuleSpec.getAliasTarget();
+            final String aliasTarget = aliasModuleSpec.getAliasName();
             out.println(aliasTarget);
             if (visited.add(aliasTarget)) {
                 try {
@@ -68,15 +68,15 @@ public final class DependencyTreeViewer {
         }
     }
 
-    private static void print(PrintWriter out, String prefix, DependencySpec spec, FastCopyHashSet<ModuleIdentifier> visited, final boolean last, final File... roots) {
+    private static void print(PrintWriter out, String prefix, DependencySpec spec, FastCopyHashSet<String> visited, final boolean last, final File... roots) {
         if (spec instanceof ModuleDependencySpec) {
             final ModuleDependencySpec moduleDependencySpec = (ModuleDependencySpec) spec;
-            final ModuleIdentifier identifier = moduleDependencySpec.getIdentifier();
+            final String name = moduleDependencySpec.getName();
             out.print(prefix);
             out.print(last ? '└' : '├');
             out.print('─');
             out.print(' ');
-            out.print(identifier);
+            out.print(name);
             if (moduleDependencySpec.isOptional()) {
                 out.print(" (optional)");
             }
@@ -84,18 +84,18 @@ public final class DependencyTreeViewer {
             if (! exportFilter.equals(PathFilters.rejectAll())) {
                 out.print(" (exported)");
             }
-            if (visited.add(identifier)) {
-                print(out, prefix + (last ? "   " : "│  "), identifier, visited, roots);
+            if (visited.add(name)) {
+                print(out, prefix + (last ? "   " : "│  "), name, visited, roots);
             } else {
                 out.println();
             }
         }
     }
 
-    private static void print(PrintWriter out, String prefix, ModuleIdentifier identifier, FastCopyHashSet<ModuleIdentifier> visited, final File... roots) {
+    private static void print(PrintWriter out, String prefix, String name, FastCopyHashSet<String> visited, final File... roots) {
         final ModuleSpec moduleSpec;
         try {
-            moduleSpec = LocalModuleFinder.parseModuleXmlFile(identifier, null, roots);
+            moduleSpec = LocalModuleFinder.parseModuleXmlFile(name, null, roots);
             if (moduleSpec == null) {
                 out.println(" (not found)");
             } else {
@@ -118,10 +118,23 @@ public final class DependencyTreeViewer {
      * @param out the output stream to use
      * @param identifier the identifier of the module to examine
      * @param roots the module roots to search
+     * @deprecated Use {@link #print(PrintWriter, String, File...)} instead.
      */
+    @Deprecated
     public static void print(PrintWriter out, ModuleIdentifier identifier, final File... roots) {
-        out.print(identifier);
-        print(out, "", identifier, new FastCopyHashSet<ModuleIdentifier>(), roots);
+        print(out, identifier.toString(), roots);
+    }
+
+    /**
+     * Print the dependency tree for the given module with the given module root list.
+     *
+     * @param out the output stream to use
+     * @param identifier the identifier of the module to examine
+     * @param roots the module roots to search
+     */
+    public static void print(PrintWriter out, String name, final File... roots) {
+        out.print(name);
+        print(out, "", name, new FastCopyHashSet<String>(), roots);
         out.flush();
     }
 }

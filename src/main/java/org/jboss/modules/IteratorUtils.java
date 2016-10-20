@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2014 Red Hat, Inc., and individual contributors
+ * Copyright 2016 Red Hat, Inc., and individual contributors
  * as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,37 +18,25 @@
 
 package org.jboss.modules;
 
+import java.util.Iterator;
+import java.util.function.Function;
+
 /**
- * A module specification for a module alias.
- *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class AliasModuleSpec extends ModuleSpec {
-
-    private final String aliasName;
-
-    AliasModuleSpec(final String name, final String aliasName) {
-        super(name);
-        this.aliasName = aliasName;
+final class IteratorUtils {
+    private IteratorUtils() {
     }
 
-    /**
-     * Get the module alias target.
-     *
-     * @return the module alias target
-     * @deprecated Use {@link #getAliasName()} instead.
-     */
-    @Deprecated
-    public ModuleIdentifier getAliasTarget() {
-        return ModuleIdentifier.fromString(aliasName);
-    }
+    public static <T, U> Iterator<U> transformingIterator(Iterator<T> original, Function<T, U> translator) {
+        return new Iterator<U>() {
+            public boolean hasNext() {
+                return original.hasNext();
+            }
 
-    /**
-     * Get the module alias name.
-     *
-     * @return the module alias name
-     */
-    public String getAliasName() {
-        return aliasName;
+            public U next() {
+                return translator.apply(original.next());
+            }
+        };
     }
 }

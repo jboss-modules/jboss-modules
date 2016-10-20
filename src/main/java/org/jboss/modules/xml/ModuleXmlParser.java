@@ -161,8 +161,25 @@ public final class ModuleXmlParser {
      * @return a module specification
      * @throws ModuleLoadException if a dependency could not be established or another error occurs
      * @throws IOException if I/O fails
+     * @deprecated Use {@link #parseModuleXml(ModuleLoader, String, File, File)} instead.
      */
+    @Deprecated
     public static ModuleSpec parseModuleXml(final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier, final File root, final File moduleInfoFile) throws ModuleLoadException, IOException {
+        return parseModuleXml(moduleLoader, moduleIdentifier.toString(), root, moduleInfoFile);
+    }
+
+    /**
+     * Parse a {@code module.xml} file.
+     *
+     * @param moduleLoader the module loader to use for dependency specifications
+     * @param moduleName the name of the module to load
+     * @param root the module path root
+     * @param moduleInfoFile the {@code File} of the {@code module.xml} content
+     * @return a module specification
+     * @throws ModuleLoadException if a dependency could not be established or another error occurs
+     * @throws IOException if I/O fails
+     */
+    public static ModuleSpec parseModuleXml(final ModuleLoader moduleLoader, final String moduleName, final File root, final File moduleInfoFile) throws ModuleLoadException, IOException {
         final FileInputStream fis;
         try {
             fis = new FileInputStream(moduleInfoFile);
@@ -197,7 +214,7 @@ public final class ModuleXmlParser {
                     final JarFile jarFile = new JarFile(file, true);
                     return ResourceLoaders.createJarResourceLoader(loaderName, jarFile);
                 }
-            }, root.getPath(), new BufferedInputStream(fis), moduleInfoFile.getPath(), moduleLoader, moduleIdentifier);
+            }, root.getPath(), new BufferedInputStream(fis), moduleInfoFile.getPath(), moduleLoader, moduleName);
         } finally {
             safeClose(fis);
         }
@@ -215,9 +232,28 @@ public final class ModuleXmlParser {
      * @return a module specification
      * @throws ModuleLoadException if a dependency could not be established or another error occurs
      * @throws IOException if I/O fails
+     * @deprecated Use {@link #parseModuleXml(ResourceRootFactory, String, InputStream, String, ModuleLoader, String)} instead.
      */
+    @Deprecated
     public static ModuleSpec parseModuleXml(final ResourceRootFactory factory, final String rootPath, InputStream source, final String moduleInfoFile, final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier) throws ModuleLoadException, IOException {
         return parseModuleXml(factory, MavenResolver.createDefaultResolver(), rootPath, source, moduleInfoFile, moduleLoader, moduleIdentifier);
+    }
+
+    /**
+     * Parse a {@code module.xml} file.
+     *
+     * @param factory the resource root factory to use (must not be {@code null})
+     * @param rootPath the root path to send in to the resource root factory (must not be {@code null})
+     * @param source a stream of the {@code module.xml} content (must not be {@code null})
+     * @param moduleInfoFile the {@code File} of the {@code module.xml} content (must not be {@code null})
+     * @param moduleLoader the module loader to use for dependency specifications (must not be {@code null})
+     * @param moduleName the module name of the module to load
+     * @return a module specification
+     * @throws ModuleLoadException if a dependency could not be established or another error occurs
+     * @throws IOException if I/O fails
+     */
+    public static ModuleSpec parseModuleXml(final ResourceRootFactory factory, final String rootPath, InputStream source, final String moduleInfoFile, final ModuleLoader moduleLoader, final String moduleName) throws ModuleLoadException, IOException {
+        return parseModuleXml(factory, MavenResolver.createDefaultResolver(), rootPath, source, moduleInfoFile, moduleLoader, moduleName);
     }
 
     /**
@@ -233,13 +269,33 @@ public final class ModuleXmlParser {
      * @return a module specification
      * @throws ModuleLoadException if a dependency could not be established or another error occurs
      * @throws IOException if I/O fails
+     * @deprecated Use {@link #parseModuleXml(ResourceRootFactory, MavenResolver, String, InputStream, String, ModuleLoader, String)} instead.
      */
+    @Deprecated
     public static ModuleSpec parseModuleXml(final ResourceRootFactory factory, final MavenResolver mavenResolver, final String rootPath, InputStream source, final String moduleInfoFile, final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier) throws ModuleLoadException, IOException {
+        return parseModuleXml(factory, mavenResolver, rootPath, source, moduleInfoFile, moduleLoader, moduleIdentifier.toString());
+    }
+
+    /**
+     * Parse a {@code module.xml} file.
+     *
+     * @param factory the resource root factory to use (must not be {@code null})
+     * @param mavenResolver the Maven artifact resolver to use (must not be {@code null})
+     * @param rootPath the root path to send in to the resource root factory (must not be {@code null})
+     * @param source a stream of the {@code module.xml} content (must not be {@code null})
+     * @param moduleInfoFile the {@code File} of the {@code module.xml} content (must not be {@code null})
+     * @param moduleLoader the module loader to use for dependency specifications (must not be {@code null})
+     * @param moduleName the module name of the module to load
+     * @return a module specification
+     * @throws ModuleLoadException if a dependency could not be established or another error occurs
+     * @throws IOException if I/O fails
+     */
+    public static ModuleSpec parseModuleXml(final ResourceRootFactory factory, final MavenResolver mavenResolver, final String rootPath, InputStream source, final String moduleInfoFile, final ModuleLoader moduleLoader, final String moduleName) throws ModuleLoadException, IOException {
         try {
             final MXParser parser = new MXParser();
             parser.setFeature(FEATURE_PROCESS_NAMESPACES, true);
             parser.setInput(source, null);
-            return parseDocument(mavenResolver, factory, rootPath, parser, moduleLoader, moduleIdentifier);
+            return parseDocument(mavenResolver, factory, rootPath, parser, moduleLoader, moduleName);
         } catch (XmlPullParserException e) {
             throw new ModuleLoadException("Error loading module from " + moduleInfoFile, e);
         } finally {
@@ -277,7 +333,7 @@ public final class ModuleXmlParser {
         return new XmlPullParserException("Unexpected end of document", reader, null);
     }
 
-    private static XmlPullParserException invalidModuleName(final XmlPullParser reader, final ModuleIdentifier expected) {
+    private static XmlPullParserException invalidModuleName(final XmlPullParser reader, final String expected) {
         return new XmlPullParserException("Invalid/mismatched module name (expected " + expected + ")", reader, null);
     }
 
@@ -328,6 +384,10 @@ public final class ModuleXmlParser {
         }
     }
 
+    private static boolean atLeast1_6(final XmlPullParser reader) {
+            return MODULE_1_6.equals(reader.getNamespace());
+    }
+
     private static void assertNoAttributes(final XmlPullParser reader) throws XmlPullParserException {
         final int attributeCount = reader.getAttributeCount();
         if (attributeCount > 0) {
@@ -341,30 +401,31 @@ public final class ModuleXmlParser {
         }
     }
 
-    private static ModuleSpec parseDocument(final MavenResolver mavenResolver, final ResourceRootFactory factory, final String rootPath, XmlPullParser reader, final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier) throws XmlPullParserException, IOException {
+    private static ModuleSpec parseDocument(final MavenResolver mavenResolver, final ResourceRootFactory factory, final String rootPath, XmlPullParser reader, final ModuleLoader moduleLoader, final String moduleName) throws XmlPullParserException, IOException {
         int eventType;
         for (;;) {
             eventType = reader.nextTag();
             switch (eventType) {
                 case START_DOCUMENT: {
-                    return parseRootElement(mavenResolver, factory, rootPath, reader, moduleLoader, moduleIdentifier);
+                    return parseRootElement(mavenResolver, factory, rootPath, reader, moduleLoader, moduleName);
                 }
                 case START_TAG: {
+                    validateNamespace(reader);
                     final String element = reader.getName();
                     switch (element) {
                         case E_MODULE: {
-                            final ModuleSpec.Builder specBuilder = ModuleSpec.build(moduleIdentifier);
-                            parseModuleContents(mavenResolver, reader, factory, moduleLoader, moduleIdentifier, specBuilder, rootPath);
+                            final ModuleSpec.Builder specBuilder = ModuleSpec.build(moduleName);
+                            parseModuleContents(mavenResolver, reader, factory, moduleLoader, moduleName, specBuilder, rootPath);
                             parseEndDocument(reader);
                             return specBuilder.create();
                         }
                         case E_MODULE_ALIAS: {
-                            final ModuleSpec moduleSpec = parseModuleAliasContents(reader, moduleIdentifier);
+                            final ModuleSpec moduleSpec = parseModuleAliasContents(reader, moduleName);
                             parseEndDocument(reader);
                             return moduleSpec;
                         }
                         case E_MODULE_ABSENT: {
-                            parseModuleAbsentContents(reader, moduleIdentifier);
+                            parseModuleAbsentContents(reader, moduleName);
                             return null;
                         }
                         default: {
@@ -379,7 +440,7 @@ public final class ModuleXmlParser {
         }
     }
 
-    private static ModuleSpec parseRootElement(final MavenResolver mavenResolver, final ResourceRootFactory factory, final String rootPath, final XmlPullParser reader, final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier) throws XmlPullParserException, IOException {
+    private static ModuleSpec parseRootElement(final MavenResolver mavenResolver, final ResourceRootFactory factory, final String rootPath, final XmlPullParser reader, final ModuleLoader moduleLoader, final String moduleName) throws XmlPullParserException, IOException {
         assertNoAttributes(reader);
         int eventType;
         while ((eventType = reader.nextTag()) != END_DOCUMENT) {
@@ -389,18 +450,18 @@ public final class ModuleXmlParser {
                     final String element = reader.getName();
                     switch (element) {
                         case E_MODULE: {
-                            final ModuleSpec.Builder specBuilder = ModuleSpec.build(moduleIdentifier);
-                            parseModuleContents(mavenResolver, reader, factory, moduleLoader, moduleIdentifier, specBuilder, rootPath);
+                            final ModuleSpec.Builder specBuilder = ModuleSpec.build(moduleName);
+                            parseModuleContents(mavenResolver, reader, factory, moduleLoader, moduleName, specBuilder, rootPath);
                             parseEndDocument(reader);
                             return specBuilder.create();
                         }
                         case E_MODULE_ALIAS: {
-                            final ModuleSpec moduleSpec = parseModuleAliasContents(reader, moduleIdentifier);
+                            final ModuleSpec moduleSpec = parseModuleAliasContents(reader, moduleName);
                             parseEndDocument(reader);
                             return moduleSpec;
                         }
                         case E_MODULE_ABSENT: {
-                            parseModuleAbsentContents(reader, moduleIdentifier);
+                            parseModuleAbsentContents(reader, moduleName);
                             return null;
                         }
                         default: {
@@ -416,12 +477,13 @@ public final class ModuleXmlParser {
         throw endOfDocument(reader);
     }
 
-    private static ModuleSpec parseModuleAliasContents(final XmlPullParser reader, final ModuleIdentifier moduleIdentifier) throws XmlPullParserException, IOException {
+    private static ModuleSpec parseModuleAliasContents(final XmlPullParser reader, final String moduleName) throws XmlPullParserException, IOException {
         final int count = reader.getAttributeCount();
         String name = null;
         String slot = null;
         String targetName = null;
         String targetSlot = null;
+        boolean noSlots = atLeast1_6(reader);
         final Set<String> required = new HashSet<>(LIST_A_NAME_A_TARGET_NAME);
         for (int i = 0; i < count; i ++) {
             validateAttributeNamespace(reader, i);
@@ -429,24 +491,34 @@ public final class ModuleXmlParser {
             required.remove(attribute);
             switch (attribute) {
                 case A_NAME:    name = reader.getAttributeValue(i); break;
-                case A_SLOT:    slot = reader.getAttributeValue(i); break;
+                case A_SLOT:    if (noSlots) throw unknownAttribute(reader,i); else slot = reader.getAttributeValue(i); break;
                 case A_TARGET_NAME: targetName = reader.getAttributeValue(i); break;
-                case A_TARGET_SLOT: targetSlot = reader.getAttributeValue(i); break;
+                case A_TARGET_SLOT: if (noSlots) throw unknownAttribute(reader,i); else targetSlot = reader.getAttributeValue(i); break;
                 default: throw unknownAttribute(reader, i);
             }
         }
         if (! required.isEmpty()) {
             throw missingAttributes(reader, required);
         }
-        if (! moduleIdentifier.equals(ModuleIdentifier.create(name, slot))) {
-            throw invalidModuleName(reader, moduleIdentifier);
+        if (noSlots) {
+            if (! moduleName.equals(name)) {
+                throw invalidModuleName(reader, moduleName);
+            }
+        } else {
+            if (! ModuleIdentifier.fromString(moduleName).equals(ModuleIdentifier.create(name, slot))) {
+                throw invalidModuleName(reader, moduleName);
+            }
         }
         int eventType;
         for (;;) {
             eventType = reader.nextTag();
             switch (eventType) {
                 case END_TAG: {
-                    return ModuleSpec.buildAlias(moduleIdentifier, ModuleIdentifier.create(targetName, targetSlot)).create();
+                    if (noSlots) {
+                        return ModuleSpec.buildAlias(moduleName, targetName).create();
+                    } else {
+                        return ModuleSpec.buildAlias(ModuleIdentifier.fromString(moduleName), ModuleIdentifier.create(targetName, targetSlot)).create();
+                    }
                 }
                 default: {
                     throw unexpectedContent(reader);
@@ -455,10 +527,11 @@ public final class ModuleXmlParser {
         }
     }
 
-    private static void parseModuleAbsentContents(final XmlPullParser reader, final ModuleIdentifier moduleIdentifier) throws XmlPullParserException, IOException {
+    private static void parseModuleAbsentContents(final XmlPullParser reader, final String moduleName) throws XmlPullParserException, IOException {
         final int count = reader.getAttributeCount();
         String name = null;
         String slot = null;
+        boolean noSlots = atLeast1_6(reader);
         final Set<String> required = new HashSet<>(LIST_A_NAME_A_SLOT);
         for (int i = 0; i < count; i ++) {
             validateAttributeNamespace(reader, i);
@@ -466,15 +539,21 @@ public final class ModuleXmlParser {
             required.remove(attribute);
             switch (attribute) {
                 case A_NAME:    name = reader.getAttributeValue(i); break;
-                case A_SLOT:    slot = reader.getAttributeValue(i); break;
+                case A_SLOT:    if (noSlots) throw unknownAttribute(reader, i); else slot = reader.getAttributeValue(i); break;
                 default: throw unknownAttribute(reader, i);
             }
         }
         if (! required.isEmpty()) {
             throw missingAttributes(reader, required);
         }
-        if (! moduleIdentifier.equals(ModuleIdentifier.create(name, slot))) {
-            throw invalidModuleName(reader, moduleIdentifier);
+        if (noSlots) {
+            if (! name.equals(moduleName)) {
+                throw invalidModuleName(reader, moduleName);
+            }
+        } else {
+            if (! ModuleIdentifier.fromString(moduleName).equals(ModuleIdentifier.create(name, slot))) {
+                throw invalidModuleName(reader, moduleName);
+            }
         }
         int eventType;
         for (;;) {
@@ -500,19 +579,20 @@ public final class ModuleXmlParser {
         return permissions;
     }
 
-    private static void parseModuleContents(final MavenResolver mavenResolver, final XmlPullParser reader, final ResourceRootFactory factory, final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier, final ModuleSpec.Builder specBuilder, final String rootPath) throws XmlPullParserException, IOException {
+    private static void parseModuleContents(final MavenResolver mavenResolver, final XmlPullParser reader, final ResourceRootFactory factory, final ModuleLoader moduleLoader, final String moduleName, final ModuleSpec.Builder specBuilder, final String rootPath) throws XmlPullParserException, IOException {
         final int count = reader.getAttributeCount();
         String name = null;
         String slot = null;
+        boolean noSlots = atLeast1_6(reader);
         Version version = null;
-        final Set<String> required = new HashSet<>(LIST_A_NAME);
+        final Set<String> required = noSlots ? new HashSet<>(LIST_A_NAME) : new HashSet<>(LIST_A_NAME);
         for (int i = 0; i < count; i ++) {
             validateAttributeNamespace(reader, i);
             final String attribute = reader.getAttributeName(i);
             required.remove(attribute);
             switch (attribute) {
                 case A_NAME:    name = reader.getAttributeValue(i); break;
-                case A_SLOT:    slot = reader.getAttributeValue(i); break;
+                case A_SLOT:    if (noSlots) throw unknownAttribute(reader, i); else slot = reader.getAttributeValue(i); break;
                 case A_VERSION:
                     try {
                         version = Version.parse(reader.getAttributeValue(i));
@@ -526,8 +606,14 @@ public final class ModuleXmlParser {
         if (! required.isEmpty()) {
             throw missingAttributes(reader, required);
         }
-        if (! specBuilder.getIdentifier().equals(ModuleIdentifier.create(name, slot))) {
-            throw invalidModuleName(reader, specBuilder.getIdentifier());
+        if (noSlots) {
+            if (! specBuilder.getName().equals(name)) {
+                throw invalidModuleName(reader, specBuilder.getName());
+            }
+        } else {
+            if (! specBuilder.getIdentifier().equals(ModuleIdentifier.create(name, slot))) {
+                throw invalidModuleName(reader, specBuilder.getIdentifier().toString());
+            }
         }
         specBuilder.setVersion(version);
         // xsd:all
@@ -560,7 +646,7 @@ public final class ModuleXmlParser {
                         case E_MAIN_CLASS:   parseMainClass(reader, specBuilder); break;
                         case E_RESOURCES:    parseResources(mavenResolver, factory, rootPath, reader, specBuilder); break;
                         case E_PROPERTIES:   parseProperties(reader, specBuilder); break;
-                        case E_PERMISSIONS:  parsePermissions(reader, moduleLoader, moduleIdentifier, specBuilder); gotPerms = true; break;
+                        case E_PERMISSIONS:  parsePermissions(reader, moduleLoader, moduleName, specBuilder); gotPerms = true; break;
                         default: throw unexpectedContent(reader);
                     }
                     break;
@@ -603,6 +689,7 @@ public final class ModuleXmlParser {
         String slot = null;
         boolean export = false;
         boolean optional = false;
+        boolean noSlots = atLeast1_6(reader);
         String services = D_NONE;
         final Set<String> required = new HashSet<>(LIST_A_NAME);
         final int count = reader.getAttributeCount();
@@ -612,7 +699,7 @@ public final class ModuleXmlParser {
             required.remove(attribute);
             switch (attribute) {
                 case A_NAME:     name = reader.getAttributeValue(i); break;
-                case A_SLOT:     slot = reader.getAttributeValue(i); break;
+                case A_SLOT:     if (noSlots) throw unknownAttribute(reader, i); else slot = reader.getAttributeValue(i); break;
                 case A_EXPORT:   export = Boolean.parseBoolean(reader.getAttributeValue(i)); break;
                 case A_OPTIONAL: optional = Boolean.parseBoolean(reader.getAttributeValue(i)); break;
                 case A_SERVICES: {
@@ -661,7 +748,11 @@ public final class ModuleXmlParser {
                         importBuilder.addFilter(PathFilters.getMetaInfFilter(), false);
                         importFilter = importBuilder.create();
                     }
-                    dependencies.add(DependencySpec.createModuleDependencySpec(importFilter, exportFilter, null, ModuleIdentifier.create(name, slot), optional));
+                    if (noSlots) {
+                        dependencies.add(DependencySpec.createModuleDependencySpec(importFilter, exportFilter, null, name, optional));
+                    } else {
+                        dependencies.add(DependencySpec.createModuleDependencySpec(importFilter, exportFilter, null, ModuleIdentifier.create(name, slot), optional));
+                    }
                     return;
                 }
                 case START_TAG: {
@@ -1099,7 +1190,7 @@ public final class ModuleXmlParser {
         parseNoContent(reader);
     }
 
-    private static void parsePermissions(final XmlPullParser reader, final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
+    private static void parsePermissions(final XmlPullParser reader, final ModuleLoader moduleLoader, final String moduleName, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
         assertNoAttributes(reader);
         // xsd:choice
         ArrayList<PermissionFactory> list = new ArrayList<>();
@@ -1115,7 +1206,7 @@ public final class ModuleXmlParser {
                     validateNamespace(reader);
                     switch (reader.getName()) {
                         case E_GRANT: {
-                            parseGrant(reader, moduleLoader, moduleIdentifier, list);
+                            parseGrant(reader, moduleLoader, moduleName, list);
                             break;
                         }
                         default: throw unexpectedContent(reader);
@@ -1129,7 +1220,7 @@ public final class ModuleXmlParser {
         }
     }
 
-    private static void parseGrant(final XmlPullParser reader, final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier, final ArrayList<PermissionFactory> list) throws XmlPullParserException, IOException {
+    private static void parseGrant(final XmlPullParser reader, final ModuleLoader moduleLoader, final String moduleName, final ArrayList<PermissionFactory> list) throws XmlPullParserException, IOException {
         String permission = null;
         String name = null;
         String actions = null;
@@ -1149,19 +1240,19 @@ public final class ModuleXmlParser {
         if (! required.isEmpty()) {
             throw missingAttributes(reader, required);
         }
-        expandName(moduleLoader, moduleIdentifier, list, permission, name, actions);
+        expandName(moduleLoader, moduleName, list, permission, name, actions);
 
         // consume remainder of element
         parseNoContent(reader);
     }
 
-    private static void expandName(final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier,
+    private static void expandName(final ModuleLoader moduleLoader, final String moduleName,
             final ArrayList<PermissionFactory> list, String permission, String name, String actions) {
         String expandedName = PolicyExpander.expand(name);
         //If a property can't be expanded in a permission entry that entry is ignored.
         //https://docs.oracle.com/javase/8/docs/technotes/guides/security/PolicyFiles.html#PropertyExp
         if(expandedName != null)
-            list.add(new ModularPermissionFactory(moduleLoader, moduleIdentifier, permission, expandedName, actions));
+            list.add(new ModularPermissionFactory(moduleLoader, moduleName, permission, expandedName, actions));
     }
 
     private static void parseNoContent(final XmlPullParser reader) throws XmlPullParserException, IOException {

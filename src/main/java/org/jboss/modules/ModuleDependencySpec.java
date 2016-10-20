@@ -27,19 +27,19 @@ import org.jboss.modules.filter.PathFilter;
 public final class ModuleDependencySpec extends DependencySpec {
 
     private final ModuleLoader moduleLoader;
-    private final ModuleIdentifier identifier;
+    private final String name;
     private final boolean optional;
 
-    ModuleDependencySpec(final PathFilter importFilter, final PathFilter exportFilter, final PathFilter resourceImportFilter, final PathFilter resourceExportFilter, final ClassFilter classImportFilter, final ClassFilter classExportFilter, final ModuleLoader moduleLoader, final ModuleIdentifier identifier, final boolean optional) {
+    ModuleDependencySpec(final PathFilter importFilter, final PathFilter exportFilter, final PathFilter resourceImportFilter, final PathFilter resourceExportFilter, final ClassFilter classImportFilter, final ClassFilter classExportFilter, final ModuleLoader moduleLoader, final String name, final boolean optional) {
         super(importFilter, exportFilter, resourceImportFilter, resourceExportFilter, classImportFilter, classExportFilter);
         this.moduleLoader = moduleLoader;
-        this.identifier = identifier;
+        this.name = name;
         this.optional = optional;
     }
 
     Dependency getDependency(final Module module) {
         final ModuleLoader loader = moduleLoader;
-        return new ModuleDependency(exportFilter, importFilter, resourceExportFilter, resourceImportFilter, classExportFilter, classImportFilter, loader == null ? module.getModuleLoader() : loader, identifier, optional);
+        return new ModuleDependency(exportFilter, importFilter, resourceExportFilter, resourceImportFilter, classExportFilter, classImportFilter, loader == null ? module.getModuleLoader() : loader, name, optional);
     }
 
     /**
@@ -55,9 +55,20 @@ public final class ModuleDependencySpec extends DependencySpec {
      * Get the module identifier of the dependency.
      *
      * @return the module identifier
+     * @deprecated Use {@code #getName()} instead.
      */
+    @Deprecated
     public ModuleIdentifier getIdentifier() {
-        return identifier;
+        return ModuleIdentifier.fromString(name);
+    }
+
+    /**
+     * Get the module name of the dependency.
+     *
+     * @return the module name
+     */
+    public String getName() {
+        return name;
     }
 
     /**
@@ -70,6 +81,6 @@ public final class ModuleDependencySpec extends DependencySpec {
     }
 
     public String toString() {
-        return "dependency on " + identifier;
+        return "dependency on " + name;
     }
 }

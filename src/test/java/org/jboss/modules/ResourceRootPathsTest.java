@@ -91,7 +91,7 @@ public class ResourceRootPathsTest extends AbstractModuleTestCase {
 
     @Test
     public void testPaths() throws Exception {
-        ConcreteModuleSpec moduleSpec = (ConcreteModuleSpec) moduleLoader.findModule(MODULE_ID);
+        ConcreteModuleSpec moduleSpec = (ConcreteModuleSpec) moduleLoader.findModule("test.test");
         ResourceLoaderSpec[] resourceLoaders = moduleSpec.getResourceLoaders();
         int checkCount = 0;
         for (ResourceLoaderSpec r : resourceLoaders) {

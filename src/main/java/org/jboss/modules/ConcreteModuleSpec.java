@@ -43,8 +43,8 @@ public final class ConcreteModuleSpec extends ModuleSpec {
     private final PermissionCollection permissionCollection;
     private final Version version;
 
-    ConcreteModuleSpec(final ModuleIdentifier moduleIdentifier, final String mainClass, final AssertionSetting assertionSetting, final ResourceLoaderSpec[] resourceLoaders, final DependencySpec[] dependencies, final LocalLoader fallbackLoader, final ModuleClassLoaderFactory moduleClassLoaderFactory, final ClassFileTransformer classFileTransformer, final Map<String, String> properties, final PermissionCollection permissionCollection, final Version version) {
-        super(moduleIdentifier);
+    ConcreteModuleSpec(final String name, final String mainClass, final AssertionSetting assertionSetting, final ResourceLoaderSpec[] resourceLoaders, final DependencySpec[] dependencies, final LocalLoader fallbackLoader, final ModuleClassLoaderFactory moduleClassLoaderFactory, final ClassFileTransformer classFileTransformer, final Map<String, String> properties, final PermissionCollection permissionCollection, final Version version) {
+        super(name);
         this.mainClass = mainClass;
         this.assertionSetting = assertionSetting;
         this.resourceLoaders = resourceLoaders;

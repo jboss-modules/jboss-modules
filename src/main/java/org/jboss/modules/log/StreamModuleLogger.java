@@ -22,7 +22,6 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 
 import org.jboss.modules.Module;
-import org.jboss.modules.ModuleIdentifier;
 import org.jboss.modules.ModuleLoader;
 
 /**
@@ -145,7 +144,7 @@ public final class StreamModuleLogger implements ModuleLogger {
     }
 
     /** {@inheritDoc} */
-    public void moduleDefined(final ModuleIdentifier identifier, final ModuleLoader moduleLoader) {
+    public void moduleDefined(final String name, final ModuleLoader moduleLoader) {
     }
 
     /** {@inheritDoc} */

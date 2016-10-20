@@ -19,7 +19,6 @@
 package org.jboss.modules.log;
 
 import org.jboss.modules.Module;
-import org.jboss.modules.ModuleIdentifier;
 import org.jboss.modules.ModuleLoader;
 
 /**
@@ -81,7 +80,7 @@ public final class NoopModuleLogger implements ModuleLogger {
     }
 
     @Override
-    public void moduleDefined(final ModuleIdentifier identifier, final ModuleLoader moduleLoader) {
+    public void moduleDefined(final String name, final ModuleLoader moduleLoader) {
     }
 
     @Override

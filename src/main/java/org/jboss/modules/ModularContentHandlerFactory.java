@@ -53,12 +53,9 @@ final class ModularContentHandlerFactory implements ContentHandlerFactory {
                 final String moduleId = (i == -1 ? urlModulesList.substring(f) : urlModulesList.substring(f, i)).trim();
                 if (moduleId.length() > 0) {
                     try {
-                        final ModuleIdentifier identifier = ModuleIdentifier.fromString(moduleId);
-                        Module module = Module.getBootModuleLoader().loadModule(identifier);
+                        Module module = Module.getBootModuleLoader().loadModule(moduleId);
                         moduleList.add(module);
-                    } catch (RuntimeException e) {
-                        // skip it
-                    } catch (ModuleLoadException e) {
+                    } catch (RuntimeException | ModuleLoadException e) {
                         // skip it
                     }
                 }

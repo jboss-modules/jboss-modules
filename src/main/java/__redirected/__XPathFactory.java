@@ -68,6 +68,10 @@ public final class __XPathFactory extends XPathFactory {
     }
 
     public static void changeDefaultFactory(ModuleIdentifier id, ModuleLoader loader) {
+        changeDefaultFactory(id.toString(), loader);
+    }
+
+    public static void changeDefaultFactory(String id, ModuleLoader loader) {
         Class<? extends XPathFactory> clazz = __RedirectedUtils.loadProvider(id, XPathFactory.class, loader);
         if (clazz != null) {
             try {
