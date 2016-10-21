@@ -239,6 +239,19 @@ public class ModuleLoader {
         return String.format("%s@%x for finders %s", getClass().getSimpleName(), hashCode(), Arrays.toString(finders));
     }
 
+    /**
+     * Get a string representation of the given module, used in debug output and stack traces.  This method may be
+     * overridden to provide a more detailed description.  By default it returns a string consisting of the module's
+     * name and version (if any).
+     *
+     * @param module the module to describe
+     * @return the description string
+     */
+    public String getModuleDescription(final Module module) {
+        final Version version = module.getVersion();
+        return version == null ? module.getName() : module.getName() + "@" + version;
+    }
+
     static void installMBeanServer() {
         REG_REF.installReal();
     }
