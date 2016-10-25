@@ -555,7 +555,7 @@ public class ModuleLoader {
         if (moduleLoader != this) {
             throw new SecurityException("Attempted to unload " + module + " from a different module loader");
         }
-        final ModuleIdentifier id = module.getIdentifier();
+        final String id = module.getIdentifier().toString();
         final FutureModule futureModule = moduleMap.get(id);
         if (futureModule != null && futureModule.module == module) {
             moduleMap.remove(id, futureModule);
