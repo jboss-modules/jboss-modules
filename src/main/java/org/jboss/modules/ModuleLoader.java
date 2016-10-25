@@ -483,7 +483,7 @@ public class ModuleLoader {
             if ( moduleSpec instanceof AliasModuleSpec) {
                 final String aliasName = ((AliasModuleSpec) moduleSpec).getAliasName();
                 try {
-                    newFuture.setModule(module = loadModuleLocal(name));
+                    newFuture.setModule(module = loadModuleLocal(aliasName));
                 } catch (RuntimeException | Error e) {
                     log.trace(e, "Failed to load module %s (alias for %s)", name, aliasName);
                     throw e;
