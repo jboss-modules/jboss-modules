@@ -18,7 +18,6 @@
 
 package org.jboss.modules;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -30,8 +29,6 @@ import java.security.PrivilegedAction;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Set;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 import sun.reflect.Reflection;
 
@@ -140,8 +137,8 @@ final class JDKSpecific {
         final Set<String> jarSet = new FastCopyHashSet<>(1024);
         final String sunBootClassPath = AccessController.doPrivileged(new PropertyReadAction("sun.boot.class.path"));
         final String javaClassPath = AccessController.doPrivileged(new PropertyReadAction("java.class.path"));
-        processClassPathItem(sunBootClassPath, jarSet, pathSet);
-        processClassPathItem(javaClassPath, jarSet, pathSet);
+        JDKPaths.processClassPathItem(sunBootClassPath, jarSet, pathSet);
+        JDKPaths.processClassPathItem(javaClassPath, jarSet, pathSet);
         pathSet.add("org/jboss/modules");
         pathSet.add("org/jboss/modules/filter");
         pathSet.add("org/jboss/modules/log");
@@ -156,74 +153,6 @@ final class JDKSpecific {
         @Override
         protected Class<?>[] getClassContext() {
             return super.getClassContext();
-        }
-    }
-
-    private static void processClassPathItem(final String classPath, final Set<String> jarSet, final Set<String> pathSet) {
-        if (classPath == null) return;
-        int s = 0, e;
-        do {
-            e = classPath.indexOf(File.pathSeparatorChar, s);
-            String item = e == -1 ? classPath.substring(s) : classPath.substring(s, e);
-            if (! jarSet.contains(item)) {
-                final File file = new File(item);
-                if (file.isDirectory()) {
-                    processDirectory0(pathSet, file);
-                } else {
-                    try {
-                        processJar(pathSet, file);
-                    } catch (IOException ex) {
-                        // ignore
-                    }
-                }
-            }
-            s = e + 1;
-        } while (e != -1);
-    }
-
-    private static void processJar(final Set<String> pathSet, final File file) throws IOException {
-        final ZipFile zipFile = new ZipFile(file);
-        try {
-            final Enumeration<? extends ZipEntry> entries = zipFile.entries();
-            while (entries.hasMoreElements()) {
-                final ZipEntry entry = entries.nextElement();
-                final String name = entry.getName();
-                final int lastSlash = name.lastIndexOf('/');
-                if (lastSlash != -1) {
-                    pathSet.add(name.substring(0, lastSlash));
-                }
-            }
-            zipFile.close();
-        } finally {
-            StreamUtil.safeClose(zipFile);
-        }
-    }
-
-    private static void processDirectory0(final Set<String> pathSet, final File file) {
-        for (File entry : file.listFiles()) {
-            if (entry.isDirectory()) {
-                processDirectory1(pathSet, entry, file.getPath());
-            } else {
-                final String parent = entry.getParent();
-                if (parent != null) pathSet.add(parent);
-            }
-        }
-    }
-
-    private static void processDirectory1(final Set<String> pathSet, final File file, final String pathBase) {
-        for (File entry : file.listFiles()) {
-            if (entry.isDirectory()) {
-                processDirectory1(pathSet, entry, pathBase);
-            } else {
-                String packagePath = entry.getParent();
-                if (packagePath != null) {
-                    packagePath = packagePath.substring(pathBase.length()).replace('\\', '/');
-                    if(packagePath.startsWith("/")) {
-                        packagePath = packagePath.substring(1);
-                    }
-                    pathSet.add(packagePath);
-                }
-            }
         }
     }
 }
