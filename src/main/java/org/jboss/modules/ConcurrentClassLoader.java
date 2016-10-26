@@ -36,7 +36,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public abstract class ConcurrentClassLoader extends ClassLoader {
+public abstract class ConcurrentClassLoader extends NamedClassLoader {
 
     private static final ClassLoader definingLoader = ConcurrentClassLoader.class.getClassLoader();
 
@@ -66,17 +66,37 @@ public abstract class ConcurrentClassLoader extends ClassLoader {
      * @param parent the parent class loader
      */
     protected ConcurrentClassLoader(final ConcurrentClassLoader parent) {
-        super(parent == null ? ConcurrentClassLoader.class.getClassLoader() : parent);
-        if (getClassLoadingLock("$TEST$") == this) {
-            throw new Error("Cannot instantiate non-parallel subclass");
-        }
+        this(parent, null);
     }
 
     /**
      * Construct a new instance, using our class loader as the parent.
      */
     protected ConcurrentClassLoader() {
-        super(ConcurrentClassLoader.class.getClassLoader());
+        this((String) null);
+    }
+
+    /**
+     * Construct a new instance with the given parent class loader, which must be a concurrent class loader, or {@code null}
+     * to create a root concurrent class loader.
+     *
+     * @param parent the parent class loader
+     * @param name the name of this class loader, or {@code null} if it is unnamed
+     */
+    protected ConcurrentClassLoader(final ConcurrentClassLoader parent, final String name) {
+        super(parent == null ? ConcurrentClassLoader.class.getClassLoader() : parent, name);
+        if (! JDKSpecific.isParallelCapable(this)) {
+            throw new Error("Cannot instantiate non-parallel subclass");
+        }
+    }
+
+    /**
+     * Construct a new instance, using our class loader as the parent.
+     *
+     * @param name the name of this class loader, or {@code null} if it is unnamed
+     */
+    protected ConcurrentClassLoader(String name) {
+        super(ConcurrentClassLoader.class.getClassLoader(), name);
         if (! JDKSpecific.isParallelCapable(this)) {
             throw new Error("Cannot instantiate non-parallel subclass");
         }
