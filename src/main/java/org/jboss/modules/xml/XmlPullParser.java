@@ -118,7 +118,6 @@ import java.io.Reader;
  * <p>For more details on API usage, please refer to the
  * quick Introduction available at <a href="http://www.xmlpull.org">http://www.xmlpull.org</a>
  *
- * @see XmlPullParserFactory
  * @see #defineEntityReplacementText
  * @see #getName
  * @see #getNamespace

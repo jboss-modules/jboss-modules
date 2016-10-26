@@ -261,7 +261,7 @@ public class ModuleLoader {
      * Load a module based on an identifier.  This method delegates to {@link #preloadModule(String)} and then
      * links the returned module if necessary.
      *
-     * @param identifier The module identifier
+     * @param name The module name
      * @return The loaded Module
      * @throws ModuleLoadException if the Module can not be loaded
      */
@@ -380,7 +380,7 @@ public class ModuleLoader {
     /**
      * Preload an "exported" module based on an identifier.  By default this simply delegates to {@link #preloadModule(String)}.
      *
-     * @param name the module identifier
+     * @param name the module name
      * @return the load result, or {@code null} if the module is not found
      * @throws ModuleLoadException if an error occurs
      */
@@ -391,7 +391,7 @@ public class ModuleLoader {
     /**
      * Preload an "exported" module based on an identifier.  By default this simply delegates to {@link #preloadModule(String)}.
      *
-     * @param name the module identifier
+     * @param identifier the module identifier
      * @return the load result, or {@code null} if the module is not found
      * @throws ModuleLoadException if an error occurs
      * @deprecated Use {@link #preloadModule(String)} instead.
@@ -418,7 +418,7 @@ public class ModuleLoader {
      * Utility method to delegate to another module loader, accessible from subclasses.  The delegate module loader
      * will be queried for exported modules only.
      *
-     * @param name the module name
+     * @param identifier the module identifier
      * @param moduleLoader the module loader to delegate to
      * @return the delegation result
      * @throws ModuleLoadException if an error occurs
@@ -483,7 +483,7 @@ public class ModuleLoader {
             if ( moduleSpec instanceof AliasModuleSpec) {
                 final String aliasName = ((AliasModuleSpec) moduleSpec).getAliasName();
                 try {
-                    newFuture.setModule(module = loadModuleLocal(name));
+                    newFuture.setModule(module = loadModuleLocal(aliasName));
                 } catch (RuntimeException | Error e) {
                     log.trace(e, "Failed to load module %s (alias for %s)", name, aliasName);
                     throw e;
@@ -555,7 +555,7 @@ public class ModuleLoader {
         if (moduleLoader != this) {
             throw new SecurityException("Attempted to unload " + module + " from a different module loader");
         }
-        final ModuleIdentifier id = module.getIdentifier();
+        final String id = module.getIdentifier().toString();
         final FutureModule futureModule = moduleMap.get(id);
         if (futureModule != null && futureModule.module == module) {
             moduleMap.remove(id, futureModule);
@@ -583,7 +583,7 @@ public class ModuleLoader {
     }
 
     /**
-     * Find a Module's specification in this ModuleLoader by its identifier.  This can be overriden by sub-classes to
+     * Find a Module's specification in this ModuleLoader by its name.  This can be overriden by sub-classes to
      * implement the Module loading strategy for this loader.  The default implementation iterates the module finders
      * provided during construction.
      * <p/>
@@ -591,7 +591,7 @@ public class ModuleLoader {
      * null}. If the module is found but some problem occurred (for example, a transitive dependency failed to load)
      * then this method should throw a {@link ModuleLoadException} of the relevant type.
      *
-     * @param moduleIdentifier the module identifier
+     * @param name the module name
      * @return the module specification, or {@code null} if no module is found with the given identifier
      * @throws ModuleLoadException if any problems occur finding the module
      */

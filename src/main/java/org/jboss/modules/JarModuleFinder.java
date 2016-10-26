@@ -56,7 +56,7 @@ public final class JarModuleFinder implements ModuleFinder {
     /**
      * Construct a new instance.
      *
-     * @param myIdentifier the identifier to use for the JAR itself
+     * @param myName the name to use for the JAR itself
      * @param jarFile the JAR file to encapsulate
      */
     public JarModuleFinder(final String myName, final JarFile jarFile) {
