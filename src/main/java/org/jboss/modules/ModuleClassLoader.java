@@ -112,6 +112,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
      * @param configuration the module class loader configuration to use
      */
     protected ModuleClassLoader(final Configuration configuration) {
+        super(configuration.getModule().getModuleLoader().getModuleDescription(configuration.getModule()));
         module = configuration.getModule();
         paths.lazySet(new Paths<>(configuration.getResourceLoaders(), Collections.<String, List<ResourceLoader>>emptyMap()));
         final AssertionSetting setting = configuration.getAssertionSetting();
@@ -560,12 +561,12 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
     }
 
     /**
-     * Get the name of this module.  This method is used by Java 9 in debug output and delegates to {@link Module#getName()}.
+     * Get the name of this module.  This method is used by Java 9 in debug output.
      *
      * @return the name of this module
      */
     public final String getName() {
-        return module.getName();
+        return super.getName();
     }
 
     /**

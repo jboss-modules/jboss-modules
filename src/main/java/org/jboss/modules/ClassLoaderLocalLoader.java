@@ -19,12 +19,7 @@
 package org.jboss.modules;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.UndeclaredThrowableException;
 import java.net.URL;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -37,26 +32,7 @@ final class ClassLoaderLocalLoader implements LocalLoader {
 
     static final ClassLoaderLocalLoader SYSTEM = new ClassLoaderLocalLoader(ClassLoaderLocalLoader.class.getClassLoader());
 
-    private static final Method getPackage;
-
     private final ClassLoader classLoader;
-
-    static {
-        getPackage = AccessController.doPrivileged(new PrivilegedAction<Method>() {
-            public Method run() {
-                for (Method method : ClassLoader.class.getDeclaredMethods()) {
-                    if (method.getName().equals("getPackage")) {
-                        Class<?>[] parameterTypes = method.getParameterTypes();
-                        if (parameterTypes.length == 1 && parameterTypes[0] == String.class) {
-                            method.setAccessible(true);
-                            return method;
-                        }
-                    }
-                }
-                throw new IllegalStateException("No getPackage method found on ClassLoader");
-            }
-        });
-    }
 
     /**
      * Construct a new instance.
@@ -85,21 +61,7 @@ final class ClassLoaderLocalLoader implements LocalLoader {
     }
 
     public Package loadPackageLocal(final String name) {
-        try {
-            return (Package) getPackage.invoke(classLoader, name);
-        } catch (IllegalAccessException e) {
-            throw new IllegalAccessError(e.getMessage());
-        } catch (InvocationTargetException e) {
-            try {
-                throw e.getCause();
-            } catch (RuntimeException re) {
-                throw re;
-            } catch (Error er) {
-                throw er;
-            } catch (Throwable throwable) {
-                throw new UndeclaredThrowableException(throwable);
-            }
-        }
+        return JDKSpecific.getPackage(classLoader, name);
     }
 
     public List<Resource> loadResourceLocal(final String name) {
@@ -107,7 +69,7 @@ final class ClassLoaderLocalLoader implements LocalLoader {
         ClassLoader classLoader = this.classLoader;
         try {
             if (classLoader == null) {
-                urls = ClassLoader.getSystemResources(name);
+                urls = JDKSpecific.getPlatformResources(name);
             } else {
                 urls = classLoader.getResources(name);
             }
