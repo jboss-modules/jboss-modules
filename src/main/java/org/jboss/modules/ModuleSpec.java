@@ -46,7 +46,7 @@ public abstract class ModuleSpec {
      *
      * @param moduleIdentifier the module identifier
      * @return the builder
-     * @deprecated Use {@link #buider(String)} instead.
+     * @deprecated Use {@link #build(String)} instead.
      */
     @Deprecated
     public static Builder build(final ModuleIdentifier moduleIdentifier) {
@@ -163,8 +163,8 @@ public abstract class ModuleSpec {
     /**
      * Get a builder for a new module alias specification.
      *
-     * @param moduleIdentifier the module identifier
-     * @param aliasTarget the alias target identifier
+     * @param name the module name
+     * @param aliasName the alias target name
      * @return the builder
      */
     public static AliasBuilder buildAlias(final String name, final String aliasName) {

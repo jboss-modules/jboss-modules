@@ -45,8 +45,7 @@ public final class ClassifyingModuleLoader extends ModuleLoader {
         this.name = name;
     }
 
-    /** {@inheritDoc}
-     * @param moduleIdentifier*/
+    /** {@inheritDoc} */
     protected Module preloadModule(String name) throws ModuleLoadException {
         int idx;
         final Map<String, ModuleLoader> delegates = this.delegates;
