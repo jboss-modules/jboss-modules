@@ -30,7 +30,7 @@ import java.util.List;
  */
 final class ClassLoaderLocalLoader implements LocalLoader {
 
-    static final ClassLoaderLocalLoader SYSTEM = new ClassLoaderLocalLoader(ClassLoaderLocalLoader.class.getClassLoader());
+    static final LocalLoader SYSTEM = JDKSpecific.getSystemLocalLoader();
 
     private final ClassLoader classLoader;
 
@@ -69,7 +69,7 @@ final class ClassLoaderLocalLoader implements LocalLoader {
         ClassLoader classLoader = this.classLoader;
         try {
             if (classLoader == null) {
-                urls = JDKSpecific.getPlatformResources(name);
+                urls = JDKSpecific.getSystemResources(name);
             } else {
                 urls = classLoader.getResources(name);
             }

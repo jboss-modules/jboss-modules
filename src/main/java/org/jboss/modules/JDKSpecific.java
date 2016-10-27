@@ -19,6 +19,7 @@
 package org.jboss.modules;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
@@ -128,10 +129,6 @@ final class JDKSpecific {
         }
     }
 
-    static Enumeration<URL> getPlatformResources(String name) throws IOException {
-        return ClassLoader.getSystemResources(name);
-    }
-
     static Set<String> getJDKPaths() {
         final Set<String> pathSet = new FastCopyHashSet<>(1024);
         final Set<String> jarSet = new FastCopyHashSet<>(1024);
@@ -145,6 +142,34 @@ final class JDKSpecific {
         pathSet.add("org/jboss/modules/management");
         pathSet.add("org/jboss/modules/ref");
         return Collections.unmodifiableSet(pathSet);
+    }
+
+    static LocalLoader getSystemLocalLoader() {
+        return new ClassLoaderLocalLoader(getPlatformClassLoader());
+    }
+
+    static ClassLoader getPlatformClassLoader() {
+        return JDKSpecific.class.getClassLoader();
+    }
+
+    static URL getSystemResource(final String name) {
+        final ClassLoader classLoader = getPlatformClassLoader();
+        return classLoader != null ? classLoader.getResource(name) : ClassLoader.getSystemResource(name);
+    }
+
+    static Enumeration<URL> getSystemResources(final String name) throws IOException {
+        final ClassLoader classLoader = getPlatformClassLoader();
+        return classLoader != null ? classLoader.getResources(name) : ClassLoader.getSystemResources(name);
+    }
+
+    static InputStream getSystemResourceAsStream(final String name) {
+        final ClassLoader classLoader = getPlatformClassLoader();
+        return classLoader != null ? classLoader.getResourceAsStream(name) : ClassLoader.getSystemResourceAsStream(name);
+    }
+
+    static Class<?> getSystemClass(final ConcurrentClassLoader caller, final String className) throws ClassNotFoundException {
+        final ClassLoader platformClassLoader = JDKSpecific.getPlatformClassLoader();
+        return platformClassLoader != null ? platformClassLoader.loadClass(className) : caller.findSystemClassInternal(className);
     }
 
     // === nested util stuff, non-API ===

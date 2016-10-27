@@ -38,8 +38,6 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public abstract class ConcurrentClassLoader extends NamedClassLoader {
 
-    private static final ClassLoader definingLoader = ConcurrentClassLoader.class.getClassLoader();
-
     private static final ThreadLocal<Boolean> GET_PACKAGE_SUPPRESSOR = new ThreadLocal<Boolean>();
 
     static {
@@ -84,7 +82,7 @@ public abstract class ConcurrentClassLoader extends NamedClassLoader {
      * @param name the name of this class loader, or {@code null} if it is unnamed
      */
     protected ConcurrentClassLoader(final ConcurrentClassLoader parent, final String name) {
-        super(parent == null ? ConcurrentClassLoader.class.getClassLoader() : parent, name);
+        super(parent == null ? JDKSpecific.getPlatformClassLoader() : parent, name);
         if (! JDKSpecific.isParallelCapable(this)) {
             throw new Error("Cannot instantiate non-parallel subclass");
         }
@@ -96,7 +94,7 @@ public abstract class ConcurrentClassLoader extends NamedClassLoader {
      * @param name the name of this class loader, or {@code null} if it is unnamed
      */
     protected ConcurrentClassLoader(String name) {
-        super(ConcurrentClassLoader.class.getClassLoader(), name);
+        super(JDKSpecific.getPlatformClassLoader(), name);
         if (! JDKSpecific.isParallelCapable(this)) {
             throw new Error("Cannot instantiate non-parallel subclass");
         }
@@ -226,6 +224,21 @@ public abstract class ConcurrentClassLoader extends NamedClassLoader {
     }
 
     /**
+     * Implementation of {@link ClassLoader#findClass(String, String)}.
+     *
+     * @param moduleName the Java module name
+     * @param className the class name
+     * @return the result of {@code findClass(className, false, false)}
+     */
+    protected final Class<?> findClass(final String moduleName, final String name) {
+        try {
+            return findClass(name);
+        } catch (ClassNotFoundException e) {
+            return null;
+        }
+    }
+
+    /**
      * Finds the resource with the given name.  The name of a resource is a {@code '/'}-separated path name that
      * identifies the resource.  If the resource name starts with {@code "java/"} then the parent class loader is used.
      * Otherwise, this method delegates to {@link #findResource(String, boolean)}.
@@ -237,9 +250,7 @@ public abstract class ConcurrentClassLoader extends NamedClassLoader {
     public final URL getResource(final String name) {
         for (String s : Module.systemPaths) {
             if (name.startsWith(s)) {
-                // Whatever loads jboss-modules.jar should have it's classes accessible.
-                // This could even be the bootclasspath, in which case CL is null, and we prefer the system CL
-                return definingLoader != null ? definingLoader.getResource(name) : ClassLoader.getSystemResource(name);
+                return JDKSpecific.getSystemResource(name);
             }
         }
         return findResource(name, false);
@@ -257,7 +268,7 @@ public abstract class ConcurrentClassLoader extends NamedClassLoader {
     public final Enumeration<URL> getResources(final String name) throws IOException {
         for (String s : Module.systemPaths) {
             if (name.startsWith(s)) {
-                return definingLoader != null ? definingLoader.getResources(name) : ClassLoader.getSystemResources(name);
+                return JDKSpecific.getSystemResources(name);
             }
         }
         return findResources(name, false);
@@ -298,7 +309,7 @@ public abstract class ConcurrentClassLoader extends NamedClassLoader {
      * @return the resource URL
      */
     protected final URL findResource(final String moduleName, final String name) throws IOException {
-        return findResource(name, false);
+        return getResource(name);
     }
 
     /**
@@ -353,7 +364,7 @@ public abstract class ConcurrentClassLoader extends NamedClassLoader {
     public final InputStream getResourceAsStream(final String name) {
         for (String s : Module.systemPaths) {
             if (name.startsWith(s)) {
-                return definingLoader != null ? definingLoader.getResourceAsStream(name) : ClassLoader.getSystemResourceAsStream(name);
+                return JDKSpecific.getSystemResourceAsStream(name);
             }
         }
         return findResourceAsStream(name, false);
@@ -383,7 +394,7 @@ public abstract class ConcurrentClassLoader extends NamedClassLoader {
         }
         for (String s : Module.systemPackages) {
             if (className.startsWith(s)) {
-                return definingLoader != null ? definingLoader.loadClass(className) : findSystemClass(className);
+                return JDKSpecific.getSystemClass(this, className);
             }
         }
         return performLoadClassUnchecked(className, exportsOnly, resolve);
@@ -402,6 +413,10 @@ public abstract class ConcurrentClassLoader extends NamedClassLoader {
     }
 
     private final ConcurrentHashMap<String, Package> packages = new ConcurrentHashMap<>();
+
+    Class<?> findSystemClassInternal(String name) throws ClassNotFoundException {
+        return findSystemClass(name);
+    }
 
     /**
      * Load a package which is visible to this class loader.
