@@ -423,7 +423,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
     }
 
     static void addInternalIndex(File file, boolean modify) throws IOException {
-        final JarFile oldJarFile = new JarFile(file, false);
+        final JarFile oldJarFile = JDKSpecific.getJarFile(file, false);
         try {
             final Collection<String> index = new TreeSet<String>();
             final File outputFile;
