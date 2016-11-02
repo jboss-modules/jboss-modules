@@ -40,7 +40,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Properties;
 import java.util.ServiceLoader;
-import java.util.jar.JarFile;
 import java.util.logging.LogManager;
 
 import java.util.prefs.Preferences;
@@ -378,7 +377,7 @@ public final class Main {
         environmentLoader = DefaultBootModuleLoaderHolder.INSTANCE;
         final String moduleName;
         if (jar) {
-            loader = new JarModuleLoader(environmentLoader, new JarFile(nameArgument));
+            loader = new JarModuleLoader(environmentLoader, JDKSpecific.getJarFile(nameArgument, true));
             moduleName = ((JarModuleLoader) loader).getMyName();
         } else if (classpathDefined || classDefined) {
             loader = new ClassPathModuleLoader(environmentLoader, nameArgument, classpath, deps);

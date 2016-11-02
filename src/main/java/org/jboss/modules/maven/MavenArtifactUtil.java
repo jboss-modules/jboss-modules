@@ -190,7 +190,7 @@ public final class MavenArtifactUtil {
     public static ResourceLoader createMavenArtifactLoader(final MavenResolver mavenResolver, final String name) throws IOException {
         File fp = mavenResolver.resolveJarArtifact(ArtifactCoordinates.fromString(name));
         if (fp == null) return null;
-        JarFile jarFile = new JarFile(fp, true);
+        JarFile jarFile = JDKSpecific.getJarFile(fp, true);
         return ResourceLoaders.createJarResourceLoader(name, jarFile);
     }
 

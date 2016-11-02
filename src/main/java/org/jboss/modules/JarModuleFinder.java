@@ -114,7 +114,7 @@ public final class JarModuleFinder implements ModuleFinder {
                         // assume a JAR
                         JarFile childJarFile;
                         try {
-                            childJarFile = new JarFile(root, true);
+                            childJarFile = JDKSpecific.getJarFile(root, true);
                         } catch (IOException e) {
                             // ignore and continue
                             continue;

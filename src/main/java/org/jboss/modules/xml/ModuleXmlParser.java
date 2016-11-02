@@ -211,7 +211,7 @@ public final class ModuleXmlParser {
                 if (file.isDirectory()) {
                     return ResourceLoaders.createFileResourceLoader(loaderName, file);
                 } else {
-                    final JarFile jarFile = new JarFile(file, true);
+                    final JarFile jarFile = JDKSpecific.getJarFile(file, true);
                     return ResourceLoaders.createJarResourceLoader(loaderName, jarFile);
                 }
             }, root.getPath(), new BufferedInputStream(fis), moduleInfoFile.getPath(), moduleLoader, moduleName);

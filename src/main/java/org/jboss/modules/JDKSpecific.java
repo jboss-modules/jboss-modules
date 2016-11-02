@@ -18,6 +18,7 @@
 
 package org.jboss.modules;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.invoke.MethodHandle;
@@ -30,6 +31,7 @@ import java.security.PrivilegedAction;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Set;
+import java.util.jar.JarFile;
 
 import sun.reflect.Reflection;
 
@@ -37,6 +39,7 @@ import sun.reflect.Reflection;
  * JDK-specific classes which are replaced for different JDK major versions.  This one is for Java 8 only.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  */
 final class JDKSpecific {
 
@@ -88,6 +91,14 @@ final class JDKSpecific {
     }
 
     // === the actual JDK-specific API ===
+
+    static JarFile getJarFile(final String name, final boolean verify) throws IOException {
+        return new JarFile(name, verify);
+    }
+
+    static JarFile getJarFile(final File name, final boolean verify) throws IOException {
+        return new JarFile(name, verify);
+    }
 
     static Class<?> getCallingUserClass() {
         // 0 == this class
