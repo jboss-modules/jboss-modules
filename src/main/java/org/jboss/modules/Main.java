@@ -524,11 +524,8 @@ public final class Main {
     }
 
     private static String getServiceName(ClassLoader classLoader, String className) throws IOException {
-        final InputStream stream = classLoader.getResourceAsStream("META-INF/services/" + className);
-        if (stream == null) {
-            return null;
-        }
-        try {
+        try (final InputStream stream = classLoader.getResourceAsStream("META-INF/services/" + className)) {
+            if ( stream == null ) return null;
             final BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
             String line;
             while ((line = reader.readLine()) != null) {
@@ -541,8 +538,6 @@ public final class Main {
                 return line;
             }
             return null;
-        } finally {
-            Utils.safeClose(stream);
         }
     }
 

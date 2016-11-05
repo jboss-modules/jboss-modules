@@ -106,17 +106,12 @@ class LayeredModulePathFactory {
         if (!layersList.exists()) {
             return new LayersConfig();
         }
-        Reader reader = null;
-        try {
-            reader = new InputStreamReader(new FileInputStream(layersList), "UTF-8");
+        try (final Reader reader = new InputStreamReader(new FileInputStream(layersList), "UTF-8")) {
             Properties props = new Properties();
             props.load(reader);
-
             return new LayersConfig(props);
         } catch (IOException e) {
             throw new RuntimeException(e);
-        } finally {
-            Utils.safeClose(reader);
         }
     }
 

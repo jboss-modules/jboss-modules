@@ -128,8 +128,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
             return null;
         }
         final long size = entry.getSize();
-        final InputStream is = jarFile.getInputStream(entry);
-        try {
+        try (final InputStream is = jarFile.getInputStream(entry)) {
             if (size == -1) {
                 // size unknown
                 final ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -165,8 +164,6 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
             } else {
                 throw new IOException("Resource is too large to be a valid class file");
             }
-        } finally {
-            Utils.safeClose(is);
         }
     }
 
@@ -194,11 +191,8 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
             if (jarEntry == null) {
                 manifest = null;
             } else {
-                InputStream inputStream = jarFile.getInputStream(jarEntry);
-                try {
+                try (final InputStream inputStream = jarFile.getInputStream(jarEntry)) {
                     manifest = new Manifest(inputStream);
-                } finally {
-                    Utils.safeClose(inputStream);
                 }
             }
         }
@@ -380,16 +374,13 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
         // Now try to write it
         boolean ok = false;
         try {
-            final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(indexFile)));
-            try {
+            try (final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(indexFile)))) {
                 for (String name : index) {
                     writer.write(name);
                     writer.write('\n');
                 }
                 writer.close();
                 ok = true;
-            } finally {
-                Utils.safeClose(writer);
             }
         } catch (IOException e) {
             // failed, ignore
@@ -423,15 +414,13 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
     }
 
     static void addInternalIndex(File file, boolean modify) throws IOException {
-        final JarFile oldJarFile = JDKSpecific.getJarFile(file, false);
-        try {
+        try (final JarFile oldJarFile = JDKSpecific.getJarFile(file, false)) {
             final Collection<String> index = new TreeSet<String>();
             final File outputFile;
 
             outputFile = new File(file.getAbsolutePath().replace(".jar", "-indexed.jar"));
 
-            final ZipOutputStream zo = new ZipOutputStream(new FileOutputStream(outputFile));
-            try {
+            try (final ZipOutputStream zo = new ZipOutputStream(new FileOutputStream(outputFile))) {
                 Enumeration<JarEntry> entries = oldJarFile.entries();
                 while (entries.hasMoreElements()) {
                     final JarEntry entry = entries.nextElement();
@@ -460,15 +449,11 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
 
                 // write index
                 zo.putNextEntry(new ZipEntry(INDEX_FILE));
-                final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(zo));
-                try {
-                    for (String name : index) {
+                try (final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(zo))) {
+                    for (final String name : index) {
                         writer.write(name);
                         writer.write('\n');
                     }
-                    writer.close();
-                } finally {
-                    Utils.safeClose(writer);
                 }
                 zo.close();
                 oldJarFile.close();
@@ -479,11 +464,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
                         throw new IOException("failed to rename " + outputFile.getAbsolutePath() + " to " + file.getAbsolutePath());
                     }
                 }
-            } finally {
-                Utils.safeClose(zo);
             }
-        } finally {
-            Utils.safeClose(oldJarFile);
         }
     }
 

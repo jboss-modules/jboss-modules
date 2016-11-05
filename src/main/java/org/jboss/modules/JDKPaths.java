@@ -47,8 +47,7 @@ final class JDKPaths {
     }
 
     static void processJar(final Set<String> pathSet, final File file) throws IOException {
-        final ZipFile zipFile = new ZipFile(file);
-        try {
+        try (final ZipFile zipFile = new ZipFile(file)) {
             final Enumeration<? extends ZipEntry> entries = zipFile.entries();
             while (entries.hasMoreElements()) {
                 final ZipEntry entry = entries.nextElement();
@@ -58,9 +57,6 @@ final class JDKPaths {
                     pathSet.add(name.substring(0, lastSlash));
                 }
             }
-            zipFile.close();
-        } finally {
-            Utils.safeClose(zipFile);
         }
     }
 

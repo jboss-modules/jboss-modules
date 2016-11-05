@@ -18,7 +18,6 @@
 
 package org.jboss.modules;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -38,9 +37,4 @@ final class Utils {
         out.flush();
     }
 
-    static void safeClose(Closeable closeable) {
-        if (closeable != null) try {
-            closeable.close();
-        } catch (Throwable ignored) {}
-    }
 }
