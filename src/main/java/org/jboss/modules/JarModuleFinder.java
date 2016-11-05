@@ -39,6 +39,10 @@ import org.jboss.modules.xml.ModuleXmlParser;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class JarModuleFinder implements ModuleFinder {
+
+    private static final String MODULES_DIR = "modules";
+    private static final String MODULE_FILE = "module.xml";
+
     private final String myName;
     private final JarFile jarFile;
     private final AccessControlContext context;
@@ -83,8 +87,8 @@ public final class JarModuleFinder implements ModuleFinder {
             String classPath = mainAttributes.getValue(Attributes.Name.CLASS_PATH);
             String dependencies = mainAttributes.getValue("Dependencies");
             MultiplePathFilterBuilder pathFilterBuilder = PathFilters.multiplePathFilterBuilder(true);
-            pathFilterBuilder.addFilter(PathFilters.is("modules"), false);
-            pathFilterBuilder.addFilter(PathFilters.isChildOf("modules"), false);
+            pathFilterBuilder.addFilter(PathFilters.is(MODULES_DIR), false);
+            pathFilterBuilder.addFilter(PathFilters.isChildOf(MODULES_DIR), false);
             builder.addResourceRoot(ResourceLoaderSpec.createResourceLoaderSpec(new JarFileResourceLoader("", jarFile), pathFilterBuilder.create()));
             String[] classPathEntries = classPath == null ? JarModuleLoader.NO_STRINGS : classPath.split("\\s+");
             for (String entry : classPathEntries) {
@@ -150,11 +154,11 @@ public final class JarModuleFinder implements ModuleFinder {
             builder.addDependency(DependencySpec.createLocalDependencySpec());
             return builder.create();
         } else {
-            String basePath = "modules/" + toPathString(name);
-            JarEntry moduleXmlEntry = jarFile.getJarEntry(basePath + "/module.xml");
+            String basePath = MODULES_DIR + "/" + toPathString(name);
+            JarEntry moduleXmlEntry = jarFile.getJarEntry(basePath + "/" + MODULE_FILE);
             if (moduleXmlEntry == null) {
-                basePath = "modules/" + toLegacyPathString(name);
-                moduleXmlEntry = jarFile.getJarEntry(basePath + "/module.xml");
+                basePath = MODULES_DIR + "/" + toLegacyPathString(name);
+                moduleXmlEntry = jarFile.getJarEntry(basePath + "/" + MODULE_FILE);
                 if (moduleXmlEntry == null) {
                     return null;
                 }
@@ -168,7 +172,7 @@ public final class JarModuleFinder implements ModuleFinder {
                     StreamUtil.safeClose(inputStream);
                 }
             } catch (IOException e) {
-                throw new ModuleLoadException("Failed to read module.xml file", e);
+                throw new ModuleLoadException("Failed to read " + MODULE_FILE + " file", e);
             }
             return moduleSpec;
         }

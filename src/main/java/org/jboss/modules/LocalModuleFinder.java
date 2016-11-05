@@ -40,6 +40,7 @@ import static java.security.AccessController.doPrivileged;
  */
 public final class LocalModuleFinder implements ModuleFinder {
 
+    private static final String MODULE_FILE = "module.xml";
     private static final File[] NO_FILES = new File[0];
 
     private final File[] repoRoots;
@@ -196,10 +197,10 @@ public final class LocalModuleFinder implements ModuleFinder {
         final String child2 = toLegacyPathString(name);
         for (File root : roots) {
             File file = new File(root, child1);
-            File moduleXml = new File(file, "module.xml");
+            File moduleXml = new File(file, MODULE_FILE);
             if (! moduleXml.exists()) {
                 file = new File(root, child2);
-                moduleXml = new File(file, "module.xml");
+                moduleXml = new File(file, MODULE_FILE);
             }
             if (moduleXml.exists()) {
                 final ModuleSpec spec = ModuleXmlParser.parseModuleXml(delegateLoader, name, file, moduleXml);
