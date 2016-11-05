@@ -28,6 +28,13 @@ import java.io.OutputStream;
  */
 final class Utils {
 
+    private Utils() {
+        // forbidden instantiation
+    }
+
+    static final String MODULES_DIR = "modules";
+    static final String MODULE_FILE = "module.xml";
+
     static void copy(final InputStream in, final OutputStream out) throws IOException {
         byte[] buf = new byte[16384];
         int len;

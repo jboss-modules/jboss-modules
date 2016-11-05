@@ -33,15 +33,16 @@ import org.jboss.modules.filter.MultiplePathFilterBuilder;
 import org.jboss.modules.filter.PathFilters;
 import org.jboss.modules.xml.ModuleXmlParser;
 
+import static org.jboss.modules.Utils.MODULES_DIR;
+import static org.jboss.modules.Utils.MODULE_FILE;
+
 /**
  * A module finder which uses a JAR file as a module repository.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  */
 public final class JarModuleFinder implements ModuleFinder {
-
-    private static final String MODULES_DIR = "modules";
-    private static final String MODULE_FILE = "module.xml";
 
     private final String myName;
     private final JarFile jarFile;

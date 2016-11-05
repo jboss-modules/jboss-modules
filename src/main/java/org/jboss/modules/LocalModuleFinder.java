@@ -31,16 +31,17 @@ import org.jboss.modules.filter.PathFilters;
 import org.jboss.modules.xml.ModuleXmlParser;
 
 import static java.security.AccessController.doPrivileged;
+import static org.jboss.modules.Utils.MODULE_FILE;
 
 /**
  * A module finder which locates module specifications which are stored in a local module
  * repository on the filesystem, which uses {@code module.xml} descriptors.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  */
 public final class LocalModuleFinder implements ModuleFinder {
 
-    private static final String MODULE_FILE = "module.xml";
     private static final File[] NO_FILES = new File[0];
 
     private final File[] repoRoots;
