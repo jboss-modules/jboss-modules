@@ -25,10 +25,11 @@ import java.io.OutputStream;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  */
-final class StreamUtil {
+final class Utils {
 
-    static void copy(InputStream in, OutputStream out) throws IOException {
+    static void copy(final InputStream in, final OutputStream out) throws IOException {
         byte[] buf = new byte[16384];
         int len;
         while ((len = in.read(buf)) > 0) {

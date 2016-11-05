@@ -542,7 +542,7 @@ public final class Main {
             }
             return null;
         } finally {
-            StreamUtil.safeClose(stream);
+            Utils.safeClose(stream);
         }
     }
 

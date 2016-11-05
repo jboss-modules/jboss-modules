@@ -116,7 +116,7 @@ class LayeredModulePathFactory {
         } catch (IOException e) {
             throw new RuntimeException(e);
         } finally {
-            StreamUtil.safeClose(reader);
+            Utils.safeClose(reader);
         }
     }
 

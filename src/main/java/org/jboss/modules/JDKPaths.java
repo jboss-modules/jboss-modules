@@ -60,7 +60,7 @@ final class JDKPaths {
             }
             zipFile.close();
         } finally {
-            StreamUtil.safeClose(zipFile);
+            Utils.safeClose(zipFile);
         }
     }
 

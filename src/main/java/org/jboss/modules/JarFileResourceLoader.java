@@ -166,7 +166,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
                 throw new IOException("Resource is too large to be a valid class file");
             }
         } finally {
-            StreamUtil.safeClose(is);
+            Utils.safeClose(is);
         }
     }
 
@@ -198,7 +198,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
                 try {
                     manifest = new Manifest(inputStream);
                 } finally {
-                    StreamUtil.safeClose(inputStream);
+                    Utils.safeClose(inputStream);
                 }
             }
         }
@@ -389,7 +389,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
                 writer.close();
                 ok = true;
             } finally {
-                StreamUtil.safeClose(writer);
+                Utils.safeClose(writer);
             }
         } catch (IOException e) {
             // failed, ignore
@@ -443,7 +443,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
                         if (clone.getMethod() != ZipEntry.STORED)
                             clone.setCompressedSize(-1);
                         zo.putNextEntry(clone);
-                        StreamUtil.copy(oldJarFile.getInputStream(entry), zo);
+                        Utils.copy(oldJarFile.getInputStream(entry), zo);
                     }
 
                     // add to the index
@@ -468,7 +468,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
                     }
                     writer.close();
                 } finally {
-                    StreamUtil.safeClose(writer);
+                    Utils.safeClose(writer);
                 }
                 zo.close();
                 oldJarFile.close();
@@ -480,10 +480,10 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
                     }
                 }
             } finally {
-                StreamUtil.safeClose(zo);
+                Utils.safeClose(zo);
             }
         } finally {
-            StreamUtil.safeClose(oldJarFile);
+            Utils.safeClose(oldJarFile);
         }
     }
 

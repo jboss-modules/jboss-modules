@@ -169,7 +169,7 @@ public final class JarModuleFinder implements ModuleFinder {
                 try {
                     moduleSpec = ModuleXmlParser.parseModuleXml((rootPath, loaderPath, loaderName) -> new JarFileResourceLoader(loaderName, jarFile, loaderPath), basePath, inputStream, moduleXmlEntry.getName(), delegateLoader, name);
                 } finally {
-                    StreamUtil.safeClose(inputStream);
+                    Utils.safeClose(inputStream);
                 }
             } catch (IOException e) {
                 throw new ModuleLoadException("Failed to read " + MODULE_FILE + " file", e);
