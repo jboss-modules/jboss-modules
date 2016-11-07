@@ -93,7 +93,7 @@ public final class JarModuleFinder implements ModuleFinder {
                         // invalid
                         continue;
                     }
-                    File root = null;
+                    File root;
                     try {
                         File path = new File(new URI(entry));
                         if (path.isAbsolute()) {
@@ -150,12 +150,14 @@ public final class JarModuleFinder implements ModuleFinder {
             builder.addDependency(DependencySpec.createLocalDependencySpec());
             return builder.create();
         } else {
-            ModuleIdentifier identifier = ModuleIdentifier.fromString(name);
-            String namePath = identifier.getName().replace('.', '/');
-            String basePath = "modules/" + namePath + "/" + identifier.getSlot();
+            String basePath = "modules/" + toPathString(name);
             JarEntry moduleXmlEntry = jarFile.getJarEntry(basePath + "/module.xml");
             if (moduleXmlEntry == null) {
-                return null;
+                basePath = "modules/" + toLegacyPathString(name);
+                moduleXmlEntry = jarFile.getJarEntry(basePath + "/module.xml");
+                if (moduleXmlEntry == null) {
+                    return null;
+                }
             }
             ModuleSpec moduleSpec;
             try {
@@ -170,5 +172,14 @@ public final class JarModuleFinder implements ModuleFinder {
             }
             return moduleSpec;
         }
+    }
+
+    private static String toPathString(String moduleName) {
+        return moduleName.replace('.', '/') + '/' + moduleName;
+    }
+
+    private static String toLegacyPathString(String moduleName) {
+        final ModuleIdentifier moduleIdentifier = ModuleIdentifier.fromString(moduleName);
+        return moduleIdentifier.getName().replace('.', '/') + '/' + moduleIdentifier.getSlot();
     }
 }
