@@ -176,11 +176,11 @@ public final class JarModuleFinder implements ModuleFinder {
         }
     }
 
-    private static String toPathString(String moduleName) {
-        return moduleName.replace('.', '/') + '/' + moduleName;
+    private static String toPathString(final String moduleName) {
+        return moduleName.replace('.', '/');
     }
 
-    private static String toLegacyPathString(String moduleName) {
+    private static String toLegacyPathString(final String moduleName) {
         final ModuleIdentifier moduleIdentifier = ModuleIdentifier.fromString(moduleName);
         return moduleIdentifier.getName().replace('.', '/') + '/' + moduleIdentifier.getSlot();
     }

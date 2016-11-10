@@ -131,11 +131,11 @@ public final class LocalModuleFinder implements ModuleFinder {
         return files;
     }
 
-    private static String toPathString(String moduleName) {
-        return moduleName.replace('.', File.separatorChar) + File.separatorChar + moduleName;
+    private static String toPathString(final String moduleName) {
+        return moduleName.replace('.', File.separatorChar);
     }
 
-    private static String toLegacyPathString(String moduleName) {
+    private static String toLegacyPathString(final String moduleName) {
         final ModuleIdentifier moduleIdentifier = ModuleIdentifier.fromString(moduleName);
         final String name = moduleIdentifier.getName();
         final String slot = moduleIdentifier.getSlot();
