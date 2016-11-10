@@ -33,6 +33,9 @@ import org.jboss.modules.filter.MultiplePathFilterBuilder;
 import org.jboss.modules.filter.PathFilters;
 import org.jboss.modules.xml.ModuleXmlParser;
 
+import static org.jboss.modules.Utils.DEPENDENCIES;
+import static org.jboss.modules.Utils.EXPORT;
+import static org.jboss.modules.Utils.OPTIONAL;
 import static org.jboss.modules.Utils.MODULES_DIR;
 import static org.jboss.modules.Utils.MODULE_FILE;
 
@@ -86,7 +89,7 @@ public final class JarModuleFinder implements ModuleFinder {
                 builder.setMainClass(mainClass);
             }
             String classPath = mainAttributes.getValue(Attributes.Name.CLASS_PATH);
-            String dependencies = mainAttributes.getValue("Dependencies");
+            String dependencies = mainAttributes.getValue(DEPENDENCIES);
             MultiplePathFilterBuilder pathFilterBuilder = PathFilters.multiplePathFilterBuilder(true);
             pathFilterBuilder.addFilter(PathFilters.is(MODULES_DIR), false);
             pathFilterBuilder.addFilter(PathFilters.isChildOf(MODULES_DIR), false);
@@ -141,9 +144,9 @@ public final class JarModuleFinder implements ModuleFinder {
                     String moduleName = fields[0];
                     for (int i = 1; i < fields.length; i++) {
                         String field = fields[i];
-                        if (field.equals("optional")) {
+                        if (field.equals(OPTIONAL)) {
                             optional = true;
-                        } else if (field.equals("export")) {
+                        } else if (field.equals(EXPORT)) {
                             export = true;
                         }
                         // else ignored
