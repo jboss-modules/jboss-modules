@@ -18,17 +18,27 @@
 
 package org.jboss.modules;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  */
-final class StreamUtil {
+final class Utils {
 
-    static void copy(InputStream in, OutputStream out) throws IOException {
+    static final String DEPENDENCIES = "Dependencies";
+    static final String EXPORT = "export";
+    static final String OPTIONAL = "optional";
+    static final String MODULES_DIR = "modules";
+    static final String MODULE_FILE = "module.xml";
+
+    private Utils() {
+        // forbidden instantiation
+    }
+
+    static void copy(final InputStream in, final OutputStream out) throws IOException {
         byte[] buf = new byte[16384];
         int len;
         while ((len = in.read(buf)) > 0) {
@@ -37,9 +47,4 @@ final class StreamUtil {
         out.flush();
     }
 
-    static void safeClose(Closeable closeable) {
-        if (closeable != null) try {
-            closeable.close();
-        } catch (Throwable ignored) {}
-    }
 }

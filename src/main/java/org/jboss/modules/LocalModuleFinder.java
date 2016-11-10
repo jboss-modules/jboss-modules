@@ -31,12 +31,14 @@ import org.jboss.modules.filter.PathFilters;
 import org.jboss.modules.xml.ModuleXmlParser;
 
 import static java.security.AccessController.doPrivileged;
+import static org.jboss.modules.Utils.MODULE_FILE;
 
 /**
  * A module finder which locates module specifications which are stored in a local module
  * repository on the filesystem, which uses {@code module.xml} descriptors.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  */
 public final class LocalModuleFinder implements ModuleFinder {
 
@@ -129,11 +131,11 @@ public final class LocalModuleFinder implements ModuleFinder {
         return files;
     }
 
-    private static String toPathString(String moduleName) {
-        return moduleName.replace('.', File.separatorChar) + File.separatorChar + moduleName;
+    private static String toPathString(final String moduleName) {
+        return moduleName.replace('.', File.separatorChar);
     }
 
-    private static String toLegacyPathString(String moduleName) {
+    private static String toLegacyPathString(final String moduleName) {
         final ModuleIdentifier moduleIdentifier = ModuleIdentifier.fromString(moduleName);
         final String name = moduleIdentifier.getName();
         final String slot = moduleIdentifier.getSlot();
@@ -196,10 +198,10 @@ public final class LocalModuleFinder implements ModuleFinder {
         final String child2 = toLegacyPathString(name);
         for (File root : roots) {
             File file = new File(root, child1);
-            File moduleXml = new File(file, "module.xml");
+            File moduleXml = new File(file, MODULE_FILE);
             if (! moduleXml.exists()) {
                 file = new File(root, child2);
-                moduleXml = new File(file, "module.xml");
+                moduleXml = new File(file, MODULE_FILE);
             }
             if (moduleXml.exists()) {
                 final ModuleSpec spec = ModuleXmlParser.parseModuleXml(delegateLoader, name, file, moduleXml);
