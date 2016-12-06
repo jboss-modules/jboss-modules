@@ -18,25 +18,37 @@
 
 package org.jboss.modules;
 
+import static java.nio.file.FileVisitResult.CONTINUE;
+import static java.nio.file.FileVisitResult.SKIP_SUBTREE;
+import static java.security.AccessController.doPrivileged;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.reflect.Method;
-import java.lang.reflect.UndeclaredThrowableException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 import java.util.jar.JarFile;
 
-import sun.reflect.Reflection;
-
 /**
- * JDK-specific classes which are replaced for different JDK major versions.  This one is for Java 8 only.
+ * JDK-specific classes which are replaced for different JDK major versions.  This one is for Java 9 only.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
@@ -45,150 +57,177 @@ final class JDKSpecific {
 
     // === private fields and data ===
 
-    private static Hack hack = AccessController.doPrivileged(new PrivilegedAction<Hack>() {
-        @Override
-        public Hack run() {
-            return new Hack();
-        }
-    });
+    static final Set<String> MODULES_PACKAGES = new HashSet<>(Arrays.asList(
+        "org/jboss/modules",
+        "org/jboss/modules/filter",
+        "org/jboss/modules/log",
+        "org/jboss/modules/management",
+        "org/jboss/modules/ref"
+    ));
 
-    private static final MethodHandle getPackageMH;
-    private static final boolean hasGetCallerClass;
-    private static final int callerOffset;
+    static final StackWalker STACK_WALKER = doPrivileged((PrivilegedAction<StackWalker>) () -> StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE));
 
-    static {
-        try {
-            getPackageMH = MethodHandles.lookup().unreflect(AccessController.doPrivileged(new PrivilegedAction<Method>() {
-                public Method run() {
-                    for (Method method : ClassLoader.class.getDeclaredMethods()) {
-                        if (method.getName().equals("getPackage")) {
-                            Class<?>[] parameterTypes = method.getParameterTypes();
-                            if (parameterTypes.length == 1 && parameterTypes[0] == String.class) {
-                                method.setAccessible(true);
-                                return method;
-                            }
-                        }
-                    }
-                    throw new IllegalStateException("No getPackage method found on ClassLoader");
-                }
-            }));
-        } catch (IllegalAccessException e) {
-            final IllegalAccessError error = new IllegalAccessError(e.getMessage());
-            error.setStackTrace(e.getStackTrace());
-            throw error;
-        }
-        boolean result = false;
-        int offset = 0;
-        try {
-            //noinspection deprecation
-            result = Reflection.getCallerClass(1) == JDKSpecific.class || Reflection.getCallerClass(2) == JDKSpecific.class;
-            //noinspection deprecation
-            offset = Reflection.getCallerClass(1) == Reflection.class ? 2 : 1;
-
-        } catch (Throwable ignored) {}
-        hasGetCallerClass = result;
-        callerOffset = offset;
-    }
+    static final ClassLoader PLATFORM_CLASS_LOADER = doPrivileged((PrivilegedAction<ClassLoader>) ClassLoader::getPlatformClassLoader);
+    static final ClassLoader OUR_CLASS_LOADER = JDKSpecific.class.getClassLoader();
 
     // === the actual JDK-specific API ===
 
     static JarFile getJarFile(final String name, final boolean verify) throws IOException {
-        return new JarFile(name, verify);
+        return new JarFile(new File(name), verify, JarFile.OPEN_READ, JarFile.runtimeVersion());
     }
 
     static JarFile getJarFile(final File name, final boolean verify) throws IOException {
-        return new JarFile(name, verify);
+        return new JarFile(name, verify, JarFile.OPEN_READ, JarFile.runtimeVersion());
     }
 
     static Class<?> getCallingUserClass() {
-        // 0 == this class
-        // 1 == immediate caller in jboss-modules
-        // 2 == user caller
-        Class<?>[] stack = hack.getClassContext();
-        int i = 3;
-        while (stack[i] == stack[2]) {
-            // skip nested calls front the same class
-            if (++i >= stack.length)
-                return null;
-        }
-
-        return stack[i];
+        return STACK_WALKER.walk(stream -> stream.skip(1)
+                .filter(s -> !s.getDeclaringClass().equals(org.jboss.modules.Module.class))
+                .findFirst().get().getDeclaringClass());
     }
 
     static Class<?> getCallingClass() {
-        // 0 == this class
-        // 1 == immediate caller in jboss-modules
-        // 2 == user caller
-        if (hasGetCallerClass) {
-            return Reflection.getCallerClass(2 + callerOffset);
-        } else {
-            return hack.getClassContext()[2 + callerOffset];
-        }
+        return STACK_WALKER.walk(JDKSpecific::processFrame);
     }
 
     static boolean isParallelCapable(ConcurrentClassLoader cl) {
-        return ConcurrentClassLoader.getLockForClass(cl, "$TEST$") != cl;
+        return cl.isRegisteredAsParallelCapable();
     }
 
     static Package getPackage(ClassLoader cl, String packageName) {
-        try {
-            return (Package) getPackageMH.invoke(cl, packageName);
-        } catch (RuntimeException | Error e2) {
-            throw e2;
-        } catch (Throwable throwable) {
-            throw new UndeclaredThrowableException(throwable);
-        }
+        return cl.getDefinedPackage(packageName);
     }
 
     static Set<String> getJDKPaths() {
-        final Set<String> pathSet = new FastCopyHashSet<>(1024);
-        final Set<String> jarSet = new FastCopyHashSet<>(1024);
-        final String sunBootClassPath = AccessController.doPrivileged(new PropertyReadAction("sun.boot.class.path"));
+        Set<String> pathSet = new FastCopyHashSet<>(1024);
+        processRuntimeImages(pathSet);
+        // TODO: Remove this stuff once jboss-modules is itself a module
         final String javaClassPath = AccessController.doPrivileged(new PropertyReadAction("java.class.path"));
-        JDKPaths.processClassPathItem(sunBootClassPath, jarSet, pathSet);
-        JDKPaths.processClassPathItem(javaClassPath, jarSet, pathSet);
-        pathSet.add("org/jboss/modules");
-        pathSet.add("org/jboss/modules/filter");
-        pathSet.add("org/jboss/modules/log");
-        pathSet.add("org/jboss/modules/management");
-        pathSet.add("org/jboss/modules/ref");
-        return Collections.unmodifiableSet(pathSet);
+        JDKPaths.processClassPathItem(javaClassPath, new FastCopyHashSet<>(1024), pathSet);
+        pathSet.addAll(MODULES_PACKAGES);
+        return pathSet;
     }
 
     static LocalLoader getSystemLocalLoader() {
-        return new ClassLoaderLocalLoader(getPlatformClassLoader());
+        return new LocalLoader() {
+            public Class<?> loadClassLocal(final String name, final boolean resolve) {
+                try {
+                    return Class.forName(name, resolve, getPlatformClassLoader());
+                } catch (ClassNotFoundException ignored) {
+                    try {
+                        return Class.forName(name, resolve, OUR_CLASS_LOADER);
+                    } catch (ClassNotFoundException e) {
+                        return null;
+                    }
+                }
+            }
+
+            public Package loadPackageLocal(final String name) {
+                final Package pkg = getPackage(getPlatformClassLoader(), name);
+                return pkg != null ? pkg : getPackage(OUR_CLASS_LOADER, name);
+            }
+
+            public List<Resource> loadResourceLocal(final String name) {
+                final Enumeration<URL> urls;
+                try {
+                    urls = getSystemResources(name);
+                } catch (IOException e) {
+                    return Collections.emptyList();
+                }
+                final List<Resource> list = new ArrayList<Resource>();
+                while (urls.hasMoreElements()) {
+                    list.add(new URLResource(urls.nextElement()));
+                }
+                return list;
+            }
+        };
     }
 
     static ClassLoader getPlatformClassLoader() {
-        return JDKSpecific.class.getClassLoader();
+        return PLATFORM_CLASS_LOADER;
     }
 
     static URL getSystemResource(final String name) {
-        final ClassLoader classLoader = getPlatformClassLoader();
-        return classLoader != null ? classLoader.getResource(name) : ClassLoader.getSystemResource(name);
+        final URL resource = getPlatformClassLoader().getResource(name);
+        return resource != null ? resource : OUR_CLASS_LOADER.getResource(name);
     }
 
     static Enumeration<URL> getSystemResources(final String name) throws IOException {
-        final ClassLoader classLoader = getPlatformClassLoader();
-        return classLoader != null ? classLoader.getResources(name) : ClassLoader.getSystemResources(name);
+        final Enumeration<URL> resources = getPlatformClassLoader().getResources(name);
+        return resources != null && resources.hasMoreElements() ? resources : OUR_CLASS_LOADER.getResources(name);
     }
 
     static InputStream getSystemResourceAsStream(final String name) {
-        final ClassLoader classLoader = getPlatformClassLoader();
-        return classLoader != null ? classLoader.getResourceAsStream(name) : ClassLoader.getSystemResourceAsStream(name);
+        final InputStream stream = getPlatformClassLoader().getResourceAsStream(name);
+        return stream != null ? stream : OUR_CLASS_LOADER.getSystemResourceAsStream(name);
     }
 
-    static Class<?> getSystemClass(final ConcurrentClassLoader caller, final String className) throws ClassNotFoundException {
-        final ClassLoader platformClassLoader = JDKSpecific.getPlatformClassLoader();
-        return platformClassLoader != null ? platformClassLoader.loadClass(className) : caller.findSystemClassInternal(className);
+    static Class<?> getSystemClass(@SuppressWarnings("unused") final ConcurrentClassLoader caller, final String className) throws ClassNotFoundException {
+        try {
+            return getPlatformClassLoader().loadClass(className);
+        } catch (ClassNotFoundException ignored) {
+            return OUR_CLASS_LOADER.loadClass(className);
+        }
     }
 
     // === nested util stuff, non-API ===
 
-    static final class Hack extends SecurityManager {
+    private static Class<?> processFrame(Stream<StackWalker.StackFrame> stream) {
+        final Iterator<StackWalker.StackFrame> iterator = stream.iterator();
+        if (! iterator.hasNext()) return null;
+        iterator.next();
+        if (! iterator.hasNext()) return null;
+        Class<?> testClass = iterator.next().getDeclaringClass();
+        while (iterator.hasNext()) {
+            final Class<?> item = iterator.next().getDeclaringClass();
+            if (testClass != item) {
+                return item;
+            }
+        }
+        return null;
+    }
+
+    private static void processRuntimeImages(final Set<String> jarSet) {
+        try {
+            for (final Path root : FileSystems.getFileSystem(new URI("jrt:/")).getRootDirectories()) {
+                Files.walkFileTree(root, new JrtFileVisitor(jarSet));
+            }
+        } catch (final URISyntaxException |IOException e) {
+            throw new IllegalStateException("Unable to process java runtime images");
+        }
+    }
+
+    private static class JrtFileVisitor implements FileVisitor<Path> {
+
+        private static final String SLASH = "/";
+        private static final String PACKAGES = "/packages";
+        private final Set<String> pathSet;
+
+        private JrtFileVisitor(final Set<String> pathSet) {
+            this.pathSet = pathSet;
+        }
+
         @Override
-        protected Class<?>[] getClassContext() {
-            return super.getClassContext();
+        public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs) throws IOException {
+            final String d = dir.toString();
+            return d.equals(SLASH) || d.startsWith(PACKAGES) ? CONTINUE : SKIP_SUBTREE;
+        }
+
+        @Override
+        public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) throws IOException {
+            String f = file.toString();
+            pathSet.add(f.substring(PACKAGES.length() + 1, f.lastIndexOf(SLASH)).replace('.', '/'));
+            return CONTINUE;
+        }
+
+        @Override
+        public FileVisitResult visitFileFailed(final Path file, final IOException exc) throws IOException {
+            return CONTINUE;
+        }
+
+        @Override
+        public FileVisitResult postVisitDirectory(final Path dir, final IOException exc) throws IOException {
+            return CONTINUE;
         }
     }
 }

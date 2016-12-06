@@ -18,8 +18,6 @@
 
 package org.jboss.modules;
 
-import __redirected.__JAXPRedirected;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -387,11 +385,6 @@ public final class Main {
             moduleName = nameArgument;
         }
         Module.initBootModuleLoader(loader);
-        if (jaxpModuleName != null) {
-            __JAXPRedirected.changeAll(jaxpModuleName, Module.getBootModuleLoader());
-        } else {
-            __JAXPRedirected.changeAll(moduleName, Module.getBootModuleLoader());
-        }
 
         final Module module;
         try {

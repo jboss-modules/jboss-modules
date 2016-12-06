@@ -43,8 +43,8 @@
     <properties>
         <skip.compile>false</skip.compile>
         <version.org.wildfly.checkstyle-config>1.0.5.Final</version.org.wildfly.checkstyle-config>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>9</maven.compiler.source>
+        <maven.compiler.target>9</maven.compiler.target>
     </properties>
 
     <build>
@@ -129,27 +129,6 @@
                 </configuration>
             </plugin>
 
-            <!-- Remote resources -->
-            <plugin>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>add-java9-supplement</id>
-                        <phase>generate-resources</phase>
-                        <goals>
-                            <goal>unpack-dependencies</goal>
-                        </goals>
-                        <configuration>
-                            <includeGroupIds>org.jboss.modules</includeGroupIds>
-                            <includeArtifactIds>jboss-modules-jdk9-supplement</includeArtifactIds>
-                            <excludeTransitive>true</excludeTransitive>
-                            <includes>**/*.class</includes>
-                            <outputDirectory>${project.build.directory}/generated-resources/META-INF/versions/9</outputDirectory>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
             <!-- JAR -->
             <plugin>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -186,18 +165,6 @@
         </plugins>
     </build>
     <dependencies>
-        <dependency>
-            <groupId>org.jboss.modules</groupId>
-            <artifactId>jboss-modules-jdk9-supplement</artifactId>
-            <version>1.2.Final</version>
-            <scope>provided</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.jboss.modules</groupId>
-                    <artifactId>jboss-modules</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
         <dependency>
             <groupId>org.jboss.shrinkwrap</groupId>
             <artifactId>shrinkwrap-impl-base</artifactId>

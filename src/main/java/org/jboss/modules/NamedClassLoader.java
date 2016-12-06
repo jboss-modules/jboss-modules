@@ -30,8 +30,6 @@ public abstract class NamedClassLoader extends ClassLoader {
         }
     }
 
-    private final String name;
-
     /**
      * Construct a new instance.
      *
@@ -39,8 +37,7 @@ public abstract class NamedClassLoader extends ClassLoader {
      * @param name the name, or {@code null} if the class loader has no name
      */
     protected NamedClassLoader(final ClassLoader parent, final String name) {
-        super(parent);
-        this.name = name;
+        super(name, parent == null ? ClassLoader.getPlatformClassLoader() : parent);
     }
 
     /**
@@ -49,7 +46,7 @@ public abstract class NamedClassLoader extends ClassLoader {
      * @param name the name, or {@code null} if the class loader has no name
      */
     protected NamedClassLoader(final String name) {
-        this.name = name;
+        this(null, name);
     }
 
     /**
@@ -58,6 +55,6 @@ public abstract class NamedClassLoader extends ClassLoader {
      * @return the name of this class loader, or {@code null} if it is unnamed
      */
     public String getName() {
-        return name;
+        return super.getName();
     }
 }
