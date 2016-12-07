@@ -1211,6 +1211,10 @@ public final class Module {
                     continue;
                 }
 
+                // Jigsaw stuff
+                final ModuleClassLoader myClassLoader = getClassLoaderPrivate();
+                myClassLoader.getController().addReads(myClassLoader.getJdkModule(), module.getClassLoaderPrivate().getJdkModule());
+
                 final PathFilter importFilter = dependency.getImportFilter();
                 final FastCopyHashSet<PathFilter> nestedFilters;
                 final FastCopyHashSet<ClassFilter> nestedClassFilters;

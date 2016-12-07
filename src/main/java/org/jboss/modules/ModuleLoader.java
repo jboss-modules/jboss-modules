@@ -22,6 +22,7 @@ import static java.security.AccessController.doPrivileged;
 import static org.jboss.modules.management.ObjectProperties.property;
 
 import java.lang.management.ManagementFactory;
+import java.lang.module.ModuleDescriptor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.UndeclaredThrowableException;

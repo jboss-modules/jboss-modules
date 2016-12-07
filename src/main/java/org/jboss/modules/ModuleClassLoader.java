@@ -18,12 +18,20 @@
 
 package org.jboss.modules;
 
+import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleFinder;
+import java.lang.module.ModuleReader;
+import java.lang.module.ModuleReference;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Layer;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.PermissionCollection;
 import java.security.ProtectionDomain;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+
 import org.jboss.modules.filter.PathFilter;
 import org.jboss.modules.filter.PathFilters;
 import org.jboss.modules.log.ModuleLogger;
@@ -40,8 +48,10 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
 /**
  * A module classloader.  Instances of this class implement the complete view of classes and resources available in a
@@ -70,6 +80,8 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
 
     private final Module module;
     private final ClassFileTransformer transformer;
+    private final Layer.Controller controller;
+    private final java.lang.reflect.Module jdkModule;
 
     private final AtomicReference<Paths<ResourceLoader, ResourceLoaderSpec>> paths = new AtomicReference<>(Paths.<ResourceLoader, ResourceLoaderSpec>none());
 
@@ -120,6 +132,53 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
             setDefaultAssertionStatus(setting == AssertionSetting.ENABLED);
         }
         transformer = configuration.getTransformer();
+        final String myName = configuration.getModule().getName()
+            // TODO vvvv TODO
+            .replace('-', '_').replace(':', '_') // remove this
+            // TODO ^^^^ TODO
+        ;
+        final ModuleDescriptor.Builder builder = ModuleDescriptor.module(myName);
+        final Version version = configuration.getModule().getVersion();
+        if (version != null) {
+            builder.version(version.toString());
+        }
+        final ModuleReader moduleReader = new ModuleReader() {
+            public Optional<URI> find(final String name) throws IOException {
+                final Iterator<Resource> iterator = loadResourceLocal(name).iterator();
+                try {
+                    return iterator.hasNext() ? Optional.of(iterator.next().getURL().toURI()) : Optional.empty();
+                } catch (URISyntaxException e) {
+                    return Optional.empty();
+                }
+            }
+
+            public Optional<InputStream> open(final String name) throws IOException {
+                final Iterator<Resource> iterator = loadResourceLocal(name).iterator();
+                return iterator.hasNext() ? Optional.of(iterator.next().openStream()) : Optional.empty();
+            }
+
+            public Stream<String> list() throws IOException {
+                return Stream.empty();
+            }
+
+            public void close() throws IOException {
+                // ignored
+            }
+        };
+
+        final ModuleReference theModuleReference = new ModuleReference(builder.build(), null, () -> moduleReader);
+        final java.lang.module.Configuration jdkConfig = java.lang.module.Configuration.empty().resolveRequires(new ModuleFinder() {
+            public Optional<ModuleReference> find(final String name) {
+                return Optional.of(theModuleReference);
+            }
+
+            public Set<ModuleReference> findAll() {
+                return Collections.singleton(theModuleReference);
+            }
+        }, ModuleFinder.ofSystem(), Collections.singleton(myName));
+        final Layer.Controller controller = Layer.defineModules(jdkConfig, List.of(Layer.empty()), ignored -> this);
+        this.controller = controller;
+        jdkModule = controller.layer().findModule(myName).orElseThrow(IllegalStateException::new);
     }
 
     /**
@@ -145,7 +204,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
     }
 
     private boolean setResourceLoaders(final Paths<ResourceLoader, ResourceLoaderSpec> paths, final ResourceLoaderSpec[] resourceLoaders) {
-        final Map<String, List<ResourceLoader>> allPaths = new HashMap<String, List<ResourceLoader>>();
+        final Map<String, List<ResourceLoader>> allPaths = new HashMap<>();
         for (ResourceLoaderSpec loaderSpec : resourceLoaders) {
             final ResourceLoader loader = loaderSpec.getResourceLoader();
             final PathFilter filter = loaderSpec.getPathFilter();
@@ -153,11 +212,16 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
                 if (filter.accept(path)) {
                     final List<ResourceLoader> allLoaders = allPaths.get(path);
                     if (allLoaders == null) {
-                        ArrayList<ResourceLoader> newList = new ArrayList<ResourceLoader>(16);
+                        ArrayList<ResourceLoader> newList = new ArrayList<>(16);
                         newList.add(loader);
                         allPaths.put(path, newList);
                     } else {
                         allLoaders.add(loader);
+                    }
+                    // XXX WARNING RACE CITY XXX
+                    if (! path.isEmpty()) {
+                        controller.addPackage(jdkModule, path);
+                        controller.addOpensToAll(jdkModule, path);
                     }
                 }
             }
@@ -661,6 +725,14 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
             loaders[i] = specs[i].getResourceLoader();
         }
         return loaders;
+    }
+
+    Layer.Controller getController() {
+        return controller;
+    }
+
+    java.lang.reflect.Module getJdkModule() {
+        return jdkModule;
     }
 
     /**

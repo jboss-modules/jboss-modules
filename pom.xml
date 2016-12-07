@@ -110,6 +110,10 @@
                     <showWarnings>true</showWarnings>
                     <skipMain>${skip.compile}</skipMain>
                     <skip>${skip.compile}</skip>
+                    <compilerArgs>
+                        <arg>--patch-module</arg>
+                        <arg>java.base=${project.basedir}/patched</arg>
+                    </compilerArgs>
                 </configuration>
             </plugin>
 
@@ -126,6 +130,7 @@
                         <include>**/*Test.java</include>
                     </includes>
                     <forkMode>always</forkMode>
+                    <argLine>--patch-module java.base=${project.basedir}/patched</argLine>
                 </configuration>
             </plugin>
 
