@@ -79,8 +79,6 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         POLICY_PERMISSIONS = Boolean.parseBoolean(System.getProperty("jboss.modules.policy-permissions", "false"));
     }
 
-    static final ResourceLoaderSpec[] NO_RESOURCE_LOADERS = new ResourceLoaderSpec[0];
-
     private final Module module;
     private final ClassFileTransformer transformer;
 
@@ -143,7 +141,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
      */
     boolean recalculate() {
         final Paths<ResourceLoader, ResourceLoaderSpec> paths = this.paths;
-        return setResourceLoaders(paths, paths.getSourceList(NO_RESOURCE_LOADERS));
+        return setResourceLoaders(paths, paths.getSourceList(ResourceLoaderSpec.NO_RESOURCE_LOADERS));
     }
 
     /**
@@ -559,7 +557,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         final ModuleLogger log = Module.log;
         log.trace("Attempting to load native library %s from %s", libname, module);
 
-        for (ResourceLoaderSpec loader : paths.getSourceList(NO_RESOURCE_LOADERS)) {
+        for (ResourceLoaderSpec loader : paths.getSourceList(ResourceLoaderSpec.NO_RESOURCE_LOADERS)) {
             final String library = loader.getResourceLoader().getLibrary(libname);
             if (library != null) {
                 return library;
@@ -684,7 +682,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
     }
 
     ResourceLoader[] getResourceLoaders() {
-        final ResourceLoaderSpec[] specs = paths.getSourceList(NO_RESOURCE_LOADERS);
+        final ResourceLoaderSpec[] specs = paths.getSourceList(ResourceLoaderSpec.NO_RESOURCE_LOADERS);
         final int length = specs.length;
         final ResourceLoader[] loaders = new ResourceLoader[length];
         for (int i = 0; i < length; i++) {
