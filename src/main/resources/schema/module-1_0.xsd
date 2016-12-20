@@ -426,7 +426,7 @@
             <xsd:element name="module-path" type="pathType">
                 <annotation xmlns="http://www.w3.org/2001/XMLSchema">
                     <documentation>
-                        A module root path for this loader. Paths are relative to ${user.dir} by default.
+                        A module root path for this loader. Paths are relative to user directory (user.dir) by default.
                     </documentation>
                 </annotation>
             </xsd:element>
