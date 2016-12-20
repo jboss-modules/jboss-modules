@@ -35,6 +35,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * a method on this class loader may cause an unexpected deadlock.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  */
 public abstract class ConcurrentClassLoader extends NamedClassLoader {
 
@@ -498,7 +499,7 @@ public abstract class ConcurrentClassLoader extends NamedClassLoader {
             try {
                 pkg = super.definePackage(name, specTitle, specVersion, specVendor, implTitle, implVersion, implVendor, sealBase);
             } catch (final IllegalArgumentException iae) {
-                pkg = super.getPackage(name);
+                pkg = super.getDefinedPackage(name);
                 if (pkg == null) throw iae;
             }
             existing = packages.putIfAbsent(name, pkg);
