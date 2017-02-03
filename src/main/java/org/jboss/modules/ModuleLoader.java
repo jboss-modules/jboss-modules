@@ -279,16 +279,7 @@ public abstract class ModuleLoader {
             }
             final Module module;
             if ( moduleSpec instanceof AliasModuleSpec) {
-                final ModuleIdentifier aliasTarget = ((AliasModuleSpec) moduleSpec).getAliasTarget();
-                try {
-                    newFuture.setModule(module = loadModuleLocal(aliasTarget));
-                } catch (RuntimeException e) {
-                    log.trace(e, "Failed to load module %s (alias for %s)", identifier, aliasTarget);
-                    throw e;
-                } catch (Error e) {
-                    log.trace(e, "Failed to load module %s (alias for %s)", identifier, aliasTarget);
-                    throw e;
-                }
+                module = defineModule(((AliasModuleSpec) moduleSpec).asConcreteModuleSpec(), newFuture);
             } else {
                 module = defineModule((ConcreteModuleSpec) moduleSpec, newFuture);
             }
