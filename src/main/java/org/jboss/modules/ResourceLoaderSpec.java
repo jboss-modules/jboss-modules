@@ -30,6 +30,7 @@ import org.jboss.modules.filter.PathFilters;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class ResourceLoaderSpec {
+    static final ResourceLoaderSpec[] NO_RESOURCE_LOADERS = new ResourceLoaderSpec[0];
     private final ResourceLoader resourceLoader;
     private final PathFilter pathFilter;
 
