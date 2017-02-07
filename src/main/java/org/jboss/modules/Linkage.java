@@ -30,6 +30,7 @@ import java.util.Map;
  * The linkage state of a module.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  */
 final class Linkage {
 
@@ -41,6 +42,7 @@ final class Linkage {
         UNLINKED,
         LINKING,
         LINKED,
+        REMOVED,
         ;
     }
 
