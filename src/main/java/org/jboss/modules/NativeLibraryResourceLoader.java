@@ -238,6 +238,8 @@ public class NativeLibraryResourceLoader extends AbstractResourceLoader {
                                 cpuName = cpuNames.get(0);
                             }
                         }
+                    } else {
+                        cpuNames.add(cpuName);
                     }
 
                     // Finally, search paths.
