@@ -1028,7 +1028,7 @@ public class ModuleLoader {
             final ResourceLoader[] loaders = classLoader.getResourceLoaders();
             final ArrayList<ResourceLoaderInfo> list = new ArrayList<ResourceLoaderInfo>(loaders.length);
             for (ResourceLoader resourceLoader : loaders) {
-                list.add(new ResourceLoaderInfo(resourceLoader.getClass().getName(), resourceLoader.getLocation().toString(), new ArrayList<>(resourceLoader.getPaths())));
+                list.add(new ResourceLoaderInfo(resourceLoader.getClass().getName(), String.valueOf(resourceLoader.getLocation()), new ArrayList<>(resourceLoader.getPaths())));
             }
             return list;
         }
