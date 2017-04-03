@@ -76,6 +76,6 @@ public class ModularProtectionDomain extends ProtectionDomain {
      * @return the string representation (not {@code null})
      */
     public String toString() {
-        return String.format("ProtectionDomain (%s) %s%n%s%n%s%n%s", dynamic ? "dynamic" : "static", getCodeSource(), getClassLoader(), getPermissions());
+        return String.format("ProtectionDomain (%s) %s%n%s%n%s", dynamic ? "dynamic" : "static", getCodeSource(), getClassLoader(), getPermissions());
     }
 }
