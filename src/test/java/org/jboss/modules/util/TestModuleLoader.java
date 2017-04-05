@@ -36,12 +36,13 @@ import java.util.Map;
  * provided specs.
  *
  * @author John E. Bailey
+ * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  */
 public class TestModuleLoader extends ModuleLoader {
 
     private final Map<ModuleIdentifier, ModuleSpec> moduleSpecs = new HashMap<ModuleIdentifier, ModuleSpec>();
 
-    protected Module preloadModule(final ModuleIdentifier identifier) throws ModuleLoadException {
+    public Module preloadModule(final ModuleIdentifier identifier) throws ModuleLoadException {
         return super.preloadModule(identifier);
     }
 
