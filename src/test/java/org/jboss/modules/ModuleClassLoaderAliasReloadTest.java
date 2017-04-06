@@ -161,4 +161,62 @@ public class ModuleClassLoaderAliasReloadTest extends AbstractModuleTestCase {
         moduleLoader.unloadModuleLocal(testModule2);
     }
 
+
+    /**
+     * Ensure the Alias modules do not leak during unload/reload, see https://issues.jboss.org/browse/MODULES-241
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testAliasModuleReload2() throws Exception {
+        // FIRST PHASE
+        configureModules();
+        Module testModule1 = moduleLoader.loadModule(MODULE_ONE_ID);
+        Module testModule2 = moduleLoader.loadModule(MODULE_TWO_AL);
+        ModuleClassLoader classLoader1 = testModule1.getClassLoader();
+        ModuleClassLoader classLoader2 = testModule2.getClassLoader();
+
+        try {
+            Class<?> testClass1 = classLoader1.loadClass("org.jboss.modules.test.TestClass");
+            assertNotNull(testClass1);
+            Class<?> testClass2 = classLoader2.loadClass("org.jboss.modules.test.TestClass");
+            assertNotNull(testClass2);
+            assertNotNull(testClass1.getResource("/test.txt"));
+            assertNotNull(testClass2.getResource("/test.txt"));
+        } catch (ClassNotFoundException e) {
+            fail();
+        }
+        // cleanup
+        for (final ResourceLoader rl : classLoader1.getResourceLoaders()) { ((CloseAwareResourceLoader)rl).close(); }
+        for (final ResourceLoader rl : classLoader2.getResourceLoaders()) { ((CloseAwareResourceLoader)rl).close(); }
+        moduleLoader.unloadModuleLocal(testModule1);
+        moduleLoader.unloadModuleLocal(testModule2);
+
+        // SECOND PHASE
+        configureModules();
+        testModule1 = moduleLoader.loadModule(MODULE_ONE_ID);
+        moduleLoader.relink(testModule1);
+        testModule2 = moduleLoader.loadModule(MODULE_TWO_AL);
+        moduleLoader.relink(testModule2);
+        classLoader1 = testModule1.getClassLoader();
+        classLoader2 = testModule2.getClassLoader();
+
+        try {
+            Class<?> testClass1 = classLoader1.loadClass("org.jboss.modules.test.TestClass");
+            assertNotNull(testClass1);
+            Class<?> testClass2 = classLoader2.loadClass("org.jboss.modules.test.TestClass");
+            assertNotNull(testClass2);
+            assertNotNull(testClass1.getResource("/test.txt"));
+            assertNotNull(testClass2.getResource("/test.txt"));
+        } catch (ClassNotFoundException e) {
+            fail();
+        }
+        // cleanup
+        for (final ResourceLoader rl : classLoader1.getResourceLoaders()) { ((CloseAwareResourceLoader)rl).close(); }
+        for (final ResourceLoader rl : classLoader2.getResourceLoaders()) { ((CloseAwareResourceLoader)rl).close(); }
+        moduleLoader.unloadModuleLocal(testModule1);
+        moduleLoader.unloadModuleLocal(testModule2);
+    }
+
+
 }
