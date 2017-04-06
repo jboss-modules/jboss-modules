@@ -2,6 +2,7 @@ package org.jboss.modules;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 
@@ -54,8 +55,16 @@ public class ModuleClassLoaderAliasTest extends AbstractModuleTestCase {
         } catch (ClassNotFoundException e) {
             fail();
         }
-        moduleLoader.unloadModuleLocal(testModule1);
-        moduleLoader.unloadModuleLocal(testModule2);
+        moduleLoader.unloadModuleLocal(ModuleIdentifier.fromString("test.alias-cyclic.module-one"), testModule1);
+        assertNull("module-one should not be present in the moduleLoader after it has been removed",
+                moduleLoader.findLoadedModuleLocal(ModuleIdentifier.fromString("test.alias-cyclic.module-one")));
+
+        /* Assert that unloading an aliased module also removes the aliases */
+        moduleLoader.unloadModuleLocal(ModuleIdentifier.fromString("test.alias-cyclic.module-two"), testModule2);
+        assertNull("module-two should not be present in the moduleLoader after it has been removed",
+                moduleLoader.findLoadedModuleLocal(ModuleIdentifier.fromString("test.alias-cyclic.module-two")));
+        assertNull("module-two-alias should should not be present in the moduleLoader after module-two has been removed",
+                moduleLoader.findLoadedModuleLocal(ModuleIdentifier.fromString("test.alias-cyclic.module-two-alias")));
 
     }
 
@@ -90,11 +99,54 @@ public class ModuleClassLoaderAliasTest extends AbstractModuleTestCase {
         assertResourceString(classLoader1.getResource("/test.txt"), "Test file 1");
         assertResourceString(classLoader2.getResource("/test.txt"), "Test file 2");
 
-        moduleLoader.unloadModuleLocal(testModule1);
-        moduleLoader.unloadModuleLocal(testModule2);
+        moduleLoader.unloadModuleLocal(ModuleIdentifier.fromString("test.alias-simple.module-one"), testModule1);
+        assertNull("module-one should not be present in the moduleLoader after it has been removed",
+                moduleLoader.findLoadedModuleLocal(ModuleIdentifier.fromString("test.alias-simple.module-one")));
+
+        /* Assert that unloading an aliased module also removes the aliases */
+        moduleLoader.unloadModuleLocal(ModuleIdentifier.fromString("test.alias-simple.module-two"), testModule2);
+        assertNull("module-two should not be present in the moduleLoader after it has been removed",
+                moduleLoader.findLoadedModuleLocal(ModuleIdentifier.fromString("test.alias-simple.module-two")));
+        assertNull("module-two-alias should should not be present in the moduleLoader after module-two has been removed",
+                moduleLoader.findLoadedModuleLocal(ModuleIdentifier.fromString("test.alias-simple.module-two-alias")));
 
     }
 
+    /**
+     * A reproducer for MODULES-282
+     */
+    @Test
+    public void testAliasResource() throws Exception {
+        final File repoRoot = getResource("test/repo");
+        final ModuleLoader moduleLoader = new LocalModuleLoader(new File[] { repoRoot });
+
+        Module dependentAliasModule = moduleLoader.loadModule(ModuleIdentifier.fromString("test.alias-resources.dependent-module-alias"));
+
+        /* Assert that the whole dependency graph is there */
+        assertNotNull("dependent-module-alias should be present in the moduleLoader after dependent-module-alias has been loaded",
+                moduleLoader.findLoadedModuleLocal(ModuleIdentifier.fromString("test.alias-resources.dependent-module-alias")));
+        assertNotNull("dependent-module should be present in the moduleLoader after dependent-module-alias has been loaded",
+                moduleLoader.findLoadedModuleLocal(ModuleIdentifier.fromString("test.alias-resources.dependent-module")));
+        assertNotNull("dependency-module should be present in the moduleLoader after dependent-module-alias has been loaded",
+                moduleLoader.findLoadedModuleLocal(ModuleIdentifier.fromString("test.alias-resources.dependency-module")));
+
+        ModuleClassLoader dependentAliasClassLoader = dependentAliasModule.getClassLoader();
+        assertResourceString(dependentAliasClassLoader.getResource("/dependency-resource.txt"), "Dependency resource");
+
+        moduleLoader.unloadModuleLocal(ModuleIdentifier.fromString("test.alias-resources.dependent-module-alias"), dependentAliasModule);
+
+        /* Assert that unloading the alias removes just the alias while leaving the aliased module there */
+        assertNull("dependent-module-alias should not be present in the moduleLoader after it has been removed",
+                moduleLoader.findLoadedModuleLocal(ModuleIdentifier.fromString("test.alias-resources.dependent-module-alias")));
+        assertNotNull("dependent-module should be present in the moduleLoader after dependent-module-alias has been removed",
+                moduleLoader.findLoadedModuleLocal(ModuleIdentifier.fromString("test.alias-resources.dependent-module")));
+        assertNotNull("dependency-module should be present in the moduleLoader after dependent-module-alias has been removed",
+                moduleLoader.findLoadedModuleLocal(ModuleIdentifier.fromString("test.alias-resources.dependency-module")));
+
+        moduleLoader.unloadModuleLocal(ModuleIdentifier.fromString("test.alias-resources.dependent-module"), dependentAliasModule);
+        assertNull("dependent-module should not be present in the moduleLoader after it has been removed",
+                moduleLoader.findLoadedModuleLocal(ModuleIdentifier.fromString("test.alias-resources.dependent-module")));
+    }
     private static void assertResourceString(URL resource, String expected) throws IOException {
         assertNotNull(resource);
         byte[] bytes = Util.readBytes(resource.openStream());
