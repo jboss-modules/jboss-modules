@@ -389,7 +389,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
                         final PermissionCollection policyPermissions = policy.getPermissions(codeSource);
                         if (policyPermissions != null && policyPermissions != Policy.UNSUPPORTED_EMPTY_COLLECTION) {
                             if (permissions == null) {
-                                protectionDomain = new ProtectionDomain(codeSource, policyPermissions);
+                                protectionDomain = new ProtectionDomain(codeSource, policyPermissions, this, null);
                             } else {
                                 final Enumeration<Permission> e2 = policyPermissions.elements();
                                 final Enumeration<Permission> e1 = permissions.elements();
@@ -403,22 +403,22 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
                                             combined.add(e2.nextElement());
                                         }
                                         combined.setReadOnly();
-                                        protectionDomain = new ProtectionDomain(codeSource, combined);
+                                        protectionDomain = new ProtectionDomain(codeSource, combined, this, null);
                                     } else {
                                         protectionDomain = new ProtectionDomain(codeSource, policyPermissions);
                                     }
                                 } else {
-                                    protectionDomain = new ProtectionDomain(codeSource, permissions);
+                                    protectionDomain = new ProtectionDomain(codeSource, permissions, this, null);
                                 }
                             }
                         } else {
-                            protectionDomain = new ProtectionDomain(codeSource, permissions);
+                            protectionDomain = new ProtectionDomain(codeSource, permissions, this, null);
                         }
                     } else {
-                        protectionDomain = new ProtectionDomain(codeSource, permissions);
+                        protectionDomain = new ProtectionDomain(codeSource, permissions, this, null);
                     }
                 } else {
-                    protectionDomain = new ProtectionDomain(codeSource, permissions);
+                    protectionDomain = new ProtectionDomain(codeSource, permissions, this, null);
                 }
                 map.put(codeSource, protectionDomain);
             }
