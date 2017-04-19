@@ -374,7 +374,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
             ProtectionDomain protectionDomain = map.get(codeSource);
             if (protectionDomain == null) {
                 final PermissionCollection permissions = module.getPermissionCollection();
-                protectionDomain = new ProtectionDomain(codeSource, permissions);
+                protectionDomain = new ProtectionDomain(codeSource, permissions, this, null);
                 map.put(codeSource, protectionDomain);
             }
             return protectionDomain;
