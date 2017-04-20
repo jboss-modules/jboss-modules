@@ -5,19 +5,6 @@
 
   <localRepository/>
 
-  <proxies>
-    <proxy>
-      <id>my-proxy</id>
-      <active>true</active>
-      <host>myproxy.corp.com</host>
-      <port>8080</port>
-      <protocol>http</protocol>
-      <username>bob</username>
-      <password>hunter2</password>
-      <nonProxyHosts>www.google.com|*.apple.com</nonProxyHosts>
-    </proxy>
-  </proxies>
-
   <profiles>
     <profile>
       <id>jboss-public-repository</id>
