@@ -1,6 +1,9 @@
 package org.jboss.modules.maven;
 
 import java.lang.reflect.Field;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -70,12 +73,60 @@ public class MavenSettingsTest {
 
     }
 
+
+    @Test
+    public void testProxies() throws Exception {
+        MavenSettings settings = new MavenSettings();
+
+        MavenSettings.parseSettingsXml(Paths.get(MavenSettingsTest.class.getResource("settings-empty-local-repo.xml").toURI()), settings);
+        List<MavenSettings.Proxy> proxies = settings.getProxies();
+        Assert.assertEquals(1, proxies.size());
+
+        MavenSettings.Proxy proxy = proxies.get(0);
+
+        Assert.assertEquals("my-proxy", proxy.getId());
+        Assert.assertEquals("myproxy.corp.com", proxy.getHost());
+        Assert.assertEquals(8080, proxy.getPort());
+        Assert.assertEquals("http", proxy.getProtocol());
+        Assert.assertEquals("bob", proxy.getUsername());
+        Assert.assertEquals("hunter2", proxy.getPassword());
+
+        Assert.assertTrue(proxy.canProxyFor(new URL("http://www.redhat.com/")));
+        Assert.assertFalse(proxy.canProxyFor(new URL("http://genius.apple.com/")));
+
+        Proxy netProxy = proxy.getProxy();
+
+        Assert.assertNotNull(netProxy);
+
+        Assert.assertEquals("myproxy.corp.com", ((InetSocketAddress) netProxy.address()).getHostName());
+        Assert.assertEquals(8080, ((InetSocketAddress) netProxy.address()).getPort());
+    }
+
+    @Test
+    public void testProxySelection() throws Exception {
+        MavenSettings settings = new MavenSettings();
+
+        MavenSettings.parseSettingsXml(Paths.get(MavenSettingsTest.class.getResource("settings-empty-local-repo.xml").toURI()), settings);
+        List<MavenSettings.Proxy> proxies = settings.getProxies();
+        Assert.assertEquals(1, proxies.size());
+
+        MavenSettings.Proxy proxy = settings.getProxyFor(new URL("http://genius.apple.com/foo/bar/baz"));
+        Assert.assertNull(proxy);
+
+        proxy = settings.getProxyFor(new URL("http://repository.jboss.org/foo/bar/baz"));
+        Assert.assertNotNull(proxy);
+
+        Assert.assertEquals("myproxy.corp.com", ((InetSocketAddress) proxy.getProxy().address()).getHostName());
+        Assert.assertEquals(8080, ((InetSocketAddress) proxy.getProxy().address()).getPort());
+    }
+
     /**
      * testing is snapshot resolving works properly, as in case of snapshot version, we need to use different path than exact version.
+     *
      * @throws Exception
      */
     @Test
-    public void testSnapshotResolving()throws Exception{
+    public void testSnapshotResolving() throws Exception {
         ArtifactCoordinates coordinates = ArtifactCoordinates.fromString("org.wildfly.core:wildfly-version:2.0.5.Final-20151222.144931-1");
         String path = coordinates.relativeArtifactPath('/');
         Assert.assertEquals("org/wildfly/core/wildfly-version/2.0.5.Final-SNAPSHOT/wildfly-version-2.0.5.Final-20151222.144931-1", path);

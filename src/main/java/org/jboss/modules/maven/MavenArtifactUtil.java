@@ -158,7 +158,7 @@ public final class MavenArtifactUtil {
             return;
         }
         final URL url = new URL(src);
-        final URLConnection connection = url.openConnection();
+        final URLConnection connection = MavenSettings.getSettings().openConnection(url);
         boolean message = Boolean.getBoolean("maven.download.message");
 
         try (InputStream bis = connection.getInputStream()){
