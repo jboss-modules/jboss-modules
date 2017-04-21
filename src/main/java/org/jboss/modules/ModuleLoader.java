@@ -66,6 +66,7 @@ import javax.management.ObjectName;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
+ * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  * @author Jason T. Greene
  *
  * @apiviz.landmark
@@ -493,13 +494,32 @@ public class ModuleLoader {
                 throw new ModuleLoadException("Module loader found a module with the wrong name");
             }
             final Module module;
-            if ( moduleSpec instanceof AliasModuleSpec) {
-                module = defineModule(((AliasModuleSpec) moduleSpec).asConcreteModuleSpec(), newFuture);
+            if (moduleSpec instanceof AliasModuleSpec) {
+                final AliasModuleSpec aliasModuleSpec = (AliasModuleSpec) moduleSpec;
+                Module aliasedModule;
+                while (true) {
+                    aliasedModule = loadModuleLocal(aliasModuleSpec.getAliasName());
+                    if (aliasedModule == null) {
+                        throw new ModuleLoadException("Alias module " + name + " is referencing not existing module");
+                    }
+                    final Set<String> aliases = aliasedModule.aliases;
+                    if (aliases == null) continue; // race condition detected, retry
+                    synchronized (aliases) {
+                        if (aliases == aliasedModule.aliases) {
+                            // no race-condition with removal, go ahead
+                            aliases.add(moduleSpec.getName());
+                            newFuture.setModule(module = aliasedModule);
+                            log.trace("Added module %s as alias of %s from %s", moduleSpec.getName(), aliasModuleSpec.getAliasName(), this);
+                            ok = true;
+                            break;
+                        }
+                    }
+                }
             } else {
                 module = defineModule((ConcreteModuleSpec) moduleSpec, newFuture);
+                log.trace("Loaded module %s from %s", name, this);
+                ok = true;
             }
-            log.trace("Loaded module %s from %s", name, this);
-            ok = true;
             return module;
         } finally {
             if (! ok) {
@@ -556,17 +576,65 @@ public class ModuleLoader {
      * @param module the module to unload
      * @throws SecurityException if an attempt is made to unload a module which does not belong to this module loader
      * @throws SecurityException if the module was not defined by this module loader
+     * @deprecated use {@link #unloadModuleLocal(String,Module)} instead
      */
+    @Deprecated
     protected final void unloadModuleLocal(Module module) throws SecurityException {
+        if (module == null) {
+            throw new NullPointerException("Module parameter cannot be null");
+        }
+        unloadModuleLocal(module.getName(), module);
+    }
+
+    /**
+     * Unload a module from this module loader.  Note that this has no effect on existing modules which refer to the
+     * module being unloaded.  Also, only modules from the current module loader can be unloaded.  Unloading the same
+     * module more than once has no additional effect.  This method only removes the mapping for the module; any running
+     * threads which are currently accessing or linked to the module will continue to function, however attempts to load
+     * this module will fail until a new module is loaded with the same name.  Once this happens, if all references to
+     * the previous module are not cleared, the same module may be loaded more than once, causing possible class duplication
+     * and class cast exceptions if proper care is not taken.
+     *
+     * If the given {@code moduleName} is an alias of the given {@code module}
+     * then only alias mapping to {@code module} is removed. Aliased {@code module}
+     * with its canonical name and other aliases mapping is left intact.
+     *
+     * If the given {@code moduleName} is the canonical {@code module} name
+     * then all its alias plus canonical {@code moduleName} association mappings are removed.
+     *
+     * @param moduleId the module identifier
+     * @param module the module to unload
+     * @return true iff module was unloaded
+     * @throws SecurityException if an attempt is made to unload a module which does not belong to this module loader
+     * @throws SecurityException if the module was not defined by this module loader
+     */
+    protected final boolean unloadModuleLocal(final String moduleId, final Module module) throws SecurityException {
+        if (moduleId == null || module == null) {
+            throw new NullPointerException("Method parameters cannot be null");
+        }
         final ModuleLoader moduleLoader = module.getModuleLoader();
         if (moduleLoader != this) {
             throw new SecurityException("Attempted to unload " + module + " from a different module loader");
         }
-        final String id = module.getIdentifier().toString();
-        final FutureModule futureModule = moduleMap.get(id);
+        final FutureModule futureModule = moduleMap.get(moduleId);
         if (futureModule != null && futureModule.module == module) {
-            moduleMap.remove(id, futureModule);
+            final Set<String> aliases = module.aliases;
+            if (aliases != null) {
+                synchronized (aliases) {
+                    if (aliases.remove(moduleId)) {
+                        // unregistered alias from aliased module
+                    } else {
+                        // cleaning aliased module and all its aliases
+                        module.aliases = null;
+                        for (String alias : aliases) {
+                            moduleMap.remove(alias);
+                        }
+                    }
+                }
+            }
+            return moduleMap.remove(moduleId, futureModule);
         }
+        return false;
     }
 
     /**
@@ -955,7 +1023,7 @@ public class ModuleLoader {
             if (module == null) {
                 return false;
             } else {
-                loader.unloadModuleLocal(module);
+                loader.unloadModuleLocal(name, module);
                 return true;
             }
         }
