@@ -18,48 +18,18 @@
 
 package org.jboss.modules;
 
-import java.lang.instrument.ClassFileTransformer;
-import java.security.PermissionCollection;
-import java.util.Collections;
-import java.util.Map;
-
-import org.jboss.modules.filter.PathFilters;
-
 /**
  * A module specification for a module alias.
- * <p>
- * Note that because of MODULES-241, alias modules are handled as a regular modules with a single dependency on the alias
- * target. Use {@link #asConcreteModuleSpec()} to get the regular {@link ConcreteModuleSpec} representing this
- * {@link AliasModuleSpec}.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
- * @author <a href="https://github.com/ppalaga">Peter Palaga</a>
  */
 public final class AliasModuleSpec extends ModuleSpec {
 
     private final String aliasName;
-    private final ConcreteModuleSpec concreteModuleSpec;
 
     AliasModuleSpec(final String name, final String aliasName) {
         super(name);
         this.aliasName = aliasName;
-
-        DependencySpec aliasTargetDependency = DependencySpec.createModuleDependencySpec(PathFilters.acceptAll(),
-                PathFilters.acceptAll(), null, aliasName, false);
-
-        final String mainClass = null;
-        final AssertionSetting assertionSetting = AssertionSetting.INHERIT;
-        final ResourceLoaderSpec[] resourceLoaders = ResourceLoaderSpec.NO_RESOURCE_LOADERS;
-        final DependencySpec[] dependencies = new DependencySpec[] { aliasTargetDependency };
-        final LocalLoader fallbackLoader = null;
-        final ModuleClassLoaderFactory moduleClassLoaderFactory = null;
-        final ClassFileTransformer classFileTransformer = null;
-        final Map<String, String> properties = Collections.emptyMap();
-        final PermissionCollection permissionCollection = ModulesPolicy.DEFAULT_PERMISSION_COLLECTION;
-        final Version version = null;
-        this.concreteModuleSpec = new ConcreteModuleSpec(name, mainClass, assertionSetting, resourceLoaders,
-                dependencies, fallbackLoader, moduleClassLoaderFactory, classFileTransformer, properties, permissionCollection,
-                version);
     }
 
     /**
@@ -82,12 +52,4 @@ public final class AliasModuleSpec extends ModuleSpec {
         return aliasName;
     }
 
-    /**
-     * @return a {@link ConcreteModuleSpec} instance representing this {@link AliasModuleSpec} - i.e. a
-     *         {@link ConcreteModuleSpec} with single dependency on the alias target, with the import and export filters set to
-     *         {@link PathFilters#acceptAll()}.
-     */
-    ConcreteModuleSpec asConcreteModuleSpec() {
-        return concreteModuleSpec;
-    }
 }
