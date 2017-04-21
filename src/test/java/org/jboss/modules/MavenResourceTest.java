@@ -23,6 +23,7 @@ import java.net.URL;
 
 import org.jboss.modules.maven.ArtifactCoordinates;
 import org.jboss.modules.maven.MavenArtifactUtil;
+import org.jboss.modules.maven.MavenSettingsTest;
 import org.jboss.modules.util.Util;
 import org.junit.Assert;
 import org.junit.Before;
@@ -38,6 +39,7 @@ import org.junit.rules.TemporaryFolder;
 public class MavenResourceTest {
 
     protected static final ModuleIdentifier MODULE_ID = ModuleIdentifier.fromString("test.maven");
+
     protected static final ModuleIdentifier MODULE_ID2 = ModuleIdentifier.fromString("test.maven:non-main");
 
     @Rule
@@ -68,11 +70,16 @@ public class MavenResourceTest {
 
     @Test
     public void testDefaultRepositories() throws Exception {
-        Module module = moduleLoader.loadModule(MODULE_ID2);
-        URL url = module.getResource("org/jboss/resteasy/plugins/providers/jackson/ResteasyJacksonProvider.class");
-        System.out.println(url);
-        Assert.assertNotNull(url);
-
+        try {
+            URL settingsXmlUrl = MavenSettingsTest.class.getResource("jboss-settings.xml");
+            System.setProperty("jboss.modules.settings.xml.url", settingsXmlUrl.toExternalForm());
+            Module module = moduleLoader.loadModule(MODULE_ID2);
+            URL url = module.getResource("org/jboss/resteasy/plugins/providers/jackson/ResteasyJacksonProvider.class");
+            System.out.println(url);
+            Assert.assertNotNull(url);
+        } finally {
+            System.clearProperty("jboss.modules.settings.xml.url");
+        }
     }
 
     /**
