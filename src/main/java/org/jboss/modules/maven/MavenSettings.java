@@ -174,6 +174,7 @@ final class MavenSettings {
                                     break;
                                 }
                             }
+                            break;
                         }
                         case "profiles": {
                             while ((eventType = reader.nextTag()) != END_DOCUMENT) {
