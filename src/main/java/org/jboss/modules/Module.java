@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -179,6 +180,10 @@ public final class Module {
     private final PermissionCollection permissionCollection;
 
     // mutable properties
+    /**
+     * Module aliases
+     */
+    volatile Set<ModuleIdentifier> aliases = new HashSet<ModuleIdentifier>();
 
     /**
      * The linkage state.
