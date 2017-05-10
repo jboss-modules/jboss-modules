@@ -25,7 +25,6 @@ package org.jboss.modules;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 /**
@@ -34,12 +33,12 @@ import java.util.jar.JarFile;
  */
 final class JarEntryResource implements Resource {
     private final JarFile jarFile;
-    private final JarEntry entry;
+    private final String entryName;
     private final URL resourceURL;
 
-    JarEntryResource(final JarFile jarFile, final JarEntry entry, final URL resourceURL) {
+    JarEntryResource(final JarFile jarFile, final String name, final URL resourceURL) {
         this.jarFile = jarFile;
-        this.entry = entry;
+        this.entryName = name;
         this.resourceURL = resourceURL;
     }
 
@@ -52,11 +51,11 @@ final class JarEntryResource implements Resource {
     }
 
     public InputStream openStream() throws IOException {
-        return jarFile.getInputStream(entry);
+        return jarFile.getInputStream(jarFile.getEntry(entryName));
     }
 
     public long getSize() {
-        final long size = entry.getSize();
+        final long size = jarFile.getEntry(entryName).getSize();
         return size == -1 ? 0 : size;
     }
 }
