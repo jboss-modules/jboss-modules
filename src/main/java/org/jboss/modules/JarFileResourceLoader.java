@@ -35,12 +35,14 @@ import java.net.URL;
 import java.net.URLStreamHandler;
 import java.security.CodeSigner;
 import java.security.CodeSource;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.TreeSet;
@@ -64,6 +66,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
     private final URL rootUrl;
     private final String relativePath;
     private final File fileOfJar;
+    private final List<String> directory;
 
     // protected by {@code this}
     private final Map<CodeSigners, CodeSource> codeSources = new HashMap<>();
@@ -92,6 +95,15 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException("Invalid root file specified", e);
         }
+        final Enumeration<JarEntry> entries = jarFile.entries();
+        List<String> directory = new ArrayList<>();
+        while (entries.hasMoreElements()) {
+            final JarEntry jarEntry = entries.nextElement();
+            if (! jarEntry.isDirectory()) {
+                directory.add(jarEntry.getName());
+            }
+        }
+        this.directory = directory;
     }
 
     private static URI getJarURI(final URI original, final String nestedPath) throws URISyntaxException {
@@ -237,7 +249,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
             } catch (URISyntaxException x) {
                 throw new IllegalStateException(x);
             }
-            return new JarEntryResource(jarFile, entry, relativePath, new URL(null, getJarURI(uri, entry.getName()).toString(), (URLStreamHandler) null));
+            return new JarEntryResource(jarFile, entry.getName(), relativePath, new URL(null, getJarURI(uri, entry.getName()).toString(), (URLStreamHandler) null));
         } catch (MalformedURLException e) {
             // must be invalid...?  (todo: check this out)
             return null;
@@ -248,26 +260,22 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
     }
 
     public Iterator<Resource> iterateResources(String startPath, final boolean recursive) {
-        final JarFile jarFile = this.jarFile;
         if (relativePath != null) startPath = startPath.equals("") ? relativePath : relativePath + "/" + startPath;
         final String startName = PathUtils.canonicalize(PathUtils.relativize(startPath));
-        final Enumeration<JarEntry> entries = jarFile.entries();
+        final Iterator<String> iterator = directory.iterator();
         return new Iterator<Resource>() {
             private Resource next;
 
             public boolean hasNext() {
                 while (next == null) {
-                    if (! entries.hasMoreElements()) {
+                    if (! iterator.hasNext()) {
                         return false;
                     }
-                    final JarEntry entry = entries.nextElement();
-                    final String name = entry.getName();
+                    final String name = iterator.next();
                     if ((recursive ? PathUtils.isChild(startName, name) : PathUtils.isDirectChild(startName, name))) {
-                        if (!entry.isDirectory()) {
-                            try {
-                                next = new JarEntryResource(jarFile, entry, relativePath, getJarURI(new File(jarFile.getName()).toURI(), entry.getName()).toURL());
-                            } catch (Exception ignored) {
-                            }
+                        try {
+                            next = new JarEntryResource(jarFile, name, relativePath, getJarURI(new File(jarFile.getName()).toURI(), name).toURL());
+                        } catch (Exception ignored) {
                         }
                     }
                 }
