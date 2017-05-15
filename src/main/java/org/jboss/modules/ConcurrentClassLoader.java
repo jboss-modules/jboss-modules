@@ -47,7 +47,6 @@ public abstract class ConcurrentClassLoader extends ClassLoader {
 
     private static final boolean LOCKLESS;
     private static final boolean SAFE_JDK;
-    private static final boolean JDK7_PLUS;
 
     private static final ClassLoader definingLoader = ConcurrentClassLoader.class.getClassLoader();
 
@@ -83,7 +82,6 @@ public abstract class ConcurrentClassLoader extends ClassLoader {
         LOCKLESS = Boolean.parseBoolean(AccessController.doPrivileged(new PropertyReadAction("jboss.modules.lockless", Boolean.toString(! jdk7plus && hasUnsafe && ! isJRockit))));
         // If the JDK has safe CL, set this flag
         SAFE_JDK = Boolean.parseBoolean(AccessController.doPrivileged(new PropertyReadAction("jboss.modules.safe-jdk", Boolean.toString(jdk7plus || isJRockit))));
-        JDK7_PLUS = jdk7plus;
     }
 
     /**
@@ -99,11 +97,10 @@ public abstract class ConcurrentClassLoader extends ClassLoader {
      */
     protected ConcurrentClassLoader(final ConcurrentClassLoader parent) {
         super(parent == null ? ConcurrentClassLoader.class.getClassLoader() : parent);
-        if (JDK7_PLUS) {
-            if (getClassLoadingLock("$TEST$") == this) {
-                throw new Error("Cannot instantiate non-parallel subclass");
-            }
+        if (getClassLoadingLock("$TEST$") == this) {
+            throw new Error("Cannot instantiate non-parallel subclass");
         }
+
     }
 
     /**
@@ -111,10 +108,8 @@ public abstract class ConcurrentClassLoader extends ClassLoader {
      */
     protected ConcurrentClassLoader() {
         super(ConcurrentClassLoader.class.getClassLoader());
-        if (JDK7_PLUS) {
-            if (getClassLoadingLock("$TEST$") == this) {
-                throw new Error("Cannot instantiate non-parallel subclass");
-            }
+        if (getClassLoadingLock("$TEST$") == this) {
+            throw new Error("Cannot instantiate non-parallel subclass");
         }
     }
 
@@ -400,46 +395,6 @@ public abstract class ConcurrentClassLoader extends ClassLoader {
      * @throws ClassNotFoundException if {@link #findClass(String, boolean, boolean)} throws this exception
      */
     private Class<?> performLoadClassChecked(final String className, final boolean exportsOnly, final boolean resolve) throws ClassNotFoundException {
-        if (SAFE_JDK) {
-            return performLoadClassUnchecked(className, exportsOnly, resolve);
-        } else if (Thread.holdsLock(this)) {
-            if (LOCKLESS) {
-                final Unsafe unsafe = UnsafeHolder.UNSAFE;
-                unsafe.monitorExit(this);
-                try {
-                    return performLoadClassChecked(className, exportsOnly, resolve);
-                } finally {
-                    unsafe.monitorEnter(this);
-                }
-            }
-            if (Thread.currentThread() != LoaderThreadHolder.LOADER_THREAD) {
-                // Only the classloader thread may take this lock; use a condition to relinquish it
-                final LoadRequest req = new LoadRequest(className, resolve, exportsOnly, this, AccessController.getContext());
-                final Queue<LoadRequest> queue = LoaderThreadHolder.REQUEST_QUEUE;
-                synchronized (queue) {
-                    queue.add(req);
-                    queue.notify();
-                }
-                boolean intr = false;
-                try {
-                    while (!req.done) try {
-                        wait();
-                    } catch (InterruptedException e) {
-                        intr = true;
-                    }
-                } finally {
-                    if (intr) Thread.currentThread().interrupt();
-                }
-
-                final Class<?> result = req.result;
-                if (result == null) {
-                    final String message = req.message;
-                    throw new ClassNotFoundException(message == null ? className : message);
-                }
-                return result;
-            }
-        }
-        // no deadlock risk!  Either the lock isn't held, or we're inside the class loader thread.
         return performLoadClassUnchecked(className, exportsOnly, resolve);
     }
 
