@@ -1,0 +1,753 @@
+= JBoss Modules version 1
+
+:toc:
+
+== Introduction
+
+JBoss Modules is a standalone implementation of a _modular_
+(non-hierarchical) class loading and execution environment for Java. In
+other words, rather than a single class loader which loads all JARs into
+a flat class path, each library becomes a _module_ which only links
+against the exact modules it depends on, and nothing more. It implements
+a thread-safe, fast, and highly concurrent delegating class loader
+model, coupled to an extensible module resolution system, which combine
+to form a unique, simple and powerful system for application execution
+and distribution.
+
+JBoss Modules is designed to work with any existing library or
+application without changes, and its simple naming and resolution
+strategy is what makes that possible. Unlike OSGi, JBoss Modules does
+not implement a container; rather, it is a thin bootstrap wrapper for
+executing an application in a modular environment. The moment your
+application takes control, the modular environment is ready to load and
+link modules as needed. Furthermore, modules are never loaded (not even
+for resolution purposes) until required by a dependency, meaning that
+the performance of a modular application depends only on the number of
+modules actually used (and when they are used), rather than the total
+number of modules in the system. And, they may be unloaded by the user
+at any time.
+
+[[defining-a-module]]
+== Defining a module
+
+Since module definition is essentially pluggable, a module can be
+defined in many different ways.  However, JBoss Modules ships with two
+basic implemented strategies which are most commonly utilized.
+
+The first strategy is the link:#819701[static filesystem repository]
+approach.  Modules are organized in a directory hierarchy on the
+filesystem which is derived from the name and version of the module.
+ The content of the module’s specific directory is comprised of a
+simple link:#module-descriptors[module descriptor] and all of the content itself
+(JARs or loose files).
+
+The second strategy is designed for direct JAR execution.  It uses JAR
+link:#819684[MANIFEST.MF information] to define simple dependencies and
+other module information, and is designed for executing JARs from the
+command line as well as situations where a JAR may be deployed in a
+container such as the JBoss Application Server.
+
+[[module-descriptors]]
+=== Module descriptors
+
+A _module descriptor_ is an XML file which describes the structure,
+content, dependencies, filtering, and other attributes of a module. This
+format is highly expressive and is tailored for use by the
+filesystem-backed module loader to allow the module description to
+reside alongside its content, rather than inside it. In particular, its
+location on the filesystem is calculated by converting the dot-separated
+segments of the module name to path elements, followed by a path element
+which consists of the version slot for that module. This path is then
+appended to each module path root in turn until a file named
+`module.xml` is found within it.
+
+Below is an example of a module descriptor used by the JBoss Application
+Server:
+
+Example module descriptor
+
+....
+<?xml version="1.0" encoding="UTF-8"?>
+
+<module xmlns="urn:jboss:module:1.6" name="org.jboss.msc" version="1.0.1.GA">
+
+    <main-class name="org.jboss.msc.Version"/>
+
+    <properties>
+        <property name="my.property" value="foo"/>
+    </properties>
+
+    <resources>
+        <resource-root path="jboss-msc-1.0.1.GA.jar"/>
+    </resources>
+
+    <dependencies>
+        <module name="javax.api"/>
+        <module name="org.jboss.logging"/>
+        <module name="org.jboss.modules"/>
+
+        <!-- Optional deps -->
+        <module name="javax.inject.api" optional="true"/>
+        <module name="org.jboss.threads" optional="true"/>
+        <module name="org.jboss.vfs" optional="true"/>
+    </dependencies>
+</module>
+....
+
+==== The root module element
+
+The root element of the module descriptor determines what _type_ of
+module is being specified. There are two types: a regular *module* and a
+**module alias**.
+
+Regular module descriptors have a root element named `module` from the
+`urn:jboss:module:xxx` namespace. The `module` element supports the
+following attributes:
+
+[cols="1,1,1,1,4",options="header"]
+|===
+
+|Attribute
+|Type
+|Required?
+|Version(s)
+|Description
+
+|name
+|string
+|Yes
+|1.0+
+|The name of the module. This name must match the name of the module being loaded.
+
+|slot
+|string
+|No
+|1.0-1.5
+|The modules slot. If not specified, defaults to ``main''. Deprecated in 1.5, removed in 1.6.
+
+|version
+|string
+|No
+|1.6+
+|The optional version designation of the module.  Appears in stack traces on Java 9+.
+
+|===
+
+The `module` element may contain any of the following elements:
+
+[cols="1,1,1,4",options="header"]
+|===
+|Element
+|Required?
+|Version(s)
+|Description
+
+|main-class
+|No
+|1.0+
+|The main class of this module, if any.
+
+|properties
+|No
+|1.1+
+|A list of properties to make available on this module.
+
+|resources
+|No
+|1.0+
+|The resources that make up this module.
+
+|dependencies
+|No
+|1.0+
+|The dependencies for this module.
+
+|exports
+|No
+|1.0+
+|The path filter expressions to apply to the export filter of the local resources of this module.
+
+|===
+
+[[the-main-class-element]]
+==== The main-class element
+
+A module which is defined with a `main-class` element is said to be
+__executable__. In other words, the module name can be listed on the
+command line, and the standard static `main(String[])` method in the
+named module’s `main-class` will be loaded and executed.
+
+The `main-class` element supports the following attributes:
+
+[cols="1,1,1,1,4",options="header"]
+|===
+
+|Attribute
+|Type
+|Required?
+|Version(s)
+|Description
+
+|name
+|string
+|Yes
+|1.0+
+|The name of the main class.
+
+|===
+
+This element may not contain any nested elements.
+
+[NOTE]
+
+The main class need not come from the module’s actual resources, nor
+does it need to be exported. Any public class which is visible to the
+module - which includes all imported dependencies as well as all
+resource roots - is a valid main class, as long as it has a method with
+the signature `public static void main(String[] args)`.
+
+[[the-resources-element]]
+==== The resources element
+
+In order for a module to actually have content, you must define the
+`resources` element with at least one resource root.
+
+A _resource root_ is a specification of a location where the class
+loader for a module will look for classes and resources. Each module has
+zero or more resource roots, though most regular modules will contain
+exactly one, which refers to the JAR file with the module’s content.
+
+It is possible to define resource roots for a module which correspond to
+JAR files as well as file system directories, just like class paths.
+File system directory resource roots have the additional property of
+supporting the specification of native libraries, which cannot be loaded
+from JAR files.
+
+The `resources` element does not support any attributes; it contains
+zero or more `resource-root` elements. The `resource-root` element
+supports the following attributes:
+
+[cols="1,1,1,1,4",options="header"]
+|===
+
+|Attribute
+|Type
+|Required?
+|Version(s)
+|Description
+
+|path
+|string
+|Yes
+|1.0+
+|The path of this resource root, relative to the location of the
+module.xml file.
+
+|name
+|string
+|No
+|1.0+
+|The name of the resource root. If not specified, defaults to the
+resource root’s path.
+
+|===
+
+In addition, the `resource-root` element may contain a nested element:
+
+[cols="1,1,1,4",options="header"]
+|===
+|Element
+|Required?
+|Version(s)
+|Description
+
+|filter
+|No
+|1.0+
+|A path filter to apply to this resource root. If not specified, all
+paths are accepted.
+
+|===
+
+See the section on filter definition for more information about defining
+filters.
+
+[[the-properties-element]]
+==== The properties element
+
+The modules API exposes a method which can read property (string
+key-value pair) values from a module. To specify values for these
+properties you use the `properties` element which can contain zero or
+more `property` elements, each supporting the following attributes:
+
+[cols="1,1,1,1,4",options="header"]
+|===
+
+|Attribute
+|Type
+|Required?
+|Version(s)
+|Description
+
+|name
+|string
+|Yes
+|1.1+
+|The name of the property.
+
+|value
+|string
+|No
+|1.1+
+|The property value; if not given, the property value defaults to
+``true''.
+
+|===
+
+[[the-dependencies-element]]
+==== The dependencies element
+
+A module may express one or more dependencies on other module(s) via the
+`dependencies` element.
+
+The `dependencies` element does not support any attributes. It
+contains zero or more nested elements as follows:
+
+[cols="1,1,1,4",options="header"]
+|===
+|Element
+|Required?
+|Version(s)
+|Description
+
+|module
+|No
+|1.0+
+|A module name upon which a dependency should be added.
+
+|system
+|No
+|1.0+
+|A specification for expressing a dependency upon the system or
+application class path.
+
+|===
+
+[[module-dependencies]]
+==== Module dependencies
+
+The `module` element supports the following attributes:
+
+[cols="1,1,1,1,4",options="header"]
+|===
+
+|Attribute
+|Type
+|Required?
+|Version(s)
+|Description
+
+|name
+|string
+|Yes
+|1.0+
+|The name of the module upon which this module depends.
+
+|slot
+|string
+|No
+|1.0-1.5
+|The version slot of the module upon which this module depends; defaults
+to ``main''.  Deprecated in 1.5, removed in 1.6.
+
+|export
+|boolean
+|No
+|1.0+
+|Specify whether this dependency is re-exported by default; if not
+specified, defaults to ``false''.
+
+|services
+|enum
+|No
+|1.0+
+|Specify whether this dependency’s services
+footnoteref:[spi,For an introduction to Java language’s service provider interface mechanism, refer to: http://download.oracle.com/javase/tutorial/sound/SPI-intro.html ]
+are imported and/or exported. Possible values are ``none'', ``import'', or ``export'';
+defaults to ``none''.
+
+|optional
+|boolean
+|No
+|1.0+
+|Specify whether this dependency is optional; defaults to ``false''.
+
+|===
+
+In addition, the `module` element supports the following nested
+elements:
+
+[cols="1,1,1,4",options="header"]
+|===
+|Element
+|Required?
+|Version(s)
+|Description
+
+|imports
+|No
+|1.0+
+|A path filter used to restrict what paths are imported from the dependency.
+
+|exports
+|No
+|1.0+
+|A path filter used to restrict what imported paths are re-exported from
+this module.
+
+|===
+
+Example of adding an explicit exclude for a dependency
+
+....
+<dependencies>
+    <module name="org.jboss.example">
+        <imports>
+            <exclude-set>
+                <path name="org/jboss/example/tests"/>
+            </exclude-set>
+        </imports>
+    </module>
+</dependencies>
+....
+
+See the section on filter definition for more information about filters.
+
+[[system-dependencies]]
+==== System dependencies
+
+The `system` element expresses a dependency which is satisfied by
+accessing paths and packages from the class loader which loaded JBoss
+Modules (this is usually the system’s application class loader). The
+element supports the following attributes:
+
+[cols="1,1,1,1,4",options="header"]
+|===
+
+|Attribute
+|Type
+|Required?
+|Version(s)
+|Description
+
+|export
+|boolean
+|1.0+
+|No
+|Specify whether this dependency is re-exported by default; if not
+specified, defaults to `false`.
+|===
+
+It also contains nested elements as follows:
+
+[cols="1,1,1,4",options="header"]
+|===
+|Element
+|Required?
+|Version(s)
+|Description
+
+|paths
+|Yes
+|1.0+
+|Specify the list of paths (or packages, with ``.'' transformed to ``/'')
+which are exposed by this dependency.
+
+|exports
+|No
+|1.0+
+|A filter which restricts the list of packages/paths which are
+re-exported by this module. If not specified, all paths are selected
+(does not apply if the export attribute on the system element is false
+or unspecified).
+|===
+
+[[the-root-module-alias-element]]
+==== The root module-alias element
+
+A module alias descriptor defines a module which is simply another name
+for a second module. The root element is called `module-alias` and
+supports the following attributes:
+
+[cols="1,1,1,1,4",options="header"]
+|===
+
+|Attribute
+|Type
+|Required?
+|Version(s)
+|Description
+
+|name
+|string
+|Yes
+|1.0+
+|The name of the module. This name must match the name of the module
+being loaded.
+
+|slot
+|string
+|No
+|1.0-1.5
+|The version slot. If not specified, defaults to ``main''.  Deprecated in 1.5; removed in 1.6.
+
+|target-name
+|string
+|Yes
+|1.0+
+|The name of the module to which this alias refers.
+
+|target-slot
+|string
+|No
+|1.0-1.5
+|The version slot of the module to which this alias refers. If not
+specified, defaults to ``main''.  Deprecated in 1.5; removed in 1.6.
+
+|===
+
+=== Manifest Module Information
+
+[[introduction-1]]
+==== Introduction
+
+The previous chapter discussed how module descriptors are structured and
+the options available when defining modules. This chapter will talk
+about how applications packaged as jars can declare that they depend on
+one or more modules.
+
+For example, lets say you have an application packaged in a jar file and
+want to run this code using JBoss Modules. In such cases we need to have
+a way to of telling JBoss Modules what modules our applications depends
+on so that the classes and resources in those modules are available to
+the application. The way this is done is by using a manifest header.
+
+[[dependencies-manifest-header]]
+==== Dependencies Manifest header
+
+The Dependencies manifest header is used to specify dependencies that a
+jar file has. The value is a comma-separated list, like this example:
+
+....
+Dependencies: org.some.module, org.another.module
+....
+
+You can also specify a version slot by appending the version slot after
+the module name like this:
+
+....
+Dependencies: org.some.module:main, org.another.module:1.0
+....
+
+Each entry follows this format:
+
+....
+<module-name> [optional] [export]
+....
+
+The `optional` flag indicates that this dependency is optional (if it
+is not present, no error is thrown). The `export` flag indicates that
+this dependency’s packages should be re-exported to consumers of the
+current module.
+
+Note that some implementations (such as JBoss AS) support more flags or
+arguments than this on each dependency. As such, arguments which are not
+recognized are automatically ignored.
+
+[[adding-the-dependencies-header-using-maven]]
+==== Adding the Dependencies header using Maven
+
+Below is an example of how the _Depencencies_ header can be added to a
+projects Maven pom.xml:
+
+....
+<plugins>
+   <plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-jar-plugin</artifactId>
+      <version>2.3.1</version>
+      <configuration>
+         <archive>
+            <manifestEntries>
+               <Dependencies>org.some.module, org.another.module</Dependencies>
+            </manifestEntries>
+         </archive>
+     </configuration>
+   </plugin>
+</plugins>
+....
+
+[[module-names]]
+=== Module names
+
+A module name is a dot-separated string which is used to uniquely identify a module within a module
+loader.  Names are typically organized along the same lines as package
+names, however there is no specific relationship between a module name
+and the packages it contains.  These are all examples of typical module
+names:
+
+* `org.apache.commons.logging`
+* `org.jboss.remoting`
+* `cglib`
+* `javax.ejb.api`
+* `ch.qos.cal10n`
+
+Most module loaders support loading a special module called `system`.
+ This module refers to the class loader which loaded the
+`jboss-modules.jar` itself.  Due to the fact that this class loader may
+include just about anything, rather than using this module directly, one
+should make use
+of link:#imports-and-exports[import
+and export filtering] to present a reduced version of this module.
+
+[[version-slots]]
+==== Version slots
+
+Version slot identifiers were used when you wish to have more than one
+instance of a module in a module loader under the same name.  This may
+occur when introducing a new major version of a module which is not
+API-compatible with the old version but is used by newer applications.
+ A version slot identifier is an arbitrary string; thus one can use just
+about any system they wish for organization.  If not otherwise
+specified, the version slot identifier defaulted to `main`.
+
+When identifying a module in a string, the version slot identifier could
+be appended to the module name, separated by a colon `:`.  For
+example, the following two module identifier strings refer to the same
+module:
+
+* `org.jboss.remoting:main`
+* `org.jboss.remoting`
+
+The following three module identifier strings refer to different
+modules:
+
+* `org.jboss.remoting:2`
+* `org.jboss.remoting:3`
+* `org.jboss.remoting`
+
+Within the Modules API, a module identifier with a slot was represented by the
+`org.jboss.modules.ModuleIdentifier` class, which has the ability to
+parse identifier strings as well as assemble a name or a name plus a
+version slot identifier into a module identifier.
+
+The concept of slot names has been deprecated since version 1.5, and removed in 1.6
+and later, in order to more closely align with the future Java Platform's module
+system, which has only names.  Legacy module identifiers containing a slot component are transformed
+into plain names in the following way:
+
+* If the slot is `main` or is not given, the effective module name is equal to the name portion of the identifier.
+* If the slot is not `main`, the effective module name is equal ot the name portion of the identifier,
+followed by a colon `:` character, followed by the slot name.
+* If the name portion of the identifier contains a colon `:` character, the character is escaped with a backslash `\`
+so that in the final name, it is given as `\:`.
+
+[[native-libraries]]
+=== Native Libraries
+
+When using the default file system-backed module loader, each module
+defined in the module repository has an additional resource root
+automatically added to it solely for the purposes of supporting native
+libraries in a module. This resource root recognizes a special directory
+in each module root named `lib`.
+
+The module class loader will search for native libraries by encoding the
+current detected platform into a directory name, appending it to the
+path of the `lib` directory, and testing the resultant directory for a
+matching native library file. For example, imagine a module named
+``org.foobar.gizmo'' which contains a native library which runs on Linux
+for Intel 32- and 64-bit processors. It would have a module directory
+structure similar to this:
+
+....
+org/
+└─ foobar/
+   └─ gizmo/
+      └─ main/
+         ├─ module.xml
+         ├─ gizmo-1.0.jar
+         └─ lib/
+            ├─ linux-i686/
+            │  └─ libgizmo.so
+            └─ linux-x86_64/
+               └─ libgizmo.so
+....
+
+In this case, the appropriate `libgizmo.so` will automatically be
+located. On platforms without a corresponding library, no library will
+be loaded.
+
+The platform string is in the form `<osname>-<cpuname>`. The following
+values may be used for the OS name:
+
+* `linux`
+* `macosx`
+* `win`
+* `os2`
+* `solaris`
+* `mpeix`
+* `hpux`
+* `aix`
+* `os390`
+* `freebsd`
+* `openbsd`
+* `netbsd`
+* `irix`
+* `digitalunix`
+* `osf1`
+* `openvms`
+* `ios`
+* `unknown`
+
+The following values are recognized for the CPU name:
+
+* `sparcv9`
+* `sparc`
+* `x86_64`
+* `i686`
+* `x32`
+* `ppc64`
+* `ppc`
+* `armv4`
+* `armv4t`
+* `armv5`
+* `armv5t`
+* `armv5t-iwmmx`
+* `armv5t-iwmmx2`
+* `armv6`
+* `armv7a`
+* `aarch64`
+* `parisc64`
+* `parisc`
+* `alpha`
+* `mips`
+* `unknown`
+
+[[module-execution]]
+== Module execution
+
+There are normally two ways in which a module may be directly executed.
+ The module may be launched link:#executable-modules[by name from the static
+repository] like this:
+
+....
+   java -jar jboss-modules.jar com.your.module
+....
+
+Or, the module may be executed as a link:#819697[JAR file given on the
+command line] like this:
+
+....
+   java -jar jboss-module.jar -jar your-app.jar
+....
+
