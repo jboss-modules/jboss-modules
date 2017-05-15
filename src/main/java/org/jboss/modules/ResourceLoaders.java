@@ -19,9 +19,11 @@
 package org.jboss.modules;
 
 import java.io.File;
-import java.nio.file.Path;
+import java.io.IOException;
+import java.nio.file.*;
 import java.security.AccessController;
 import java.util.jar.JarFile;
+
 import org.jboss.modules.filter.PathFilter;
 
 /**
@@ -75,9 +77,20 @@ public final class ResourceLoaders {
      * @param jarFile the backing JAR file
      * @return the resource loader
      */
-    public static ResourceLoader createJarResourceLoader(final String name, final JarFile jarFile) {
-        return new JarFileResourceLoader(name, jarFile);
+    public static ResourceLoader createJarResourceLoader(final String name, final Path jarFile) throws IOException {
+        return new JarResourceLoader(name, jarFile, AccessController.getContext());
     }
+
+    @Deprecated
+    public static ResourceLoader createJarResourceLoader(final String name, final JarFile jarFile) {
+        try {
+            return createJarResourceLoader(name, java.nio.file.Paths.get(jarFile.getName()));
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new JarFileResourceLoader(name, jarFile);
+        }
+    }
+
 
     /**
      * Create a JAR-backed resource loader.  JAR resource loaders do not have native library support.
@@ -88,6 +101,7 @@ public final class ResourceLoaders {
      * @param jarFile the backing JAR file
      * @return the resource loader
      */
+    @Deprecated
     public static IterableResourceLoader createJarResourceLoader(final String name, final JarFile jarFile, final String relativePath) {
         return new JarFileResourceLoader(name, jarFile, relativePath);
     }
