@@ -23,6 +23,7 @@ import java.lang.reflect.UndeclaredThrowableException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.AccessControlContext;
@@ -97,11 +98,13 @@ class PathResourceLoader extends AbstractResourceLoader implements IterableResou
 
     @Override
     public String getLibrary(String name) {
-        final String mappedName = System.mapLibraryName(name);
-        for (String path : NativeLibraryResourceLoader.Identification.NATIVE_SEARCH_PATHS) {
-            Path testFile = root.resolve(path).resolve(mappedName);
-            if (Files.exists(testFile)) {
-                return testFile.toAbsolutePath().toString();
+        if (root.getFileSystem() == FileSystems.getDefault()) {
+            final String mappedName = System.mapLibraryName(name);
+            for (String path : NativeLibraryResourceLoader.Identification.NATIVE_SEARCH_PATHS) {
+                Path testFile = root.resolve(path).resolve(mappedName);
+                if (Files.exists(testFile)) {
+                    return testFile.toAbsolutePath().toString();
+                }
             }
         }
         return null;
