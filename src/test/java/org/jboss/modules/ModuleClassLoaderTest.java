@@ -31,11 +31,8 @@ import org.jboss.modules.util.TestModuleLoader;
 import org.jboss.modules.util.TestResourceLoader;
 import org.junit.Before;
 import org.junit.Test;
-import sun.misc.JavaSecurityProtectionDomainAccess;
-import sun.misc.SharedSecrets;
 
 import java.net.URL;
-import java.security.ProtectionDomain;
 import java.util.Enumeration;
 import java.util.List;
 
@@ -63,8 +60,6 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
     private static final ModuleIdentifier MODULE_WITH_FILTERED_EXPORT_ID = ModuleIdentifier.fromString("test-with-filtered-export");
     private static final ModuleIdentifier MODULE_WITH_FILTERED_IMPORT_ID = ModuleIdentifier.fromString("test-with-filtered-import");
     private static final ModuleIdentifier MODULE_WITH_FILTERED_DOUBLE_EXPORT_ID = ModuleIdentifier.fromString("test-with-filtered-double-export");
-
-    private static final JavaSecurityProtectionDomainAccess PD_ACCESS = SharedSecrets.getJavaSecurityProtectionDomainAccess();
 
     private TestModuleLoader moduleLoader;
 
@@ -346,15 +341,5 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
         System.out.println(testClass.getClassLoader());
         final Package pkg = testClass.getPackage();
         assertEquals("JBoss Modules Test Classes", pkg.getSpecificationTitle());
-    }
-
-    @Test
-    public void testDynamicProtectionDomain() throws Exception {
-        final Module testModule = moduleLoader.loadModule(MODULE_WITH_CONTENT_ID);
-        final ModuleClassLoader classLoader = testModule.getClassLoader();
-
-        final Class<?> testClass = classLoader.loadClass("org.jboss.modules.test.TestClass");
-        final ProtectionDomain pd = testClass.getProtectionDomain();
-        assertTrue("Protection Domain shouldn't be static", !PD_ACCESS.getStaticPermissionsField(pd));
     }
 }
