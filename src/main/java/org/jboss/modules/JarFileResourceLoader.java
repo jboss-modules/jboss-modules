@@ -101,7 +101,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
             throw new IllegalArgumentException("Invalid root file specified", e);
         }
         final Enumeration<JarEntry> entries = jarFile.entries();
-        List<String> directory = new ArrayList<>();
+        List<String> directory = new ArrayList<String>();
         while (entries.hasMoreElements()) {
             final JarEntry jarEntry = entries.nextElement();
             if (! jarEntry.isDirectory()) {
