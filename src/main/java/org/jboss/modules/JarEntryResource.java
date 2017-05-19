@@ -43,7 +43,7 @@ final class JarEntryResource implements Resource {
     }
 
     public String getName() {
-        return entry.getName();
+        return entryName;
     }
 
     public URL getURL() {
