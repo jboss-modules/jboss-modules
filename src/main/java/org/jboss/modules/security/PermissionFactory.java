@@ -22,6 +22,8 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.security.Permission;
 
+import org.jboss.modules.PropertyExpander;
+
 /**
  * A factory for {@link Permission} objects.
  *
@@ -48,7 +50,7 @@ public interface PermissionFactory {
      * @throws InstantiationException if the object could not be instantiated for some reason
      * @throws NoSuchMethodException if none of the candidate constructors exist on the class
      */
-    static Permission constructFromClass(Class<? extends Permission> permissionClass, String targetName, String permissionActions) throws IllegalAccessException, InvocationTargetException, InstantiationException, NoSuchMethodException {
+    static Permission constructFromClass(Class<? extends Permission> permissionClass, String targetName, String permissionActions) throws IllegalAccessException, InvocationTargetException, InstantiationException, NoSuchMethodException, PropertyExpander.ExpandException {
         final Constructor<? extends Permission> constructor;
         boolean hasTarget = targetName != null && ! targetName.isEmpty();
         boolean hasAction = permissionActions != null && ! permissionActions.isEmpty();
@@ -86,6 +88,7 @@ public interface PermissionFactory {
         } else {
             constructor = permissionClass.getConstructor();
         }
+        targetName = PropertyExpander.expand(targetName);
         if (hasTarget && hasAction) {
             return constructor.newInstance(targetName, permissionActions);
         } else if (hasTarget) {
