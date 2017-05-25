@@ -123,9 +123,6 @@ public final class Module {
                 } catch (Throwable t) {
                     // todo log a warning or something
                 }
-
-                __JAXPRedirected.initAll();
-
                 return null;
             }
         });
@@ -232,7 +229,11 @@ public final class Module {
     ModuleClassLoader getClassLoaderPrivate() {
         return moduleClassLoader;
     }
-
+    
+    public static void enableJAXPRedirect() {
+        __JAXPRedirected.initAll();
+    }
+    
     /**
      * Get an exported resource from a specific root in this module.
      *
