@@ -547,7 +547,7 @@ public final class Main {
                 jarName = versionProps.getProperty("jarName", jarName);
                 versionString = versionProps.getProperty("version", versionString);
             }
-        } catch (IOException ignored) {
+        } catch (Exception ignored) {
         }
         JAR_NAME = jarName;
         VERSION_STRING = versionString;
