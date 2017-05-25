@@ -284,7 +284,12 @@ public class ModuleLoader {
         if (module == null) {
             throw new ModuleNotFoundException(name);
         }
-        module.relinkIfNecessary();
+        try {
+            module.relinkIfNecessary();
+        } catch (ModuleLoadException e) {
+            unloadModuleLocal(module);
+            throw e;
+        }
         return module;
     }
 
