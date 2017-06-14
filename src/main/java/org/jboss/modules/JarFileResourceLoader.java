@@ -69,7 +69,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
     private final URL rootUrl;
     private final String relativePath;
     private final File fileOfJar;
-    private final List<String> directory;
+    private volatile List<String> directory;
 
     // protected by {@code this}
     private final Map<CodeSigners, CodeSource> codeSources = new HashMap<>();
@@ -97,15 +97,6 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException("Invalid root file specified", e);
         }
-        final Enumeration<JarEntry> entries = jarFile.entries();
-        List<String> directory = new ArrayList<>();
-        while (entries.hasMoreElements()) {
-            final JarEntry jarEntry = entries.nextElement();
-            if (! jarEntry.isDirectory()) {
-                directory.add(jarEntry.getName());
-            }
-        }
-        this.directory = directory;
     }
 
     private static URI getJarURI(final URI original, final String nestedPath) throws URISyntaxException {
@@ -264,6 +255,23 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
     public Iterator<Resource> iterateResources(final String startPath, final boolean recursive) {
         final JarFile jarFile = this.jarFile;
         final String startName = PathUtils.canonicalize(PathUtils.relativize(startPath));
+        List<String> directory = this.directory;
+        if (directory == null) {
+            synchronized (jarFile) {
+                directory = this.directory;
+                if (directory == null) {
+                    directory = new ArrayList<>();
+                    final Enumeration<JarEntry> entries = jarFile.entries();
+                    while (entries.hasMoreElements()) {
+                        final JarEntry jarEntry = entries.nextElement();
+                        if (! jarEntry.isDirectory()) {
+                            directory.add(jarEntry.getName());
+                        }
+                    }
+                    this.directory = directory;
+                }
+            }
+        }
         final Iterator<String> iterator = directory.iterator();
         return new Iterator<Resource>() {
             private Resource next;
