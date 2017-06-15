@@ -39,7 +39,7 @@ final class Paths<T, A> {
 
     Paths(final A[] sourceList, final Map<String, List<T>> allPaths) {
         this.sourceList = sourceList;
-        this.allPaths = allPaths;
+        this.allPaths = PathUtils.deduplicateLists(allPaths);
     }
 
     Map<String, List<T>> getAllPaths() {

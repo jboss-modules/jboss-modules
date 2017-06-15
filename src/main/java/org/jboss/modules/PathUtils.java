@@ -28,10 +28,15 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+
 import org.jboss.modules.filter.PathFilter;
 
 /**
@@ -269,5 +274,32 @@ public final class PathUtils {
     public static boolean isSeparator(final char ch) {
         // the second half of this compare will optimize away on / OSes
         return ch == '/' || File.separatorChar != '/' && ch == File.separatorChar;
+    }
+
+    /**
+     * Takes a list of maps an returns an immutable representation of the same map, with all duplicate lists
+     * coalesced into a single object, and with all lists replaced by immutable array lists that has a backing array
+     * that is the correct size for the number of contents.
+     *
+     * This can result in a significant memory saving for some use cases
+     *
+     */
+    static <T> Map<String, List<T>> deduplicateLists(Map<String, List<T>> allPaths) {
+        if (allPaths == null) {
+            return null;
+        } else if (allPaths.size() == 0) {
+            return Collections.emptyMap();
+        } else {
+            Map<String, List<T>> newPaths = new HashMap<>();
+            Map<List<T>, List<T>> dedup = new HashMap<>();
+            for (Map.Entry<String, List<T>> e : allPaths.entrySet()) {
+                List<T> l = dedup.get(e.getValue());
+                if (l == null) {
+                    dedup.put(e.getValue(), l = Collections.unmodifiableList(new ArrayList<>(e.getValue())));
+                }
+                newPaths.put(e.getKey(), l);
+            }
+            return Collections.unmodifiableMap(newPaths);
+        }
     }
 }

@@ -62,7 +62,7 @@ final class Linkage {
         this.dependencySpecs = dependencySpecs;
         this.dependencies = dependencies;
         this.state = state;
-        this.allPaths = allPaths;
+        this.allPaths = PathUtils.deduplicateLists(allPaths);
     }
 
     Map<String, List<LocalLoader>> getPaths() {
