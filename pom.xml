@@ -23,7 +23,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.jboss.modules</groupId>
     <artifactId>jboss-modules</artifactId>
-    <version>1.5.4.Final</version>
+    <version>1.5.5.Final-SNAPSHOT</version>
     <name>JBoss Modules</name>
 
     <parent>
