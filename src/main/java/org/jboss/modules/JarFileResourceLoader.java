@@ -179,6 +179,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
 
     // this MUST only be called after the input stream is fully read (see MODULES-201)
     private CodeSource createCodeSource(final JarEntry entry) {
+        assert holdsLock(this);
         final CodeSigner[] entryCodeSigners = entry.getCodeSigners();
         final CodeSigners codeSigners = entryCodeSigners == null || entryCodeSigners.length == 0 ? EMPTY_CODE_SIGNERS : new CodeSigners(entryCodeSigners);
         CodeSource codeSource = codeSources.get(codeSigners);
