@@ -124,14 +124,14 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
     }
 
     public synchronized ClassSpec getClassSpec(final String fileName) throws IOException {
-        final ClassSpec spec = new ClassSpec();
         final JarEntry entry = getJarEntry(fileName);
         if (entry == null) {
             // no such entry
             return null;
         }
-        final long size = entry.getSize();
         try (final InputStream is = jarFile.getInputStream(entry)) {
+            final ClassSpec spec = new ClassSpec();
+            final long size = entry.getSize();
             if (size == -1) {
                 // size unknown
                 final ByteArrayOutputStream baos = new ByteArrayOutputStream();
