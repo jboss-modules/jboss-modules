@@ -141,19 +141,9 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
                 spec.setCodeSource(codeSource);
                 return spec;
             } else if (size <= (long) Integer.MAX_VALUE) {
-                final int castSize = (int) size;
-                byte[] bytes = new byte[castSize];
-                int a = 0, res;
-                while ((res = is.read(bytes, a, castSize - a)) > 0) {
-                    a += res;
-                }
-                // consume remainder so that cert check doesn't fail in case of wonky JARs
-                while (is.read() != -1) {
-                    //
-                }
-                // done
+                // size known
+                spec.setBytes(getClassBytes(is, (int) size));
                 CodeSource codeSource = createCodeSource(entry);
-                spec.setBytes(bytes);
                 spec.setCodeSource(codeSource);
                 return spec;
             } else {
@@ -172,6 +162,20 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
         }
         baos.close();
         return baos.toByteArray();
+    }
+
+    private byte[] getClassBytes(final InputStream is, final int castSize) throws IOException {
+        assert holdsLock(this);
+        final byte[] bytes = new byte[castSize];
+        int a = 0, res;
+        while ((res = is.read(bytes, a, castSize - a)) > 0) {
+            a += res;
+        }
+        // consume remainder so that cert check doesn't fail in case of wonky JARs
+        while (is.read() != -1) {
+            //
+        }
+        return bytes;
     }
 
     // this MUST only be called after the input stream is fully read (see MODULES-201)
