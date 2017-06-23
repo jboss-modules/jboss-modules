@@ -131,29 +131,28 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
             // no such entry
             return null;
         }
-        try (InputStream is = jarFile.getInputStream(entry)) {
             final ClassSpec spec = new ClassSpec();
             final long size = entry.getSize();
             if (size == -1) {
                 // size unknown
-                spec.setBytes(getClassBytes(is));
+                spec.setBytes(getClassBytes(entry));
                 CodeSource codeSource = createCodeSource(entry);
                 spec.setCodeSource(codeSource);
                 return spec;
             } else if (size <= (long) Integer.MAX_VALUE) {
                 // size known
-                spec.setBytes(getClassBytes(is, (int) size));
+                spec.setBytes(getClassBytes(entry, (int) size));
                 CodeSource codeSource = createCodeSource(entry);
                 spec.setCodeSource(codeSource);
                 return spec;
             } else {
                 throw new IOException("Resource is too large to be a valid class file");
             }
-        }
     }
 
-    private byte[] getClassBytes(final InputStream is) throws IOException {
+    private byte[] getClassBytes(final JarEntry entry) throws IOException {
         assert holdsLock(this);
+        try (InputStream is = jarFile.getInputStream(entry)) {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         final byte[] buf = new byte[16384];
         int res;
@@ -162,10 +161,12 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
         }
         baos.close();
         return baos.toByteArray();
+        }
     }
 
-    private byte[] getClassBytes(final InputStream is, final int castSize) throws IOException {
+    private byte[] getClassBytes(final JarEntry entry, final int castSize) throws IOException {
         assert holdsLock(this);
+        try (InputStream is = jarFile.getInputStream(entry)) {
         final byte[] bytes = new byte[castSize];
         int a = 0, res;
         while ((res = is.read(bytes, a, castSize - a)) > 0) {
@@ -176,6 +177,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
             //
         }
         return bytes;
+        }
     }
 
     // this MUST only be called after the input stream is fully read (see MODULES-201)
