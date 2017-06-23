@@ -136,14 +136,12 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
         if (size == -1) {
             // size unknown
             spec.setBytes(getClassBytes(entry));
-            CodeSource codeSource = createCodeSource(entry);
-            spec.setCodeSource(codeSource);
+            spec.setCodeSource(createCodeSource(entry));
             return spec;
         } else if (size <= (long) Integer.MAX_VALUE) {
             // size known
             spec.setBytes(getClassBytes(entry, (int) size));
-            CodeSource codeSource = createCodeSource(entry);
-            spec.setCodeSource(codeSource);
+            spec.setCodeSource(createCodeSource(entry));
             return spec;
         } else {
             throw new IOException("Resource is too large to be a valid class file");
