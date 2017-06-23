@@ -18,6 +18,8 @@
 
 package org.jboss.modules;
 
+import static java.lang.Thread.holdsLock;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
@@ -134,16 +136,8 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
             final long size = entry.getSize();
             if (size == -1) {
                 // size unknown
-                final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                final byte[] buf = new byte[16384];
-                int res;
-                while ((res = is.read(buf)) > 0) {
-                    baos.write(buf, 0, res);
-                }
-                // done
+                spec.setBytes(getClassBytes(is));
                 CodeSource codeSource = createCodeSource(entry);
-                baos.close();
-                spec.setBytes(baos.toByteArray());
                 spec.setCodeSource(codeSource);
                 return spec;
             } else if (size <= (long) Integer.MAX_VALUE) {
@@ -166,6 +160,18 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
                 throw new IOException("Resource is too large to be a valid class file");
             }
         }
+    }
+
+    private byte[] getClassBytes(final InputStream is) throws IOException {
+        assert holdsLock(this);
+        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        final byte[] buf = new byte[16384];
+        int res;
+        while ((res = is.read(buf)) > 0) {
+            baos.write(buf, 0, res);
+        }
+        baos.close();
+        return baos.toByteArray();
     }
 
     // this MUST only be called after the input stream is fully read (see MODULES-201)
