@@ -129,7 +129,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
             // no such entry
             return null;
         }
-        try (final InputStream is = jarFile.getInputStream(entry)) {
+        try (InputStream is = jarFile.getInputStream(entry)) {
             final ClassSpec spec = new ClassSpec();
             final long size = entry.getSize();
             if (size == -1) {
@@ -143,7 +143,6 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
                 // done
                 CodeSource codeSource = createCodeSource(entry);
                 baos.close();
-                is.close();
                 spec.setBytes(baos.toByteArray());
                 spec.setCodeSource(codeSource);
                 return spec;
@@ -160,7 +159,6 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
                 }
                 // done
                 CodeSource codeSource = createCodeSource(entry);
-                is.close();
                 spec.setBytes(bytes);
                 spec.setCodeSource(codeSource);
                 return spec;
