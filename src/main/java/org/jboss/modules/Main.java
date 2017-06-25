@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Properties;
+import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
 import java.util.logging.LogManager;
 
@@ -496,13 +497,18 @@ public final class Main {
         }
 
         final ServiceLoader<Provider> providerServiceLoader = ServiceLoader.load(Provider.class, bootClassLoader);
-        for (Provider provider : providerServiceLoader) {
+        Iterator<Provider> iterator = providerServiceLoader.iterator();
+        for (;;) try {
+            if (! (iterator.hasNext())) break;
+            final Provider provider = iterator.next();
             final Class<? extends Provider> providerClass = provider.getClass();
             // each provider needs permission to install itself
             doPrivileged((PrivilegedAction<Void>) () -> {
                 Security.addProvider(provider);
                 return null;
             }, new AccessControlContext(new ProtectionDomain[] { providerClass.getProtectionDomain() }));
+        } catch (ServiceConfigurationError | RuntimeException e) {
+            Module.getModuleLogger().trace(e, "Failed to initialize a security provider");
         }
 
         ModuleLoader.installMBeanServer();
