@@ -318,9 +318,9 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
         // First check for an external index
         final JarFile jarFile = this.jarFile;
         final String jarFileName = jarFile.getName();
-        final long jarModified = fileOfJar.lastModified();
         final File indexFile = new File(jarFileName + ".index");
         if (ResourceLoaders.USE_INDEXES) {
+            final long jarModified = fileOfJar.lastModified();
             if (indexFile.exists()) {
                 final long indexModified = indexFile.lastModified();
                 if (indexModified != 0L && jarModified != 0L && indexModified >= jarModified) try {
