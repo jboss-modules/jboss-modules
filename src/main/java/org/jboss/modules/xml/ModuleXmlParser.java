@@ -144,7 +144,6 @@ public final class ModuleXmlParser {
     private static final String D_IMPORT = "import";
     private static final String D_EXPORT = "export";
 
-    private static final List<String> LIST_A_NAME = Collections.singletonList(A_NAME);
     private static final List<String> LIST_A_PATH = Collections.singletonList(A_PATH);
 
     private static final List<String> LIST_A_NAME_A_SLOT = Arrays.asList(A_NAME, A_SLOT);
@@ -338,6 +337,14 @@ public final class ModuleXmlParser {
     }
 
     private static XmlPullParserException missingAttributes(final XmlPullParser reader, final Set<String> required) {
+        final StringBuilder b = new StringBuilder("Missing one or more required attributes:");
+        for (String attribute : required) {
+            b.append(' ').append(attribute);
+        }
+        return new XmlPullParserException(b.toString(), reader, null);
+    }
+
+    private static XmlPullParserException missingAttributes(final XmlPullParser reader, final String... required) {
         final StringBuilder b = new StringBuilder("Missing one or more required attributes:");
         for (String attribute : required) {
             b.append(' ').append(attribute);
@@ -585,11 +592,11 @@ public final class ModuleXmlParser {
         String slot = null;
         boolean noSlots = atLeast1_6(reader);
         Version version = null;
-        final Set<String> required = noSlots ? new HashSet<>(LIST_A_NAME) : new HashSet<>(LIST_A_NAME);
+        boolean missingName = true;
         for (int i = 0; i < count; i ++) {
             validateAttributeNamespace(reader, i);
             final String attribute = reader.getAttributeName(i);
-            required.remove(attribute);
+            if (A_NAME.equals(attribute)) missingName = false;
             switch (attribute) {
                 case A_NAME:    name = reader.getAttributeValue(i); break;
                 case A_SLOT:    if (noSlots) throw unknownAttribute(reader, i); else slot = reader.getAttributeValue(i); break;
@@ -603,8 +610,8 @@ public final class ModuleXmlParser {
                 default: throw unknownAttribute(reader, i);
             }
         }
-        if (! required.isEmpty()) {
-            throw missingAttributes(reader, required);
+        if (missingName) {
+            throw missingAttributes(reader, A_NAME);
         }
         if (noSlots) {
             if (! specBuilder.getName().equals(name)) {
@@ -691,12 +698,12 @@ public final class ModuleXmlParser {
         boolean optional = false;
         boolean noSlots = atLeast1_6(reader);
         String services = D_NONE;
-        final Set<String> required = new HashSet<>(LIST_A_NAME);
+        boolean missingName = true;
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
             validateAttributeNamespace(reader, i);
             final String attribute = reader.getAttributeName(i);
-            required.remove(attribute);
+            if (A_NAME.equals(attribute)) missingName = false;
             switch (attribute) {
                 case A_NAME:     name = reader.getAttributeValue(i); break;
                 case A_SLOT:     if (noSlots) throw unknownAttribute(reader, i); else slot = reader.getAttributeValue(i); break;
@@ -716,8 +723,8 @@ public final class ModuleXmlParser {
                 default: throw unknownAttribute(reader, i);
             }
         }
-        if (! required.isEmpty()) {
-            throw missingAttributes(reader, required);
+        if (missingName) {
+            throw missingAttributes(reader, A_NAME);
         }
         final MultiplePathFilterBuilder importBuilder = PathFilters.multiplePathFilterBuilder(true);
         final MultiplePathFilterBuilder exportBuilder = PathFilters.multiplePathFilterBuilder(export);
@@ -815,19 +822,19 @@ public final class ModuleXmlParser {
 
     private static void parseMainClass(final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
         String name = null;
-        final Set<String> required = new HashSet<>(LIST_A_NAME);
+        boolean missingName = true;
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
             validateAttributeNamespace(reader, i);
             final String attribute = reader.getAttributeName(i);
-            required.remove(attribute);
+            if (A_NAME.equals(attribute)) missingName = false;
             switch (attribute) {
                 case A_NAME: name = reader.getAttributeValue(i); break;
                 default: throw unexpectedContent(reader);
             }
         }
-        if (! required.isEmpty()) {
-            throw missingAttributes(reader, required);
+        if (missingName) {
+            throw missingAttributes(reader, A_NAME);
         }
         specBuilder.setMainClass(name);
         // consume remainder of element
@@ -884,19 +891,19 @@ public final class ModuleXmlParser {
 
     private static void parseNativeArtifact(final MavenResolver mavenResolver, final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
         String name = null;
-        final Set<String> required = new HashSet<>(LIST_A_NAME);
+        boolean missingName = true;
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
             validateAttributeNamespace(reader, i);
             final String attribute = reader.getAttributeName(i);
-            required.remove(attribute);
+            if (A_NAME.equals(attribute)) missingName = false;
             switch (attribute) {
                 case A_NAME: name = reader.getAttributeValue(i); break;
                 default: throw unknownAttribute(reader, i);
             }
         }
-        if (! required.isEmpty()) {
-            throw missingAttributes(reader, required);
+        if (missingName) {
+            throw missingAttributes(reader, A_NAME);
         }
 
         int eventType;
@@ -923,19 +930,19 @@ public final class ModuleXmlParser {
 
     private static void parseArtifact(final MavenResolver mavenResolver, final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
         String name = null;
-        final Set<String> required = new HashSet<>(LIST_A_NAME);
+        boolean missingName = true;
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
             validateAttributeNamespace(reader, i);
             final String attribute = reader.getAttributeName(i);
-            required.remove(attribute);
+            if (A_NAME.equals(attribute)) missingName = false;
             switch (attribute) {
                 case A_NAME: name = reader.getAttributeValue(i); break;
                 default: throw unknownAttribute(reader, i);
             }
         }
-        if (! required.isEmpty()) {
-            throw missingAttributes(reader, required);
+        if (missingName) {
+            throw missingAttributes(reader, A_NAME);
         }
 
         final MultiplePathFilterBuilder filterBuilder = PathFilters.multiplePathFilterBuilder(true);
@@ -1115,19 +1122,19 @@ public final class ModuleXmlParser {
 
     private static void parsePathName(final XmlPullParser reader, final Set<String> set) throws XmlPullParserException, IOException {
         String name = null;
-        final Set<String> required = new HashSet<>(LIST_A_NAME);
+        boolean missingName = true;
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
             validateAttributeNamespace(reader, i);
             final String attribute = reader.getAttributeName(i);
-            required.remove(attribute);
+            if (A_NAME.equals(attribute)) missingName = false;
             switch (attribute) {
                 case A_NAME: name = reader.getAttributeValue(i); break;
                 default: throw unknownAttribute(reader, i);
             }
         }
-        if (! required.isEmpty()) {
-            throw missingAttributes(reader, required);
+        if (missingName) {
+            throw missingAttributes(reader, A_NAME);
         }
         set.add(name);
 
@@ -1166,20 +1173,20 @@ public final class ModuleXmlParser {
     private static void parseProperty(final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
         String name = null;
         String value = null;
-        final Set<String> required = new HashSet<>(LIST_A_NAME);
+        boolean missingName = true;
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
             validateAttributeNamespace(reader, i);
             final String attribute = reader.getAttributeName(i);
-            required.remove(attribute);
+            if (A_NAME.equals(attribute)) missingName = false;
             switch (attribute) {
                 case A_NAME: name = reader.getAttributeValue(i); break;
                 case A_VALUE: value = reader.getAttributeValue(i); break;
                 default: throw unknownAttribute(reader, i);
             }
         }
-        if (! required.isEmpty()) {
-            throw missingAttributes(reader, required);
+        if (missingName) {
+            throw missingAttributes(reader, A_NAME);
         }
         specBuilder.addProperty(name, value == null ? "true" : value);
         if ("jboss.assertions".equals(name)) try {
