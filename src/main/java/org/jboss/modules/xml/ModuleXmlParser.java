@@ -144,8 +144,6 @@ public final class ModuleXmlParser {
     private static final String D_IMPORT = "import";
     private static final String D_EXPORT = "export";
 
-    private static final List<String> LIST_A_PATH = Collections.singletonList(A_PATH);
-
     private static final List<String> LIST_A_NAME_A_SLOT = Arrays.asList(A_NAME, A_SLOT);
     private static final List<String> LIST_A_NAME_A_TARGET_NAME = Arrays.asList(A_NAME, A_TARGET_NAME);
     private static final List<String> LIST_A_PERMISSION_A_NAME = Arrays.asList(A_PERMISSION, A_NAME);
@@ -983,20 +981,20 @@ public final class ModuleXmlParser {
     private static void parseResourceRoot(final ResourceRootFactory factory, final String rootPath, final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
         String name = null;
         String path = null;
-        final Set<String> required = new HashSet<>(LIST_A_PATH);
+        boolean missingPath = true;
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
             validateAttributeNamespace(reader, i);
             final String attribute = reader.getAttributeName(i);
-            required.remove(attribute);
+            if (A_PATH.equals(attribute)) missingPath = false;
             switch (attribute) {
                 case A_NAME: name = reader.getAttributeValue(i); break;
                 case A_PATH: path = reader.getAttributeValue(i); break;
                 default: throw unknownAttribute(reader, i);
             }
         }
-        if (! required.isEmpty()) {
-            throw missingAttributes(reader, required);
+        if (missingPath) {
+            throw missingAttributes(reader, A_PATH);
         }
         if (name == null) name = path;
 
@@ -1064,19 +1062,19 @@ public final class ModuleXmlParser {
 
     private static void parsePath(final XmlPullParser reader, final boolean include, final MultiplePathFilterBuilder builder) throws XmlPullParserException, IOException {
         String path = null;
-        final Set<String> required = new HashSet<>(LIST_A_PATH);
+        boolean missingPath = true;
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
             validateAttributeNamespace(reader, i);
             final String attribute = reader.getAttributeName(i);
-            required.remove(attribute);
+            if (A_PATH.equals(attribute)) missingPath = false;
             switch (attribute) {
                 case A_PATH: path = reader.getAttributeValue(i); break;
                 default: throw unknownAttribute(reader, i);
             }
         }
-        if (! required.isEmpty()) {
-            throw missingAttributes(reader, required);
+        if (missingPath) {
+            throw missingAttributes(reader, A_PATH);
         }
 
         final boolean literal = path.indexOf('*') == -1 && path.indexOf('?') == -1;
