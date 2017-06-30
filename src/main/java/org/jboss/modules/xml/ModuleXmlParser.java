@@ -30,11 +30,9 @@ import java.io.OutputStream;
 import java.security.AllPermission;
 import java.security.Permissions;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.jar.JarFile;
@@ -143,8 +141,6 @@ public final class ModuleXmlParser {
     private static final String D_NONE = "none";
     private static final String D_IMPORT = "import";
     private static final String D_EXPORT = "export";
-
-    private static final List<String> LIST_A_PERMISSION_A_NAME = Arrays.asList(A_PERMISSION, A_NAME);
 
     /**
      * Parse a {@code module.xml} file.
@@ -330,14 +326,6 @@ public final class ModuleXmlParser {
 
     private static XmlPullParserException invalidModuleName(final XmlPullParser reader, final String expected) {
         return new XmlPullParserException("Invalid/mismatched module name (expected " + expected + ")", reader, null);
-    }
-
-    private static XmlPullParserException missingAttributes(final XmlPullParser reader, final Set<String> required) {
-        final StringBuilder b = new StringBuilder("Missing one or more required attributes:");
-        for (String attribute : required) {
-            b.append(' ').append(attribute);
-        }
-        return new XmlPullParserException(b.toString(), reader, null);
     }
 
     private static XmlPullParserException missingAttributes(final XmlPullParser reader, final String... required) {
@@ -1229,12 +1217,13 @@ public final class ModuleXmlParser {
         String permission = null;
         String name = null;
         String actions = null;
-        final Set<String> required = new HashSet<>(LIST_A_PERMISSION_A_NAME);
+        boolean missingPermission = true, missingName = true;
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
             validateAttributeNamespace(reader, i);
             final String attribute = reader.getAttributeName(i);
-            required.remove(attribute);
+            if (A_PERMISSION.equals(attribute)) missingPermission = false;
+            if (A_NAME.equals(attribute)) missingName = false;
             switch (attribute) {
                 case A_PERMISSION: permission = reader.getAttributeValue(i); break;
                 case A_NAME: name = reader.getAttributeValue(i); break;
@@ -1242,8 +1231,8 @@ public final class ModuleXmlParser {
                 default: throw unknownAttribute(reader, i);
             }
         }
-        if (! required.isEmpty()) {
-            throw missingAttributes(reader, required);
+        if (missingPermission || missingName) {
+            throw missingAttributes(reader, missingPermission ? A_PERMISSION : null, missingName ? A_NAME : null);
         }
         expandName(moduleLoader, moduleName, list, permission, name, actions);
 
