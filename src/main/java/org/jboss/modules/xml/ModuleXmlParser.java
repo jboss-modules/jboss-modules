@@ -144,7 +144,6 @@ public final class ModuleXmlParser {
     private static final String D_IMPORT = "import";
     private static final String D_EXPORT = "export";
 
-    private static final List<String> LIST_A_NAME_A_TARGET_NAME = Arrays.asList(A_NAME, A_TARGET_NAME);
     private static final List<String> LIST_A_PERMISSION_A_NAME = Arrays.asList(A_PERMISSION, A_NAME);
 
     /**
@@ -488,11 +487,12 @@ public final class ModuleXmlParser {
         String targetName = null;
         String targetSlot = null;
         boolean noSlots = atLeast1_6(reader);
-        final Set<String> required = new HashSet<>(LIST_A_NAME_A_TARGET_NAME);
+        boolean missingName = true, missingTargetName = true;
         for (int i = 0; i < count; i ++) {
             validateAttributeNamespace(reader, i);
             final String attribute = reader.getAttributeName(i);
-            required.remove(attribute);
+            if (A_NAME.equals(attribute)) missingName = false;
+            if (A_TARGET_NAME.equals(attribute)) missingTargetName = false;
             switch (attribute) {
                 case A_NAME:    name = reader.getAttributeValue(i); break;
                 case A_SLOT:    if (noSlots) throw unknownAttribute(reader,i); else slot = reader.getAttributeValue(i); break;
@@ -501,8 +501,8 @@ public final class ModuleXmlParser {
                 default: throw unknownAttribute(reader, i);
             }
         }
-        if (! required.isEmpty()) {
-            throw missingAttributes(reader, required);
+        if (missingName || missingTargetName) {
+            throw missingAttributes(reader, missingName ? A_NAME : null, missingTargetName ? A_TARGET_NAME : null);
         }
         if (noSlots) {
             if (! moduleName.equals(name)) {
