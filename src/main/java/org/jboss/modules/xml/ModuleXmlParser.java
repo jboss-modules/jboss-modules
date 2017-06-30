@@ -934,7 +934,6 @@ public final class ModuleXmlParser {
         final MultiplePathFilterBuilder filterBuilder = PathFilters.multiplePathFilterBuilder(true);
         final ResourceLoader resourceLoader;
 
-        final Set<String> encountered = new HashSet<>();
         int eventType;
         for (;;) {
             eventType = reader.nextTag();
@@ -952,7 +951,7 @@ public final class ModuleXmlParser {
                 case START_TAG: {
                     validateNamespace(reader);
                     final String element = reader.getName();
-                    if (! encountered.add(element)) throw unexpectedContent(reader);
+                    if (!E_FILTER.equals(element)) throw unexpectedContent(reader);
                     switch (element) {
                         case E_FILTER: parseFilterList(reader, filterBuilder); break;
                         default: throw unexpectedContent(reader);
@@ -989,7 +988,6 @@ public final class ModuleXmlParser {
         final MultiplePathFilterBuilder filterBuilder = PathFilters.multiplePathFilterBuilder(true);
         final ResourceLoader resourceLoader;
 
-        final Set<String> encountered = new HashSet<>();
         int eventType;
         for (;;) {
             eventType = reader.nextTag();
@@ -1006,7 +1004,7 @@ public final class ModuleXmlParser {
                 case START_TAG: {
                     validateNamespace(reader);
                     final String element = reader.getName();
-                    if (! encountered.add(element)) throw unexpectedContent(reader);
+                    if (!E_FILTER.equals(element)) throw unexpectedContent(reader);
                     switch (element) {
                         case E_FILTER: parseFilterList(reader, filterBuilder); break;
                         default: throw unexpectedContent(reader);
