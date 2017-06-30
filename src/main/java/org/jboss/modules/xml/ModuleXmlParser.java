@@ -144,7 +144,6 @@ public final class ModuleXmlParser {
     private static final String D_IMPORT = "import";
     private static final String D_EXPORT = "export";
 
-    private static final List<String> LIST_A_NAME_A_SLOT = Arrays.asList(A_NAME, A_SLOT);
     private static final List<String> LIST_A_NAME_A_TARGET_NAME = Arrays.asList(A_NAME, A_TARGET_NAME);
     private static final List<String> LIST_A_PERMISSION_A_NAME = Arrays.asList(A_PERMISSION, A_NAME);
 
@@ -345,7 +344,7 @@ public final class ModuleXmlParser {
     private static XmlPullParserException missingAttributes(final XmlPullParser reader, final String... required) {
         final StringBuilder b = new StringBuilder("Missing one or more required attributes:");
         for (String attribute : required) {
-            b.append(' ').append(attribute);
+            if (attribute != null) b.append(' ').append(attribute);
         }
         return new XmlPullParserException(b.toString(), reader, null);
     }
@@ -537,19 +536,20 @@ public final class ModuleXmlParser {
         String name = null;
         String slot = null;
         boolean noSlots = atLeast1_6(reader);
-        final Set<String> required = new HashSet<>(LIST_A_NAME_A_SLOT);
+        boolean missingName = true, missingSlot = true;
         for (int i = 0; i < count; i ++) {
             validateAttributeNamespace(reader, i);
             final String attribute = reader.getAttributeName(i);
-            required.remove(attribute);
+            if (A_NAME.equals(attribute)) missingName = false;
+            if (A_SLOT.equals(attribute)) missingSlot = false;
             switch (attribute) {
                 case A_NAME:    name = reader.getAttributeValue(i); break;
                 case A_SLOT:    if (noSlots) throw unknownAttribute(reader, i); else slot = reader.getAttributeValue(i); break;
                 default: throw unknownAttribute(reader, i);
             }
         }
-        if (! required.isEmpty()) {
-            throw missingAttributes(reader, required);
+        if (missingName || missingSlot) {
+            throw missingAttributes(reader, missingName ? A_NAME : null, missingSlot ? A_SLOT : null);
         }
         if (noSlots) {
             if (! name.equals(moduleName)) {
