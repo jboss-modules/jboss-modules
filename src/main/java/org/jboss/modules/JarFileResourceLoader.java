@@ -34,7 +34,6 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URLStreamHandler;
 import java.security.CodeSigner;
 import java.security.CodeSource;
 import java.util.ArrayList;
@@ -68,7 +67,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
     private final URL rootUrl;
     private final String relativePath;
     private final File fileOfJar;
-    private final URI jarURI;
+    private final String uriPrefix;
     private volatile List<String> directory;
 
     // protected by {@code this}
@@ -92,8 +91,8 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
         if (realPath != null && realPath.endsWith("/")) realPath = realPath.substring(0, realPath.length() - 1);
         this.relativePath = realPath;
         try {
-            jarURI = fileOfJar.toURI();
-            rootUrl = getJarURI(jarURI, realPath).toURL();
+            uriPrefix = getURIPrefix();
+            rootUrl = getJarURI(realPath).toURL();
         } catch (URISyntaxException e) {
             throw new IllegalArgumentException("Invalid root file specified", e);
         } catch (MalformedURLException e) {
@@ -101,7 +100,8 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
         }
     }
 
-    private static URI getJarURI(final URI original, final String nestedPath) throws URISyntaxException {
+    private String getURIPrefix() throws URISyntaxException {
+        final URI original = new File(jarFile.getName()).toURI();
         final StringBuilder b = new StringBuilder();
         b.append("file:");
         assert original.getScheme().equals("file");
@@ -117,10 +117,11 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
         final String path = original.getPath();
         assert path != null;
         b.append(PathUtils.canonicalize(path)).append("!/");
-        if (nestedPath != null) {
-            b.append(nestedPath);
-        }
-        return new URI("jar", b.toString(), null);
+        return b.toString();
+    }
+
+    private URI getJarURI(final String path) throws URISyntaxException {
+        return new URI("jar", path == null ? uriPrefix : uriPrefix + path, null);
     }
 
     public String getRootName() {
@@ -224,7 +225,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
             if (entry == null) {
                 return null;
             }
-            return new JarEntryResource(jarFile, entry.getName(), relativePath, new URL(null, getJarURI(jarURI, entry.getName()).toString(), (URLStreamHandler) null));
+            return new JarEntryResource(jarFile, entry.getName(), relativePath, getJarURI(name).toURL());
         } catch (MalformedURLException e) {
             // must be invalid...?  (todo: check this out)
             return null;
@@ -266,7 +267,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
                     final String name = iterator.next();
                     if ((recursive ? PathUtils.isChild(startName, name) : PathUtils.isDirectChild(startName, name))) {
                         try {
-                            next = new JarEntryResource(jarFile, name, relativePath, getJarURI(jarURI, name).toURL());
+                            next = new JarEntryResource(jarFile, name, relativePath, getJarURI(name).toURL());
                         } catch (Exception ignored) {
                         }
                     }
@@ -343,7 +344,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
 
     public URI getLocation() {
         try {
-            return getJarURI(jarURI, null);
+            return getJarURI(null);
         } catch (URISyntaxException e) {
             return null;
         }
