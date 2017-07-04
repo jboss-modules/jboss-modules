@@ -61,7 +61,7 @@ import java.util.zip.ZipOutputStream;
  * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  */
 final class JarFileResourceLoader extends AbstractResourceLoader implements IterableResourceLoader {
-    private static final String INDEX_FILE = "META-INF/PATHS.LIST";
+    private static final String INDEX_FILE = "META-INF/INDEX.LIST";
 
     private final JarFile jarFile;
     private final String rootName;
@@ -334,9 +334,9 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
         JarEntry listEntry = jarFile.getJarEntry(INDEX_FILE);
         if (listEntry != null) {
             try {
-                return readIndex(jarFile.getInputStream(listEntry), index, relativePath);
+                return readIndex(jarFile.getInputStream(listEntry), relativePath);
             } catch (IOException e) {
-                index.clear();
+                // ignored
             }
         }
         // Next just read the JAR
@@ -413,6 +413,30 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
                 // well, we tried...
                 indexFile.delete();
             }
+        }
+    }
+
+    static Collection<String> readIndex(final InputStream stream, String relativePath) throws IOException {
+        try (BufferedReader r = new BufferedReader(new InputStreamReader(stream))) {
+            r.readLine(); // ignore version-info line
+            r.readLine(); // ignore blank line
+            r.readLine(); // ignore header line
+            final Collection<String> index = new HashSet<>();
+            index.add("");
+            String s;
+            if (relativePath == null) {
+                while ((s = r.readLine()) != null) {
+                    index.add(s);
+                }
+            } else {
+                relativePath = relativePath + "/";
+                while ((s = r.readLine()) != null) {
+                    if (s.startsWith(relativePath)) {
+                        index.add(s.substring(relativePath.length()));
+                    }
+                }
+            }
+            return index;
         }
     }
 
