@@ -20,16 +20,19 @@ package org.jboss.modules.filter;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  */
 final class EqualsPathFilter implements PathFilter {
 
     private final String path;
+    private final int hashCode;
 
     EqualsPathFilter(final String path) {
         if (path == null) {
             throw new IllegalArgumentException("path is null");
         }
         this.path = path;
+        this.hashCode = path.hashCode() + 7;
     }
 
     public boolean accept(final String path) {
@@ -37,7 +40,7 @@ final class EqualsPathFilter implements PathFilter {
     }
 
     public boolean equals(final Object obj) {
-        return obj instanceof EqualsPathFilter && equals((EqualsPathFilter) obj);
+        return obj == this || obj instanceof EqualsPathFilter && equals((EqualsPathFilter) obj);
     }
 
     public boolean equals(final EqualsPathFilter obj) {
@@ -49,6 +52,6 @@ final class EqualsPathFilter implements PathFilter {
     }
 
     public int hashCode() {
-        return path.hashCode() + 7;
+        return hashCode;
     }
 }

@@ -23,6 +23,7 @@ import java.util.Set;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  */
 final class SetPathFilter implements PathFilter {
 
@@ -54,7 +55,7 @@ final class SetPathFilter implements PathFilter {
     }
 
     public boolean equals(final Object obj) {
-        return obj instanceof SetPathFilter && equals((SetPathFilter) obj);
+        return obj == this || obj instanceof SetPathFilter && equals((SetPathFilter) obj);
     }
 
     public boolean equals(final SetPathFilter obj) {

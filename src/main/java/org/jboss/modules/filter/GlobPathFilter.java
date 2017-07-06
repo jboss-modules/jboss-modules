@@ -26,12 +26,14 @@ import java.util.regex.Pattern;
  *
  * @author John E. Bailey
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  */
 final class GlobPathFilter implements PathFilter {
     private static final Pattern GLOB_PATTERN = Pattern.compile("(\\*\\*?)|(\\?)|(\\\\.)|(/+)|([^*?]+)");
 
     private final String glob;
     private final Pattern pattern;
+    private final int hashCode;
 
     /**
      * Construct a new instance.
@@ -41,6 +43,7 @@ final class GlobPathFilter implements PathFilter {
     GlobPathFilter(final String glob) {
         pattern = getGlobPattern(glob);
         this.glob = glob;
+        hashCode = glob.hashCode() + 13;
     }
 
     /**
@@ -113,11 +116,11 @@ final class GlobPathFilter implements PathFilter {
     }
 
     public int hashCode() {
-        return glob.hashCode() + 13;
+        return hashCode;
     }
 
     public boolean equals(final Object obj) {
-        return obj instanceof GlobPathFilter && equals((GlobPathFilter) obj);
+        return obj == this || obj instanceof GlobPathFilter && equals((GlobPathFilter) obj);
     }
 
     public boolean equals(final GlobPathFilter obj) {

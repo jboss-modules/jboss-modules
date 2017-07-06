@@ -20,13 +20,16 @@ package org.jboss.modules.filter;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  */
 final class ChildPathFilter implements PathFilter {
 
     private final String prefix;
+    private final int hashCode;
 
     ChildPathFilter(final String path) {
         prefix = path.charAt(path.length() - 1) == '/' ? path : path + "/";
+        hashCode = prefix.hashCode();
     }
 
     public boolean accept(final String path) {
@@ -34,7 +37,7 @@ final class ChildPathFilter implements PathFilter {
     }
 
     public boolean equals(final Object obj) {
-        return obj instanceof ChildPathFilter && equals((ChildPathFilter) obj);
+        return obj == this || obj instanceof ChildPathFilter && equals((ChildPathFilter) obj);
     }
 
     public boolean equals(final ChildPathFilter obj) {
@@ -46,6 +49,6 @@ final class ChildPathFilter implements PathFilter {
     }
 
     public int hashCode() {
-        return prefix.hashCode();
+        return hashCode;
     }
 }
