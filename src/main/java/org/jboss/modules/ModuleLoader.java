@@ -483,9 +483,9 @@ public class ModuleLoader {
         try {
             final ModuleLogger log = Module.log;
             log.trace("Locally loading module %s from %s", name, this);
-            final long startTime = Metrics.getCurrentCPUTime();
+            final long startTime = Metrics.ENABLED ? Metrics.getCurrentCPUTime() : 0L;
             final ModuleSpec moduleSpec = findModule(name);
-            loadTime.addAndGet(Metrics.getCurrentCPUTime() - startTime);
+            if (Metrics.ENABLED) loadTime.addAndGet(Metrics.getCurrentCPUTime() - startTime);
             if (moduleSpec == null) {
                 log.trace("Module %s not found from %s", name, this);
                 return null;
@@ -859,15 +859,15 @@ public class ModuleLoader {
     }
 
     void incScanCount() {
-        if (Metrics.ENABLED) scanCount.getAndIncrement();
+        scanCount.getAndIncrement();
     }
 
     void incRaceCount() {
-        if (Metrics.ENABLED) raceCount.getAndIncrement();
+        raceCount.getAndIncrement();
     }
 
     void incClassCount() {
-        if (Metrics.ENABLED) classCount.getAndIncrement();
+        classCount.getAndIncrement();
     }
 
     private static final class FutureModule {

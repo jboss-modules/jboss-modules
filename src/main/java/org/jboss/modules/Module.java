@@ -1189,7 +1189,8 @@ public final class Module {
 
     private long addPaths(Dependency[] dependencies, Map<String, List<LocalLoader>> map, FastCopyHashSet<PathFilter> filterStack, FastCopyHashSet<ClassFilter> classFilterStack, final FastCopyHashSet<PathFilter> resourceFilterStack, Set<Visited> visited) throws ModuleLoadException {
         long subtract = 0L;
-        moduleLoader.incScanCount();
+        long pauseStart = 0L;
+        if (Metrics.ENABLED) moduleLoader.incScanCount();
         for (Dependency dependency : dependencies) {
             if (dependency instanceof ModuleDependency) {
                 final ModuleDependency moduleDependency = (ModuleDependency) dependency;
@@ -1198,11 +1199,11 @@ public final class Module {
                 final Module module;
 
                 try {
-                    long pauseStart = Metrics.getCurrentCPUTime();
+                    if (Metrics.ENABLED) pauseStart = Metrics.getCurrentCPUTime();
                     try {
                         module = moduleLoader.preloadModule(name);
                     } finally {
-                        subtract += Metrics.getCurrentCPUTime() - pauseStart;
+                        if (Metrics.ENABLED) subtract += Metrics.getCurrentCPUTime() - pauseStart;
                     }
                 } catch (ModuleLoadException ex) {
                     if (moduleDependency.isOptional()) {
@@ -1337,7 +1338,8 @@ public final class Module {
             return 0L;
         }
         long subtract = 0L;
-        moduleLoader.incScanCount();
+        long pauseStart = 0L;
+        if (Metrics.ENABLED) moduleLoader.incScanCount();
         for (Dependency dependency : dependencies) {
             final PathFilter exportFilter = dependency.getExportFilter();
             // skip non-exported dependencies altogether
@@ -1349,11 +1351,11 @@ public final class Module {
                     final Module module;
 
                     try {
-                        long pauseStart = Metrics.getCurrentCPUTime();
+                        if (Metrics.ENABLED) pauseStart = Metrics.getCurrentCPUTime();
                         try {
                             module = moduleLoader.preloadModule(name);
                         } finally {
-                            subtract += Metrics.getCurrentCPUTime() - pauseStart;
+                            if (Metrics.ENABLED) subtract += Metrics.getCurrentCPUTime() - pauseStart;
                         }
                     } catch (ModuleLoadException ex) {
                         if (moduleDependency.isOptional()) {
@@ -1563,7 +1565,7 @@ public final class Module {
     void link(final Linkage linkage) throws ModuleLoadException {
         final HashMap<String, List<LocalLoader>> importsMap = new HashMap<String, List<LocalLoader>>();
         final Dependency[] dependencies = linkage.getDependencies();
-        final long start = Metrics.getCurrentCPUTime();
+        final long start = Metrics.ENABLED ? Metrics.getCurrentCPUTime() : 0L;
         long subtractTime = 0L;
         try {
             final Set<Visited> visited = new FastCopyHashSet<Visited>(16);
@@ -1579,7 +1581,7 @@ public final class Module {
                 // else all our efforts were just wasted since someone changed the deps in the meantime
             }
         } finally {
-            moduleLoader.addLinkTime(Metrics.getCurrentCPUTime() - start - subtractTime);
+            if (Metrics.ENABLED) moduleLoader.addLinkTime(Metrics.getCurrentCPUTime() - start - subtractTime);
         }
     }
 
