@@ -68,6 +68,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
     private final URL rootUrl;
     private final String relativePath;
     private final File fileOfJar;
+    private final URI jarURI;
     private volatile List<String> directory;
 
     // protected by {@code this}
@@ -91,7 +92,8 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
         if (realPath != null && realPath.endsWith("/")) realPath = realPath.substring(0, realPath.length() - 1);
         this.relativePath = realPath;
         try {
-            rootUrl = getJarURI(fileOfJar.toURI(), realPath).toURL();
+            jarURI = fileOfJar.toURI();
+            rootUrl = getJarURI(jarURI, realPath).toURL();
         } catch (URISyntaxException e) {
             throw new IllegalArgumentException("Invalid root file specified", e);
         } catch (MalformedURLException e) {
@@ -103,8 +105,6 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
         final StringBuilder b = new StringBuilder();
         b.append("file:");
         assert original.getScheme().equals("file");
-        final String path = original.getPath();
-        assert path != null;
         final String host = original.getHost();
         if (host != null) {
             final String userInfo = original.getRawUserInfo();
@@ -114,7 +114,9 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
             }
             b.append(host);
         }
-        b.append(path).append("!/");
+        final String path = original.getPath();
+        assert path != null;
+        b.append(PathUtils.canonicalize(path)).append("!/");
         if (nestedPath != null) {
             b.append(nestedPath);
         }
@@ -217,34 +219,12 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
 
     public Resource getResource(String name) {
         try {
-            final JarFile jarFile = this.jarFile;
             name = PathUtils.canonicalize(PathUtils.relativize(name));
             final JarEntry entry = getJarEntry(name);
             if (entry == null) {
                 return null;
             }
-            final URI uri;
-            try {
-                File absoluteFile = new File(jarFile.getName()).getAbsoluteFile();
-                String path = absoluteFile.getPath();
-                path = PathUtils.canonicalize(path);
-                if (File.separatorChar != '/') {
-                    // optimizes away on platforms with /
-                    path = path.replace(File.separatorChar, '/');
-                }
-                if (PathUtils.isRelative(path)) {
-                    // should not be possible, but the JDK thinks this might happen sometimes..?
-                    path = "/" + path;
-                }
-                if (path.startsWith("//")) {
-                    // UNC path URIs have loads of leading slashes
-                    path = "//" + path;
-                }
-                uri = new URI("file", null, path, null);
-            } catch (URISyntaxException x) {
-                throw new IllegalStateException(x);
-            }
-            return new JarEntryResource(jarFile, entry.getName(), relativePath, new URL(null, getJarURI(uri, entry.getName()).toString(), (URLStreamHandler) null));
+            return new JarEntryResource(jarFile, entry.getName(), relativePath, new URL(null, getJarURI(jarURI, entry.getName()).toString(), (URLStreamHandler) null));
         } catch (MalformedURLException e) {
             // must be invalid...?  (todo: check this out)
             return null;
@@ -286,7 +266,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
                     final String name = iterator.next();
                     if ((recursive ? PathUtils.isChild(startName, name) : PathUtils.isDirectChild(startName, name))) {
                         try {
-                            next = new JarEntryResource(jarFile, name, relativePath, getJarURI(new File(jarFile.getName()).toURI(), name).toURL());
+                            next = new JarEntryResource(jarFile, name, relativePath, getJarURI(jarURI, name).toURL());
                         } catch (Exception ignored) {
                         }
                     }
@@ -363,7 +343,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
 
     public URI getLocation() {
         try {
-            return getJarURI(fileOfJar.toURI(), "");
+            return getJarURI(jarURI, null);
         } catch (URISyntaxException e) {
             return null;
         }
