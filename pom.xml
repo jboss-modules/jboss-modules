@@ -34,8 +34,13 @@
 
     <licenses>
         <license>
-            <name>asl</name>
+            <name>Apache License 2.0</name>
             <url>http://repository.jboss.org/licenses/apache-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+        <license>
+            <name>Indiana University Extreme! Lab Software License 1.1.1</name>
+	    <url>http://www.bearcave.com/software/java/xml/xmlpull_license.html</url>
             <distribution>repo</distribution>
         </license>
     </licenses>
