@@ -178,12 +178,6 @@
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>${version.javadoc.plugin}</version>
                 <configuration>
-                    <doclet>net.gleamynode.apiviz.APIviz</doclet>
-                    <docletArtifact>
-                        <groupId>org.jboss.apiviz</groupId>
-                        <artifactId>apiviz</artifactId>
-                        <version>1.3.2.GA</version>
-                    </docletArtifact>
                     <excludePackageNames>__redirected</excludePackageNames>
                     <excludePackageNames>org.jboss.modules._private</excludePackageNames>
                 </configuration>
