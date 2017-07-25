@@ -26,6 +26,10 @@ import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 import org.jboss.modules.filter.PathFilter;
 import org.jboss.modules.filter.PathFilters;
 import org.jboss.modules.xml.ModuleXmlParser;
@@ -40,13 +44,41 @@ import static org.jboss.modules.Utils.MODULE_FILE;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  */
-public final class LocalModuleFinder implements ModuleFinder {
+public final class LocalModuleFinder implements ModuleFinder, AutoCloseable {
 
     private static final File[] NO_FILES = new File[0];
 
     private final File[] repoRoots;
     private final PathFilter pathFilter;
     private final AccessControlContext accessControlContext;
+    private final List<ResourceLoader> resourceLoaderList = new ArrayList<>(64);
+    private final ModuleXmlParser.ResourceRootFactory resourceRootFactory;
+
+    private static final ResourceLoader TERMINATED_MARKER = new ResourceLoader() {
+        public String getRootName() {
+            return null;
+        }
+
+        public ClassSpec getClassSpec(final String fileName) throws IOException {
+            return null;
+        }
+
+        public PackageSpec getPackageSpec(final String name) throws IOException {
+            return null;
+        }
+
+        public Resource getResource(final String name) {
+            return null;
+        }
+
+        public String getLibrary(final String name) {
+            return null;
+        }
+
+        public Collection<String> getPaths() {
+            return null;
+        }
+    };
 
     private LocalModuleFinder(final File[] repoRoots, final PathFilter pathFilter, final boolean cloneRoots) {
         this.repoRoots = cloneRoots && repoRoots.length > 0 ? repoRoots.clone() : repoRoots;
@@ -58,6 +90,18 @@ public final class LocalModuleFinder implements ModuleFinder {
         }
         this.pathFilter = pathFilter;
         this.accessControlContext = AccessController.getContext();
+        resourceRootFactory = (rootPath, loaderPath, loaderName) -> {
+            final ResourceLoader loader = ModuleXmlParser.ResourceRootFactory.getDefault().createResourceLoader(rootPath, loaderPath, loaderName);
+            final List<ResourceLoader> list = this.resourceLoaderList;
+            synchronized (list) {
+                if (list.size() == 1 && list.get(0) == TERMINATED_MARKER) {
+                    safeClose(loader);
+                    throw new IllegalStateException("Module finder is closed");
+                }
+                list.add(loader);
+            }
+            return loader;
+        };
     }
 
     /**
@@ -151,7 +195,7 @@ public final class LocalModuleFinder implements ModuleFinder {
         final PathFilter pathFilter = this.pathFilter;
         if (pathFilter.accept(child1 + "/") || pathFilter.accept(child2 + "/")) {
             try {
-                return doPrivileged((PrivilegedExceptionAction<ModuleSpec>) () -> parseModuleXmlFile(name, delegateLoader, repoRoots), accessControlContext);
+                return doPrivileged((PrivilegedExceptionAction<ModuleSpec>) () -> parseModuleXmlFile(resourceRootFactory, name, delegateLoader, repoRoots), accessControlContext);
             } catch (PrivilegedActionException e) {
                 try {
                     throw e.getCause();
@@ -194,6 +238,10 @@ public final class LocalModuleFinder implements ModuleFinder {
      * @throws ModuleLoadException if creating the module specification failed (e.g. due to a parse error)
      */
     public static ModuleSpec parseModuleXmlFile(final String name, final ModuleLoader delegateLoader, final File... roots) throws IOException, ModuleLoadException {
+        return parseModuleXmlFile(ModuleXmlParser.ResourceRootFactory.getDefault(), name, delegateLoader, roots);
+    }
+
+    static ModuleSpec parseModuleXmlFile(final ModuleXmlParser.ResourceRootFactory factory, final String name, final ModuleLoader delegateLoader, final File... roots) throws IOException, ModuleLoadException {
         final String child1 = toPathString(name);
         final String child2 = toLegacyPathString(name);
         for (File root : roots) {
@@ -204,7 +252,7 @@ public final class LocalModuleFinder implements ModuleFinder {
                 moduleXml = new File(file, MODULE_FILE);
             }
             if (moduleXml.exists()) {
-                final ModuleSpec spec = ModuleXmlParser.parseModuleXml(delegateLoader, name, file, moduleXml);
+                final ModuleSpec spec = ModuleXmlParser.parseModuleXml(factory, delegateLoader, name, file, moduleXml);
                 if (spec == null) break;
                 return spec;
             }
@@ -225,5 +273,31 @@ public final class LocalModuleFinder implements ModuleFinder {
         }
         b.append(')');
         return b.toString();
+    }
+
+    /**
+     * Close this module loader and release all backing files.  Note that subsequent load attempts will fail with an
+     * error after this method is called.
+     */
+    public void close() {
+        final List<ResourceLoader> list = this.resourceLoaderList;
+        final ArrayList<ResourceLoader> toClose;
+        synchronized (list) {
+            if (list.size() == 1 && list.get(0) == TERMINATED_MARKER) {
+                return;
+            }
+            toClose = new ArrayList<>(list);
+            list.clear();
+            list.add(TERMINATED_MARKER);
+        }
+        for (ResourceLoader resourceLoader : toClose) {
+            safeClose(resourceLoader);
+        }
+    }
+
+    private static void safeClose(AutoCloseable closeable) {
+        if (closeable != null) try {
+            closeable.close();
+        } catch (Throwable ignored) {}
     }
 }

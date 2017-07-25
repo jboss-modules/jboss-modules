@@ -28,7 +28,7 @@ import org.jboss.modules.filter.PathFilters;
  * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class LocalModuleLoader extends ModuleLoader {
+public final class LocalModuleLoader extends ModuleLoader implements AutoCloseable {
 
     /**
      * Construct a new instance.
@@ -61,5 +61,15 @@ public final class LocalModuleLoader extends ModuleLoader {
         final StringBuilder b = new StringBuilder();
         b.append("local module loader @").append(Integer.toHexString(hashCode())).append(" (finder: ").append(getFinders()[0]).append(')');
         return b.toString();
+    }
+
+    /**
+     * Close this module loader and release all backing files.  Note that subsequent load attempts will fail with an
+     * error after this method is called.
+     */
+    public void close() {
+        final ModuleFinder[] finders = getFinders();
+        assert finders.length == 1 && finders[0] instanceof LocalModuleFinder;
+        ((LocalModuleFinder)finders[0]).close();
     }
 }
