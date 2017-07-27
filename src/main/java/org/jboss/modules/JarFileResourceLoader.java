@@ -18,6 +18,8 @@
 
 package org.jboss.modules;
 
+import static java.lang.Thread.holdsLock;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
@@ -32,7 +34,6 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URLStreamHandler;
 import java.security.CodeSigner;
 import java.security.CodeSource;
 import java.util.ArrayList;
@@ -59,13 +60,14 @@ import java.util.zip.ZipOutputStream;
  * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  */
 final class JarFileResourceLoader extends AbstractResourceLoader implements IterableResourceLoader {
-    private static final String INDEX_FILE = "META-INF/PATHS.LIST";
+    private static final String INDEX_FILE = "META-INF/INDEX.LIST";
 
     private final JarFile jarFile;
     private final String rootName;
     private final URL rootUrl;
     private final String relativePath;
     private final File fileOfJar;
+    private final String uriPrefix;
     private volatile List<String> directory;
 
     // protected by {@code this}
@@ -89,7 +91,8 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
         if (realPath != null && realPath.endsWith("/")) realPath = realPath.substring(0, realPath.length() - 1);
         this.relativePath = realPath;
         try {
-            rootUrl = getJarURI(fileOfJar.toURI(), realPath).toURL();
+            uriPrefix = getURIPrefix();
+            rootUrl = getJarURI(realPath).toURL();
         } catch (URISyntaxException e) {
             throw new IllegalArgumentException("Invalid root file specified", e);
         } catch (MalformedURLException e) {
@@ -97,12 +100,11 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
         }
     }
 
-    private static URI getJarURI(final URI original, final String nestedPath) throws URISyntaxException {
+    private String getURIPrefix() throws URISyntaxException {
+        final URI original = new File(jarFile.getName()).toURI();
         final StringBuilder b = new StringBuilder();
         b.append("file:");
         assert original.getScheme().equals("file");
-        final String path = original.getPath();
-        assert path != null;
         final String host = original.getHost();
         if (host != null) {
             final String userInfo = original.getRawUserInfo();
@@ -112,11 +114,14 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
             }
             b.append(host);
         }
-        b.append(path).append("!/");
-        if (nestedPath != null) {
-            b.append(nestedPath);
-        }
-        return new URI("jar", b.toString(), null);
+        final String path = original.getPath();
+        assert path != null;
+        b.append(PathUtils.canonicalize(path)).append("!/");
+        return b.toString();
+    }
+
+    private URI getJarURI(final String path) throws URISyntaxException {
+        return new URI("jar", path == null ? uriPrefix : uriPrefix + path, null);
     }
 
     public String getRootName() {
@@ -124,54 +129,60 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
     }
 
     public synchronized ClassSpec getClassSpec(final String fileName) throws IOException {
-        final ClassSpec spec = new ClassSpec();
         final JarEntry entry = getJarEntry(fileName);
         if (entry == null) {
             // no such entry
             return null;
         }
+        final ClassSpec spec = new ClassSpec();
         final long size = entry.getSize();
-        try (final InputStream is = jarFile.getInputStream(entry)) {
-            if (size == -1) {
-                // size unknown
-                final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                final byte[] buf = new byte[16384];
-                int res;
-                while ((res = is.read(buf)) > 0) {
-                    baos.write(buf, 0, res);
-                }
-                // done
-                CodeSource codeSource = createCodeSource(entry);
-                baos.close();
-                is.close();
-                spec.setBytes(baos.toByteArray());
-                spec.setCodeSource(codeSource);
-                return spec;
-            } else if (size <= (long) Integer.MAX_VALUE) {
-                final int castSize = (int) size;
-                byte[] bytes = new byte[castSize];
-                int a = 0, res;
-                while ((res = is.read(bytes, a, castSize - a)) > 0) {
-                    a += res;
-                }
-                // consume remainder so that cert check doesn't fail in case of wonky JARs
-                while (is.read() != -1) {
-                    //
-                }
-                // done
-                CodeSource codeSource = createCodeSource(entry);
-                is.close();
-                spec.setBytes(bytes);
-                spec.setCodeSource(codeSource);
-                return spec;
-            } else {
-                throw new IOException("Resource is too large to be a valid class file");
+        if (size == -1) {
+            // size unknown
+            spec.setBytes(getClassBytes(entry));
+            spec.setCodeSource(createCodeSource(entry));
+        } else if (size <= (long) Integer.MAX_VALUE) {
+            // size known
+            spec.setBytes(getClassBytes(entry, (int) size));
+            spec.setCodeSource(createCodeSource(entry));
+        } else {
+            throw new IOException("Resource is too large to be a valid class file");
+        }
+        return spec;
+    }
+
+    private byte[] getClassBytes(final JarEntry entry) throws IOException {
+        assert holdsLock(this);
+        try (InputStream is = jarFile.getInputStream(entry)) {
+            final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            final byte[] buf = new byte[16384];
+            int res;
+            while ((res = is.read(buf)) > 0) {
+                baos.write(buf, 0, res);
             }
+            baos.close();
+            return baos.toByteArray();
+        }
+    }
+
+    private byte[] getClassBytes(final JarEntry entry, final int castSize) throws IOException {
+        assert holdsLock(this);
+        try (InputStream is = jarFile.getInputStream(entry)) {
+            final byte[] bytes = new byte[castSize];
+            int a = 0, res;
+            while ((res = is.read(bytes, a, castSize - a)) > 0) {
+                a += res;
+            }
+            // consume remainder so that cert check doesn't fail in case of wonky JARs
+            while (is.read() != -1) {
+                //
+            }
+            return bytes;
         }
     }
 
     // this MUST only be called after the input stream is fully read (see MODULES-201)
     private CodeSource createCodeSource(final JarEntry entry) {
+        assert holdsLock(this);
         final CodeSigner[] entryCodeSigners = entry.getCodeSigners();
         final CodeSigners codeSigners = entryCodeSigners == null || entryCodeSigners.length == 0 ? EMPTY_CODE_SIGNERS : new CodeSigners(entryCodeSigners);
         CodeSource codeSource = codeSources.get(codeSigners);
@@ -209,34 +220,12 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
 
     public Resource getResource(String name) {
         try {
-            final JarFile jarFile = this.jarFile;
             name = PathUtils.canonicalize(PathUtils.relativize(name));
             final JarEntry entry = getJarEntry(name);
             if (entry == null) {
                 return null;
             }
-            final URI uri;
-            try {
-                File absoluteFile = new File(jarFile.getName()).getAbsoluteFile();
-                String path = absoluteFile.getPath();
-                path = PathUtils.canonicalize(path);
-                if (File.separatorChar != '/') {
-                    // optimizes away on platforms with /
-                    path = path.replace(File.separatorChar, '/');
-                }
-                if (PathUtils.isRelative(path)) {
-                    // should not be possible, but the JDK thinks this might happen sometimes..?
-                    path = "/" + path;
-                }
-                if (path.startsWith("//")) {
-                    // UNC path URIs have loads of leading slashes
-                    path = "//" + path;
-                }
-                uri = new URI("file", null, path, null);
-            } catch (URISyntaxException x) {
-                throw new IllegalStateException(x);
-            }
-            return new JarEntryResource(jarFile, entry.getName(), relativePath, new URL(null, getJarURI(uri, entry.getName()).toString(), (URLStreamHandler) null));
+            return new JarEntryResource(jarFile, entry.getName(), relativePath, getJarURI(name).toURL());
         } catch (MalformedURLException e) {
             // must be invalid...?  (todo: check this out)
             return null;
@@ -278,7 +267,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
                     final String name = iterator.next();
                     if ((recursive ? PathUtils.isChild(startName, name) : PathUtils.isDirectChild(startName, name))) {
                         try {
-                            next = new JarEntryResource(jarFile, name, relativePath, getJarURI(new File(jarFile.getName()).toURI(), name).toURL());
+                            next = new JarEntryResource(jarFile, name, relativePath, getJarURI(name).toURL());
                         } catch (Exception ignored) {
                         }
                     }
@@ -310,9 +299,9 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
         // First check for an external index
         final JarFile jarFile = this.jarFile;
         final String jarFileName = jarFile.getName();
-        final long jarModified = fileOfJar.lastModified();
         final File indexFile = new File(jarFileName + ".index");
         if (ResourceLoaders.USE_INDEXES) {
+            final long jarModified = fileOfJar.lastModified();
             if (indexFile.exists()) {
                 final long indexModified = indexFile.lastModified();
                 if (indexModified != 0L && jarModified != 0L && indexModified >= jarModified) try {
@@ -326,9 +315,9 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
         JarEntry listEntry = jarFile.getJarEntry(INDEX_FILE);
         if (listEntry != null) {
             try {
-                return readIndex(jarFile.getInputStream(listEntry), index, relativePath);
+                return readIndex(jarFile.getInputStream(listEntry), relativePath);
             } catch (IOException e) {
-                index.clear();
+                // ignored
             }
         }
         // Next just read the JAR
@@ -355,7 +344,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
 
     public URI getLocation() {
         try {
-            return getJarURI(fileOfJar.toURI(), "");
+            return getJarURI(null);
         } catch (URISyntaxException e) {
             return null;
         }
@@ -405,6 +394,30 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
                 // well, we tried...
                 indexFile.delete();
             }
+        }
+    }
+
+    static Collection<String> readIndex(final InputStream stream, String relativePath) throws IOException {
+        try (BufferedReader r = new BufferedReader(new InputStreamReader(stream))) {
+            r.readLine(); // ignore version-info line
+            r.readLine(); // ignore blank line
+            r.readLine(); // ignore header line
+            final Collection<String> index = new HashSet<>();
+            index.add("");
+            String s;
+            if (relativePath == null) {
+                while ((s = r.readLine()) != null) {
+                    index.add(s);
+                }
+            } else {
+                relativePath = relativePath + "/";
+                while ((s = r.readLine()) != null) {
+                    if (s.startsWith(relativePath)) {
+                        index.add(s.substring(relativePath.length()));
+                    }
+                }
+            }
+            return index;
         }
     }
 

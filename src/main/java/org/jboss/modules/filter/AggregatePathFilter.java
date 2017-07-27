@@ -25,6 +25,7 @@ import java.util.Arrays;
  *
  * @author John E. Bailey
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  */
 final class AggregatePathFilter implements PathFilter {
     private final PathFilter[] delegates;
@@ -60,7 +61,7 @@ final class AggregatePathFilter implements PathFilter {
     }
 
     public boolean equals(final Object obj) {
-        return obj instanceof AggregatePathFilter && equals((AggregatePathFilter) obj);
+        return obj == this || obj instanceof AggregatePathFilter && equals((AggregatePathFilter) obj);
     }
 
     public boolean equals(final AggregatePathFilter obj) {

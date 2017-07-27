@@ -356,12 +356,12 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
     private Class<?> doDefineOrLoadClass(final String className, final byte[] bytes, int off, int len, ProtectionDomain protectionDomain) {
         try {
             final Class<?> definedClass = defineClass(className, bytes, off, len, protectionDomain);
-            module.getModuleLoader().incClassCount();
+            if (Metrics.ENABLED) module.getModuleLoader().incClassCount();
             return definedClass;
         } catch (LinkageError e) {
             final Class<?> loadedClass = findLoadedClass(className);
             if (loadedClass != null) {
-                module.getModuleLoader().incRaceCount();
+                if (Metrics.ENABLED) module.getModuleLoader().incRaceCount();
                 return loadedClass;
             }
             throw e;
@@ -433,9 +433,9 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
                         throw error;
                     }
                 }
-                final long start = Metrics.getCurrentCPUTime();
+                final long start = Metrics.ENABLED ? Metrics.getCurrentCPUTime() : 0L;
                 newClass = doDefineOrLoadClass(name, bytes, 0, bytes.length, protectionDomain);
-                module.getModuleLoader().addClassLoadTime(Metrics.getCurrentCPUTime() - start);
+                if (Metrics.ENABLED) module.getModuleLoader().addClassLoadTime(Metrics.getCurrentCPUTime() - start);
                 log.classDefined(name, module);
             } catch (LinkageError e) {
                 // Prepend the current class name, so that transitive class definition issues are clearly expressed

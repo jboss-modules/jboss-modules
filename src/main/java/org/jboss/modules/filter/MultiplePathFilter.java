@@ -22,6 +22,7 @@ import java.util.Arrays;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  */
 final class MultiplePathFilter implements PathFilter {
     private final PathFilter[] filters;
@@ -64,8 +65,8 @@ final class MultiplePathFilter implements PathFilter {
         return hashCode;
     }
 
-    public boolean equals(Object other) {
-        return other instanceof MultiplePathFilter && equals((MultiplePathFilter)other);
+    public boolean equals(final Object other) {
+        return other == this || other instanceof MultiplePathFilter && equals((MultiplePathFilter)other);
     }
 
     public boolean equals(MultiplePathFilter other) {
