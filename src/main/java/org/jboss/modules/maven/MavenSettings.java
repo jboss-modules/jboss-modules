@@ -157,7 +157,7 @@ final class MavenSettings {
                         case "localRepository": {
                             String localRepository = reader.nextText();
                             if (localRepository != null && !localRepository.trim().isEmpty()) {
-                                mavenSettings.setLocalRepository(Paths.get(localRepository));
+                                mavenSettings.setLocalRepository(Paths.get(interpolateVariables(localRepository)));
                             }
                             break;
                         }
@@ -435,6 +435,40 @@ final class MavenSettings {
                 remoteRepositories.addAll(p.getRepositories());
             }
         }
+    }
+
+    static String interpolateVariables(String in) {
+        StringBuilder out = new StringBuilder();
+
+        int cur = 0;
+        int startLoc = -1;
+
+        while ((startLoc = in.indexOf("${", cur)) >= 0) {
+            out.append(in.substring(cur, startLoc));
+            int endLoc = in.indexOf("}", startLoc);
+            if (endLoc > 0) {
+                String name = in.substring(startLoc + 2, endLoc);
+                String value = null;
+                if (name.startsWith("env.")) {
+                    value = System.getenv(name.substring(4));
+                } else {
+                    value = System.getProperty(name);
+                }
+                if (value == null) {
+                    value = "";
+                }
+                out.append(value);
+            } else {
+                out.append(in.substring(startLoc));
+                cur = in.length();
+                break;
+            }
+            cur = endLoc + 1;
+        }
+
+        out.append(in.substring(cur));
+
+        return out.toString();
     }
 
     static final class Proxy {
