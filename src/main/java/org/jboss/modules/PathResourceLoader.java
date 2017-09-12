@@ -144,6 +144,7 @@ class PathResourceLoader extends AbstractResourceLoader implements IterableResou
 
     @Override
     public Iterator<Resource> iterateResources(final String startPath, final boolean recursive) {
+        
         try {
             Path path = root.resolve(PathUtils.canonicalize(PathUtils.relativize(startPath)));
             return Files.walk(path, recursive ? Integer.MAX_VALUE : 1)

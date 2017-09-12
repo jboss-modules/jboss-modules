@@ -20,6 +20,7 @@ package org.jboss.modules.xml;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.jar.JarFile;
 
 /**
@@ -29,8 +30,8 @@ import java.util.jar.JarFile;
  */
 final class JDKSpecific {
 
-    static JarFile getJarFile(final File name, final boolean verify) throws IOException {
-        return new JarFile(name, verify);
+    static Path getJarFile(final File name, final boolean verify) throws IOException {
+        return name.toPath();
     }
 
 }

@@ -26,6 +26,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.net.URL;
+import java.nio.file.Path;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Collections;
@@ -98,6 +99,10 @@ final class JDKSpecific {
 
     static JarFile getJarFile(final File name, final boolean verify) throws IOException {
         return new JarFile(name, verify);
+    }
+
+    static Path getJarPath(final File name, final boolean verify) throws IOException {
+        return name.toPath();
     }
 
     static Class<?> getCallingUserClass() {

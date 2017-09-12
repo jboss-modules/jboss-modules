@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.util.jar.Attributes;
@@ -120,14 +121,18 @@ public final class JarModuleFinder implements ModuleFinder {
                         builder.addResourceRoot(ResourceLoaderSpec.createResourceLoaderSpec(resourceLoader));
                     } else {
                         // assume a JAR
-                        JarFile childJarFile;
+                        Path childJarFile;
                         try {
-                            childJarFile = JDKSpecific.getJarFile(root, true);
+                            childJarFile = JDKSpecific.getJarPath(root, true);
                         } catch (IOException e) {
                             // ignore and continue
                             continue;
                         }
-                        builder.addResourceRoot(ResourceLoaderSpec.createResourceLoaderSpec(new JarFileResourceLoader(entry, childJarFile)));
+                        try {
+                            builder.addResourceRoot(ResourceLoaderSpec.createResourceLoaderSpec(new JarResourceLoader(entry, childJarFile, context)));
+                        } catch (IOException e) {
+                            throw new ModuleLoadException(e);
+                        }
                     }
                 }
             }

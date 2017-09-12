@@ -32,7 +32,6 @@ import java.security.AccessController;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.List;
-import java.util.jar.JarFile;
 
 import org.jboss.modules.Module;
 import org.jboss.modules.ResourceLoader;
@@ -190,8 +189,9 @@ public final class MavenArtifactUtil {
     public static ResourceLoader createMavenArtifactLoader(final MavenResolver mavenResolver, final String name) throws IOException {
         File fp = mavenResolver.resolveJarArtifact(ArtifactCoordinates.fromString(name));
         if (fp == null) return null;
-        JarFile jarFile = JDKSpecific.getJarFile(fp, true);
-        return ResourceLoaders.createJarResourceLoader(name, jarFile);
+        //JarFile jarFile = JDKSpecific.getJarFile(fp, true);
+
+        return ResourceLoaders.createJarResourceLoader(name, fp.toPath());
     }
 
     static <T> T doIo(PrivilegedExceptionAction<T> action) throws IOException {

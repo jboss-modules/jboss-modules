@@ -96,7 +96,7 @@ public class ResourceRootPathsTest extends AbstractModuleTestCase {
         int checkCount = 0;
         for (ResourceLoaderSpec r : resourceLoaders) {
             ResourceLoader resourceLoader = r.getResourceLoader();
-            if (resourceLoader instanceof JarFileResourceLoader) {
+            if (resourceLoader instanceof JarResourceLoader) {
                 // validate jar with relative path
                 if(resourceLoader.getRootName().equals("relativejar")) {
                     checkCount++;
