@@ -90,6 +90,15 @@ public final class ModuleXmlParser {
      */
     public interface ResourceRootFactory {
         ResourceLoader createResourceLoader(final String rootPath, final String loaderPath, final String loaderName) throws IOException;
+
+        /**
+         * Get the default resource root factory.
+         *
+         * @return the default resource root factory (not {@code null})
+         */
+        static ResourceRootFactory getDefault() {
+            return DefaultResourceRootFactory.INSTANCE;
+        }
     }
 
     private ModuleXmlParser() {
@@ -180,6 +189,22 @@ public final class ModuleXmlParser {
      * @throws IOException if I/O fails
      */
     public static ModuleSpec parseModuleXml(final ModuleLoader moduleLoader, final String moduleName, final File root, final File moduleInfoFile) throws ModuleLoadException, IOException {
+        return parseModuleXml(ResourceRootFactory.getDefault(), moduleLoader, moduleName, root, moduleInfoFile);
+    }
+
+    /**
+     * Parse a {@code module.xml} file.
+     *
+     * @param factory the resource root factory to use (must not be {@code null})
+     * @param moduleLoader the module loader to use for dependency specifications
+     * @param moduleName the name of the module to load
+     * @param root the module path root
+     * @param moduleInfoFile the {@code File} of the {@code module.xml} content
+     * @return a module specification
+     * @throws ModuleLoadException if a dependency could not be established or another error occurs
+     * @throws IOException if I/O fails
+     */
+    public static ModuleSpec parseModuleXml(final ResourceRootFactory factory, final ModuleLoader moduleLoader, final String moduleName, final File root, final File moduleInfoFile) throws ModuleLoadException, IOException {
         final FileInputStream fis;
         try {
             fis = new FileInputStream(moduleInfoFile);
@@ -187,34 +212,7 @@ public final class ModuleXmlParser {
             throw new ModuleLoadException("No module.xml file found at " + moduleInfoFile);
         }
         try {
-            return parseModuleXml((rootPath, loaderPath, loaderName) -> {
-                final File file;
-                final File loaderFile;
-                final String loaderFileName;
-                if (File.separatorChar == '/') {
-                    loaderFileName = loaderPath;
-                } else {
-                    loaderFileName = loaderPath.replace('/', File.separatorChar);
-                }
-                loaderFile = new File(loaderFileName);
-                if (loaderFile.isAbsolute()) {
-                    file = loaderFile;
-                } else {
-                    final String rootPathName;
-                    if (File.separatorChar == '/') {
-                        rootPathName = rootPath;
-                    } else {
-                        rootPathName = rootPath.replace('/', File.separatorChar);
-                    }
-                    file = new File(rootPathName, loaderFileName);
-                }
-                if (file.isDirectory()) {
-                    return ResourceLoaders.createFileResourceLoader(loaderName, file);
-                } else {
-                    final JarFile jarFile = JDKSpecific.getJarFile(file, true);
-                    return ResourceLoaders.createJarResourceLoader(loaderName, jarFile);
-                }
-            }, root.getPath(), new BufferedInputStream(fis), moduleInfoFile.getPath(), moduleLoader, moduleName);
+            return parseModuleXml(factory, root.getPath(), new BufferedInputStream(fis), moduleInfoFile.getPath(), moduleLoader, moduleName);
         } finally {
             safeClose(fis);
         }
@@ -1346,5 +1344,42 @@ public final class ModuleXmlParser {
         if (closeable != null) try {
             closeable.close();
         } catch (Throwable ignored) {}
+    }
+
+    static class DefaultResourceRootFactory implements ResourceRootFactory {
+
+        private DefaultResourceRootFactory() {
+        }
+
+        static final DefaultResourceRootFactory INSTANCE = new DefaultResourceRootFactory();
+
+        public ResourceLoader createResourceLoader(final String rootPath, final String loaderPath, final String loaderName) throws IOException {
+            final File file;
+            final File loaderFile;
+            final String loaderFileName;
+            if (File.separatorChar == '/') {
+                loaderFileName = loaderPath;
+            } else {
+                loaderFileName = loaderPath.replace('/', File.separatorChar);
+            }
+            loaderFile = new File(loaderFileName);
+            if (loaderFile.isAbsolute()) {
+                file = loaderFile;
+            } else {
+                final String rootPathName;
+                if (File.separatorChar == '/') {
+                    rootPathName = rootPath;
+                } else {
+                    rootPathName = rootPath.replace('/', File.separatorChar);
+                }
+                file = new File(rootPathName, loaderFileName);
+            }
+            if (file.isDirectory()) {
+                return ResourceLoaders.createFileResourceLoader(loaderName, file);
+            } else {
+                final JarFile jarFile = JDKSpecific.getJarFile(file, true);
+                return ResourceLoaders.createJarResourceLoader(loaderName, jarFile);
+            }
+        }
     }
 }
