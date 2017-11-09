@@ -64,7 +64,7 @@ final class ModulesPolicy extends Policy {
     }
 
     public PermissionCollection getPermissions(final CodeSource codesource) {
-        return codesource.equals(ourCodeSource) ? getAllPermission() : policy.getPermissions(codesource);
+        return codesource != null && codesource.equals(ourCodeSource) ? getAllPermission() : policy.getPermissions(codesource);
     }
 
     public PermissionCollection getPermissions(final ProtectionDomain domain) {
