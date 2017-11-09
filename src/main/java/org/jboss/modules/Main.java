@@ -29,7 +29,10 @@ import java.io.PrintWriter;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.AccessControlContext;
+import java.security.AccessController;
 import java.security.Policy;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
@@ -376,13 +379,24 @@ public final class Main {
         final ModuleLoader loader;
         final ModuleLoader environmentLoader;
         environmentLoader = DefaultBootModuleLoaderHolder.INSTANCE;
+        final Path rootPath = Paths.get("").toAbsolutePath();
         final String moduleName;
         if (jar) {
-            loader = new JarModuleLoader(environmentLoader, JDKSpecific.getJarFile(nameArgument, true));
-            moduleName = ((JarModuleLoader) loader).getMyName();
+            loader = new ModuleLoader(new FileSystemClassPathModuleFinder(environmentLoader));
+            moduleName = rootPath.resolve(nameArgument).normalize().toString();
         } else if (classpathDefined || classDefined) {
-            loader = new ClassPathModuleLoader(environmentLoader, nameArgument, classpath, deps);
-            moduleName = ClassPathModuleLoader.CLASSPATH_STRING;
+            AccessController.doPrivileged(new PropertyWriteAction("java.class.path", classpath));
+            final String[] items = classpath.split(Pattern.quote(File.pathSeparator));
+            if (items.length == 0) {
+                loader = new ModuleLoader();
+                moduleName = null;
+            } else {
+                for (int i = 0; i < items.length; i++) {
+                    items[i] = rootPath.resolve(items[i]).normalize().toString();
+                }
+                loader = new ModuleLoader(new ClassPathModuleFinder(environmentLoader, items, deps, nameArgument));
+                moduleName = items[items.length - 1];
+            }
         } else {
             loader = environmentLoader;
             moduleName = nameArgument;
@@ -392,6 +406,10 @@ public final class Main {
             __JAXPRedirected.changeAll(jaxpModuleName, Module.getBootModuleLoader());
         } else {
             __JAXPRedirected.changeAll(moduleName, Module.getBootModuleLoader());
+        }
+
+        if (moduleName == null) {
+            return;
         }
 
         final Module module;

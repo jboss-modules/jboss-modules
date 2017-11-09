@@ -24,6 +24,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.net.URL;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Enumeration;
 
@@ -48,11 +49,12 @@ public class ClassPathModuleLoaderTest extends AbstractModuleTestCase {
     @Test
     public void testLoader() throws Exception {
         final File repoRoot = getResource("test/repo");
-        final String classPath = "./target/test-classes/test/repo";
+        final String item = Paths.get("").toAbsolutePath().resolve("./target/test-classes/test/repo").normalize().toString();
+        final String[] classPath = { item };
         final String deps = "test.test,test.with-deps";
         final String mainClass = "org.jboss.modules.test.TestClass";
-        final ModuleLoader moduleLoader = new ClassPathModuleLoader(new LocalModuleLoader(new File[] { repoRoot }), mainClass, classPath, deps);
-        Module module = moduleLoader.loadModule(ModuleIdentifier.CLASSPATH);
+        final ModuleLoader moduleLoader = new ModuleLoader(new ClassPathModuleFinder(new LocalModuleLoader(new File[] { repoRoot }), classPath, deps, mainClass));
+        final Module module = moduleLoader.loadModule(item);
         module.getClassLoader();
         assertNotNull(module);
     }
@@ -65,11 +67,12 @@ public class ClassPathModuleLoaderTest extends AbstractModuleTestCase {
     @Test
     public void testService() throws Exception {
         final File repoRoot = getResource("test/repo");
-        final String classPath = "./target/test-classes/test/repo";
+        final String item = Paths.get("").toAbsolutePath().resolve("./target/test-classes/test/repo").normalize().toString();
+        final String[] classPath = { item };
         final String deps = "test.service";
         final String mainClass = null;
-        final ModuleLoader moduleLoader = new ClassPathModuleLoader(new LocalModuleLoader(new File[] { repoRoot }), mainClass, classPath, deps);
-        final Module module = moduleLoader.loadModule(ModuleIdentifier.CLASSPATH);
+        final ModuleLoader moduleLoader = new ModuleLoader(new ClassPathModuleFinder(new LocalModuleLoader(new File[] { repoRoot }), classPath, deps, mainClass));
+        final Module module = moduleLoader.loadModule(item);
         final ClassLoader classLoader = module.getClassLoader();
         final URL url = classLoader.getResource("META-INF/services/dummy");
         assertNotNull(url);
@@ -82,11 +85,12 @@ public class ClassPathModuleLoaderTest extends AbstractModuleTestCase {
     @Test
     public void testMultipleServices() throws Exception {
         final File repoRoot = getResource("test/repo");
-        final String classPath = "./target/test-classes/test/repo";
+        final String item = Paths.get("").toAbsolutePath().resolve("./target/test-classes/test/repo").normalize().toString();
+        final String[] classPath = { item };
         final String deps = "test.jaxrs";
         final String mainClass = null;
-        final ModuleLoader moduleLoader = new ClassPathModuleLoader(new LocalModuleLoader(new File[] { repoRoot }), mainClass, classPath, deps);
-        final Module module = moduleLoader.loadModule(ModuleIdentifier.CLASSPATH);
+        final ModuleLoader moduleLoader = new ModuleLoader(new ClassPathModuleFinder(new LocalModuleLoader(new File[] { repoRoot }), classPath, deps, mainClass));
+        final Module module = moduleLoader.loadModule(item);
         final ClassLoader classLoader = module.getClassLoader();
         final Enumeration<URL> services = classLoader.getResources("META-INF/services/javax.ws.rs.ext.Providers");
         assertNotNull(services);

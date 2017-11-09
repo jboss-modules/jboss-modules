@@ -343,7 +343,7 @@ public final class ModuleXmlParser {
         return new XmlPullParserException(b.toString(), reader, null);
     }
 
-    private static XmlPullParserException unknownAttribute(final XmlPullParser parser, final int index) {
+    static XmlPullParserException unknownAttribute(final XmlPullParser parser, final int index) {
         final String namespace = parser.getAttributeNamespace(index);
         final String prefix = parser.getAttributePrefix(index);
         final String name = parser.getAttributeName(index);

@@ -44,7 +44,10 @@ import static org.jboss.modules.Utils.MODULE_FILE;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
+ * @deprecated {@link FileSystemClassPathModuleFinder} and/or {@link FatJarModuleFinder} should be used instead for more
+ *      complete functionality.
  */
+@Deprecated
 public final class JarModuleFinder implements ModuleFinder {
 
     private final String myName;
@@ -94,7 +97,7 @@ public final class JarModuleFinder implements ModuleFinder {
             pathFilterBuilder.addFilter(PathFilters.is(MODULES_DIR), false);
             pathFilterBuilder.addFilter(PathFilters.isChildOf(MODULES_DIR), false);
             builder.addResourceRoot(ResourceLoaderSpec.createResourceLoaderSpec(new JarFileResourceLoader("", jarFile), pathFilterBuilder.create()));
-            String[] classPathEntries = classPath == null ? JarModuleLoader.NO_STRINGS : classPath.split("\\s+");
+            String[] classPathEntries = classPath == null ? Utils.NO_STRINGS : classPath.split("\\s+");
             for (String entry : classPathEntries) {
                 if (! entry.isEmpty()) {
                     if (entry.startsWith("../") || entry.startsWith("./") || entry.startsWith("/") || entry.contains("/../")) {
@@ -131,7 +134,7 @@ public final class JarModuleFinder implements ModuleFinder {
                     }
                 }
             }
-            String[] dependencyEntries = dependencies == null ? JarModuleLoader.NO_STRINGS : dependencies.split("\\s*,\\s*");
+            String[] dependencyEntries = dependencies == null ? Utils.NO_STRINGS : dependencies.split("\\s*,\\s*");
             for (String dependencyEntry : dependencyEntries) {
                 boolean optional = false;
                 boolean export = false;

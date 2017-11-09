@@ -31,8 +31,10 @@ final class Utils {
     static final String DEPENDENCIES = "Dependencies";
     static final String EXPORT = "export";
     static final String OPTIONAL = "optional";
+    static final String SERVICES = "services";
     static final String MODULES_DIR = "modules";
     static final String MODULE_FILE = "module.xml";
+    static final String[] NO_STRINGS = new String[0];
 
     private Utils() {
         // forbidden instantiation

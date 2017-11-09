@@ -174,6 +174,15 @@ public class ModuleLoader {
         this(checkPermissions(), false, safeClone(finders));
     }
 
+    /**
+     * Construct a new instance.
+     *
+     * @param finder the single module finder to search (must not be {@code null})
+     */
+    public ModuleLoader(final ModuleFinder finder) {
+        this(new ModuleFinder[] { finder });
+    }
+
     private static ModuleFinder[] safeClone(ModuleFinder[] finders) {
         if (finders == null || finders.length == 0) {
             return NO_FINDERS;

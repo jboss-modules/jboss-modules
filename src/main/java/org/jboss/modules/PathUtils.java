@@ -18,6 +18,8 @@
 
 package org.jboss.modules;
 
+import static java.lang.Math.max;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -125,10 +127,20 @@ public final class PathUtils {
     public static String relativize(String path) {
         for (int i = 0; i < path.length(); i ++) {
             if (path.charAt(i) != '/' && path.charAt(i) != File.separatorChar) {
-                return i == 0 ? path : path.substring(i);
+                return path.substring(i);
             }
         }
         return "";
+    }
+
+    /**
+     * Get the file name (last) segment of the given path.
+     *
+     * @param path the path name
+     * @return the file name
+     */
+    public static String fileNameOfPath(String path) {
+        return path.substring(max(path.lastIndexOf('/'), path.lastIndexOf(File.separatorChar)) + 1);
     }
 
     /**
