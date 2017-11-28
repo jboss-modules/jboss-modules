@@ -101,4 +101,16 @@ public interface ResourceLoader extends AutoCloseable {
     default URI getLocation() {
         return null;
     }
+
+    /**
+     * Create a loader which loads resources under a relative subdirectory relative to this loader.  If the resource
+     * loader does not support subloaders, {@code null} is returned.
+     *
+     * @param relativePath the relative path
+     * @param rootName the name of the subloader's root
+     * @return the resource loader, or {@code null} if subloaders are not supported
+     */
+    default ResourceLoader createSubloader(String relativePath, String rootName) {
+        return null;
+    }
 }

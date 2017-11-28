@@ -90,11 +90,8 @@ public class FileSystemClassPathModuleFinder implements ModuleFinder {
      * @param extensionModuleLoaderSupplier a supplier which yields a module loader for loading extensions (must not be {@code null})
      */
     public FileSystemClassPathModuleFinder(final ModuleLoader baseModuleLoader, final Supplier<ModuleLoader> extensionModuleLoaderSupplier) {
+        this(new SimpleSupplier<>(baseModuleLoader), extensionModuleLoaderSupplier);
         if (baseModuleLoader == null) throw new IllegalArgumentException("baseModuleLoader is null");
-        this.baseModuleLoaderSupplier = new SimpleSupplier<>(baseModuleLoader);
-        if (extensionModuleLoaderSupplier == null) throw new IllegalArgumentException("extensionModuleLoaderSupplier is null");
-        this.extensionModuleLoaderSupplier = extensionModuleLoaderSupplier;
-        context = AccessController.getContext();
     }
 
     /**
@@ -162,7 +159,7 @@ public class FileSystemClassPathModuleFinder implements ModuleFinder {
                     }
                     throw t;
                 }
-                fatModuleLoader = new DelegatingModuleLoader(baseModuleLoader, new FatJarModuleFinder(jarFile));
+                fatModuleLoader = new DelegatingModuleLoader(baseModuleLoader, new ResourceLoaderModuleFinder(resourceLoader));
             }
             // now build the module specification from the manifest information
             try {

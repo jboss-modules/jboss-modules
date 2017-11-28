@@ -185,6 +185,10 @@ class PathResourceLoader extends AbstractResourceLoader implements IterableResou
         return doPrivilegedIfNeeded(context, root::toUri);
     }
 
+    public ResourceLoader createSubloader(final String relativePath, final String rootName) {
+        return new PathResourceLoader(rootName, root.resolve(PathUtils.relativize(PathUtils.canonicalize(relativePath))), context);
+    }
+
     static <T, E extends Throwable> T doPrivilegedIfNeeded(AccessControlContext context, Class<E> exceptionType, PrivilegedExceptionAction<T> action) throws E {
         SecurityManager sm = System.getSecurityManager();
 

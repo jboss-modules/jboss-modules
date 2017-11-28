@@ -361,6 +361,10 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
         }
     }
 
+    public ResourceLoader createSubloader(final String relativePath, final String rootName) {
+        return new JarFileResourceLoader(rootName, jarFile, relativePath);
+    }
+
     static void extractJarPaths(final JarFile jarFile, String relativePath,
             final Collection<String> index) {
         index.add("");

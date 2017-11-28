@@ -44,7 +44,7 @@ import static org.jboss.modules.Utils.MODULE_FILE;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
- * @deprecated {@link FileSystemClassPathModuleFinder} and/or {@link FatJarModuleFinder} should be used instead for more
+ * @deprecated {@link FileSystemClassPathModuleFinder} and/or {@link ResourceLoaderModuleFinder} should be used instead for more
  *      complete functionality.
  */
 @Deprecated
