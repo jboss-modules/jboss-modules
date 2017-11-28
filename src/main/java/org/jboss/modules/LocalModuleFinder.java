@@ -85,7 +85,7 @@ public final class LocalModuleFinder implements ModuleFinder, AutoCloseable {
         final SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
             for (File repoRoot : this.repoRoots) {
-                if (repoRoot == null) sm.checkPermission(new FilePermission(new File(repoRoot, "-").getPath(), "read"));
+                if (repoRoot != null) sm.checkPermission(new FilePermission(new File(repoRoot, "-").getPath(), "read"));
             }
         }
         this.pathFilter = pathFilter;
@@ -179,6 +179,7 @@ public final class LocalModuleFinder implements ModuleFinder, AutoCloseable {
         return moduleName.replace('.', File.separatorChar);
     }
 
+    @SuppressWarnings("deprecation")
     private static String toLegacyPathString(final String moduleName) {
         final ModuleIdentifier moduleIdentifier = ModuleIdentifier.fromString(moduleName);
         final String name = moduleIdentifier.getName();
