@@ -381,9 +381,11 @@ public final class Main {
         environmentLoader = DefaultBootModuleLoaderHolder.INSTANCE;
         final Path rootPath = Paths.get("").toAbsolutePath();
         final String moduleName;
+        final String className;
         if (jar) {
             loader = new ModuleLoader(new FileSystemClassPathModuleFinder(environmentLoader));
             moduleName = rootPath.resolve(nameArgument).normalize().toString();
+            className = null;
         } else if (classpathDefined || classDefined) {
             AccessController.doPrivileged(new PropertyWriteAction("java.class.path", classpath));
             final String[] items = classpath.split(Pattern.quote(File.pathSeparator));
@@ -397,9 +399,17 @@ public final class Main {
                 loader = new ModuleLoader(new ClassPathModuleFinder(environmentLoader, items, deps, nameArgument));
                 moduleName = items[items.length - 1];
             }
+            className = null;
         } else {
             loader = environmentLoader;
-            moduleName = nameArgument;
+            final int idx = nameArgument.lastIndexOf('/');
+            if (idx != -1) {
+                moduleName = nameArgument.substring(0, idx);
+                className = nameArgument.substring(idx + 1);
+            } else {
+                moduleName = nameArgument;
+                className = null;
+            }
         }
         Module.initBootModuleLoader(environmentLoader);
         if (jaxpModuleName != null) {
@@ -540,7 +550,12 @@ public final class Main {
         }
 
         try {
-            module.run(argsList.toArray(new String[argsList.size()]));
+            final String[] mainArgs = argsList.toArray(new String[argsList.size()]);
+            if (className != null) {
+                module.runMainMethod(className, mainArgs);
+            } else {
+                module.run(mainArgs);
+            }
         } catch (InvocationTargetException e) {
             throw e.getCause();
         }

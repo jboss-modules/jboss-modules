@@ -325,13 +325,17 @@ public final class Module {
         if (mainClassName == null) {
             throw new NoSuchMethodException("No main class defined for " + this);
         }
+        runMainMethod(mainClassName, args);
+    }
+
+    void runMainMethod(final String className, final String[] args) throws NoSuchMethodException, InvocationTargetException, ClassNotFoundException {
         final ClassLoader oldClassLoader = SecurityActions.setContextClassLoader(moduleClassLoader);
         try {
-            final Class<?> mainClass = Class.forName(mainClassName, false, moduleClassLoader);
+            final Class<?> mainClass = Class.forName(className, false, moduleClassLoader);
             try {
-                Class.forName(mainClassName, true, moduleClassLoader);
+                Class.forName(className, true, moduleClassLoader);
             } catch (Throwable t) {
-                throw new InvocationTargetException(t, "Failed to initialize main class '" + mainClassName + "'");
+                throw new InvocationTargetException(t, "Failed to initialize main class '" + className + "'");
             }
             final MethodHandles.Lookup lookup = MethodHandles.lookup();
             final MethodHandle methodHandle;
