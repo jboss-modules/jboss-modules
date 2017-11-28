@@ -113,15 +113,15 @@ public class FileSystemClassPathModuleFinder implements ModuleFinder {
 
     public ModuleSpec findModule(final String name, final ModuleLoader delegateLoader) throws ModuleLoadException {
         if (PathUtils.isRelative(name)) {
-            throw new ModuleLoadException("Only absolute paths may be loaded by this loader");
+            return null;
         }
         final String canonName = PathUtils.canonicalize(name);
         if (! name.equals(canonName)) {
-            throw new ModuleLoadException("Only canonical paths may be loaded by this loader");
+            return null;
         }
         final String fileName = PathUtils.fileNameOfPath(canonName);
         if (fileName.isEmpty()) {
-            throw new ModuleLoadException("Path name must not end with a separator");
+            return null;
         }
         try {
             final Manifest manifest;

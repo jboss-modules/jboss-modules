@@ -19,12 +19,11 @@
 package org.jboss.modules.xml;
 
 import static org.jboss.modules.xml.XmlPullParser.END_TAG;
+import static org.jboss.modules.xml.XmlPullParser.FEATURE_PROCESS_NAMESPACES;
 import static org.jboss.modules.xml.XmlPullParser.START_TAG;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,7 +51,8 @@ public final class PermissionsXmlParser {
      */
     public static FactoryPermissionCollection parsePermissionsXml(final InputStream inputStream, ModuleLoader moduleLoader, final String moduleName) throws XmlPullParserException, IOException {
         final MXParser mxParser = new MXParser();
-        mxParser.setInput(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+        mxParser.setFeature(FEATURE_PROCESS_NAMESPACES, true);
+        mxParser.setInput(inputStream, null);
         return parsePermissionsXml(mxParser, moduleLoader, moduleName);
     }
 
@@ -81,6 +81,7 @@ public final class PermissionsXmlParser {
                             throw ModuleXmlParser.unexpectedContent(reader);
                         }
                     }
+                    //break;
                 }
                 case END_TAG: {
                     return new FactoryPermissionCollection();
@@ -93,6 +94,7 @@ public final class PermissionsXmlParser {
         final String namespace = reader.getNamespace();
         if (namespace != null) {
             switch (namespace) {
+                case "":
                 case "http://xmlns.jcp.org/xml/ns/javaee":
                 case "http://java.sun.com/xml/ns/javaee":
                 case "http://java.sun.com/xml/ns/j2ee":
@@ -106,7 +108,7 @@ public final class PermissionsXmlParser {
     private static FactoryPermissionCollection parsePermissionsElement(final XmlPullParser reader, final ModuleLoader moduleLoader, final String moduleName) throws IOException, XmlPullParserException {
         final int attributeCount = reader.getAttributeCount();
         for (int i = 0; i < attributeCount; i ++) {
-            if (! reader.getAttributeNamespace(i).isEmpty() || ! reader.getAttributeName(i).equals("version")) {
+            if (reader.getAttributeNamespace(i).isEmpty() && ! reader.getAttributeName(i).equals("version")) {
                 throw ModuleXmlParser.unknownAttribute(reader, i);
             }
         }
@@ -126,6 +128,7 @@ public final class PermissionsXmlParser {
                             throw ModuleXmlParser.unexpectedContent(reader);
                         }
                     }
+                    break;
                 }
                 case END_TAG: {
                     return new FactoryPermissionCollection(factories.toArray(NO_PERMISSION_FACTORIES));
@@ -147,7 +150,7 @@ public final class PermissionsXmlParser {
                     validateNamespace(reader);
                     switch (reader.getName()) {
                         case "class-name": {
-                            if (className != null || name != null || actions != null) {
+                            if (className != null) {
                                 throw ModuleXmlParser.unexpectedContent(reader);
                             }
                             className = reader.nextText().trim();
@@ -171,6 +174,7 @@ public final class PermissionsXmlParser {
                             throw ModuleXmlParser.unexpectedContent(reader);
                         }
                     }
+                    break;
                 }
                 case END_TAG: {
                     return new ModularPermissionFactory(moduleLoader, moduleName, className, name, actions);

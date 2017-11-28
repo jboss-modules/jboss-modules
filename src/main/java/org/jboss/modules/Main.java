@@ -401,7 +401,7 @@ public final class Main {
             loader = environmentLoader;
             moduleName = nameArgument;
         }
-        Module.initBootModuleLoader(loader);
+        Module.initBootModuleLoader(environmentLoader);
         if (jaxpModuleName != null) {
             __JAXPRedirected.changeAll(jaxpModuleName, Module.getBootModuleLoader());
         } else {
@@ -456,7 +456,7 @@ public final class Main {
         if (secMgrModule != null) {
             final Module loadedModule;
             try {
-                loadedModule = loader.loadModule(secMgrModule);
+                loadedModule = environmentLoader.loadModule(secMgrModule);
             } catch (ModuleNotFoundException e) {
                 e.printStackTrace(System.err);
                 System.exit(1);
