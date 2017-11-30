@@ -28,6 +28,7 @@ import java.io.OutputStream;
  */
 final class Utils {
 
+    static final String MODULE_VERSION = "Module-Version";
     static final String DEPENDENCIES = "Dependencies";
     static final String EXPORT = "export";
     static final String OPTIONAL = "optional";

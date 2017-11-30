@@ -21,6 +21,7 @@ package org.jboss.modules;
 import static org.jboss.modules.Utils.DEPENDENCIES;
 import static org.jboss.modules.Utils.EXPORT;
 import static org.jboss.modules.Utils.MODULES_DIR;
+import static org.jboss.modules.Utils.MODULE_VERSION;
 import static org.jboss.modules.Utils.OPTIONAL;
 import static org.jboss.modules.Utils.SERVICES;
 
@@ -171,6 +172,7 @@ public class FileSystemClassPathModuleFinder implements ModuleFinder {
                 final ModuleLoader extensionModuleLoader = extensionModuleLoaderSupplier.get();
                 addExtensionDependencies(builder, mainAttributes, extensionModuleLoader);
                 addModuleDependencies(builder, fatModuleLoader, mainAttributes);
+                setModuleVersion(builder, mainAttributes);
                 addSystemDependencies(builder);
                 addPermissions(builder, resourceLoader, delegateLoader);
             } catch (Throwable t) {
@@ -232,6 +234,13 @@ public class FileSystemClassPathModuleFinder implements ModuleFinder {
                     optional
                 ));
             }
+        }
+    }
+
+    void setModuleVersion(final ModuleSpec.Builder builder, final Attributes mainAttributes) {
+        final String versionString = mainAttributes.getValue(MODULE_VERSION);
+        if (versionString != null) {
+            builder.setVersion(Version.parse(versionString));
         }
     }
 
