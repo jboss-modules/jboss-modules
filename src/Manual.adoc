@@ -1,7 +1,14 @@
-= JBoss Modules version 1
+:sectnumlevels: 4
+:sectnums:
+:imagesdir: img
+:toclevels: 4
 
-:toc:
+[id='top']
+= JBoss Modules: version 1.x
 
+:toc: left
+
+[id='introduction']
 == Introduction
 
 JBoss Modules is a standalone implementation of a _modular_
@@ -27,591 +34,212 @@ modules actually used (and when they are used), rather than the total
 number of modules in the system. And, they may be unloaded by the user
 at any time.
 
-[[defining-a-module]]
-== Defining a module
+[id='about-this']
+=== About this manual
 
-Since module definition is essentially pluggable, a module can be
-defined in many different ways.  However, JBoss Modules ships with two
-basic implemented strategies which are most commonly utilized.
+The source code for this manual is presently hosted
+link:https://github.com/jboss-modules/jboss-modules/blob/manual/src/Manual.adoc[on GitHub].
+Contributions and corrections are welcome; when opening a pull request, please remember
+to set the base branch to `manual`.
 
-The first strategy is the link:#819701[static filesystem repository]
-approach.  Modules are organized in a directory hierarchy on the
-filesystem which is derived from the name and version of the module.
- The content of the module’s specific directory is comprised of a
-simple link:#module-descriptors[module descriptor] and all of the content itself
-(JARs or loose files).
+[id='concepts']
+== JBoss Modules concepts
 
-The second strategy is designed for direct JAR execution.  It uses JAR
-link:#819684[MANIFEST.MF information] to define simple dependencies and
-other module information, and is designed for executing JARs from the
-command line as well as situations where a JAR may be deployed in a
-container such as the JBoss Application Server.
+There are several important terms and concepts that must be understood to
+use JBoss Modules effectively.  Some of these terms might be familiar, but
+their complete definition may be surprising nonetheless.
 
-[[module-descriptors]]
-=== Module descriptors
+.Terms and definitions
+Resource:: a data entity which may be found and read by way of a class or class loader,
+represented in JBoss Modules by the [java]`Resource` interface
 
-A _module descriptor_ is an XML file which describes the structure,
-content, dependencies, filtering, and other attributes of a module. This
-format is highly expressive and is tailored for use by the
-filesystem-backed module loader to allow the module description to
-reside alongside its content, rather than inside it. In particular, its
-location on the filesystem is calculated by converting the dot-separated
-segments of the module name to path elements, followed by a path element
-which consists of the version slot for that module. This path is then
-appended to each module path root in turn until a file named
-`module.xml` is found within it.
+Class loader:: the Java entity responsible for the creation, management, and resolution
+of new classes and resources
 
-Below is an example of a module descriptor used by the JBoss Application
-Server:
+Defining class loader:: the class loader which defines a given class; this
+class loader can be found by way of the [java]`Class.getClassLoader()` method
 
-Example module descriptor
+Initiating class loader:: the class loader which was used to start a class
+load request; this will be the defining class loader of the class which caused
+a class load operation to begin
 
-....
-<?xml version="1.0" encoding="UTF-8"?>
+Class definition:: the first stage of loading a new class, whereby a class name is resolved
+to a sequence of bytes and registered to the JVM; the JVM also verifies the class bytes
+at this time
 
-<module xmlns="urn:jboss:module:1.6" name="org.jboss.msc" version="1.0.1.GA">
+Class resolution:: the second stage of loading a new class, whereby all the symbolic
+references in the class constant pool are resolved to concrete values
 
-    <main-class name="org.jboss.msc.Version"/>
+Class initialization:: the third and final stage of loading a new class, whereby the
+class or interface initialization method is executed (which may include executing
+dynamic code to populate the initial value of [java]`static` fields)
 
-    <properties>
-        <property name="my.property" value="foo"/>
-    </properties>
+Visibility:: the set of classes and resources that a class can directly find via its
+own class loader
 
-    <resources>
-        <resource-root path="jboss-msc-1.0.1.GA.jar"/>
-    </resources>
+Module:: an encapsulated and isolated grouping of classes and resources, which can reference
+(by dependency) other modules or content; a module is represented by a [java]`Module` object
+and backed by a [java]`ModuleClassLoader` object
 
-    <dependencies>
-        <module name="javax.api"/>
-        <module name="org.jboss.logging"/>
-        <module name="org.jboss.modules"/>
+Dependency:: a reference from one module to another, which indicates that the source module
+consumes some content from the target module
 
-        <!-- Optional deps -->
-        <module name="javax.inject.api" optional="true"/>
-        <module name="org.jboss.threads" optional="true"/>
-        <module name="org.jboss.vfs" optional="true"/>
-    </dependencies>
-</module>
-....
+Module specification:: a description of a module, which includes its dependencies and
+their order as well as its contents (classes and resources)
 
-==== The root module element
+Isolation:: the concept of preventing interference between two class loaders; isolated
+class loaders can (for example) have classes and packages which have the same name
+as classes and packages in a different class loader from which it was isolated
 
-The root element of the module descriptor determines what _type_ of
-module is being specified. There are two types: a regular *module* and a
-**module alias**.
+Package name:: the part of a class name which precedes the final period (`.`)
+character
 
-Regular module descriptors have a root element named `module` from the
-`urn:jboss:module:xxx` namespace. The `module` element supports the
-following attributes:
+Package:: a set of classes which have _both_ the same package name _and_
+the same defining class loader
 
-[cols="1,1,1,1,4",options="header"]
-|===
+Module loader:: the JBoss Modules entity responsible for the creation, management, and
+resolution of new modules
 
-|Attribute
-|Type
-|Required?
-|Version(s)
-|Description
+Module finder:: the portion of the module loading logic which is responsible for locating and
+defining module specifications
 
-|name
-|string
-|Yes
-|1.0+
-|The name of the module. This name must match the name of the module being loaded.
+Resource loader:: the JBoss Modules entity responsible for locating and serving class,
+package, and resource data to the module class loader
 
-|slot
-|string
-|No
-|1.0-1.5
-|The modules slot. If not specified, defaults to ``main''. Deprecated in 1.5, removed in 1.6.
+[id='classpath']
+=== The class path
 
-|version
-|string
-|No
-|1.6+
-|The optional version designation of the module.  Appears in stack traces on Java 9+.
+Most Java programmers are familiar with the _class path_.  This is the set of files and
+directories which comprise a typical Java program, usually given in a long list on the
+command line.  These classes are all loaded by the same class loader, known as
+the _application class loader_.
 
-|===
+The application class loader uses a _parent-first_ loading methodology: when a request to
+load a class is received by the class loader, it first _delegates_ to the _platform class loader_,
+which typically includes all the classes which are provided by the JDK itself.  If the
+platform class loader cannot provide the given class, then the class path defined in the
+application class loader is checked in order from start to end.
 
-The `module` element may contain any of the following elements:
+This simple system is sufficient for many simple applications.  However, the lack of isolation
+between class path items can cause a variety of problems for more complex systems.
 
-[cols="1,1,1,4",options="header"]
-|===
-|Element
-|Required?
-|Version(s)
-|Description
+[id='as-a-concept']
+=== Modules, defined
 
-|main-class
-|No
-|1.0+
-|The main class of this module, if any.
+The concept of a _module_ in JBoss Modules is based on the notion of _isolated_ class loaders.
+Each module is backed by a single class loader, and is comprised of a small number of _resource roots_
+(for example, JAR files, or directories on the file system) in combination with a list of _dependencies_ which determine
+the content from other modules that will be _imported_ in to this one.  The graph formed when all
+dependencies are resolved (which may include cycles) determines what content is ultimately _visible_
+to a module.
 
-|properties
-|No
-|1.1+
-|A list of properties to make available on this module.
-
-|resources
-|No
-|1.0+
-|The resources that make up this module.
-
-|dependencies
-|No
-|1.0+
-|The dependencies for this module.
-
-|exports
-|No
-|1.0+
-|The path filter expressions to apply to the export filter of the local resources of this module.
-
-|===
-
-[[the-main-class-element]]
-==== The main-class element
-
-A module which is defined with a `main-class` element is said to be
-__executable__. In other words, the module name can be listed on the
-command line, and the standard static `main(String[])` method in the
-named module’s `main-class` will be loaded and executed.
-
-The `main-class` element supports the following attributes:
-
-[cols="1,1,1,1,4",options="header"]
-|===
-
-|Attribute
-|Type
-|Required?
-|Version(s)
-|Description
-
-|name
-|string
-|Yes
-|1.0+
-|The name of the main class.
-
-|===
-
-This element may not contain any nested elements.
-
-[NOTE]
-
-The main class need not come from the module’s actual resources, nor
-does it need to be exported. Any public class which is visible to the
-module - which includes all imported dependencies as well as all
-resource roots - is a valid main class, as long as it has a method with
-the signature `public static void main(String[] args)`.
-
-[[the-resources-element]]
-==== The resources element
-
-In order for a module to actually have content, you must define the
-`resources` element with at least one resource root.
-
-A _resource root_ is a specification of a location where the class
-loader for a module will look for classes and resources. Each module has
-zero or more resource roots, though most regular modules will contain
-exactly one, which refers to the JAR file with the module’s content.
-
-It is possible to define resource roots for a module which correspond to
-JAR files as well as file system directories, just like class paths.
-File system directory resource roots have the additional property of
-supporting the specification of native libraries, which cannot be loaded
-from JAR files.
-
-The `resources` element does not support any attributes; it contains
-zero or more `resource-root` elements. The `resource-root` element
-supports the following attributes:
-
-[cols="1,1,1,1,4",options="header"]
-|===
-
-|Attribute
-|Type
-|Required?
-|Version(s)
-|Description
-
-|path
-|string
-|Yes
-|1.0+
-|The path of this resource root, relative to the location of the
-module.xml file.
-
-|name
-|string
-|No
-|1.0+
-|The name of the resource root. If not specified, defaults to the
-resource root’s path.
-
-|===
-
-In addition, the `resource-root` element may contain a nested element:
-
-[cols="1,1,1,4",options="header"]
-|===
-|Element
-|Required?
-|Version(s)
-|Description
-
-|filter
-|No
-|1.0+
-|A path filter to apply to this resource root. If not specified, all
-paths are accepted.
-
-|===
-
-See the section on filter definition for more information about defining
-filters.
-
-[[the-properties-element]]
-==== The properties element
-
-The modules API exposes a method which can read property (string
-key-value pair) values from a module. To specify values for these
-properties you use the `properties` element which can contain zero or
-more `property` elements, each supporting the following attributes:
-
-[cols="1,1,1,1,4",options="header"]
-|===
-
-|Attribute
-|Type
-|Required?
-|Version(s)
-|Description
-
-|name
-|string
-|Yes
-|1.1+
-|The name of the property.
-
-|value
-|string
-|No
-|1.1+
-|The property value; if not given, the property value defaults to
-``true''.
-
-|===
-
-[[the-dependencies-element]]
-==== The dependencies element
-
-A module may express one or more dependencies on other module(s) via the
-`dependencies` element.
-
-The `dependencies` element does not support any attributes. It
-contains zero or more nested elements as follows:
-
-[cols="1,1,1,4",options="header"]
-|===
-|Element
-|Required?
-|Version(s)
-|Description
-
-|module
-|No
-|1.0+
-|A module name upon which a dependency should be added.
-
-|system
-|No
-|1.0+
-|A specification for expressing a dependency upon the system or
-application class path.
-
-|===
-
-[[module-dependencies]]
-==== Module dependencies
-
-The `module` element supports the following attributes:
-
-[cols="1,1,1,1,4",options="header"]
-|===
-
-|Attribute
-|Type
-|Required?
-|Version(s)
-|Description
-
-|name
-|string
-|Yes
-|1.0+
-|The name of the module upon which this module depends.
-
-|slot
-|string
-|No
-|1.0-1.5
-|The version slot of the module upon which this module depends; defaults
-to ``main''.  Deprecated in 1.5, removed in 1.6.
-
-|export
-|boolean
-|No
-|1.0+
-|Specify whether this dependency is re-exported by default; if not
-specified, defaults to ``false''.
-
-|services
-|enum
-|No
-|1.0+
-|Specify whether this dependency’s services
-footnoteref:[spi,For an introduction to Java language’s service provider interface mechanism, refer to: http://download.oracle.com/javase/tutorial/sound/SPI-intro.html ]
-are imported and/or exported. Possible values are ``none'', ``import'', or ``export'';
-defaults to ``none''.
-
-|optional
-|boolean
-|No
-|1.0+
-|Specify whether this dependency is optional; defaults to ``false''.
-
-|===
-
-In addition, the `module` element supports the following nested
-elements:
-
-[cols="1,1,1,4",options="header"]
-|===
-|Element
-|Required?
-|Version(s)
-|Description
-
-|imports
-|No
-|1.0+
-|A path filter used to restrict what paths are imported from the dependency.
-
-|exports
-|No
-|1.0+
-|A path filter used to restrict what imported paths are re-exported from
-this module.
-
-|===
-
-Example of adding an explicit exclude for a dependency
-
-....
-<dependencies>
-    <module name="org.jboss.example">
-        <imports>
-            <exclude-set>
-                <path name="org/jboss/example/tests"/>
-            </exclude-set>
-        </imports>
-    </module>
-</dependencies>
-....
-
-See the section on filter definition for more information about filters.
-
-[[system-dependencies]]
-==== System dependencies
-
-The `system` element expresses a dependency which is satisfied by
-accessing paths and packages from the class loader which loaded JBoss
-Modules (this is usually the system’s application class loader). The
-element supports the following attributes:
-
-[cols="1,1,1,1,4",options="header"]
-|===
-
-|Attribute
-|Type
-|Required?
-|Version(s)
-|Description
-
-|export
-|boolean
-|1.0+
-|No
-|Specify whether this dependency is re-exported by default; if not
-specified, defaults to `false`.
-|===
-
-It also contains nested elements as follows:
-
-[cols="1,1,1,4",options="header"]
-|===
-|Element
-|Required?
-|Version(s)
-|Description
-
-|paths
-|Yes
-|1.0+
-|Specify the list of paths (or packages, with ``.'' transformed to ``/'')
-which are exposed by this dependency.
-
-|exports
-|No
-|1.0+
-|A filter which restricts the list of packages/paths which are
-re-exported by this module. If not specified, all paths are selected
-(does not apply if the export attribute on the system element is false
-or unspecified).
-|===
-
-[[the-root-module-alias-element]]
-==== The root module-alias element
-
-A module alias descriptor defines a module which is simply another name
-for a second module. The root element is called `module-alias` and
-supports the following attributes:
-
-[cols="1,1,1,1,4",options="header"]
-|===
-
-|Attribute
-|Type
-|Required?
-|Version(s)
-|Description
-
-|name
-|string
-|Yes
-|1.0+
-|The name of the module. This name must match the name of the module
-being loaded.
-
-|slot
-|string
-|No
-|1.0-1.5
-|The version slot. If not specified, defaults to ``main''.  Deprecated in 1.5; removed in 1.6.
-
-|target-name
-|string
-|Yes
-|1.0+
-|The name of the module to which this alias refers.
-
-|target-slot
-|string
-|No
-|1.0-1.5
-|The version slot of the module to which this alias refers. If not
-specified, defaults to ``main''.  Deprecated in 1.5; removed in 1.6.
-
-|===
-
-=== Manifest Module Information
-
-[[introduction-1]]
-==== Introduction
-
-The previous chapter discussed how module descriptors are structured and
-the options available when defining modules. This chapter will talk
-about how applications packaged as jars can declare that they depend on
-one or more modules.
-
-For example, lets say you have an application packaged in a jar file and
-want to run this code using JBoss Modules. In such cases we need to have
-a way to of telling JBoss Modules what modules our applications depends
-on so that the classes and resources in those modules are available to
-the application. The way this is done is by using a manifest header.
-
-[[dependencies-manifest-header]]
-==== Dependencies Manifest header
-
-The Dependencies manifest header is used to specify dependencies that a
-jar file has. The value is a comma-separated list, like this example:
-
-....
-Dependencies: org.some.module, org.another.module
-....
-
-You can also specify a version slot by appending the version slot after
-the module name like this:
-
-....
-Dependencies: org.some.module:main, org.another.module:1.0
-....
-
-Each entry follows this format:
-
-....
-<module-name> [optional] [export]
-....
-
-The `optional` flag indicates that this dependency is optional (if it
-is not present, no error is thrown). The `export` flag indicates that
-this dependency’s packages should be re-exported to consumers of the
-current module.
-
-Note that some implementations (such as JBoss AS) support more flags or
-arguments than this on each dependency. As such, arguments which are not
-recognized are automatically ignored.
-
-[[adding-the-dependencies-header-using-maven]]
-==== Adding the Dependencies header using Maven
-
-Below is an example of how the _Depencencies_ header can be added to a
-projects Maven pom.xml:
-
-....
-<plugins>
-   <plugin>
-      <groupId>org.apache.maven.plugins</groupId>
-      <artifactId>maven-jar-plugin</artifactId>
-      <version>2.3.1</version>
-      <configuration>
-         <archive>
-            <manifestEntries>
-               <Dependencies>org.some.module, org.another.module</Dependencies>
-            </manifestEntries>
-         </archive>
-     </configuration>
-   </plugin>
-</plugins>
-....
-
-[[module-names]]
+This allows the code in a module to know definitively what classes and resources it is sharing
+a class loader with, which can resolve conflicts caused when (for example) more than one
+version of a library must be used within the same application, or when certain libraries
+need control over what other libraries it loads services or other resources from.
+
+[id='loading']
+=== The module loading process
+
+Modules are loaded in a process which is similar (in concept) to the Java class loading process.
+The module loader queries each of its _module finders_ in order, asking for a module
+with the given name.  If found, the module finder may return a _specification_ object which
+describes the module, which is then used by the module loader to establish the new module.
+The new module contains a _module class loader_ which is then used to load the classes in the
+module.
+
+If the module finder does not find the module, the module loader may _delegate_ to another
+module loader to find the module.  If there is no delegation process established for the
+module loader, or the delegate module loader(s) did not find the module, then typically
+an exception will be thrown.
+
+[id='names']
 === Module names
 
-A module name is a dot-separated string which is used to uniquely identify a module within a module
-loader.  Names are typically organized along the same lines as package
-names, however there is no specific relationship between a module name
-and the packages it contains.  These are all examples of typical module
-names:
+Each module has a _name_.  This is a unique textual string that identifies the module being
+loaded.
 
+The name syntax is constrained only by the module loader in use.  The <<basic-repository,
+filesystem module repository>> uses a dot-separated, reverse domain name convention which is similar to the
+Java package name convention; here are some examples:
+
+.Typical filesystem repository module names
 * `org.apache.commons.logging`
 * `org.jboss.remoting`
 * `cglib`
 * `javax.ejb.api`
 * `ch.qos.cal10n`
 
-Most module loaders support loading a special module called `system`.
- This module refers to the class loader which loaded the
-`jboss-modules.jar` itself.  Due to the fact that this class loader may
-include just about anything, rather than using this module directly, one
-should make use
-of link:#imports-and-exports[import
-and export filtering] to present a reduced version of this module.
 
-[[version-slots]]
-==== Version slots
+The <<filesystem-repository,filesystem JAR repository>>
+uses the absolute path name of the JAR (for example, [filename]`/opt/jars/commons-lang.jar` or
+[filename]`C:\MyJars\commons-lang.jar`).  Other module loaders may use different conventions.  It is
+the responsibility of each module loader or module finder to enforce any validity checks on module
+names.
+
+[id='versions']
+=== Module versions
+
+Since JBoss Modules 1.6, a module may include an optional _version_ string.
+The module version is used for diagnostic purposes, and does not constrain or affect the resolution of the module graph
+(contrast with OSGi, wherein the bundle version is a part of its identity and strongly affects resolution logic).
+
+[id='version-syntax']
+==== Module version syntax
+
+A module version adheres to a strict syntax, which may described by the following grammar:
+
+.Version string grammar
+[source,abnf]
+----
+version         = letters-version / numbers-version
+
+letters-version = [ version separator ] letters / numbers-version letters
+
+numbers-version = [ version separator ] numbers / letters-version numbers
+
+separator       = "." / "-" / "+" / "_"
+
+letters         = 1*( letter )
+
+letter          = ; any valid Unicode code point for which Character.isLetter(int) is true
+
+digits          = 1* ( digit )
+
+digit           = ; any valid Unicode code point for which Character.digit(codePoint, 10) returns a valid value
+----
+
+JBoss Modules does not enforce one single version string convention; users are encouraged to choose whatever convention
+works best for their situation.  It is common, however, to use the version of the corresponding Maven
+artifact for a module's version string, for modules which are based on Maven artifacts.
+
+The following are all valid version strings:
+
+.Valid version string examples
+* `1.0.Beta3`
+* `10`
+* `Release9`
+* `12r6u4`
+* `5.9_224u5-build-2948+2017-11-04_11-32-04.003`
+
+[id='versions-examining']
+==== Examining versions at run time
+
+Versions are represented by the [java]`Version` class in JBoss Modules.  They are `Comparable` and have a
+stable sort order: short version strings sort before long version strings, and digit segments sort
+before letter segments.  Letter segments are sorted in a lexical (case-sensitive) manner using the
+Unicode code point of each letter.  Numeric segments are sorted by numeric value.
+Separators sort in the order _empty_, '.', '-', '+', '_' (from highest to lowest).
+
+In addition, the [java]`org.jboss.modules.Version.Iterator` class may be used to iterate the parts of a version, which
+may be useful in certain dynamic or plugin based systems, or for the introduction of a local version
+verification policy, in order to extract semantic information from a given version string.
+
+When JBoss Modules runs on Java 9 or later, the module name and version will appear in the stack
+trace of any exceptions, which is useful for diagnostic purposes.
+
+[id='slots']
+=== Module version slots
 
 Version slot identifiers were used when you wish to have more than one
 instance of a module in a module loader under the same name.  This may
@@ -641,8 +269,10 @@ Within the Modules API, a module identifier with a slot was represented by the
 parse identifier strings as well as assemble a name or a name plus a
 version slot identifier into a module identifier.
 
-The concept of slot names has been deprecated since version 1.5, and removed in 1.6
-and later, in order to more closely align with the future Java Platform's module
+[NOTE]
+====
+The concept of slot names has been deprecated since version 1.5
+in order to more closely align with the future Java Platform's module
 system, which has only names.  Legacy module identifiers containing a slot component are transformed
 into plain names in the following way:
 
@@ -651,8 +281,850 @@ into plain names in the following way:
 followed by a colon `:` character, followed by the slot name.
 * If the name portion of the identifier contains a colon `:` character, the character is escaped with a backslash `\`
 so that in the final name, it is given as `\:`.
+====
 
-[[native-libraries]]
+[id='class-loading-order']
+=== Class loading order
+
+Class loaders in Java can (for the most part) be broadly described as falling in to one of two
+categories: _parent-first_ or _child-first_.
+
+In JBoss Modules, module delegation is done graph-wise, not tree-wise, so modules generally may have
+more than one "parent".  Regardless, each module loader can determine what class loading order is used, including
+exotic hybrid orders wherein some dependencies are parent-first (i.e. checked before the current
+module) and some are child-first (i.e. checked after the current module).  However, all of the module
+loaders which are included with JBoss Modules use _child-first_ loading exclusively.
+
+The best reason for this can be described using a simple example.  Given two modules, A and B, which each depend
+on one another, like this:
+
+.Simple cycle
+image::fig-cycle.png[Module cycle,align="center"]
+
+If both of these modules contain the same class (or, more likely, resource), then when A attempts
+to load the class or resource, it will get B's version; likewise if B loads the class or resource,
+it will get A's version.  Needless to say, this can be very surprising at run time, and difficult
+to debug as well.  Using child-first loading, each module will see its own classes, avoiding this problem.
+
+However, there is a reason that parent-first loading is used pervasively in the JDK's simple
+class loading delegation tree.  If a library is provided by a parent class loader, then it may be
+that the child class loader should not be able to load another copy of it.  Using parent-first loading
+is a simple way to prefer the parent's version without affecting the child too much.
+
+With JBoss Modules, the better solution to this requirement is to exclude the packages which contain
+duplicated or undesirable resources.  The best approach here is to have care when packaging a given
+module, to ensure that it does not contain redundant classes.  However, container authors will note
+that this sometimes does not happen.  A container can however implement this technique on an automatic
+basis, by examining dependency package names, and pruning that set of package names from the set of
+packages that are to be defined by the module's own resources.
+
+[id='defining']
+== Using JBoss Modules to run an application
+
+Since module definition is essentially pluggable, a module can be
+defined in many different ways.  However, JBoss Modules ships with two
+basic implemented strategies which are most commonly utilized when running
+an application.
+
+The first strategy is the <<basic-repository>>
+approach.  Modules are organized in a directory hierarchy on the
+filesystem which is derived from the name and version of the module.
+ The content of the module's specific directory is comprised of a
+simple <<descriptors,module descriptor>> and all of the content itself
+(JARs or loose files).
+
+The second strategy is the <<jar-repository>> approach.  This approach
+runs individual JARs as modules.
+
+[id='basic-repository']
+=== Filesystem module repository
+
+The filesystem module repository is a module storage format which is used
+for applications which are comprised of a graph of modules.  The basis of
+operation for the filesystem module repository is that modules are located
+by scanning one or more _module path_ directories for a module descriptor
+whose location is determined by converting the dot-separated
+segments of the module name to path elements, followed by a path element
+which consists of the version slot for that module (if any). This path is then
+appended to each module path root in turn until a file named
+[filename]`module.xml` is found within it.
+
+The [filename]`module.xml` file format is described in the <<descriptors>> section.
+
+[id='jar-repository']
+=== JAR module repository
+
+The JAR-backed module repository format allows individual JARs to run as modules directly.
+This repository type is designed for executing JARs from the
+command line as well as situations where a JAR may be deployed in a
+container such as the JBoss Application Server.
+
+Each JAR's [filename]`MANIFEST.MF` file can be used to define dependencies and
+other module-related information.  In addition, JARs which are loaded by this repository
+may themselves contain embedded module repositories which are visible only to that JAR.
+This method of packaging has an advantage over traditional "fat" JAR approaches in that
+each nested module has the full JBoss Modules isolation and linking capabilities available.
+
+The format and meaning of the various [filename]`MANIFEST.MF` attributes are described in the
+<<manifest>> section.
+
+[id='descriptors']
+== XML Module descriptors
+
+Module loaders may, but are not required to, use an XML _module descriptor_.
+An XML module descriptor file describes the structure,
+content, dependencies, filtering, and other attributes of a module. This
+format is highly expressive and is tailored for use by
+module loaders which require the module description to
+reside alongside its content, rather than inside it.
+
+Below is an example of a module descriptor used by the JBoss Application
+Server:
+
+.Example module descriptor
+----
+<?xml version="1.0" encoding="UTF-8"?>
+
+<module xmlns="urn:jboss:module:1.6" name="org.jboss.msc" version="1.0.1.GA">
+
+    <main-class name="org.jboss.msc.Version"/>
+
+    <properties>
+        <property name="my.property" value="foo"/>
+    </properties>
+
+    <resources>
+        <resource-root path="jboss-msc-1.0.1.GA.jar"/>
+    </resources>
+
+    <dependencies>
+        <module name="javax.api"/>
+        <module name="org.jboss.logging"/>
+        <module name="org.jboss.modules"/>
+
+        <!-- Optional deps -->
+        <module name="javax.inject.api" optional="true"/>
+        <module name="org.jboss.threads" optional="true"/>
+        <module name="org.jboss.vfs" optional="true"/>
+    </dependencies>
+</module>
+----
+
+Not every JBoss Modules release has a corresponding namespace.  The supported namespaces are as
+follows:
+
+.Allowed namespaces for `module.xml` files
+[cols="3m,^",options="header"]
+|===
+|Namespace
+|Version(s)
+
+|urn:jboss:module:1.0
+|1.0+
+
+|urn:jboss:module:1.1
+|1.1+
+
+|urn:jboss:module:1.2
+|1.2+
+
+|urn:jboss:module:1.3
+|1.3+
+
+|urn:jboss:module:1.5
+|1.5+
+
+|urn:jboss:module:1.6
+|1.6+
+
+|===
+
+Note that every version of JBoss Modules supports the full descriptor formats of all previous
+versions, including elements that were deprecated or removed in later versions.
+
+[id='root-element']
+=== The root `module` element
+
+The root element of the module descriptor determines what type of
+module is being specified. There are two types: a regular _module_ and a
+_module alias_.
+
+Regular module descriptors have a root element named `module` from the
+`urn:jboss:module:xxx` namespace. The `module` element supports the
+following attributes:
+
+.Attributes of the `module` element
+[cols="m,1,^,^,4",options="header"]
+|===
+
+|Attribute
+|Type
+|Use
+|Version(s)
+|Description
+
+|name
+|string
+|required
+|1.0+
+|The name of the module. This name must match the name of the module being loaded.
+
+|slot
+|string
+|optional
+|1.0-1.5
+|The modules slot. If not specified, defaults to `"main"`. Deprecated in 1.5, removed in 1.6.
+
+|<<versions,version>>
+|string
+|optional
+|1.6+
+|The optional version designation of the module.  Appears in stack traces on Java 9+.
+
+|===
+
+The `module` element may contain any of the following elements:
+
+.Child elements of the `module` element
+[cols="m,^,^,^,4",options="header"]
+|===
+|Element
+|Minimum
+|Maximum
+|Version(s)
+|Description
+
+|<<main-class-element,main-class>>
+|0
+|1
+|1.0+
+|The name of the main class of this module, if any.
+
+|<<properties-element,properties>>
+|0
+|1
+|1.1+
+|A list of properties to make available on this module.
+
+|<<resources-element,resources>>
+|0
+|1
+|1.0+
+|The resources that make up this module.
+
+|<<dependencies-element,dependencies>>
+|0
+|1
+|1.0+
+|The dependencies for this module.
+
+|<<path-filters,exports>>
+|0
+|1
+|1.0+
+|The path filter expressions to apply to the export filter of the local resources of this module.
+
+|<<permissions-element,permissions>>
+|0
+|1
+|1.2+
+|The permissions that are to be granted to this module when a _security manager_ is present.
+
+|===
+
+[id='main-class-element']
+==== The `main-class` element
+
+A module which is defined with a `main-class` element is said to be
+_executable_. In other words, the module name can be listed on the
+command line, and the standard static [java]`main(String[])` method in the
+named module's `main-class` will be loaded and executed.
+
+The `main-class` element supports the following attributes:
+
+.Attributes of the `main-class` element
+[cols="m,1,^,^,4",options="header"]
+|===
+
+|Attribute
+|Type
+|Use
+|Version(s)
+|Description
+
+|name
+|string
+|required
+|1.0+
+|The name of the main class, which must be <<visibility,visible>> from this module.
+
+|===
+
+This element may not contain any nested elements.
+
+[NOTE]
+
+The main class need not come from the module's actual resources, nor
+does it need to be exported. Any public class which is visible to the
+module - which includes all imported dependencies as well as all
+resource roots - is a valid main class, as long as it has a method with
+the signature [java]`public static void main(String[] args)`.
+
+[id='resources-element']
+==== The `resources` element
+
+In order for a module to actually have content, you must define the
+`resources` element with at least one resource root.
+
+A _resource root_ is a specification of a location where the class
+loader for a module will look for classes and resources. Each module has
+zero or more resource roots, though most regular modules will contain
+exactly one, which refers to the JAR file with the module's content.
+
+It is possible to define resource roots for a module which correspond to
+JAR files as well as file system directories, just like class paths.
+File system directory resource roots have the additional property of
+supporting the specification of native libraries, which cannot be loaded
+from JAR files.
+
+The `resources` element may contain any of the following elements:
+
+.Child elements of the `resources` element
+[cols="m,^,^,^,4",options="header"]
+|===
+|Element
+|Minimum
+|Maximum
+|Version(s)
+|Description
+
+|<<resource-root-element,resource-root>>
+|0
+|unbounded
+|1.0+
+|A file or directory on the filesystem whose contents are to be added to the module as classes and resources.
+
+|<<artifact-element,artifact>>
+|0
+|unbounded
+|1.1+
+|A Maven artifact whose contents are to be added to the module as classes and resources.
+
+|===
+
+[id='resource-root-element']
+===== The `resource-root` element
+
+The `resources` element does not support any attributes; it contains
+zero or more `resource-root` and/or `artifact` elements. The `resource-root` element
+supports the following attributes:
+
+.Attributes of the `resources` element
+[cols="m,1,^,^,4",options="header"]
+|===
+
+|Attribute
+|Type
+|Use
+|Version(s)
+|Description
+
+|path
+|string
+|required
+|1.0+
+|The path of this resource root, relative to the location of the
+module.xml file.
+
+|name
+|string
+|optional
+|1.0+
+|The name of the resource root. If not specified, defaults to the
+resource root's path.
+
+|===
+
+In addition, the `resource-root` element may contain a nested element:
+
+.Child elements of the `resource-root` element
+[cols="m,^,^,^,4",options="header"]
+|===
+|Element
+|Minimum
+|Maximum
+|Version(s)
+|Description
+
+|filter
+|0
+|1
+|1.0+
+|A path filter to apply to this resource root. If not specified, all
+paths are accepted.
+
+|===
+
+See the section on filter definition for more information about defining
+filters.
+
+[id='artifact-element']
+===== The `artifact` element
+
+[id='properties-element']
+===== The `properties` element
+
+The modules API exposes a method which can read property (string
+key-value pair) values from a module. To specify values for these
+properties you use the `properties` element which can contain zero or
+more `property` elements, each supporting the following attributes:
+
+.Attributes of the `property` child element
+[cols="m,1,^,^,4",options="header"]
+|===
+
+|Attribute
+|Type
+|Use
+|Version(s)
+|Description
+
+|name
+|string
+|required
+|1.1+
+|The name of the property.
+
+|value
+|string
+|optional
+|1.1+
+|The property value; if not given, the property value defaults to
+`true`.
+
+|===
+
+[id='dependencies-element']
+===== The `dependencies` element
+
+A module may express one or more dependencies on other module(s) via the
+`dependencies` element.
+
+The `dependencies` element does not support any attributes. It
+contains zero or more nested elements as follows:
+
+.Child elements of the `dependencies` element
+[cols="m,^,^,^,4",options="header"]
+|===
+|Element
+|Minimum
+|Maximum
+|Version(s)
+|Description
+
+|module
+|0
+|unbounded
+|1.0+
+|A module name upon which a dependency should be added.
+
+|system
+|0
+|unbounded
+|1.0+
+|A specification for expressing a dependency upon the system or
+application class path.
+
+|===
+
+[id='dependencies-module-element']
+====== The `module` dependency element
+
+The `module` element supports the following attributes:
+
+.Attributes of the `module` dependency element
+[cols="m,1,^,^,4",options="header"]
+|===
+
+|Attribute
+|Type
+|Use
+|Version(s)
+|Description
+
+|name
+|string
+|required
+|1.0+
+|The name of the module upon which this module depends.
+
+|slot
+|string
+|optional
+|1.0-1.5
+|The version slot of the module upon which this module depends; defaults
+to `main`.  Deprecated in 1.5, removed in 1.6.
+
+|export
+|boolean
+|optional
+|1.0+
+|Specify whether this dependency is re-exported by default; if not
+specified, defaults to `false`.
+
+|services
+|enum
+|optional
+|1.0+
+|Specify whether this dependency's services
+footnoteref:[spi,For an introduction to the Java language's service provider interface mechanism, refer to: link:http://download.oracle.com/javase/tutorial/sound/SPI-intro.html[] ]
+are imported and/or exported. Possible values are `none`, `import`, or `export`;
+defaults to `none`.
+
+|optional
+|boolean
+|optional
+|1.0+
+|Specify whether this dependency is optional; defaults to `false`.
+
+|===
+
+In addition, the `module` element supports the following nested
+elements:
+
+.Child elements of the `module` dependency element
+[cols="m,^,^,^,4",options="header"]
+|===
+|Element
+|Minimum
+|Maximum
+|Version(s)
+|Description
+
+|imports
+|0
+|1
+|1.0+
+|A path filter used to restrict what paths are imported from the dependency.
+
+|exports
+|0
+|1
+|1.0+
+|A path filter used to restrict what imported paths are re-exported from
+this module.
+
+|===
+
+.Example of adding an explicit exclude for a dependency
+[source,xml]
+----
+<dependencies>
+    <module name="org.jboss.example">
+        <imports>
+            <exclude-set>
+                <path name="org/jboss/example/tests"/>
+            </exclude-set>
+        </imports>
+    </module>
+</dependencies>
+----
+
+See the section on filter definition for more information about filters.
+
+[id='system-dependency-element']
+====== The `system` dependency element
+
+The `system` element expresses a dependency which is satisfied by
+accessing paths and packages from the class loader which loaded JBoss
+Modules (this is usually the system's application class loader). The
+element supports the following attributes:
+
+.Attributes of the `system` dependency element
+[cols="m,1,^,^,4",options="header"]
+|===
+
+|Attribute
+|Type
+|Use
+|Version(s)
+|Description
+
+|export
+|boolean
+|optional
+|1.0+
+|Specify whether this dependency is re-exported by default; if not
+specified, defaults to `false`.
+|===
+
+It also contains nested elements as follows:
+
+.Child elements of the `system` dependency element
+[cols="m,^,^,^,4",options="header"]
+|===
+|Element
+|Minimum
+|Maximum
+|Version(s)
+|Description
+
+|paths
+|1
+|1
+|1.0+
+|Specify the list of paths (or packages, with `.` transformed to `/`)
+which are exposed by this dependency.
+
+|exports
+|0
+|1
+|1.0+
+|A filter which restricts the list of packages/paths which are
+re-exported by this module. If not specified, all paths are selected
+(does not apply if the export attribute on the system element is false
+or unspecified).
+|===
+
+[id='permissions-element']
+==== The `permissions` element
+
+The `permissions` element contains the following child elements:
+
+.Child elements of the `permissions` element
+[cols="m,^,^,^,4",options="header"]
+|===
+|Element
+|Minimum
+|Maximum
+|Version(s)
+|Description
+
+|permission
+|0
+|unbounded
+|1.2+
+|A granted permission.
+
+|===
+
+The nested `permission` element supports the following attributes:
+
+.Attributes of the `permission` element
+[cols="m,1,^,^,4",options="header"]
+|===
+
+|Attribute
+|Type
+|Use
+|Version(s)
+|Description
+
+|permission
+|string
+|required
+|1.2+
+|The qualified class name of the permission to grant.
+
+|name
+|string
+|optional
+|1.2+
+|The permission name to provide to the permission class constructor.
+
+|actions
+|string
+|optional
+|1.2+
+|The (optional) list of actions, required by some permission types.
+
+|===
+
+WARNING: See <<security-manager>> for important information on using the security manager.
+
+[id='alias-element']
+=== The root `module-alias` element
+
+A module alias descriptor defines a module which is simply another name
+for a second module. The root element is called `module-alias` and
+supports the following attributes:
+
+.Attributes of the `module-alias` element
+[cols="2m,1,^,^,4",options="header"]
+|===
+
+|Attribute
+|Type
+|Use
+|Version(s)
+|Description
+
+|name
+|string
+|required
+|1.0+
+|The name of the module. This name must match the name of the module
+being loaded.
+
+|slot
+|string
+|optional
+|1.0-1.5
+|The version slot. If not specified, defaults to `main`.
+Deprecated in 1.5; not supported
+module descriptors in the  `urn:jboss:module:1.6` namespace or later.
+
+|target-name
+|string
+|required
+|1.0+
+|The name of the module to which this alias refers.
+
+|target-slot
+|string
+|optional
+|1.0-1.5
+|The version slot of the module to which this alias refers. If not
+specified, defaults to `main`.
+Deprecated in 1.5; not supported
+module descriptors in the  `urn:jboss:module:1.6` namespace or later.
+
+|===
+
+[id='path-filters']
+=== Filters
+
+Many elements in the XML descriptor format support embedding a _filter_ element.  The name
+of the filter element varies by context, but they always support the same content.
+
+.Child elements of a filter element
+[cols="m,^,^,^,4",options="header"]
+|===
+|Element
+|Minimum
+|Maximum
+|Version(s)
+|Description
+
+|include
+|0
+|unbounded
+|1.0+
+|A <<path-specification,path specification>> to include.
+
+|exclude
+|0
+|unbounded
+|1.0+
+|A <<path-specification,path specification>> to exclude.
+
+|include-set
+|0
+|unbounded
+|1.0+
+|An exact <<path-set,path set>> to include.
+
+|exclude-set
+|0
+|unbounded
+|1.0+
+|An exact <<path-set,path set>> to include.
+
+|===
+
+[id='path-specification']
+==== Path specifications
+
+A path specification is a special pattern or "glob" which is compared against incoming path names
+to determine if they match the specification.  JBoss Modules paths are a sequence
+of names separated by a literal forward slash `/`.  A path specification allows wildcard characters
+to take the place of part of the path, and is comprised of a sequence of `path` elements.
+
+.Attributes of a path specification
+[cols="m,^,^,^,4",options="header"]
+|===
+|Element
+|Minimum
+|Maximum
+|Version(s)
+|Description
+
+|name
+|0
+|unbounded
+|1.0+
+|A path string, which possibly includes one or more wildcards.
+
+|===
+
+The following wildcards are supported:
+
+.Supported wildcard expressions of a path specification
+[cols="m,^,6",options="header"]
+|===
+|Pattern
+|Version(s)
+|Description
+
+|?
+|1.0+
+|Match a single character.
+
+|*
+|1.0+
+|Match a single path component.
+
+|**
+|1.0+
+|Match all the remaining path components.
+
+|===
+
+[id='path-set']
+==== Path sets
+
+A path set is a fixed set of literal path names.  Path sets do not support wildcards, however,
+they are more efficient than path specifications for large numbers of paths because an
+entire set can be checked in one operation, as opposed to path specifications which must be
+checked one pattern at a time.
+
+The path set is comprised of a sequence of `path` elements.
+
+.Path set child elements
+[cols="m,^,^,^,4",options="header"]
+|===
+|Element
+|Minimum
+|Maximum
+|Version(s)
+|Description
+
+|path
+|0
+|unbounded
+|1.0+
+|One path found in this set.
+
+|===
+
+.Attributes of the path set `path` element
+[cols="m,^,^,^,4",options="header"]
+|===
+|Element
+|Minimum
+|Maximum
+|Version(s)
+|Description
+
+|name
+|0
+|unbounded
+|1.0+
+|A literal path string.
+
+|===
+
+[id='native-libraries']
 === Native Libraries
 
 When using the default file system-backed module loader, each module
@@ -665,11 +1137,12 @@ The module class loader will search for native libraries by encoding the
 current detected platform into a directory name, appending it to the
 path of the `lib` directory, and testing the resultant directory for a
 matching native library file. For example, imagine a module named
-``org.foobar.gizmo'' which contains a native library which runs on Linux
+`org.foobar.gizmo` which contains a native library which runs on Linux
 for Intel 32- and 64-bit processors. It would have a module directory
 structure similar to this:
 
-....
+.Directory structure of a module with native libraries
+----
 org/
 └─ foobar/
    └─ gizmo/
@@ -681,7 +1154,7 @@ org/
             │  └─ libgizmo.so
             └─ linux-x86_64/
                └─ libgizmo.so
-....
+----
 
 In this case, the appropriate `libgizmo.so` will automatically be
 located. On platforms without a corresponding library, no library will
@@ -690,6 +1163,7 @@ be loaded.
 The platform string is in the form `<osname>-<cpuname>`. The following
 values may be used for the OS name:
 
+.Allowed native operating system names
 * `linux`
 * `macosx`
 * `win`
@@ -711,6 +1185,7 @@ values may be used for the OS name:
 
 The following values are recognized for the CPU name:
 
+.Allowed native CPU architecture names
 * `sparcv9`
 * `sparc`
 * `x86_64`
@@ -733,21 +1208,1168 @@ The following values are recognized for the CPU name:
 * `mips`
 * `unknown`
 
-[[module-execution]]
-== Module execution
+[id='manifest']
+== JAR repository module descriptors
 
-There are normally two ways in which a module may be directly executed.
- The module may be launched link:#executable-modules[by name from the static
-repository] like this:
+When JARs are loaded by the <<jar-repository,JAR repository loader>>, the metainformation of the
+module is stored within its [filename]`META-INF/MANIFEST.MF` file.
 
-....
-   java -jar jboss-modules.jar com.your.module
-....
+[id='manifest-main']
+=== Main manifest attributes
 
-Or, the module may be executed as a link:#819697[JAR file given on the
-command line] like this:
+The following attributes are supported
+in the main section of the manifest:
 
-....
-   java -jar jboss-module.jar -jar your-app.jar
-....
+.Main manifest attributes
+[cols="2m,^,^,^2,4",options="header"]
+|===
+
+|Attribute
+|Use
+|Version(s)
+|Specified By
+|Description
+
+|<<manifest-dependencies,Dependencies>>
+|optional
+|1.0+
+|JBoss Modules
+|A comma-separated list of module dependency specifications, as described in <<manifest-dependencies>>.
+
+|Class-Path
+|optional
+|1.0+
+|Standard JAR
+|A whitespace-separated list of paths (relative URLs) of JARs that this JAR depends on.
+
+|Main-Class
+|optional
+|1.0+
+|Standard JAR
+|The name of the main class of this JAR module.
+
+|<<versions,Module-Version>>
+|optional
+|1.7+
+|JBoss Modules
+|The version string to use for the module represented by this JAR.
+
+|Extension-List
+|unsupported
+|1.7+
+|Standard JAR
+|Not presently supported; this functionality is expected to be removed from Java.
+
+|===
+
+NOTE: As of JBoss Modules version 1.7 and later, each JAR listed in the `Class-Path`
+is loaded as a separate module.  Prior to 1.7, the class path was collapsed into a
+single module with multiple resources.
+
+[id='manifest-dependencies']
+==== The `Dependencies` manifest attribute
+
+The `Dependencies` manifest attribute specifies a comma-delimited list of module
+dependencies to add to the JAR module.  The module
+dependency may be located within the JAR itself, or it may be loaded from the
+<<basic-repository,filesystem repository>> by way of the module path.
+
+The dependency attribute has the following overall syntax:
+
+.Dependency attribute grammar
+[source,abnf]
+----
+dependencies    = module-name *( " " modifier ) *( "," module-name *( " " modifier ) )
+
+module-name     = ; any valid module name
+
+modifier        = "optional" / "export" / "services"
+----
+
+The following modifiers are supported:
+
+.`Dependency` manifest attribute modifiers
+[cols="m,^,^,5",options="header"]
+|===
+
+|Modifier
+|Use
+|Version(s)
+|Description
+
+|optional
+|optional
+|1.0+
+|Specify that the dependency is optional.
+
+|export
+|optional
+|1.0+
+|Specify that the paths imported from the dependency should be re-exported to modules
+which import this module.
+
+|services
+|optional
+|1.7+
+|Specify that the given dependency's `ServiceLoader`-based services should be imported into this module.
+
+|===
+
+NOTE: Some implementations (such as WildFly) support additional flags
+which are not listed here. Flags which are not recognized are silently ignored.
+
+[id='manifest-dependencies-maven']
+===== Adding the `Dependencies` attribute using Maven
+
+Below is an example of how the `Dependencies` attribute can be added to a
+projects Maven pom.xml.
+
+.Maven snippet to add `Dependencies` to the manifest
+[source,xml]
+----
+<plugins>
+   <plugin>
+      <artifactId>maven-jar-plugin</artifactId>
+      <version>2.3.1</version>
+      <configuration>
+         <archive>
+            <manifestEntries>
+               <Dependencies>org.some.module, org.another.module</Dependencies>
+            </manifestEntries>
+         </archive>
+     </configuration>
+   </plugin>
+</plugins>
+----
+
+[id='jar-permissions']
+=== JAR Permissions
+
+As of JBoss Modules 1.7, support has been added to allow JAR module permissions to be
+specified using a standard Java EE `META-INF/permissions.xml` file.  If this file is found
+within the JAR, then that file is read and the permissions that are listed therein are
+used as the static permission set of the module's protection domain.  The set of permissions
+may be additionally restricted, depending on the execution environment.
+
+NOTE: While the `permissions.xml` format is based on the Java EE standard, JBoss Modules does
+not require that the root element be qualified with a namespace or version attribute.
+
+.Example of a `META-INF/permissions.xml` file
+[source,xml]
+----
+<?xml version="1.0" encoding="UTF-8"?>
+
+<permissions>
+    <permission>
+        <class-name>java.util.PropertyPermission</class-name>
+        <name>org.mycompany.*</name>
+        <actions>read</actions>
+    </permission>
+    <permission>
+        <class-name>java.io.FilePermission</class-name>
+        <name>/opt/application/data/-</name>
+        <actions>*</actions>
+    </permission>
+</permissions>
+----
+
+WARNING: See <<security-manager>> for important information on using the security manager.
+
+[id='jar-nested']
+=== Nested module repository
+
+JARs which are launched on the command line (or programmatically established as modules) can optionally
+include a private, nested repository.
+
+The root of this repository is the [filename]`modules` directory within the root of the archive.
+Within this directory, files are laid out exactly as described in the <<basic-repository>> section,
+with one difference: JAR file content is not supported, so during the assembly
+of such a repository, the nested JAR must be extracted.  Note that Maven artifact resources are
+supported.
+
+NOTE: Prior to JBoss Modules 1.7, only the primary JAR given on the command line or as the main
+argument to `JarModuleFinder` could contain embedded modules, and they were not private to that JAR,
+being visible to other JARs in the transitive `Class-Path`.
+In 1.7 and later, every JAR included in the transitive `Class-Path` can have
+its own embedded module repository; `JarModuleFinder` has been deprecated in favor of
+the more robust `FileSystemClassPathModuleFinder`.
+
+
+[id='running']
+== Running JBoss Modules
+
+In order to actually use a modular application, JBoss Modules has to be bootstrapped in some way.
+Most commonly, it will be launched directly from the command line, passing one or more command line
+arguments.
+
+The command line structure depends on the type of modular application being executed.  However, for
+all modes, the structure of the command line is like this:
+
+.Command line syntax
+[source]
+----
+java [ <jvm option>... ] -jar jboss-modules.jar [ <option>... ] <program spec> [ args... ]
+----
+
+The syntax of the `program spec` is as follows:
+
+.Supported execution modes
+[cols="2m,2,4m,^,5",options="header"]
+|===
+|Switch
+|Name
+|Argument(s)
+|Version
+|Description
+
+|<none>
+|module
+|<module-name>
+|1.0+
+|Run the named module's `main-class`.
+
+|<none>
+|module+class
+|<module-name>/<class-name>
+|1.7+
+|Run the named class in the named module.
+
+|-jar
+|JAR
+|<file-name>
+|1.0+
+|Run the given JAR file name as a module.
+
+|-cp +
+-classpath
+|class path
+|<path-spec> <class-name>
+|1.0+
+|Build a set of modules representing the class path, and run the given class name (implies `-class`,
+hence the extra argument). The set
+is delimited by the standard path separator for the platform.
+
+|-class
+|class
+|<class-name>
+|1.0+
+|Run the given class name, which must be found in JBoss Modules or the platform class path.
+
+|===
+
+NOTE: Prior to JBoss Modules 1.7, the JAR and class path modes were implemented using a single
+module for the entire class path.  Since 1.7, each item is now a separate module.
+
+The supported options are as follows:
+
+.Supported command line options
+[cols="2m,2m,^,^,6",options="header"]
+|===
+|Option
+|Argument
+|Modes
+|Version
+|Description
+
+|-help
+|<none>
+|all
+|1.0+
+|Display a summary of supported command line options, and exit.
+
+|-version
+|<none>
+|all
+|1.0+
+|Display the version of JBoss Modules, and exit.
+
+|-mp +
+-modulepath
+|<path-spec>
+|all
+|1.0+
+|Specify the set of paths to scan in order to find modules in
+the <<basic-repository,filesystem repository>>.  The set
+is delimited by the standard path separator for the platform.
+
+|-dep +
+-dependencies
+|<module-specs>
+|class, class&nbsp;path
+|1.0+
+|Specify a comma-delimited list of dependencies to add to the given class path modules.
+
+|-secmgr
+|<none>
+|all
+|1.2+
+|Indicate that the application should be loaded with the
+<<security-manager,security manager>> active, discovering it from the target module, and
+falling back to the default security manager implementation.
+
+|-secmgrmodule
+|<module-name>
+|all
+|1.2+
+|Indicate that the application should be loaded with the
+<<security-manager,security manager>> active, loading it from the given module.
+
+|-debuglog
+|<none>
+|all
+|1.0+
+|Enable trace logging to the console at startup.
+
+|===
+
+NOTE: See the section <<security-manager>> for more information about running
+a JBoss Modules-based application within a security manager.
+
+
+[id='security-manager']
+== JBoss Modules and the Java security manager
+
+JBoss Modules is designed to be able to easily run applications within a security manager.  The
+primary benefit of the security manager is to prevent applications from being exploited for
+malicious purposes, by allowing each module to define a maximum permission set that it must
+adhere to.  This makes it more difficult for an attacker to cause a program to perform actions
+which were not intentionally allowed.
+
+WARNING: Using the security manager is not guaranteed to provide safety when running untrusted
+code and should never be used for this purpose.  Only the operating system can provide a
+sufficient level of safety in such a scenario.  In particular, if the JAR module repository loader
+is used in this manner, the JAR should first be examined for embedded `permissions.xml` files as
+well as `<permissions>` stanzas within any embedded module descriptors.
+
+[id='security-manager-basics']
+=== Security manager basics
+
+The mechanism by which this is accomplished is through the specification of a _protection domain_
+when module classes are defined.  The protection domain is comprised of a _code source_
+and a set of permissions which are to be granted to the module.  The code source in turn
+is assembled from a URL in
+combination with an array of code signers.
+
+Protection domains can be _static_ or _dynamic_.  A static protection domain has a fixed set
+of permissions and can be evaluated quickly.  A dynamic protection domain requires that each
+access be re-checked against the installed system `java.security.Policy` to determine what
+permissions apply to that access.
+
+The protection domain which is assigned to each class in each module is determined by the
+corresponding module loader.
+All the module loaders which are included in JBoss Modules use the same
+general strategy: permissions are extracted from the module definition, and used to assemble
+a static protection domain whose code source is the location of the resource loader which loaded
+the class in question.  Code signers are extracted from signed JARs in a standard way.
+
+[id='permission-checking']
+==== Permission checking
+
+Permissions are most commonly checked by an application, library, or the JDK using
+a block of code like this:
+
+.Permission checking example
+[source,java]
+----
+public class MyClass {
+    // [ ... ]
+
+    /**
+     * Permission instance to use for our permission check.
+     */
+    static final Permission PERM_TO_CHECK = new RuntimePermission("getClassLoader");
+
+    // [ ... ]
+
+    /**
+     * Perform an operation.
+     *
+     * @throws SecurityException if a security manager is installed and the
+     *     caller does not have the {@code getClassLoader} {@link RuntimePermission}
+     */
+    public void performOperation() throws SecurityException {
+        // we can only check if there is a security manager installed
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            // here's the actual permission check; throws an exception on failure
+            sm.checkPermission(PERM_TO_CHECK);
+        }
+        // now it's safe to perform the operation
+
+        // [ ... ]
+    }
+
+    // [ ... ]
+}
+----
+
+[id='access-control-context']
+==== Access control context
+
+The _access control context_ is what determines the permission set that is applicable at the
+point where the permission is checked.  It is comprised of a list of all the protection domains
+that are in effect for a given calling context, which in turn is derived from the combination
+of the current thread's call stack and any inherited context that was set either when the thread
+was created or explicitly by way of a <<doprivileged-saved-acc,special method call>>.
+
+The currently effective access control context can be captured by calling the
+static `AccessController.getContext()` method, which returns an instance of
+`AccessControlContext` which represents the access control context in effect
+when that method was called.
+
+The effective permission set used for access checks on a given access control context
+is the _intersection_ of
+all the permissions granted to each protection domain which is a part of the access control
+context.  This means that calling a method can never grant additional permissions.
+
+This can be a problem if a class must perform an action for which _it_ is authorized but
+_its caller_ is not.  In such a situation, the class performing the action must use the
+`doPrivileged` method of the `java.security.AccessController` class.
+
+[id='doprivileged']
+==== `AccessController.doPrivileged()`
+
+When a different set of permissions is required by a given program unit, the `doPrivileged`
+method must be called.  This method can run an action which returns a value, or
+an action which returns a value and throws an exception, under a different access control
+context than the one that is effective when the method was called.
+
+[id='doprivileged-full']
+===== Running an action with full privileges
+
+The most common form of `doPrivileged` usage is to run a given action with the full privileges
+of the class which calls the `doPrivileged` method.  This is accomplished like this, building on
+the permission checking example above:
+
+.Basic `doPrivileged` example
+[source,java]
+----
+public class MyClass {
+    // [ ... ]
+
+    /**
+     * Permission instance to use for our permission check.
+     */
+    static final Permission PERM_TO_CHECK = new RuntimePermission("getClassLoader");
+
+    // [ ... ]
+
+    /**
+     * Perform an operation.
+     *
+     * @throws SecurityException if a security manager is installed and the
+     *     caller does not have the {@code getClassLoader} {@link RuntimePermission}
+     */
+    public void performOperation() throws SecurityException {
+        // we can only check if there is a security manager installed
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            // here's the actual permission check; throws an exception on failure
+            sm.checkPermission(PERM_TO_CHECK);
+        }
+        // now it's safe to perform the operation
+        // we need extra permissions to do our work!
+        AccessController.doPrivileged(new PrivilegedAction<Void>() {
+            Void run() {
+                // perform the operation with full privileges
+                // [ ... ]
+                return null;
+            }
+        });
+    }
+
+    // [ ... ]
+}
+----
+
+Note that we are only performing the `doPrivileged` call _after_ we've checked another permission
+first.
+
+WARNING: It is very important that the `doPrivileged` method never be used in this way
+_unless_ it can be shown that the only paths to that method call all introduce a permission
+check of their own which mediates access to that operation.  This is necessary in order to
+avoid the possibility that such a call path would be able to circumvent one or more other
+access checks.
+
+[id='doprivileged-restricted']
+===== Running an action with restricted permissions
+
+It is sometimes the case that a method must perform an action with some limited set of
+privileges.  There exists a variation of `doPrivileged` which accepts a variable number
+of permissions which are to form the upper bound of permissions.  Here is an example:
+
+[source,java]
+.Restricted `doPrivileged` example
+----
+    // [ ... ]
+
+    AccessController.doPrivileged(new PrivilegedAction<Void>() {
+        Void run() {
+            // [ ... ]
+            return null;
+        }
+    }, null, new FilePermission("/some/restricted/path/-", "read"));
+
+    // [ ... ]
+----
+
+Note that the second parameter should be left `null` in this case.
+
+[id='doprivileged-saved-acc']
+===== Running an action with a saved access control context
+
+Sometimes it is necessary for a method to perform an action using an access control
+context which was captured previously.  For example, a class may capture the access
+control context during its constructor and use it for its operations, so that the privileges
+that were in effect when the object was constructed are granted to any users of that object's
+operation.
+
+This can be accomplished using one of the `doPrivileged` variants which accept an
+`AccessControlContext` as a parameter.
+
+WARNING: Anyone can construct an access control context with as many (or as few) restrictions
+as they like!  Therefore it is very important that secure code must _never_ accept an access
+control object, or directly use such an object that was accepted, from untrusted sources.  It
+is generally best to only use contexts that you have captured yourself using
+`AccessController.getContext()` directly.
+
+[id='security-manager-discovery']
+=== Security manager discovery
+
+When starting with the `-secmgr` flag, JBoss Modules will attempt to discover a security
+manager implementation to use from the module of the main class.  The
+`java.util.ServiceLoader` SPI mechanism is used after that module is loaded (but before it is run)
+to find and instantiate the security manager to use.  If no security manager instance is found
+or could be instantiated, then the default system `SecurityManager` implementation is installed.
+
+Note that the `-secmgrmodule <module-name>` flag works in a similar manner, except that the SPI mechanism
+searches the given module instead of the boot module.
+
+[id='security-best-practices']
+=== Best practices
+
+Giving a full analysis of security manager operation in Java is well beyond the scope of this
+guide.  However, there are a few basic techniques that are worth iterating which will help avoid
+some common pitfalls.
+
+.Some security manager best practices
+* Always perform a permission check before running a publicly accessible method that employs
+one or more full-privileged or restricted-privileged `doPrivileged` call(s).
+* Never accept an access control context from untrusted code; always use
+`AccessController.getContext()` from an unprivileged context to acquire a caller's context.
+* Consider using restricted-permission `doPrivileged` calls when possible.
+* Use constant permission objects whenever possible for permission checks and
+restricted-permission `doPrivileged` calls.
+* It is tempting to skip `doPrivileged` calls when a security manager is not installed; however,
+this can cause problems when a security manager is installed later in execution, which can happen
+in some container environments, particularly if such a call is expected to be long-running or
+if the body of the call may call an operation which captures the access control context for later
+use.
+
+[id='the-api']
+== Working with the JBoss Modules API
+
+Writing applications which take advantage of the capabilities of JBoss Modules require usage
+of the API. This section outlines the important constructs of the API and how to use them.
+
+[id='modules-and-class-loaders']
+=== Modules and module class loaders
+
+Every module is backed by a `Module` instance and a corresponding `ModuleClassLoader` instance.
+You can navigate from one to the other using the `Module.getClassLoader()` and
+`ModuleClassLoader.getModule()` methods.  Note however that the `Module.getClassLoader()` method
+is governed by the `getClassLoader` `RuntimePermission` in security manager environments.
+
+The `ModuleClassLoader` instance is what is used by the JDK to load and link classes for a given module.
+It can also be used to directly load resources and classes using the standard `ClassLoader` API.
+
+The `Module` instance can be used to load exported classes, resources, and services from the module.
+
+[id='module-loaders']
+=== Module loaders and module finders
+
+The `ModuleLoader` class is responsible for locating, loading, and linking modules.  The
+`loadModule()` method can be used to find a module by name, returning its `Module` instance
+on success.  In addition, the module loader for
+a given class or class loader may be found using the static
+`forClass()` and `forClassLoader()` utility methods.
+
+A module loader may delegate the task of locating modules to one or more implementations of
+the `ModuleFinder` interface, which in turn must find the module and construct its specification.
+
+[id='boot-module-loader']
+==== The boot module loader
+
+During initialization of JBoss Modules, the _boot module loader_ is established.  This is generally
+a module loader corresponding to a filesystem-backed module repository.  The boot module loader
+is typically used to load from a base set of modules which is bundled with a modular application.
+It can be determined by calling the static `Module.getBootModuleLoader()` method.
+
+[id='context-class-loader']
+==== The context class loader
+
+The thread context class loader (also known as the _TCCL_) is used to identify the class loader
+of the application being run.  When JBoss Modules starts up, the TCCL is initialized to the module
+containing the main class.
+
+[id='custom-module-loaders']
+=== Implementing your own module loaders and finders
+
+Plugin and deployment based systems which have a need to implement custom behavior must
+generally implement their own module loaders and module finders.
+
+In most cases, custom module loading behavior can be achieved wholly by implementing
+`ModuleFinder` and using it with an instance of the base `ModuleLoader` class.
+
+.An example of a custom module finder
+[source,java]
+----
+/**
+ * This module loader loads module content from a plugin directory.  The
+ * module name is the name of the JAR minus its extension (if any).
+ */
+public final class PluginModuleFinder implements ModuleFinder {
+    private final Path basePath;
+
+    public PluginModuleFinder(Path basePath) {
+        if (basePath == null) throw new IllegalArgumentException("null basePath");
+        this.basePath = basePath;
+    }
+
+    public ModuleSpec findModule(String name, ModuleLoader delegateLoader)
+        throws ModuleLoadException
+    {
+        // 8< --- 8<
+        // (construct and return the module specification)
+        // 8< --- 8<
+    }
+}
+----
+
+NOTE: The `ModuleFinder` interface has two `findModule` methods, both of which are marked `default`.
+This is because earlier versions of the API used the `ModuleIdentifier` class to locate modules.
+New implementations of `ModuleFinder` should implement the `findModule` method which accepts
+a `String` name, and disregard the other (deprecated) method, which may be removed in a future
+release.
+
+==== Finding and specifying a module
+
+The custom module finder must do the work of locating the actual module, given
+its name.  The module finder must construct a `ModuleSpec` for the module being built.  This
+can be done by way of a `ModuleSpec.Builder`, instantiated by the `ModuleSpec.builder()` static
+method.  The module specification builder has methods to set the module name, its contents, and its
+dependencies, and to construct the final immutable `ModuleSpec` instance.
+
+In our simple plugin implementation, the module name is just the name of the JAR
+file without its `.jar` extension.  We also want to take some precaution to prevent clever hackers from escaping our plugin
+path using an absolute path or `..` path segments.
+
+.Finding and specifying the module
+[source,java]
+----
+    public ModuleSpec findModule(String name, ModuleLoader delegateLoader)
+        throws ModuleLoadException
+    {
+        // Make sure nobody escapes using a .. in the plugin name
+        name = PathUtils.relativize(PathUtils.canonicalize(name));
+        Path jarPath = basePath.resolve(name + ".jar");
+        if (Files.exists(jarPath)) {
+            ModuleSpec.Builder builder = ModuleSpec.build(name);
+            // 8< --- 8<
+            // (fill in the module specification)
+            // 8< --- 8<
+            ModuleSpec moduleSpec = builder.create();
+            return moduleSpec;
+        }
+        return null;
+    }
+----
+
+===== Resource specifications
+
+Most (but not all) modules include some kind of content.  This can be in the form of a JAR file,
+filesystem data, or simply some static in-memory content.
+
+In our example we want to use the JAR file content for our plugin.  In this example we will
+use the NIO.2 JAR filesystem API to provide the content.
+
+.Providing the module content
+[source,java]
+----
+            // Add the module JAR content
+            URI uri = URI.create("jar:" + jarPath.toUri());
+            FileSystem fs;
+            try {
+                fs = FileSystems.newFileSystem(uri, Collections.emptyMap());
+            } catch (IOException e) {
+                throw new ModuleLoadException(e);
+            }
+            final Path rootPath = fs.getRootDirectories().iterator().next();
+            builder.addResourceRoot(
+                ResourceLoaderSpec.createResourceLoaderSpec(
+                    ResourceLoaders.createPathResourceLoader("root", rootPath)
+                )
+            );
+----
+
+===== Dependency specifications
+
+Modules cannot function without dependency specifications.  The module's own content as well as
+the content of dependencies will only be visible to the module through adding dependencies.
+
+The order of dependencies is significant.  Since the module's own content must be added, its
+position in the order determines whether the module's class loader will behave in a parent-first,
+a child-first, or a hybrid manner.
+
+====== Including the module's own content
+
+The module's own content can be included by adding a dependency using a specification acquired
+from the no-argument `DependencySpec.createLocalDependencySpec()` method.  Let's add it in to
+our example.
+
+.Providing the module content dependency
+[source,java]
+----
+            // Add the module's own content
+            builder.addDependency(DependencySpec.OWN_DEPENDENCY);
+----
+
+[id='depending-other-modules']
+====== Depending on other modules
+
+Adding a dependency on another module within the same module loader is done using the
+`ModuleDependencySpecBuilder` class in this way:
+
+.A simple module dependency specification
+[source,java]
+----
+DependencySpec dep = new ModuleDependencySpecBuilder()
+    .setName("the-dependency-name")
+    .build();
+----
+
+TIP: In versions of JBoss Modules prior to 1.7, dependencies on other modules were created
+using the `DependencySpec.createModuleDependencySpec()` method.
+
+
+[id='depending-other-module-loaders']
+====== Depending on modules from other module loaders
+
+Adding a dependency on a module from another module loader is done by using the
+`setModuleLoader` method on `ModuleDependencySpecBuilder`.  The dependency
+will be looked up from that module loader instead of the module's own loader.
+
+TIP: In versions of JBoss Modules prior to 1.7, dependencies on modules from other module
+loaders was achieved using a form of the `DependencySpec.createModuleDependencySpec()` method
+which includes a `ModuleLoader` typed parameter.  In 1.7 and later, this method is deprecated.
+
+This is useful when there is more than one way to declare a dependency, and each type must
+come from a different namespace.  For example, file system JAR references might come from
+a `FileSystemClassPathModuleFinder`-based `ModuleLoader`, whereas `dot.separated.names` might
+come from a `LocalModuleLoader`.
+
+This strategy can be used not only for adding dependencies on modules in different name spaces,
+but also to add a dependency on your own module, even if you do not know your module's name
+or even the module loader that loaded it.  Here's an example:
+
+.Adding your own module as a dependency
+[source,java]
+----
+            // Add my own module as a dependency
+            final Module myModule = Module.forClass(getClass());
+            builder.addDependency(
+                new ModuleDependencySpecBuilder()
+                    .setModuleLoader(myModule.getModuleLoader())
+                    .setName(myModule.getName())
+                    .build()
+            );
+----
+
+TIP: The `ModuleFinder` interface's `findModule` method accepts a `ModuleLoader` which represents
+the module loader for delegation.  If this module loader is used in a dependency specification,
+it is the same as if the <<depending-other-modules,simple form>> of `createModuleDependencySpec`
+is used.
+
+NOTE: Module loaders which implement "fall-through" or "layered" delegation, where some modules
+in a given namespace might be loaded from one module loader and others might be loaded from a
+"parent" layer, should _not_ use this delegation strategy.  Instead, the
+<<module-loader-delegation,module loader delegation>> approach should be used.
+
+[id='depending-on-system']
+====== Depending on content from the JDK
+
+In some cases it is necessary to create a dependency to make system content visible.  This can
+be done using a "local" dependency specification, for example:
+
+[source,java]
+----
+DependencySpec spec = DependencySpec.createSystemDependencySpec(
+    Collections.singleton("javax/smartcardio")
+);
+----
+
+The given set should contain all the packages (in pathname form) that should be included
+in the dependency.  No other paths will be visible to the module being built, unless they
+come from other dependencies.
+
+[id='depending-on-non-modules']
+====== Depending on content from non-module sources
+
+In rare cases it is necessary to create a dependency on some other class loader or source.  This
+is accomplished using the `createLocalDependencySpec` methods which accept a `LocalLoader` instance.
+These methods also require a set of path names which are to be delegated to the given dependency.
+
+[id='complete-plugin-example']
+==== The complete example
+
+.The complete simple custom module loading example
+[source,java]
+----
+package example.plugins;
+
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Collections;
+
+import org.jboss.modules.DependencySpec;
+import org.jboss.modules.Module;
+import org.jboss.modules.ModuleDependencySpecBuilder;
+import org.jboss.modules.ModuleFinder;
+import org.jboss.modules.ModuleLoader;
+import org.jboss.modules.ModuleSpec;
+import org.jboss.modules.ModuleLoadException;
+import org.jboss.modules.PathUtils;
+import org.jboss.modules.ResourceLoaderSpec;
+import org.jboss.modules.ResourceLoaders;
+
+/**
+ * This module loader loads module content from a plugin directory.  The
+ * module name is the name of the JAR minus its extension (if any).
+ */
+public final class PluginModuleFinder implements ModuleFinder {
+    private final Path basePath;
+
+    public PluginModuleFinder(Path basePath) {
+        if (basePath == null) throw new IllegalArgumentException("null basePath");
+        this.basePath = basePath;
+    }
+
+    public ModuleSpec findModule(String name, ModuleLoader delegateLoader)
+        throws ModuleLoadException
+    {
+        // Make sure nobody escapes using a .. in the plugin name
+        name = PathUtils.relativize(PathUtils.canonicalize(name));
+        Path jarPath = basePath.resolve(name + ".jar");
+        if (Files.exists(jarPath)) {
+            ModuleSpec.Builder builder = ModuleSpec.build(name);
+            // Add all JDK classes
+            builder.addDependency(
+                DependencySpec.createSystemDependencySpec(
+                    PathUtils.getPathSet(null)
+                )
+            );
+            // Add the module's own content
+            builder.addDependency(DependencySpec.OWN_DEPENDENCY);
+            // Add my own module as a dependency
+            final Module myModule = Module.forClass(getClass());
+            builder.addDependency(
+                new ModuleDependencySpecBuilder()
+                    .setModuleLoader(myModule.getModuleLoader())
+                    .setName(myModule.getName())
+                    .build()
+            );
+            // Add the module JAR content
+            URI uri = URI.create("jar:" + jarPath.toUri());
+            FileSystem fs;
+            try {
+                fs = FileSystems.newFileSystem(uri, Collections.emptyMap());
+            } catch (IOException e) {
+                throw new ModuleLoadException(e);
+            }
+            final Path rootPath = fs.getRootDirectories().iterator().next();
+            builder.addResourceRoot(
+                ResourceLoaderSpec.createResourceLoaderSpec(
+                    ResourceLoaders.createPathResourceLoader("root", rootPath)
+                )
+            );
+            ModuleSpec moduleSpec = builder.create();
+            return moduleSpec;
+        }
+        return null;
+    }
+}
+----
+
+The example above is intended to be compiled into a JAR and launched either as a command-line
+`-jar` to `jboss-modules.jar`, or as a module itself.
+
+[id='module-loader-delegation']
+==== Delegating to another module loader
+
+The default behavior of the `loadModule` method of the `ModuleLoader` class is to search each of
+its `ModuleFinder` instances for modules of a given name.  If the module is not found, then
+a `ModuleNotFoundException` is thrown.
+
+In cases where (for example) your module loader is acting as a "layer" over another module loader, this
+behavior can be modified by overriding the `preloadModule(String)` method.  The implementation must
+return a module, if one is found, or `null` if the module loader cannot find a module with the
+given name.
+
+NOTE: Module loaders which must handle multiple name spaces should _not_ use this delegation
+strategy.  For example, the filesystem class path loader can load modules either by file name
+(`/foo/bar/baz.jar`) from the file system module loader,
+or by RDN (`org.jboss.modules`) from the local module loader.  The
+name spaces do not overlap and dependencies for each are declared in separate ways.  The best
+way to achieve this kind of delegation is to use <<depending-other-module-loaders,the
+dependency-based approach>> instead.
+
+To search for modules in the module loader's own module finder set, the `protected` method
+`loadModuleLocal` should be used.  This method returns `null` if the module finder set does
+not contain a module, and throws a `ModuleLoadException` if the module exists but failed to
+be loaded for some reason (including, but not limited to, a missing dependency).
+
+To search other module loaders for a module, your module loader must use the `protected static`
+method `preloadModule(String, ModuleLoader)`.  The delegate module loader is passed in as the
+second parameter.
+
+Since JBoss Modules 1.7, there is a `DelegatingModuleLoader` class which extends `ModuleLoader` and
+accepts a `ModuleLoader` and an array of `ModuleFinder` instances, and implements a the common
+use case of a child-first (delegate-last) loading policy,
+where the module finders are searched first before delegating to the module loader.
+
+[id='class-loader-names']
+==== Module class loader names
+
+Since JBoss Modules 1.6, module loaders can assign a name to the class loaders of the
+modules which they load.  The name will appear in stack traces and, in some cases, can appear
+in log messages and other diagnostics when running under Java 9 or later.
+
+By default, the name of the module class loader is set to the module name and version.
+
+NOTE: Future versions of JBoss Modules may change the default, particularly as JBoss Modules
+introduces direct support for JPMS integration.  The name of class loaders is purely diagnostic,
+and should not be relied upon for program flow control.
+
+You can customize the class loader name used by your module loader by extending the `ModuleLoader`
+class and overriding its `org.jboss.modules.ModuleLoader.getModuleDescription` method.  The name
+can be set to any arbitrary string.
+
+[id='provided-module-loaders']
+==== Using the provided module loaders and finders
+
+JBoss Modules includes several useful module loaders and finders which it uses for its standard
+operation.  These loader implementations are available for reuse.
+
+[id='provided-local-module-loader']
+===== The local filesystem module loader
+
+The local filesystem module loader is implemented in two parts.  The bulk of the functionality
+exists in the `LocalModuleFinder` class.  Instances can be constructed using the constructor(s)
+found on that class, which specify the file system paths to use as the module roots (or
+_module path_) and optionally a filter which may be applied to exclude certain paths from
+consideration as modules.
+
+The module finder may be instantiated and used by itself in any module loader, or it may be
+used by way of the `LocalModuleLoader` class, which also has a `close` method which can be called
+to release any resources used by the module finder instance.
+
+The _boot module loader_, which is accessible by way of the `Module.getBootModuleLoader()` method,
+is generally a `LocalModuleLoader`-based loader by default, unless it is explicitly overridden.
+
+TIP: To reuse the modules from the module path, it is recommended to use the boot module loader
+rather than instantiating multiple module loaders over the same paths, in order to avoid extra
+memory usage and potentially hard-to-debug `ClassCastException` and similar occurrences.
+
+[id='provided-file-system-module-loader']
+===== The file system class path module loader
+
+The filesystem (class path) module loader is used to load JAR content directly as modules, including
+support for JAR- or path-embedded module repositories.
+
+This functionality is provided by the `FileSystemClassPathModuleFinder` class.  The constructor
+for this class accepts `Supplier` instances which yield module loaders for "regular" module
+dependencies (like `org.jboss.modules`) and "extension" module dependencies (which are specified
+in the JAR file specification, but are not presently supported by any JBoss Modules module loader
+or module finder implementation).  These module loaders are used as delegates for the corresponding
+dependencies.  Class path dependencies are always resolved internally.
+
+[id='custom-module-class-loader']
+==== Custom `ModuleClassLoader` subclasses
+
+Some special environments require that the class loader be a subtype of `ModuleClassLoader`.  For
+example, OSGi class loaders must implement a specific interface.
+
+The module class loader construction process can be intercepted by providing an implementation
+of `ModuleClassLoaderFactory` to the `ModuleSpec.Builder`.  Implementations of this interface
+accept an opaque configuration object, which must be passed verbatim to the constructor of the
+`ModuleClassLoader` class by the subclass constructor's `super()` call.
+
+[id='resource-loaders']
+=== Resource loaders
+
+The content of a module is determined by its _resource loaders_.  Resource loaders are defined
+by implementing the `ResourceLoader` interface.  A resource loader is responsible for providing
+_resources_, classes, and packages, and may also be used to locate native libraries.
+
+Each resource loader has a _root name_, returned by the `getRootName()` method of `ResourceLoader`.
+The root name is used to identify a particular
+resource root when a module has more than one, and should be unique per module.  It is permissible
+to return an empty string `""` in the case where only one resource loader is present in a module.
+
+The resource loader must also be able to produce its complete set of _paths_ via the
+`ResourceLoader.getPaths()` method.  These paths are always `/`-separated.  This method is normally
+called only once per module that the resource loader is included in.
+
+The resource loader may optionally implement the `getLocation()` method, which provides a URI to
+display for the output of management (JMX) operations.  This is sometimes useful for diagnostic
+purposes.
+
+[id='finding-resources']
+==== Finding resources
+
+The `ResourceLoader.getResource(String)` method finds resources by name.  If the resource is not
+found, `null` is returned; otherwise, an instance of the `Resource` interface is returned.
+
+The `Resource` interface in turn defines several operations.
+
+The `getName()` method returns the resource name, and usually should reflect the exact name
+that was sent in to the `ResourceLoader.getResource(String)` method.
+
+The `getURL()` method returns a `java.net.URL` instance which contains the location of the
+resource.  This `URL` object may be used by application code to read the resource content, so
+it should either be an exact location, or its `URLStreamHandler` should be capable of providing
+the resource content.
+
+The `getSize()` method should return the size of the resource, if it is possible to determine.
+If the size is indeterminate, for whatever reason, then `0` should be returned.
+
+The `openStream()` method returns a non-`null` `InputStream` that efficiently yields the
+content of the resource.  The caller of this method is responsible for closing the stream.  The
+resource must be capable of opening the stream multiple times, and it must support multiple
+streams open at the same time from the same resource.
+
+[id='finding-classes']
+==== Finding classes
+
+The `ResourceLoader.getClassSpec(String)` method finds classes by name.  If the class is found
+then an object of type `ClassSpec` must be returned, otherwise `null` is returned.
+
+The class bytes may be set on the class specification instance by calling `setBytes()` with
+a `byte[]`, or by calling `setByteBuffer()` with a `ByteBuffer`.  One of these two methods
+must be called for the class load operation to succeed.
+
+NOTE: Support for `ByteBuffer` class bytes was added in JBoss Modules 1.7.
+
+The class specification must also have a _code source_ set on it.  The `setCodeSource()` method
+may be called to set the code source.
+
+[id='finding-packages']
+==== Finding packages
+
+The `ResourceLoader.getPackageSpec(String)` method finds information about a package.  The
+implementation of this method must return a `PackageSpec` for known packages, or `null` if the
+package is not known.
+
+The attributes of the `PackageSpec` class correspond with information that normally comes from
+the `MANIFEST.MF` of a JAR, including the legacy specification and implementation version information
+(if any), and the package seal base URL (if the package is sealed).
+
+[id='finding-native-libraries']
+==== Finding native libraries
+
+A resource loader has the ability to provide native library locations to the module.  Native
+libraries found in this way are directly accessible to the module that includes the resource
+loader.
+
+TIP: If your resource loader must support native libraries, consider extending
+<<native-resource-loader,the native resource loader>>.
+
+To provide native library support for a module, implement the `ResourceLoader.getLibrary(String)`
+method.  The implementation of this method should usually call `System.mapLibraryName(String)`
+to determine the correct native library name.  The result of the method call should be the absolute
+path of the location of the library on the file system.  In other words, the result of this method
+may not be a JAR path, an NIO.2 non-filesystem Path, etc.
+
+The static `NativeLibraryResourceLoader.getArchName()` method may be used to acquire a string
+which may be used to help locate the correct platform native library.
+
+WARNING: It is not recommended for general purpose applications and libraries to use this
+mechanism to implement any kind of automatic native library extraction or downloads from JAR files
+or other sources.  Restricted OS environments, such as link:https://selinuxproject.org[SELinux],
+may forbid linkage to shared libraries that are written to disk by user applications.
+
+[id='resource-subloaders']
+==== Resource subloaders
+
+As of JBoss Modules 1.7, a resource loader may optionally support the ability to construct a
+subloader.  This capability may be used when (for example) a module loader supports more than
+one module in the same JAR archive.
+
+To provide the ability to produce sub-loaders, override the `ResourceLoader.createSubloader()`
+method.  This method accepts two arguments which specify the relative path and the name of the
+new resource loader.  If a name or path is not valid, or the resource loader does not support
+subloaders, this method returns `null`; otherwise, it returns the new nested `ResourceLoader`
+instance.
+
+[id='iterable-resource-loaders']
+==== Iterable resource loaders
+
+As of JBoss Modules 1.2, a module loader may optionally implement the `IterableResourceLoader`
+interface.  Iterable resource loaders have an additional method called `iterateResources`
+which returns an `Iterator` over the `Resource` instances of the loader.
+
+The `iterateResource` method accepts two parameters: a start path (as a string), and a flag
+indicating that the iteration should (or should) not be recursive.
+
+[id='provided-resource-loaders']
+==== Using the provided resource loaders
+
+Like module loaders, JBoss Modules includes several resource loader implementations that may
+be reused.
+
+[id='path-resource-loader']
+===== The `Path` resource loader
+
+The NIO.2 `Path` construct is supported using the `Path` resource loader.  The
+static `ResourceLoaders.createPathResourceLoader()` method may be invoked to
+create a new instance of the `Path` resource loader.  This method accepts two parameters:
+the name of the resource root, and the `Path` that represents the base path of the
+resource loader's content.
+
+TIP: In JBoss Modules 1.4 and earlier, only file resource loaders were supported.  The
+`ResourceLoaders.createFileResourceLoader()` method was used to create instances of this
+resource loader using a `File` instead of a `Path`.  Since 1.5, the method is now
+implemented as a special case of the `Path` resource loader.
+
+TIP: Since Java 7, the JDK has included an NIO.2-based JAR `FileSystem` implementation which
+may be used with this resource loader instead of using the <<jar-resource-loader,JAR resource
+loader>> (see the <<complete-plugin-example,plugin example>>).  However, using the JAR `FileSystem`
+currently consumes more CPU and memory resources than `JarFile` does; in addition, the `Path`
+resource loader does not fully support JAR code signer verification.  For cases where performance
+is more important than convenience, or where code signing support is required,
+it is recommended to use the JAR resource loader instead.
+
+[id='jar-resource-loader']
+===== The JAR file resource loader
+
+A special resource loader which specifically supports instances of `JarFile` is available.  To
+create instances of this resource loader, call the `createJarResourceLoader`
+method of the `ResourceLoaders` class.  The method accepts the resource root name and the
+`JarFile` instance, and optionally, a relative path within the JAR where the content root
+should be located.
+
+[id='native-resource-loader']
+===== The native resource loader
+
+The `NativeLibraryResourceLoader` class may be used directly or extended in order to provide
+module content which includes native libraries on the file system.  The constructor of this
+class accepts a single `File` argument that represents the root location of the loader's content,
+which may include native libraries.  The location is available from the `getRoot()` method of
+that class, and it is also used for the URI value returned by `getLocation()`.
+
+Native libraries are returned in the manner described by the <<native-libraries>> section.
 
