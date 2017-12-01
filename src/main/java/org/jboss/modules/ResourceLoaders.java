@@ -51,8 +51,12 @@ public final class ResourceLoaders {
      * @param root the root file of the resource loader
      * @return the resource loader
      */
-    public static ResourceLoader createFileResourceLoader(final String name, final File root) {
+    public static IterableResourceLoader createFileResourceLoader(final String name, final File root) {
         return new FileResourceLoader(name, root, AccessController.getContext());
+    }
+
+    public static ResourceLoader createFileResourceLoader$$bridge(final String name, final File root) {
+        return createFileResourceLoader(name, root);
     }
 
     /**
@@ -62,9 +66,10 @@ public final class ResourceLoaders {
      * @param name the name of the resource root
      * @param root the root file of the resource loader
      * @return the resource loader
+     * @deprecated Use {@link #createFileResourceLoader(String, File)} instead.
      */
     public static IterableResourceLoader createIterableFileResourceLoader(final String name, final File root) {
-        return new FileResourceLoader(name, root, AccessController.getContext());
+        return createFileResourceLoader(name, root);
     }
 
     /**
@@ -75,8 +80,12 @@ public final class ResourceLoaders {
      * @param jarFile the backing JAR file
      * @return the resource loader
      */
-    public static ResourceLoader createJarResourceLoader(final String name, final JarFile jarFile) {
+    public static IterableResourceLoader createJarResourceLoader(final String name, final JarFile jarFile) {
         return new JarFileResourceLoader(name, jarFile);
+    }
+
+    public static ResourceLoader createJarResourceLoader$$bridge(final String name, final JarFile jarFile) {
+        return createJarResourceLoader(name, jarFile);
     }
 
     /**
@@ -99,9 +108,11 @@ public final class ResourceLoaders {
      * @param name the name of the resource root
      * @param jarFile the backing JAR file
      * @return the resource loader
+     * @deprecated Use {@link #createJarResourceLoader(String, JarFile)} instead.
      */
+    @Deprecated
     public static IterableResourceLoader createIterableJarResourceLoader(final String name, final JarFile jarFile) {
-        return new JarFileResourceLoader(name, jarFile);
+        return createJarResourceLoader(name, jarFile);
     }
 
     /**
@@ -113,7 +124,7 @@ public final class ResourceLoaders {
      * @return the filtered resource loader
      */
     public static ResourceLoader createFilteredResourceLoader(final PathFilter pathFilter, final ResourceLoader originalLoader) {
-        return new FilteredResourceLoader(pathFilter, originalLoader);
+        return originalLoader instanceof IterableResourceLoader ? new FilteredIterableResourceLoader(pathFilter, (IterableResourceLoader) originalLoader) : new FilteredResourceLoader(pathFilter, originalLoader);
     }
 
     /**
@@ -124,8 +135,21 @@ public final class ResourceLoaders {
      * @param originalLoader the original loader to apply to
      * @return the filtered resource loader
      */
-    public static IterableResourceLoader createIterableFilteredResourceLoader(final PathFilter pathFilter, final IterableResourceLoader originalLoader) {
+    public static IterableResourceLoader createFilteredResourceLoader(final PathFilter pathFilter, final IterableResourceLoader originalLoader) {
         return new FilteredIterableResourceLoader(pathFilter, originalLoader);
+    }
+
+    /**
+     * Create a filtered view of an iterable resource loader, which allows classes to be included or excluded on a name basis.
+     * The given filter is matched against the actual class or resource name, not the directory name.
+     *
+     * @param pathFilter the path filter to apply
+     * @param originalLoader the original loader to apply to
+     * @return the filtered resource loader
+     * @deprecated Use {@link #createFileResourceLoader(String, File)} instead.
+     */
+    public static IterableResourceLoader createIterableFilteredResourceLoader(final PathFilter pathFilter, final IterableResourceLoader originalLoader) {
+        return createFilteredResourceLoader(pathFilter, originalLoader);
     }
 
     /**
