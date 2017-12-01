@@ -154,7 +154,11 @@ public final class JarModuleFinder implements ModuleFinder {
                         }
                         // else ignored
                     }
-                    builder.addDependency(DependencySpec.createModuleDependencySpec(moduleName, export, optional));
+                    builder.addDependency(new ModuleDependencySpecBuilder()
+                        .setName(moduleName)
+                        .setExport(export)
+                        .setOptional(optional)
+                        .build());
                 }
             }
             builder.addDependency(DependencySpec.createSystemDependencySpec(JDKPaths.JDK));

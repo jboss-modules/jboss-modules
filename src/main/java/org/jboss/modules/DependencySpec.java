@@ -97,10 +97,6 @@ public abstract class DependencySpec {
         return classExportFilter;
     }
 
-    DependencySpec(final PathFilter importFilter, final PathFilter exportFilter) {
-        this(importFilter, exportFilter, PathFilters.acceptAll(), PathFilters.acceptAll(), ClassFilters.acceptAll(), ClassFilters.acceptAll());
-    }
-
     DependencySpec(final PathFilter importFilter, final PathFilter exportFilter, final PathFilter resourceImportFilter, final PathFilter resourceExportFilter, final ClassFilter classImportFilter, final ClassFilter classExportFilter) {
         this.importFilter = importFilter;
         this.exportFilter = exportFilter;
@@ -114,12 +110,12 @@ public abstract class DependencySpec {
 
     /**
      * Create a dependency on the current module's local resources.  You should have at least one such dependency
-     * on any module which has its own resources.
+     * on any module which has its own resources.  Always returns {@link #OWN_DEPENDENCY}.
      *
      * @return the dependency spec
      */
     public static DependencySpec createLocalDependencySpec() {
-        return createLocalDependencySpec(PathFilters.acceptAll(), PathFilters.acceptAll());
+        return OWN_DEPENDENCY;
     }
 
     /**
@@ -129,23 +125,15 @@ public abstract class DependencySpec {
      * @param importFilter the import filter to apply
      * @param exportFilter the export filter to apply
      * @return the dependency spec
+     *
+     * @deprecated Use {@link LocalDependencySpecBuilder} instead.
      */
+    @Deprecated
     public static DependencySpec createLocalDependencySpec(final PathFilter importFilter, final PathFilter exportFilter) {
-        if (importFilter == null) {
-            throw new IllegalArgumentException("importFilter is null");
-        }
-        if (exportFilter == null) {
-            throw new IllegalArgumentException("exportFilter is null");
-        }
-        return new DependencySpec(importFilter, exportFilter) {
-            Dependency getDependency(final Module module) {
-                return new ModuleClassLoaderDependency(exportFilter, importFilter, module.getClassLoaderPrivate());
-            }
-
-            public String toString() {
-                return "dependency on local resources";
-            }
-        };
+        return new LocalDependencySpecBuilder()
+            .setImportFilter(importFilter)
+            .setExportFilter(exportFilter)
+            .build();
     }
 
     /**
@@ -159,35 +147,19 @@ public abstract class DependencySpec {
      * @param classImportFilter the class import filter to apply
      * @param classExportFilter the class export filter to apply
      * @return the dependency spec
+     *
+     * @deprecated Use {@link LocalDependencySpecBuilder} instead.
      */
+    @Deprecated
     public static DependencySpec createLocalDependencySpec(final PathFilter importFilter, final PathFilter exportFilter, final PathFilter resourceImportFilter, final PathFilter resourceExportFilter, final ClassFilter classImportFilter, final ClassFilter classExportFilter) {
-        if (importFilter == null) {
-            throw new IllegalArgumentException("importFilter is null");
-        }
-        if (exportFilter == null) {
-            throw new IllegalArgumentException("exportFilter is null");
-        }
-        if (classImportFilter == null) {
-            throw new IllegalArgumentException("classImportFilter is null");
-        }
-        if (classExportFilter == null) {
-            throw new IllegalArgumentException("classExportFilter is null");
-        }
-        if (resourceImportFilter == null) {
-            throw new IllegalArgumentException("resourceImportFilter is null");
-        }
-        if (resourceExportFilter == null) {
-            throw new IllegalArgumentException("resourceExportFilter is null");
-        }
-        return new DependencySpec(importFilter, exportFilter, resourceImportFilter, resourceExportFilter, classImportFilter, classExportFilter) {
-            Dependency getDependency(final Module module) {
-                return new ModuleClassLoaderDependency(exportFilter, importFilter, resourceExportFilter, resourceImportFilter, classExportFilter, classImportFilter, module.getClassLoaderPrivate());
-            }
-
-            public String toString() {
-                return "dependency on filtered local resources";
-            }
-        };
+        return new LocalDependencySpecBuilder()
+            .setImportFilter(importFilter)
+            .setExportFilter(exportFilter)
+            .setResourceImportFilter(resourceImportFilter)
+            .setResourceExportFilter(resourceExportFilter)
+            .setClassImportFilter(classImportFilter)
+            .setClassExportFilter(classExportFilter)
+            .build();
     }
 
     /**
@@ -197,7 +169,11 @@ public abstract class DependencySpec {
      * @return the dependency spec
      */
     public static DependencySpec createSystemDependencySpec(final Set<String> loaderPaths) {
-        return createLocalDependencySpec(ClassLoaderLocalLoader.SYSTEM, loaderPaths);
+        return new LocalDependencySpecBuilder()
+            .setImportFilter(PathFilters.acceptAll())
+            .setLocalLoader(ClassLoaderLocalLoader.SYSTEM)
+            .setLoaderPaths(loaderPaths)
+            .build();
     }
 
     /**
@@ -208,7 +184,12 @@ public abstract class DependencySpec {
      * @return the dependency spec
      */
     public static DependencySpec createSystemDependencySpec(final Set<String> loaderPaths, boolean export) {
-        return createLocalDependencySpec(ClassLoaderLocalLoader.SYSTEM, loaderPaths, export);
+        return new LocalDependencySpecBuilder()
+            .setLocalLoader(ClassLoaderLocalLoader.SYSTEM)
+            .setImportFilter(PathFilters.acceptAll())
+            .setLoaderPaths(loaderPaths)
+            .setExport(export)
+            .build();
     }
 
     /**
@@ -220,7 +201,12 @@ public abstract class DependencySpec {
      * @return the dependency spec
      */
     public static DependencySpec createSystemDependencySpec(final PathFilter importFilter, final PathFilter exportFilter, final Set<String> loaderPaths) {
-        return createLocalDependencySpec(importFilter, exportFilter, ClassLoaderLocalLoader.SYSTEM, loaderPaths);
+        return new LocalDependencySpecBuilder()
+            .setImportFilter(importFilter)
+            .setExportFilter(exportFilter)
+            .setLocalLoader(ClassLoaderLocalLoader.SYSTEM)
+            .setLoaderPaths(loaderPaths)
+            .build();
     }
 
     /**
@@ -229,7 +215,10 @@ public abstract class DependencySpec {
      * @param classLoader the class loader
      * @param loaderPaths the set of paths to use from this class loader
      * @return the dependency spec
+     *
+     * @deprecated Use {@link LocalDependencySpecBuilder} instead.
      */
+    @Deprecated
     public static DependencySpec createClassLoaderDependencySpec(final ClassLoader classLoader, final Set<String> loaderPaths) {
         return createLocalDependencySpec(new ClassLoaderLocalLoader(classLoader), loaderPaths);
     }
@@ -241,7 +230,10 @@ public abstract class DependencySpec {
      * @param loaderPaths the set of paths to use from this class loader
      * @param export {@code true} if this is a fully re-exported dependency, {@code false} if it should not be exported
      * @return the dependency spec
+     *
+     * @deprecated Use {@link LocalDependencySpecBuilder} instead.
      */
+    @Deprecated
     public static DependencySpec createClassLoaderDependencySpec(final ClassLoader classLoader, final Set<String> loaderPaths, boolean export) {
         return createLocalDependencySpec(new ClassLoaderLocalLoader(classLoader), loaderPaths, export);
     }
@@ -254,9 +246,12 @@ public abstract class DependencySpec {
      * @param classLoader the class loader
      * @param loaderPaths the set of paths to use from this class loader
      * @return the dependency spec
+     *
+     * @deprecated Use {@link LocalDependencySpecBuilder} instead.
      */
+    @Deprecated
     public static DependencySpec createClassLoaderDependencySpec(final PathFilter importFilter, final PathFilter exportFilter, final ClassLoader classLoader, final Set<String> loaderPaths) {
-        return createLocalDependencySpec(importFilter, exportFilter, PathFilters.acceptAll(), PathFilters.acceptAll(), ClassFilters.acceptAll(), ClassFilters.acceptAll(), new ClassLoaderLocalLoader(classLoader), loaderPaths);
+        return createLocalDependencySpec(importFilter, exportFilter, new ClassLoaderLocalLoader(classLoader), loaderPaths);
     }
 
     /**
@@ -265,9 +260,15 @@ public abstract class DependencySpec {
      * @param localLoader the local loader
      * @param loaderPaths the set of paths that is exposed by the local loader
      * @return the dependency spec
+     *
+     * @deprecated Use {@link LocalDependencySpecBuilder} instead.
      */
+    @Deprecated
     public static DependencySpec createLocalDependencySpec(final LocalLoader localLoader, final Set<String> loaderPaths) {
-        return createLocalDependencySpec(PathFilters.acceptAll(), PathFilters.rejectAll(), localLoader, loaderPaths);
+        return new LocalDependencySpecBuilder()
+            .setLocalLoader(localLoader)
+            .setLoaderPaths(loaderPaths)
+            .build();
     }
 
     /**
@@ -277,9 +278,16 @@ public abstract class DependencySpec {
      * @param loaderPaths the set of paths that is exposed by the local loader
      * @param export {@code true} if this is a fully re-exported dependency, {@code false} if it should not be exported
      * @return the dependency spec
+     *
+     * @deprecated Use {@link LocalDependencySpecBuilder} instead.
      */
+    @Deprecated
     public static DependencySpec createLocalDependencySpec(final LocalLoader localLoader, final Set<String> loaderPaths, boolean export) {
-        return createLocalDependencySpec(PathFilters.acceptAll(), export ? PathFilters.getDefaultImportFilter() : PathFilters.rejectAll(), localLoader, loaderPaths);
+        return new LocalDependencySpecBuilder()
+            .setLocalLoader(localLoader)
+            .setLoaderPaths(loaderPaths)
+            .setExport(export)
+            .build();
     }
 
     /**
@@ -290,9 +298,17 @@ public abstract class DependencySpec {
      * @param localLoader the local loader
      * @param loaderPaths the set of paths that is exposed by the local loader
      * @return the dependency spec
+     *
+     * @deprecated Use {@link LocalDependencySpecBuilder} instead.
      */
+    @Deprecated
     public static DependencySpec createLocalDependencySpec(final PathFilter importFilter, final PathFilter exportFilter, final LocalLoader localLoader, final Set<String> loaderPaths) {
-        return createLocalDependencySpec(importFilter, exportFilter, PathFilters.acceptAll(), PathFilters.acceptAll(), ClassFilters.acceptAll(), ClassFilters.acceptAll(), localLoader, loaderPaths);
+        return new LocalDependencySpecBuilder()
+            .setImportFilter(importFilter)
+            .setExportFilter(exportFilter)
+            .setLocalLoader(localLoader)
+            .setLoaderPaths(loaderPaths)
+            .build();
     }
 
     /**
@@ -307,41 +323,21 @@ public abstract class DependencySpec {
      * @param localLoader the local loader
      * @param loaderPaths the set of paths that is exposed by the local loader
      * @return the dependency spec
+     *
+     * @deprecated Use {@link LocalDependencySpecBuilder} instead.
      */
+    @Deprecated
     public static DependencySpec createLocalDependencySpec(final PathFilter importFilter, final PathFilter exportFilter, final PathFilter resourceImportFilter, final PathFilter resourceExportFilter, final ClassFilter classImportFilter, final ClassFilter classExportFilter, final LocalLoader localLoader, final Set<String> loaderPaths) {
-        if (importFilter == null) {
-            throw new IllegalArgumentException("importFilter is null");
-        }
-        if (exportFilter == null) {
-            throw new IllegalArgumentException("exportFilter is null");
-        }
-        if (localLoader == null) {
-            throw new IllegalArgumentException("localLoader is null");
-        }
-        if (loaderPaths == null) {
-            throw new IllegalArgumentException("loaderPaths is null");
-        }
-        if (classImportFilter == null) {
-            throw new IllegalArgumentException("classImportFilter is null");
-        }
-        if (classExportFilter == null) {
-            throw new IllegalArgumentException("classExportFilter is null");
-        }
-        if (resourceImportFilter == null) {
-            throw new IllegalArgumentException("resourceImportFilter is null");
-        }
-        if (resourceExportFilter == null) {
-            throw new IllegalArgumentException("resourceExportFilter is null");
-        }
-        return new DependencySpec(importFilter, exportFilter, resourceImportFilter, resourceExportFilter, classImportFilter, classExportFilter) {
-            Dependency getDependency(final Module module) {
-                return new LocalDependency(exportFilter, importFilter, resourceExportFilter, resourceImportFilter, classExportFilter, classImportFilter, localLoader, loaderPaths);
-            }
-
-            public String toString() {
-                return "dependency on local loader " + localLoader;
-            }
-        };
+        return new LocalDependencySpecBuilder()
+            .setImportFilter(importFilter)
+            .setExportFilter(exportFilter)
+            .setResourceImportFilter(resourceImportFilter)
+            .setResourceExportFilter(resourceExportFilter)
+            .setClassImportFilter(classImportFilter)
+            .setClassExportFilter(classExportFilter)
+            .setLocalLoader(localLoader)
+            .setLoaderPaths(loaderPaths)
+            .build();
     }
 
     /**
@@ -349,7 +345,8 @@ public abstract class DependencySpec {
      *
      * @param identifier the module identifier
      * @return the dependency spec
-     * @deprecated Use {@link #createModuleDependencySpec(String)} instead.
+     *
+     * @deprecated Use {@link ModuleDependencySpecBuilder} instead.
      */
     @Deprecated
     public static DependencySpec createModuleDependencySpec(final ModuleIdentifier identifier) {
@@ -361,9 +358,14 @@ public abstract class DependencySpec {
      *
      * @param name the module name
      * @return the dependency spec
+     *
+     * @deprecated Use {@link ModuleDependencySpecBuilder} instead.
      */
+    @Deprecated
     public static DependencySpec createModuleDependencySpec(final String name) {
-        return createModuleDependencySpec(name, false);
+        return new ModuleDependencySpecBuilder()
+            .setName(name)
+            .build();
     }
 
     /**
@@ -372,7 +374,8 @@ public abstract class DependencySpec {
      * @param identifier the module identifier
      * @param export {@code true} if the dependency should be exported by default
      * @return the dependency spec
-     * @deprecated Use {@link #createModuleDependencySpec(String,boolean)} instead.
+     *
+     * @deprecated Use {@link ModuleDependencySpecBuilder} instead.
      */
     @Deprecated
     public static DependencySpec createModuleDependencySpec(final ModuleIdentifier identifier, final boolean export) {
@@ -385,9 +388,15 @@ public abstract class DependencySpec {
      * @param name the module name
      * @param export {@code true} if the dependency should be exported by default
      * @return the dependency spec
+     *
+     * @deprecated Use {@link ModuleDependencySpecBuilder} instead.
      */
+    @Deprecated
     public static DependencySpec createModuleDependencySpec(final String name, final boolean export) {
-        return createModuleDependencySpec(name, export, false);
+        return new ModuleDependencySpecBuilder()
+            .setName(name)
+            .setExport(export)
+            .build();
     }
 
     /**
@@ -397,7 +406,8 @@ public abstract class DependencySpec {
      * @param export {@code true} if this is a fully re-exported dependency, {@code false} if it should not be exported
      * @param optional {@code true} if the dependency is optional, {@code false} if it is mandatory
      * @return the dependency spec
-     * @deprecated Use {@link #createModuleDependencySpec(String,boolean,boolean)} instead.
+     *
+     * @deprecated Use {@link ModuleDependencySpecBuilder} instead.
      */
     @Deprecated
     public static DependencySpec createModuleDependencySpec(final ModuleIdentifier identifier, final boolean export, final boolean optional) {
@@ -411,9 +421,16 @@ public abstract class DependencySpec {
      * @param export {@code true} if this is a fully re-exported dependency, {@code false} if it should not be exported
      * @param optional {@code true} if the dependency is optional, {@code false} if it is mandatory
      * @return the dependency spec
+     *
+     * @deprecated Use {@link ModuleDependencySpecBuilder} instead.
      */
+    @Deprecated
     public static DependencySpec createModuleDependencySpec(final String name, final boolean export, final boolean optional) {
-        return createModuleDependencySpec(PathFilters.getDefaultImportFilter(), export ? PathFilters.acceptAll() : PathFilters.rejectAll(), null, name, optional);
+        return new ModuleDependencySpecBuilder()
+            .setName(name)
+            .setExport(export)
+            .setOptional(optional)
+            .build();
     }
 
     /**
@@ -423,7 +440,8 @@ public abstract class DependencySpec {
      * @param identifier the module identifier
      * @param export {@code true} if this is a fully re-exported dependency, {@code false} if it should not be exported
      * @return the dependency spec
-     * @deprecated Use {@link #createModuleDependencySpec(ModuleLoader, String, boolean)} instead.
+     *
+     * @deprecated Use {@link ModuleDependencySpecBuilder} instead.
      */
     @Deprecated
     public static DependencySpec createModuleDependencySpec(final ModuleLoader moduleLoader, final ModuleIdentifier identifier, final boolean export) {
@@ -437,9 +455,16 @@ public abstract class DependencySpec {
      * @param name the module name
      * @param export {@code true} if this is a fully re-exported dependency, {@code false} if it should not be exported
      * @return the dependency spec
+     *
+     * @deprecated Use {@link ModuleDependencySpecBuilder} instead.
      */
+    @Deprecated
     public static DependencySpec createModuleDependencySpec(final ModuleLoader moduleLoader, final String name, final boolean export) {
-        return createModuleDependencySpec(PathFilters.getDefaultImportFilter(), export ? PathFilters.acceptAll() : PathFilters.rejectAll(), moduleLoader, name, false);
+        return new ModuleDependencySpecBuilder()
+            .setModuleLoader(moduleLoader)
+            .setName(name)
+            .setExport(export)
+            .build();
     }
 
     /**
@@ -450,7 +475,8 @@ public abstract class DependencySpec {
      * @param export {@code true} if this is a fully re-exported dependency, {@code false} if it should not be exported
      * @param optional {@code true} if the dependency is optional, {@code false} if it is mandatory
      * @return the dependency spec
-     * @deprecated Use {@link #createModuleDependencySpec(ModuleLoader,String,boolean,boolean)} instead.
+     *
+     * @deprecated Use {@link ModuleDependencySpecBuilder} instead.
      */
     @Deprecated
     public static DependencySpec createModuleDependencySpec(final ModuleLoader moduleLoader, final ModuleIdentifier identifier, final boolean export, final boolean optional) {
@@ -465,9 +491,17 @@ public abstract class DependencySpec {
      * @param export {@code true} if this is a fully re-exported dependency, {@code false} if it should not be exported
      * @param optional {@code true} if the dependency is optional, {@code false} if it is mandatory
      * @return the dependency spec
+     *
+     * @deprecated Use {@link ModuleDependencySpecBuilder} instead.
      */
+    @Deprecated
     public static DependencySpec createModuleDependencySpec(final ModuleLoader moduleLoader, final String name, final boolean export, final boolean optional) {
-        return createModuleDependencySpec(PathFilters.getDefaultImportFilter(), export ? PathFilters.acceptAll() : PathFilters.rejectAll(), moduleLoader, name, optional);
+        return new ModuleDependencySpecBuilder()
+            .setModuleLoader(moduleLoader)
+            .setName(name)
+            .setExport(export)
+            .setOptional(optional)
+            .build();
     }
 
     /**
@@ -477,7 +511,8 @@ public abstract class DependencySpec {
      * @param identifier the module identifier
      * @param optional {@code true} if the dependency is optional, {@code false} if it is mandatory
      * @return the dependency spec
-     * @deprecated Use {@link #createModuleDependencySpec(PathFilter,String,boolean)} instead.
+     *
+     * @deprecated Use {@link ModuleDependencySpecBuilder} instead.
      */
     @Deprecated
     public static DependencySpec createModuleDependencySpec(final PathFilter exportFilter, final ModuleIdentifier identifier, final boolean optional) {
@@ -491,9 +526,16 @@ public abstract class DependencySpec {
      * @param name the module name
      * @param optional {@code true} if the dependency is optional, {@code false} if it is mandatory
      * @return the dependency spec
+     *
+     * @deprecated Use {@link ModuleDependencySpecBuilder} instead.
      */
+    @Deprecated
     public static DependencySpec createModuleDependencySpec(final PathFilter exportFilter, final String name, final boolean optional) {
-        return createModuleDependencySpec(PathFilters.getDefaultImportFilter(), exportFilter, null, name, optional);
+        return new ModuleDependencySpecBuilder()
+            .setExportFilter(exportFilter)
+            .setName(name)
+            .setOptional(optional)
+            .build();
     }
 
     /**
@@ -504,8 +546,10 @@ public abstract class DependencySpec {
      * @param identifier the module identifier
      * @param optional {@code true} if the dependency is optional, {@code false} if it is mandatory
      * @return the dependency spec
-     * @deprecated Use {@link #createModuleDependencySpec(PathFilter,ModuleLoader,String,boolean)} instead.
+     *
+     * @deprecated Use {@link ModuleDependencySpecBuilder} instead.
      */
+    @Deprecated
     public static DependencySpec createModuleDependencySpec(final PathFilter exportFilter, final ModuleLoader moduleLoader, final ModuleIdentifier identifier, final boolean optional) {
         return createModuleDependencySpec(exportFilter, moduleLoader, identifier.toString(), optional);
     }
@@ -518,9 +562,17 @@ public abstract class DependencySpec {
      * @param name the module name
      * @param optional {@code true} if the dependency is optional, {@code false} if it is mandatory
      * @return the dependency spec
+     *
+     * @deprecated Use {@link ModuleDependencySpecBuilder} instead.
      */
+    @Deprecated
     public static DependencySpec createModuleDependencySpec(final PathFilter exportFilter, final ModuleLoader moduleLoader, final String name, final boolean optional) {
-        return createModuleDependencySpec(PathFilters.getDefaultImportFilter(), exportFilter, moduleLoader, name, optional);
+        return new ModuleDependencySpecBuilder()
+            .setExportFilter(exportFilter)
+            .setModuleLoader(moduleLoader)
+            .setName(name)
+            .setOptional(optional)
+            .build();
     }
 
     /**
@@ -532,7 +584,8 @@ public abstract class DependencySpec {
      * @param identifier the module identifier
      * @param optional {@code true} if the dependency is optional, {@code false} if it is mandatory
      * @return the dependency spec
-     * @deprecated Use {@link #createModuleDependencySpec(PathFilter, PathFilter, PathFilter, PathFilter, ClassFilter, ClassFilter, ModuleLoader, String, boolean)} instead.
+     *
+     * @deprecated Use {@link ModuleDependencySpecBuilder} instead.
      */
     @Deprecated
     public static DependencySpec createModuleDependencySpec(final PathFilter importFilter, final PathFilter exportFilter, final ModuleLoader moduleLoader, final ModuleIdentifier identifier, final boolean optional) {
@@ -548,9 +601,18 @@ public abstract class DependencySpec {
      * @param name the module name
      * @param optional {@code true} if the dependency is optional, {@code false} if it is mandatory
      * @return the dependency spec
+     *
+     * @deprecated Use {@link ModuleDependencySpecBuilder} instead.
      */
+    @Deprecated
     public static DependencySpec createModuleDependencySpec(final PathFilter importFilter, final PathFilter exportFilter, final ModuleLoader moduleLoader, final String name, final boolean optional) {
-        return createModuleDependencySpec(importFilter, exportFilter, PathFilters.acceptAll(), PathFilters.acceptAll(), ClassFilters.acceptAll(), ClassFilters.acceptAll(), moduleLoader, name, optional);
+        return new ModuleDependencySpecBuilder()
+            .setImportFilter(importFilter)
+            .setExportFilter(exportFilter)
+            .setModuleLoader(moduleLoader)
+            .setName(name)
+            .setOptional(optional)
+            .build();
     }
 
     /**
@@ -566,7 +628,8 @@ public abstract class DependencySpec {
      * @param identifier the module identifier
      * @param optional {@code true} if the dependency is optional, {@code false} if it is mandatory
      * @return the dependency spec
-     * @deprecated Use {@link #createModuleDependencySpec(PathFilter,PathFilter,PathFilter,PathFilter,ClassFilter,ClassFilter,ModuleLoader,String,boolean)} instead.
+     *
+     * @deprecated Use {@link ModuleDependencySpecBuilder} instead.
      */
     @Deprecated
     public static DependencySpec createModuleDependencySpec(final PathFilter importFilter, final PathFilter exportFilter, final PathFilter resourceImportFilter, final PathFilter resourceExportFilter, final ClassFilter classImportFilter, final ClassFilter classExportFilter, final ModuleLoader moduleLoader, final ModuleIdentifier identifier, final boolean optional) {
@@ -586,29 +649,26 @@ public abstract class DependencySpec {
      * @param name the module name
      * @param optional {@code true} if the dependency is optional, {@code false} if it is mandatory
      * @return the dependency spec
+     *
+     * @deprecated Use {@link ModuleDependencySpecBuilder} instead.
      */
+    @Deprecated
     public static DependencySpec createModuleDependencySpec(final PathFilter importFilter, final PathFilter exportFilter, final PathFilter resourceImportFilter, final PathFilter resourceExportFilter, final ClassFilter classImportFilter, final ClassFilter classExportFilter, final ModuleLoader moduleLoader, final String name, final boolean optional) {
-        if (importFilter == null) {
-            throw new IllegalArgumentException("importFilter is null");
-        }
-        if (exportFilter == null) {
-            throw new IllegalArgumentException("exportFilter is null");
-        }
-        if (name == null) {
-            throw new IllegalArgumentException("name is null");
-        }
-        if (classImportFilter == null) {
-            throw new IllegalArgumentException("classImportFilter is null");
-        }
-        if (classExportFilter == null) {
-            throw new IllegalArgumentException("classExportFilter is null");
-        }
-        if (resourceImportFilter == null) {
-            throw new IllegalArgumentException("resourceImportFilter is null");
-        }
-        if (resourceExportFilter == null) {
-            throw new IllegalArgumentException("resourceExportFilter is null");
-        }
-        return new ModuleDependencySpec(importFilter, exportFilter, resourceImportFilter, resourceExportFilter, classImportFilter, classExportFilter, moduleLoader, name, optional);
+        return new ModuleDependencySpecBuilder()
+            .setImportFilter(importFilter)
+            .setExportFilter(exportFilter)
+            .setResourceImportFilter(resourceImportFilter)
+            .setResourceExportFilter(resourceExportFilter)
+            .setClassImportFilter(classImportFilter)
+            .setClassExportFilter(classExportFilter)
+            .setModuleLoader(moduleLoader)
+            .setName(name)
+            .setOptional(optional)
+            .build();
     }
+
+    /**
+     * A constant dependency which always represents a module's own content.
+     */
+    public static final DependencySpec OWN_DEPENDENCY = new LocalDependencySpecBuilder().setExportFilter(PathFilters.acceptAll()).build();
 }

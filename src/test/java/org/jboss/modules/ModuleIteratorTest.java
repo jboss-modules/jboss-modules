@@ -48,10 +48,16 @@ public class ModuleIteratorTest extends AbstractModuleTestCase {
         TestModuleLoader moduleLoader = new TestModuleLoader();
 
         ModuleSpec.Builder builder = ModuleSpec.build(MODULE_A);
-        builder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_B, false, false));
+        builder.addDependency(new ModuleDependencySpecBuilder()
+            .setName(MODULE_B.toString())
+            .build());
         PathFilter importFilter = PathFilters.getMetaInfServicesFilter();
-        PathFilter exportFilter = PathFilters.acceptAll();
-        builder.addDependency(DependencySpec.createModuleDependencySpec(importFilter, exportFilter, moduleLoader, MODULE_B, false));
+        builder.addDependency(new ModuleDependencySpecBuilder()
+            .setImportFilter(importFilter)
+            .setExport(true)
+            .setModuleLoader(moduleLoader)
+            .setName(MODULE_B.toString())
+            .build());
         moduleLoader.addModuleSpec(builder.create());
 
         builder = ModuleSpec.build(MODULE_B);

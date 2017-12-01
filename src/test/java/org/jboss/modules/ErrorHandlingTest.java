@@ -43,7 +43,7 @@ public class ErrorHandlingTest extends AbstractModuleTestCase {
                         .addClass(ClassA.class)
                         .create())
         );
-        moduleABuilder.addDependency(DependencySpec.createLocalDependencySpec());
+        moduleABuilder.addDependency(DependencySpec.OWN_DEPENDENCY);
         moduleLoader.addModuleSpec(moduleABuilder.create());
     }
 

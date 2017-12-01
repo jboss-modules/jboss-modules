@@ -197,7 +197,12 @@ public class JAXPModuleTest extends AbstractModuleTestCase {
                 .create()
         ));
         moduleWithContentBuilder.addDependency(DependencySpec.createSystemDependencySpec(jdkApiFilter, PathFilters.rejectAll(), JDKPaths.JDK));
-        moduleWithContentBuilder.addDependency(DependencySpec.createModuleDependencySpec(PathFilters.acceptAll(), PathFilters.rejectAll(), moduleLoader, FAKE_JAXP, false));
+        moduleWithContentBuilder.addDependency(new ModuleDependencySpecBuilder()
+            .setImportFilter(PathFilters.acceptAll())
+            .setModuleLoader(moduleLoader)
+            .setName(FAKE_JAXP.toString())
+            .setOptional(false)
+            .build());
         moduleWithContentBuilder.addDependency(DependencySpec.createLocalDependencySpec());
         moduleLoader.addModuleSpec(moduleWithContentBuilder.create());
     }

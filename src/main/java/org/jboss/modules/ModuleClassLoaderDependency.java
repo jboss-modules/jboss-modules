@@ -28,11 +28,6 @@ import org.jboss.modules.filter.PathFilter;
 final class ModuleClassLoaderDependency extends Dependency {
     private final ModuleClassLoader moduleClassLoader;
 
-    ModuleClassLoaderDependency(final PathFilter exportFilter, final PathFilter importFilter, final ModuleClassLoader moduleClassLoader) {
-        super(exportFilter, importFilter);
-        this.moduleClassLoader = moduleClassLoader;
-    }
-
     ModuleClassLoaderDependency(final PathFilter exportFilter, final PathFilter importFilter, final PathFilter resourceExportFilter, final PathFilter resourceImportFilter, final ClassFilter classExportFilter, final ClassFilter classImportFilter, final ModuleClassLoader moduleClassLoader) {
         super(exportFilter, importFilter, resourceExportFilter, resourceImportFilter, classExportFilter, classImportFilter);
         this.moduleClassLoader = moduleClassLoader;

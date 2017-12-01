@@ -29,8 +29,6 @@ import org.jboss.modules.util.ModulesTestBase;
 import org.jboss.modules.util.TestResourceLoader;
 import org.junit.Test;
 
-import static org.jboss.modules.DependencySpec.createLocalDependencySpec;
-import static org.jboss.modules.DependencySpec.createModuleDependencySpec;
 import static org.jboss.modules.ResourceLoaderSpec.createResourceLoaderSpec;
 import static org.jboss.modules.util.TestResourceLoader.TestResourceLoaderBuilder;
 
@@ -71,12 +69,21 @@ public class ClassFilteringTest extends ModulesTestBase {
         PathFilter exportFilter = PathFilters.acceptAll();
         PathFilter resourceImportFilter = PathFilters.acceptAll();
         PathFilter resourceExportFilter = PathFilters.acceptAll();
-        specBuilderA.addDependency(createLocalDependencySpec(importFilter, exportFilter, resourceImportFilter, resourceExportFilter, classImportFilter, classExportFilter));
+        specBuilderA.addDependency(new LocalDependencySpecBuilder()
+            .setImportFilter(importFilter)
+            .setExportFilter(exportFilter)
+            .setResourceImportFilter(resourceImportFilter)
+            .setResourceExportFilter(resourceExportFilter)
+            .setClassImportFilter(classImportFilter)
+            .setClassExportFilter(classExportFilter)
+            .build());
         addModuleSpec(specBuilderA.create());
 
         ModuleIdentifier identifierB = ModuleIdentifier.create("moduleB");
         ModuleSpec.Builder specBuilderB = ModuleSpec.build(identifierB);
-        specBuilderB.addDependency(createModuleDependencySpec(identifierA));
+        specBuilderB.addDependency(new ModuleDependencySpecBuilder()
+            .setName(identifierA.toString())
+            .build());
         addModuleSpec(specBuilderB.create());
 
         assertLoadClass(identifierA, QuxFoo.class.getName());

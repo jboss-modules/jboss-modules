@@ -49,7 +49,11 @@ final class ClassPathModuleFinder extends FileSystemClassPathModuleFinder {
 
     void addModuleDependencies(final ModuleSpec.Builder builder, final ModuleLoader fatModuleLoader, final Attributes mainAttributes) {
         for (String dependency : dependencies) {
-            builder.addDependency(DependencySpec.createModuleDependencySpec(PathFilters.acceptAll(), PathFilters.rejectAll(), fatModuleLoader, dependency, false));
+            builder.addDependency(new ModuleDependencySpecBuilder()
+                .setImportFilter(PathFilters.acceptAll())
+                .setModuleLoader(fatModuleLoader)
+                .setName(dependency)
+                .build());
         }
         super.addModuleDependencies(builder, fatModuleLoader, mainAttributes);
     }
@@ -58,9 +62,12 @@ final class ClassPathModuleFinder extends FileSystemClassPathModuleFinder {
         // add the class path items in order, just like a real class path would
         for (String item : classPath) {
             if (item.equals(builder.getName())) {
-                builder.addDependency(DependencySpec.createLocalDependencySpec());
+                builder.addDependency(DependencySpec.OWN_DEPENDENCY);
             } else {
-                builder.addDependency(DependencySpec.createModuleDependencySpec(PathFilters.acceptAll(), PathFilters.rejectAll(), null, item, true));
+                builder.addDependency(new ModuleDependencySpecBuilder()
+                    .setName(item)
+                    .setOptional(true)
+                    .build());
             }
         }
     }

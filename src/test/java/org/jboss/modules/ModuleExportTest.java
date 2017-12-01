@@ -52,12 +52,20 @@ public class ModuleExportTest extends AbstractModuleTestCase {
         final TestModuleLoader moduleLoader = new TestModuleLoader();
 
         ModuleSpec.Builder builder = ModuleSpec.build(MODULE_A);
-        builder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_B, true, false));
+        builder.addDependency(new ModuleDependencySpecBuilder()
+            .setName(MODULE_B.toString())
+            .setExport(true)
+            .build());
         moduleLoader.addModuleSpec(builder.create());
 
         builder = ModuleSpec.build(MODULE_B);
-        builder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_C, true, false));
-        builder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_D));
+        builder.addDependency(new ModuleDependencySpecBuilder()
+            .setName(MODULE_C.toString())
+            .setExport(true)
+            .build());
+        builder.addDependency(new ModuleDependencySpecBuilder()
+            .setName(MODULE_D.toString())
+            .build());
         moduleLoader.addModuleSpec(builder.create());
 
         builder = ModuleSpec.build(MODULE_C);
@@ -115,12 +123,20 @@ public class ModuleExportTest extends AbstractModuleTestCase {
         final TestModuleLoader moduleLoader = new TestModuleLoader();
 
         ModuleSpec.Builder builder = ModuleSpec.build(MODULE_A);
-        builder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_B, true));
+        builder.addDependency(new ModuleDependencySpecBuilder()
+            .setName(MODULE_B.toString())
+            .setExport(true)
+            .build());
         moduleLoader.addModuleSpec(builder.create());
 
         builder = ModuleSpec.build(MODULE_B);
-        builder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_C, true));
-        builder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_D));
+        builder.addDependency(new ModuleDependencySpecBuilder()
+            .setName(MODULE_C.toString())
+            .setExport(true)
+            .build());
+        builder.addDependency(new ModuleDependencySpecBuilder()
+            .setName(MODULE_D.toString())
+            .build());
         moduleLoader.addModuleSpec(builder.create());
 
         builder = ModuleSpec.build(MODULE_C);

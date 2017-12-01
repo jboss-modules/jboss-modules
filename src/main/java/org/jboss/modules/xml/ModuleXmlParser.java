@@ -43,6 +43,8 @@ import java.util.zip.ZipFile;
 
 import org.jboss.modules.AssertionSetting;
 import org.jboss.modules.DependencySpec;
+import org.jboss.modules.LocalDependencySpecBuilder;
+import org.jboss.modules.ModuleDependencySpecBuilder;
 import org.jboss.modules.Version;
 import org.jboss.modules.maven.ArtifactCoordinates;
 import org.jboss.modules.maven.MavenArtifactUtil;
@@ -624,7 +626,9 @@ public final class ModuleXmlParser {
             eventType = reader.nextTag();
             switch (eventType) {
                 case END_TAG: {
-                    specBuilder.addDependency(DependencySpec.createLocalDependencySpec(PathFilters.acceptAll(), exportsBuilder.create()));
+                    specBuilder.addDependency(new LocalDependencySpecBuilder()
+                        .setExportFilter(exportsBuilder.create())
+                        .build());
                     for (DependencySpec dependency : dependencies) {
                         specBuilder.addDependency(dependency);
                     }
@@ -746,11 +750,12 @@ public final class ModuleXmlParser {
                         importBuilder.addFilter(PathFilters.getMetaInfFilter(), false);
                         importFilter = importBuilder.create();
                     }
-                    if (noSlots) {
-                        dependencies.add(DependencySpec.createModuleDependencySpec(importFilter, exportFilter, null, name, optional));
-                    } else {
-                        dependencies.add(DependencySpec.createModuleDependencySpec(importFilter, exportFilter, null, ModuleIdentifier.create(name, slot), optional));
-                    }
+                    dependencies.add(new ModuleDependencySpecBuilder()
+                        .setImportFilter(importFilter)
+                        .setExportFilter(exportFilter)
+                        .setName(noSlots ? name : ModuleIdentifier.create(name, slot).toString())
+                        .setOptional(optional)
+                        .build());
                     return;
                 }
                 case START_TAG: {

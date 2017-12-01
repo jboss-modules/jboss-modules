@@ -84,7 +84,9 @@ public class ModuleClassLoaderAliasReloadTest extends AbstractModuleTestCase {
                                 .addResources(getResource("test/aliasmodule/rootOne"))
                                 .create())
         ));
-        moduleOneBuilder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_TWO_AL));
+        moduleOneBuilder.addDependency(new ModuleDependencySpecBuilder()
+            .setName(MODULE_TWO_AL.toString())
+            .build());
         moduleOneBuilder.addDependency(DependencySpec.createLocalDependencySpec());
         moduleLoader.addModuleSpec(moduleOneBuilder.create());
         // second module
@@ -97,7 +99,9 @@ public class ModuleClassLoaderAliasReloadTest extends AbstractModuleTestCase {
                                 .create()
                 )
         ));
-        moduleTwoBuilder.addDependency(DependencySpec.createModuleDependencySpec(MODULE_ONE_ID));
+        moduleTwoBuilder.addDependency(new ModuleDependencySpecBuilder()
+            .setName(MODULE_ONE_ID.toString())
+            .build());
         moduleTwoBuilder.addDependency(DependencySpec.createLocalDependencySpec());
         moduleLoader.addModuleSpec(moduleTwoBuilder.create());
         // second alias module

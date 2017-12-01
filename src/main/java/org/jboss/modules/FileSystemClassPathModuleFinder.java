@@ -198,7 +198,10 @@ public class FileSystemClassPathModuleFinder implements ModuleFinder {
     }
 
     void addSystemDependencies(final ModuleSpec.Builder builder) {
-        builder.addDependency(DependencySpec.createSystemDependencySpec(JDKPaths.JDK));
+        builder.addDependency(new LocalDependencySpecBuilder()
+            .setLocalLoader(ClassLoaderLocalLoader.SYSTEM)
+            .setLoaderPaths(JDKPaths.JDK)
+            .build());
     }
 
     void addModuleDependencies(final ModuleSpec.Builder builder, final ModuleLoader fatModuleLoader, final Attributes mainAttributes) {
@@ -226,13 +229,13 @@ public class FileSystemClassPathModuleFinder implements ModuleFinder {
                     }
                     // else ignored
                 }
-                builder.addDependency(DependencySpec.createModuleDependencySpec(
-                    services ? PathFilters.getDefaultImportFilterWithServices() : PathFilters.getDefaultImportFilter(),
-                    export ? PathFilters.acceptAll() : PathFilters.rejectAll(),
-                    fatModuleLoader,
-                    moduleName,
-                    optional
-                ));
+                builder.addDependency(new ModuleDependencySpecBuilder()
+                    .setImportServices(services)
+                    .setExport(export)
+                    .setModuleLoader(fatModuleLoader)
+                    .setName(moduleName)
+                    .setOptional(optional)
+                    .build());
             }
         }
     }
@@ -249,7 +252,12 @@ public class FileSystemClassPathModuleFinder implements ModuleFinder {
         final String[] extensionListEntries = extensionList == null ? Utils.NO_STRINGS : extensionList.split("\\s+");
         for (String entry : extensionListEntries) {
             if (! entry.isEmpty()) {
-                builder.addDependency(DependencySpec.createModuleDependencySpec(PathFilters.acceptAll(), PathFilters.rejectAll(), extensionModuleLoader, entry, true));
+                builder.addDependency(new ModuleDependencySpecBuilder()
+                    .setImportFilter(PathFilters.acceptAll())
+                    .setModuleLoader(extensionModuleLoader)
+                    .setName(entry)
+                    .setOptional(true)
+                    .build());
             }
         }
     }
@@ -268,7 +276,12 @@ public class FileSystemClassPathModuleFinder implements ModuleFinder {
                 }
                 final Path depPath = path.resolveSibling(Paths.get(uri)).normalize();
                 // simple dependency; class path deps are always optional
-                builder.addDependency(DependencySpec.createModuleDependencySpec(PathFilters.acceptAll(), PathFilters.rejectAll(), moduleLoader, depPath.toString(), true));
+                builder.addDependency(new ModuleDependencySpecBuilder()
+                    .setImportFilter(PathFilters.acceptAll())
+                    .setModuleLoader(moduleLoader)
+                    .setName(depPath.toString())
+                    .setOptional(true)
+                    .build());
             }
         }
     }
@@ -282,7 +295,7 @@ public class FileSystemClassPathModuleFinder implements ModuleFinder {
 
     void addSelfDependency(final ModuleSpec.Builder builder) {
         // add our own dependency
-        builder.addDependency(DependencySpec.createLocalDependencySpec());
+        builder.addDependency(DependencySpec.OWN_DEPENDENCY);
     }
 
     void addSelfContent(final ModuleSpec.Builder builder, final ResourceLoader resourceLoader) {
