@@ -52,10 +52,16 @@ public final class ClassSpec {
      * Set the class file bytes.  Calling this method will clear any previously set {@code ByteBuffer}.
      *
      * @param bytes the class file bytes
+     * @return this class specification
      */
-    public void setBytes(final byte[] bytes) {
+    public ClassSpec setBytes(final byte[] bytes) {
         this.bytes = bytes;
         byteBuffer = null;
+        return this;
+    }
+
+    public void setBytes$$bridge(final byte[] bytes) {
+        setBytes(bytes);
     }
 
     /**
@@ -92,9 +98,15 @@ public final class ClassSpec {
      * Set the code source (should not be {@code null}).
      *
      * @param codeSource the code source
+     * @return this class specification
      */
-    public void setCodeSource(final CodeSource codeSource) {
+    public ClassSpec setCodeSource(final CodeSource codeSource) {
         this.codeSource = codeSource;
+        return this;
+    }
+
+    public void setCodeSource$$bridge(final CodeSource codeSource) {
+        setCodeSource(codeSource);
     }
 
     /**
@@ -110,11 +122,17 @@ public final class ClassSpec {
      * Set the class assertion setting.
      *
      * @param assertionSetting the assertion setting
+     * @return this class specification
      */
-    public void setAssertionSetting(final AssertionSetting assertionSetting) {
+    public ClassSpec setAssertionSetting(final AssertionSetting assertionSetting) {
         if (assertionSetting == null) {
             throw new IllegalArgumentException("assertionSetting is null");
         }
         this.assertionSetting = assertionSetting;
+        return this;
+    }
+
+    public void setAssertionSetting$$bridge(final AssertionSetting assertionSetting) {
+        setAssertionSetting(assertionSetting);
     }
 }

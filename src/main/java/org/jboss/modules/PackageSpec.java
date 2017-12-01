@@ -53,8 +53,13 @@ public final class PackageSpec {
      * @param specTitle the specification title
      * @see java.util.jar.Attributes.Name#SPECIFICATION_TITLE
      */
-    public void setSpecTitle(final String specTitle) {
+    public PackageSpec setSpecTitle(String specTitle) {
         this.specTitle = specTitle;
+        return this;
+    }
+
+    public void setSpecTitle$$bridge(String specTitle) {
+        setSpecTitle(specTitle);
     }
 
     /**
@@ -73,8 +78,13 @@ public final class PackageSpec {
      * @param specVersion the specification version
      * @see java.util.jar.Attributes.Name#SPECIFICATION_VERSION
      */
-    public void setSpecVersion(final String specVersion) {
+    public PackageSpec setSpecVersion(String specVersion) {
         this.specVersion = specVersion;
+        return this;
+    }
+
+    public void setSpecVersion$$bridge(String specVersion) {
+        setSpecVersion(specVersion);
     }
 
     /**
@@ -93,8 +103,13 @@ public final class PackageSpec {
      * @param specVendor the specification vendor
      * @see java.util.jar.Attributes.Name#SPECIFICATION_VENDOR
      */
-    public void setSpecVendor(final String specVendor) {
+    public PackageSpec setSpecVendor(String specVendor) {
         this.specVendor = specVendor;
+        return this;
+    }
+
+    public void setSpecVendor$$bridge(String specVendor) {
+        setSpecVendor(specVendor);
     }
 
     /**
@@ -113,8 +128,13 @@ public final class PackageSpec {
      * @param implTitle the implementation title
      * @see java.util.jar.Attributes.Name#IMPLEMENTATION_TITLE
      */
-    public void setImplTitle(final String implTitle) {
+    public PackageSpec setImplTitle(String implTitle) {
         this.implTitle = implTitle;
+        return this;
+    }
+
+    public void setImplTitle$$bridge(String implTitle) {
+        setImplTitle(implTitle);
     }
 
     /**
@@ -133,8 +153,13 @@ public final class PackageSpec {
      * @param implVersion the implementation version
      * @see java.util.jar.Attributes.Name#IMPLEMENTATION_VENDOR
      */
-    public void setImplVersion(final String implVersion) {
+    public PackageSpec setImplVersion(String implVersion) {
         this.implVersion = implVersion;
+        return this;
+    }
+
+    public void setImplVersion$$bridge(String implVersion) {
+        setImplVersion(implVersion);
     }
 
     /**
@@ -153,8 +178,13 @@ public final class PackageSpec {
      * @param implVendor the implementation vendor
      * @see java.util.jar.Attributes.Name#IMPLEMENTATION_VENDOR
      */
-    public void setImplVendor(final String implVendor) {
+    public PackageSpec setImplVendor(String implVendor) {
         this.implVendor = implVendor;
+        return this;
+    }
+
+    public void setImplVendor$$bridge(String implVendor) {
+        setImplVendor(implVendor);
     }
 
     /**
@@ -191,10 +221,15 @@ public final class PackageSpec {
      *
      * @param assertionSetting the package assertion setting
      */
-    public void setAssertionSetting(final AssertionSetting assertionSetting) {
+    public PackageSpec setAssertionSetting(AssertionSetting assertionSetting) {
         if (assertionSetting == null) {
             throw new IllegalArgumentException("assertionSetting is null");
         }
         this.assertionSetting = assertionSetting;
+        return this;
+    }
+
+    public void setAssertionSetting$$bridge(AssertionSetting assertionSetting) {
+        setAssertionSetting(assertionSetting);
     }
 }
