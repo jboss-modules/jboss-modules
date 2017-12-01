@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Asciidoctor 1.5.4">
-<title>JBoss Modules version 1</title>
+<meta name="generator" content="Asciidoctor 1.5.6.1">
+<title>JBoss Modules: version 1.x</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /* Asciidoctor default stylesheet | MIT License | http://asciidoctor.org */
@@ -17,7 +17,6 @@ audio:not([controls]){display:none;height:0}
 [hidden],template{display:none}
 script{display:none!important}
 html{font-family:sans-serif;-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}
-body{margin:0}
 a{background:transparent}
 a:focus{outline:thin dotted}
 a:active,a:hover{outline:0}
@@ -52,7 +51,7 @@ textarea{overflow:auto;vertical-align:top}
 table{border-collapse:collapse;border-spacing:0}
 *,*:before,*:after{-moz-box-sizing:border-box;-webkit-box-sizing:border-box;box-sizing:border-box}
 html,body{font-size:100%}
-body{background:#fff;color:rgba(0,0,0,.8);padding:0;margin:0;font-family:"Noto Serif","DejaVu Serif",serif;font-weight:400;font-style:normal;line-height:1;position:relative;cursor:auto}
+body{background:#fff;color:rgba(0,0,0,.8);padding:0;margin:0;font-family:"Noto Serif","DejaVu Serif",serif;font-weight:400;font-style:normal;line-height:1;position:relative;cursor:auto;tab-size:4;-moz-osx-font-smoothing:grayscale;-webkit-font-smoothing:antialiased}
 a:hover{cursor:pointer}
 img,object,embed{max-width:100%;height:auto}
 object,embed{height:100%}
@@ -64,7 +63,6 @@ img{-ms-interpolation-mode:bicubic}
 .text-center{text-align:center!important}
 .text-justify{text-align:justify!important}
 .hide{display:none}
-body{-webkit-font-smoothing:antialiased}
 img,object,svg{display:inline-block;vertical-align:middle}
 textarea{height:auto;min-height:50px}
 select{width:100%}
@@ -91,13 +89,12 @@ strong,b{font-weight:bold;line-height:inherit}
 small{font-size:60%;line-height:inherit}
 code{font-family:"Droid Sans Mono","DejaVu Sans Mono",monospace;font-weight:400;color:rgba(0,0,0,.9)}
 ul,ol,dl{font-size:1em;line-height:1.6;margin-bottom:1.25em;list-style-position:outside;font-family:inherit}
-ul,ol,ul.no-bullet,ol.no-bullet{margin-left:1.5em}
+ul,ol{margin-left:1.5em}
 ul li ul,ul li ol{margin-left:1.25em;margin-bottom:0;font-size:1em}
 ul.square li ul,ul.circle li ul,ul.disc li ul{list-style:inherit}
 ul.square{list-style-type:square}
 ul.circle{list-style-type:circle}
 ul.disc{list-style-type:disc}
-ul.no-bullet{list-style:none}
 ol li ul,ol li ol{margin-left:1.25em;margin-bottom:0}
 dl dt{margin-bottom:.3125em;font-weight:bold}
 dl dd{margin-bottom:1.25em}
@@ -119,18 +116,25 @@ table thead tr th,table thead tr td,table tfoot tr th,table tfoot tr td{padding:
 table tr th,table tr td{padding:.5625em .625em;font-size:inherit;color:rgba(0,0,0,.8)}
 table tr.even,table tr.alt,table tr:nth-of-type(even){background:#f8f8f7}
 table thead tr th,table tfoot tr th,table tbody tr td,table tr td,table tfoot tr td{display:table-cell;line-height:1.6}
-body{tab-size:4}
 h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6{line-height:1.2;word-spacing:-.05em}
 h1 strong,h2 strong,h3 strong,#toctitle strong,.sidebarblock>.content>.title strong,h4 strong,h5 strong,h6 strong{font-weight:400}
 .clearfix:before,.clearfix:after,.float-group:before,.float-group:after{content:" ";display:table}
 .clearfix:after,.float-group:after{clear:both}
-*:not(pre)>code{font-size:.9375em;font-style:normal!important;letter-spacing:0;padding:.1em .5ex;word-spacing:-.15em;background-color:#f7f7f8;-webkit-border-radius:4px;border-radius:4px;line-height:1.45;text-rendering:optimizeSpeed}
+*:not(pre)>code{font-size:.9375em;font-style:normal!important;letter-spacing:0;padding:.1em .5ex;word-spacing:-.15em;background-color:#f7f7f8;-webkit-border-radius:4px;border-radius:4px;line-height:1.45;text-rendering:optimizeSpeed;word-wrap:break-word}
+*:not(pre)>code.nobreak{word-wrap:normal}
+*:not(pre)>code.nowrap{white-space:nowrap}
 pre,pre>code{line-height:1.45;color:rgba(0,0,0,.9);font-family:"Droid Sans Mono","DejaVu Sans Mono",monospace;font-weight:400;text-rendering:optimizeSpeed}
+em em{font-style:normal}
+strong strong{font-weight:400}
 .keyseq{color:rgba(51,51,51,.8)}
 kbd{font-family:"Droid Sans Mono","DejaVu Sans Mono",monospace;display:inline-block;color:rgba(0,0,0,.8);font-size:.65em;line-height:1.45;background-color:#f7f7f7;border:1px solid #ccc;-webkit-border-radius:3px;border-radius:3px;-webkit-box-shadow:0 1px 0 rgba(0,0,0,.2),0 0 0 .1em white inset;box-shadow:0 1px 0 rgba(0,0,0,.2),0 0 0 .1em #fff inset;margin:0 .15em;padding:.2em .5em;vertical-align:middle;position:relative;top:-.1em;white-space:nowrap}
 .keyseq kbd:first-child{margin-left:0}
 .keyseq kbd:last-child{margin-right:0}
-.menuseq,.menu{color:rgba(0,0,0,.8)}
+.menuseq,.menuref{color:#000}
+.menuseq b:not(.caret),.menuref{font-weight:inherit}
+.menuseq{word-spacing:-.02em}
+.menuseq b.caret{font-size:1.25em;line-height:.8}
+.menuseq i.caret{font-weight:bold;text-align:center;width:.45em}
 b.button:before,b.button:after{position:relative;top:-1px;font-weight:400}
 b.button:before{content:"[";padding:0 3px 0 2px}
 b.button:after{content:"]";padding:0 2px 0 3px}
@@ -197,7 +201,7 @@ table.tableblock>caption.title{white-space:nowrap;overflow:visible;max-width:0}
 table.tableblock #preamble>.sectionbody>.paragraph:first-of-type p{font-size:inherit}
 .admonitionblock>table{border-collapse:separate;border:0;background:none;width:100%}
 .admonitionblock>table td.icon{text-align:center;width:80px}
-.admonitionblock>table td.icon img{max-width:none}
+.admonitionblock>table td.icon img{max-width:initial}
 .admonitionblock>table td.icon .title{font-weight:bold;font-family:"Open Sans","DejaVu Sans",sans-serif;text-transform:uppercase}
 .admonitionblock>table td.content{padding-left:1.125em;padding-right:1.25em;border-left:1px solid #ddddd8;color:rgba(0,0,0,.6)}
 .admonitionblock>table td.content>:last-child>:last-child{margin-bottom:0}
@@ -253,13 +257,13 @@ table.pyhltable .linenodiv{background:none!important;padding-right:0!important}
 table.tableblock{max-width:100%;border-collapse:separate}
 table.tableblock td>.paragraph:last-child p>p:last-child,table.tableblock th>p:last-child,table.tableblock td>p:last-child{margin-bottom:0}
 table.tableblock,th.tableblock,td.tableblock{border:0 solid #dedede}
-table.grid-all th.tableblock,table.grid-all td.tableblock{border-width:0 1px 1px 0}
-table.grid-all tfoot>tr>th.tableblock,table.grid-all tfoot>tr>td.tableblock{border-width:1px 1px 0 0}
-table.grid-cols th.tableblock,table.grid-cols td.tableblock{border-width:0 1px 0 0}
-table.grid-all *>tr>.tableblock:last-child,table.grid-cols *>tr>.tableblock:last-child{border-right-width:0}
-table.grid-rows th.tableblock,table.grid-rows td.tableblock{border-width:0 0 1px 0}
-table.grid-all tbody>tr:last-child>th.tableblock,table.grid-all tbody>tr:last-child>td.tableblock,table.grid-all thead:last-child>tr>th.tableblock,table.grid-rows tbody>tr:last-child>th.tableblock,table.grid-rows tbody>tr:last-child>td.tableblock,table.grid-rows thead:last-child>tr>th.tableblock{border-bottom-width:0}
-table.grid-rows tfoot>tr>th.tableblock,table.grid-rows tfoot>tr>td.tableblock{border-width:1px 0 0 0}
+table.grid-all>thead>tr>.tableblock,table.grid-all>tbody>tr>.tableblock{border-width:0 1px 1px 0}
+table.grid-all>tfoot>tr>.tableblock{border-width:1px 1px 0 0}
+table.grid-cols>*>tr>.tableblock{border-width:0 1px 0 0}
+table.grid-rows>thead>tr>.tableblock,table.grid-rows>tbody>tr>.tableblock{border-width:0 0 1px 0}
+table.grid-rows>tfoot>tr>.tableblock{border-width:1px 0 0 0}
+table.grid-all>*>tr>.tableblock:last-child,table.grid-cols>*>tr>.tableblock:last-child{border-right-width:0}
+table.grid-all>tbody>tr:last-child>.tableblock,table.grid-all>thead:last-child>tr>.tableblock,table.grid-rows>tbody>tr:last-child>.tableblock,table.grid-rows>thead:last-child>tr>.tableblock{border-bottom-width:0}
 table.frame-all{border-width:1px}
 table.frame-sides{border-width:0 1px}
 table.frame-topbot{border-width:1px 0}
@@ -280,10 +284,12 @@ ul li ol{margin-left:1.5em}
 dl dd{margin-left:1.125em}
 dl dd:last-child,dl dd:last-child>:last-child{margin-bottom:0}
 ol>li p,ul>li p,ul dd,ol dd,.olist .olist,.ulist .ulist,.ulist .olist,.olist .ulist{margin-bottom:.625em}
-ul.unstyled,ol.unnumbered,ul.checklist,ul.none{list-style-type:none}
-ul.unstyled,ol.unnumbered,ul.checklist{margin-left:.625em}
-ul.checklist li>p:first-child>.fa-square-o:first-child,ul.checklist li>p:first-child>.fa-check-square-o:first-child{width:1em;font-size:.85em}
-ul.checklist li>p:first-child>input[type="checkbox"]:first-child{width:1em;position:relative;top:1px}
+ul.checklist,ul.none,ol.none,ul.no-bullet,ol.no-bullet,ol.unnumbered,ul.unstyled,ol.unstyled{list-style-type:none}
+ul.no-bullet,ol.no-bullet,ol.unnumbered{margin-left:.625em}
+ul.unstyled,ol.unstyled{margin-left:0}
+ul.checklist{margin-left:.625em}
+ul.checklist li>p:first-child>.fa-square-o:first-child,ul.checklist li>p:first-child>.fa-check-square-o:first-child{width:1.25em;font-size:.8em;position:relative;bottom:.125em}
+ul.checklist li>p:first-child>input[type="checkbox"]:first-child{margin-right:.25em}
 ul.inline{margin:0 auto .625em auto;margin-left:-1.375em;margin-right:0;padding:0;list-style:none;overflow:hidden}
 ul.inline>li{list-style:none;float:left;margin-left:1.375em;display:block}
 ul.inline>li>*{display:block}
@@ -300,7 +306,8 @@ ol.lowergreek{list-style-type:lower-greek}
 td.hdlist1,td.hdlist2{vertical-align:top;padding:0 .625em}
 td.hdlist1{font-weight:bold;padding-bottom:1.25em}
 .literalblock+.colist,.listingblock+.colist{margin-top:-.5em}
-.colist>table tr>td:first-of-type{padding:0 .75em;line-height:1}
+.colist>table tr>td:first-of-type{padding:.4em .75em 0 .75em;line-height:1;vertical-align:top}
+.colist>table tr>td:first-of-type img{max-width:initial}
 .colist>table tr>td:last-of-type{padding:.25em 0}
 .thumb,.th{line-height:0;display:inline-block;border:solid 4px #fff;-webkit-box-shadow:0 0 0 1px #ddd;box-shadow:0 0 0 1px #ddd}
 .imageblock.left,.imageblock[style*="float: left"]{margin:.25em .625em 1.25em 0}
@@ -363,6 +370,7 @@ div.unbreakable{page-break-inside:avoid}
 .yellow{color:#bfbf00}
 .yellow-background{background-color:#fafa00}
 span.icon>.fa{cursor:default}
+a span.icon>.fa{cursor:inherit}
 .admonitionblock td.icon [class^="fa icon-"]{font-size:2.5em;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:default}
 .admonitionblock td.icon .icon-note:before{content:"\f05a";color:#19407c}
 .admonitionblock td.icon .icon-tip:before{content:"\f0eb";text-shadow:1px 1px 2px rgba(155,155,0,.8);color:#111}
@@ -417,28 +425,154 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 .show-for-print{display:inherit!important}}
 </style>
 </head>
-<body class="article">
+<body id="top" class="article">
 <div id="header">
-<h1>JBoss Modules version 1</h1>
+<h1>JBoss Modules: version 1.x</h1>
 <div id="toc" class="toc">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
-<li><a href="#_introduction">Introduction</a></li>
-<li><a href="#defining-a-module">Defining a module</a>
+<li><a href="#introduction">1. Introduction</a>
 <ul class="sectlevel2">
-<li><a href="#module-descriptors">Module descriptors</a></li>
-<li><a href="#_manifest_module_information">Manifest Module Information</a></li>
-<li><a href="#module-names">Module names</a></li>
-<li><a href="#native-libraries">Native Libraries</a></li>
+<li><a href="#about-this">1.1. About this manual</a></li>
 </ul>
 </li>
-<li><a href="#module-execution">Module execution</a></li>
+<li><a href="#concepts">2. JBoss Modules concepts</a>
+<ul class="sectlevel2">
+<li><a href="#classpath">2.1. The class path</a></li>
+<li><a href="#as-a-concept">2.2. Modules, defined</a></li>
+<li><a href="#loading">2.3. The module loading process</a></li>
+<li><a href="#names">2.4. Module names</a></li>
+<li><a href="#versions">2.5. Module versions</a>
+<ul class="sectlevel3">
+<li><a href="#version-syntax">2.5.1. Module version syntax</a></li>
+<li><a href="#versions-examining">2.5.2. Examining versions at run time</a></li>
+</ul>
+</li>
+<li><a href="#slots">2.6. Module version slots</a></li>
+<li><a href="#class-loading-order">2.7. Class loading order</a></li>
+</ul>
+</li>
+<li><a href="#defining">3. Using JBoss Modules to run an application</a>
+<ul class="sectlevel2">
+<li><a href="#basic-repository">3.1. Filesystem module repository</a></li>
+<li><a href="#jar-repository">3.2. JAR module repository</a></li>
+</ul>
+</li>
+<li><a href="#descriptors">4. XML Module descriptors</a>
+<ul class="sectlevel2">
+<li><a href="#root-element">4.1. The root <code>module</code> element</a>
+<ul class="sectlevel3">
+<li><a href="#main-class-element">4.1.1. The <code>main-class</code> element</a></li>
+<li><a href="#resources-element">4.1.2. The <code>resources</code> element</a>
+<ul class="sectlevel4">
+<li><a href="#resource-root-element">4.1.2.1. The <code>resource-root</code> element</a></li>
+<li><a href="#artifact-element">4.1.2.2. The <code>artifact</code> element</a></li>
+<li><a href="#properties-element">4.1.2.3. The <code>properties</code> element</a></li>
+<li><a href="#dependencies-element">4.1.2.4. The <code>dependencies</code> element</a></li>
+</ul>
+</li>
+<li><a href="#permissions-element">4.1.3. The <code>permissions</code> element</a></li>
+</ul>
+</li>
+<li><a href="#alias-element">4.2. The root <code>module-alias</code> element</a></li>
+<li><a href="#path-filters">4.3. Filters</a>
+<ul class="sectlevel3">
+<li><a href="#path-specification">4.3.1. Path specifications</a></li>
+<li><a href="#path-set">4.3.2. Path sets</a></li>
+</ul>
+</li>
+<li><a href="#native-libraries">4.4. Native Libraries</a></li>
+</ul>
+</li>
+<li><a href="#manifest">5. JAR repository module descriptors</a>
+<ul class="sectlevel2">
+<li><a href="#manifest-main">5.1. Main manifest attributes</a>
+<ul class="sectlevel3">
+<li><a href="#manifest-dependencies">5.1.1. The <code>Dependencies</code> manifest attribute</a>
+<ul class="sectlevel4">
+<li><a href="#manifest-dependencies-maven">5.1.1.1. Adding the <code>Dependencies</code> attribute using Maven</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#jar-permissions">5.2. JAR Permissions</a></li>
+<li><a href="#jar-nested">5.3. Nested module repository</a></li>
+</ul>
+</li>
+<li><a href="#running">6. Running JBoss Modules</a></li>
+<li><a href="#security-manager">7. JBoss Modules and the Java security manager</a>
+<ul class="sectlevel2">
+<li><a href="#security-manager-basics">7.1. Security manager basics</a>
+<ul class="sectlevel3">
+<li><a href="#permission-checking">7.1.1. Permission checking</a></li>
+<li><a href="#access-control-context">7.1.2. Access control context</a></li>
+<li><a href="#doprivileged">7.1.3. <code>AccessController.doPrivileged()</code></a>
+<ul class="sectlevel4">
+<li><a href="#doprivileged-full">7.1.3.1. Running an action with full privileges</a></li>
+<li><a href="#doprivileged-restricted">7.1.3.2. Running an action with restricted permissions</a></li>
+<li><a href="#doprivileged-saved-acc">7.1.3.3. Running an action with a saved access control context</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#security-manager-discovery">7.2. Security manager discovery</a></li>
+<li><a href="#security-best-practices">7.3. Best practices</a></li>
+</ul>
+</li>
+<li><a href="#the-api">8. Working with the JBoss Modules API</a>
+<ul class="sectlevel2">
+<li><a href="#modules-and-class-loaders">8.1. Modules and module class loaders</a></li>
+<li><a href="#module-loaders">8.2. Module loaders and module finders</a>
+<ul class="sectlevel3">
+<li><a href="#boot-module-loader">8.2.1. The boot module loader</a></li>
+<li><a href="#context-class-loader">8.2.2. The context class loader</a></li>
+</ul>
+</li>
+<li><a href="#custom-module-loaders">8.3. Implementing your own module loaders and finders</a>
+<ul class="sectlevel3">
+<li><a href="#_finding_and_specifying_a_module">8.3.1. Finding and specifying a module</a>
+<ul class="sectlevel4">
+<li><a href="#_resource_specifications">8.3.1.1. Resource specifications</a></li>
+<li><a href="#_dependency_specifications">8.3.1.2. Dependency specifications</a></li>
+</ul>
+</li>
+<li><a href="#complete-plugin-example">8.3.2. The complete example</a></li>
+<li><a href="#module-loader-delegation">8.3.3. Delegating to another module loader</a></li>
+<li><a href="#class-loader-names">8.3.4. Module class loader names</a></li>
+<li><a href="#provided-module-loaders">8.3.5. Using the provided module loaders and finders</a>
+<ul class="sectlevel4">
+<li><a href="#provided-local-module-loader">8.3.5.1. The local filesystem module loader</a></li>
+<li><a href="#provided-file-system-module-loader">8.3.5.2. The file system class path module loader</a></li>
+</ul>
+</li>
+<li><a href="#custom-module-class-loader">8.3.6. Custom <code>ModuleClassLoader</code> subclasses</a></li>
+</ul>
+</li>
+<li><a href="#resource-loaders">8.4. Resource loaders</a>
+<ul class="sectlevel3">
+<li><a href="#finding-resources">8.4.1. Finding resources</a></li>
+<li><a href="#finding-classes">8.4.2. Finding classes</a></li>
+<li><a href="#finding-packages">8.4.3. Finding packages</a></li>
+<li><a href="#finding-native-libraries">8.4.4. Finding native libraries</a></li>
+<li><a href="#resource-subloaders">8.4.5. Resource subloaders</a></li>
+<li><a href="#iterable-resource-loaders">8.4.6. Iterable resource loaders</a></li>
+<li><a href="#provided-resource-loaders">8.4.7. Using the provided resource loaders</a>
+<ul class="sectlevel4">
+<li><a href="#path-resource-loader">8.4.7.1. The <code>Path</code> resource loader</a></li>
+<li><a href="#jar-resource-loader">8.4.7.2. The JAR file resource loader</a></li>
+<li><a href="#native-resource-loader">8.4.7.3. The native resource loader</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
 <div id="content">
 <div class="sect1">
-<h2 id="_introduction">Introduction</h2>
+<h2 id="introduction">1. Introduction</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>JBoss Modules is a standalone implementation of a <em>modular</em>
@@ -465,770 +599,186 @@ modules actually used (and when they are used), rather than the total
 number of modules in the system. And, they may be unloaded by the user
 at any time.</p>
 </div>
+<div class="sect2">
+<h3 id="about-this">1.1. About this manual</h3>
+<div class="paragraph">
+<p>The source code for this manual is presently hosted
+<a href="https://github.com/jboss-modules/jboss-modules/blob/manual/src/Manual.adoc">on GitHub</a>.
+Contributions and corrections are welcome; when opening a pull request, please remember
+to set the base branch to <code>manual</code>.</p>
+</div>
+</div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="defining-a-module">Defining a module</h2>
+<h2 id="concepts">2. JBoss Modules concepts</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Since module definition is essentially pluggable, a module can be
-defined in many different ways.  However, JBoss Modules ships with two
-basic implemented strategies which are most commonly utilized.</p>
+<p>There are several important terms and concepts that must be understood to
+use JBoss Modules effectively.  Some of these terms might be familiar, but
+their complete definition may be surprising nonetheless.</p>
 </div>
-<div class="paragraph">
-<p>The first strategy is the <a href="#819701">static filesystem repository</a>
-approach.  Modules are organized in a directory hierarchy on the
-filesystem which is derived from the name and version of the module.
- The content of the module’s specific directory is comprised of a
-simple <a href="#module-descriptors">module descriptor</a> and all of the content itself
-(JARs or loose files).</p>
-</div>
-<div class="paragraph">
-<p>The second strategy is designed for direct JAR execution.  It uses JAR
-<a href="#819684">MANIFEST.MF information</a> to define simple dependencies and
-other module information, and is designed for executing JARs from the
-command line as well as situations where a JAR may be deployed in a
-container such as the JBoss Application Server.</p>
+<div class="dlist">
+<div class="title">Terms and definitions</div>
+<dl>
+<dt class="hdlist1">Resource</dt>
+<dd>
+<p>a data entity which may be found and read by way of a class or class loader,
+represented in JBoss Modules by the <code class="java">Resource</code> interface</p>
+</dd>
+<dt class="hdlist1">Class loader</dt>
+<dd>
+<p>the Java entity responsible for the creation, management, and resolution
+of new classes and resources</p>
+</dd>
+<dt class="hdlist1">Defining class loader</dt>
+<dd>
+<p>the class loader which defines a given class; this
+class loader can be found by way of the <code class="java">Class.getClassLoader()</code> method</p>
+</dd>
+<dt class="hdlist1">Initiating class loader</dt>
+<dd>
+<p>the class loader which was used to start a class
+load request; this will be the defining class loader of the class which caused
+a class load operation to begin</p>
+</dd>
+<dt class="hdlist1">Class definition</dt>
+<dd>
+<p>the first stage of loading a new class, whereby a class name is resolved
+to a sequence of bytes and registered to the JVM; the JVM also verifies the class bytes
+at this time</p>
+</dd>
+<dt class="hdlist1">Class resolution</dt>
+<dd>
+<p>the second stage of loading a new class, whereby all the symbolic
+references in the class constant pool are resolved to concrete values</p>
+</dd>
+<dt class="hdlist1">Class initialization</dt>
+<dd>
+<p>the third and final stage of loading a new class, whereby the
+class or interface initialization method is executed (which may include executing
+dynamic code to populate the initial value of <code class="java">static</code> fields)</p>
+</dd>
+<dt class="hdlist1">Visibility</dt>
+<dd>
+<p>the set of classes and resources that a class can directly find via its
+own class loader</p>
+</dd>
+<dt class="hdlist1">Module</dt>
+<dd>
+<p>an encapsulated and isolated grouping of classes and resources, which can reference
+(by dependency) other modules or content; a module is represented by a <code class="java">Module</code> object
+and backed by a <code class="java">ModuleClassLoader</code> object</p>
+</dd>
+<dt class="hdlist1">Dependency</dt>
+<dd>
+<p>a reference from one module to another, which indicates that the source module
+consumes some content from the target module</p>
+</dd>
+<dt class="hdlist1">Module specification</dt>
+<dd>
+<p>a description of a module, which includes its dependencies and
+their order as well as its contents (classes and resources)</p>
+</dd>
+<dt class="hdlist1">Isolation</dt>
+<dd>
+<p>the concept of preventing interference between two class loaders; isolated
+class loaders can (for example) have classes and packages which have the same name
+as classes and packages in a different class loader from which it was isolated</p>
+</dd>
+<dt class="hdlist1">Package name</dt>
+<dd>
+<p>the part of a class name which precedes the final period (<code>.</code>)
+character</p>
+</dd>
+<dt class="hdlist1">Package</dt>
+<dd>
+<p>a set of classes which have <em>both</em> the same package name <em>and</em>
+the same defining class loader</p>
+</dd>
+<dt class="hdlist1">Module loader</dt>
+<dd>
+<p>the JBoss Modules entity responsible for the creation, management, and
+resolution of new modules</p>
+</dd>
+<dt class="hdlist1">Module finder</dt>
+<dd>
+<p>the portion of the module loading logic which is responsible for locating and
+defining module specifications</p>
+</dd>
+<dt class="hdlist1">Resource loader</dt>
+<dd>
+<p>the JBoss Modules entity responsible for locating and serving class,
+package, and resource data to the module class loader</p>
+</dd>
+</dl>
 </div>
 <div class="sect2">
-<h3 id="module-descriptors">Module descriptors</h3>
+<h3 id="classpath">2.1. The class path</h3>
 <div class="paragraph">
-<p>A <em>module descriptor</em> is an XML file which describes the structure,
-content, dependencies, filtering, and other attributes of a module. This
-format is highly expressive and is tailored for use by the
-filesystem-backed module loader to allow the module description to
-reside alongside its content, rather than inside it. In particular, its
-location on the filesystem is calculated by converting the dot-separated
-segments of the module name to path elements, followed by a path element
-which consists of the version slot for that module. This path is then
-appended to each module path root in turn until a file named
-<code>module.xml</code> is found within it.</p>
+<p>Most Java programmers are familiar with the <em>class path</em>.  This is the set of files and
+directories which comprise a typical Java program, usually given in a long list on the
+command line.  These classes are all loaded by the same class loader, known as
+the <em>application class loader</em>.</p>
 </div>
 <div class="paragraph">
-<p>Below is an example of a module descriptor used by the JBoss Application
-Server:</p>
+<p>The application class loader uses a <em>parent-first</em> loading methodology: when a request to
+load a class is received by the class loader, it first <em>delegates</em> to the <em>platform class loader</em>,
+which typically includes all the classes which are provided by the JDK itself.  If the
+platform class loader cannot provide the given class, then the class path defined in the
+application class loader is checked in order from start to end.</p>
 </div>
 <div class="paragraph">
-<p>Example module descriptor</p>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
-
-&lt;module xmlns="urn:jboss:module:1.6" name="org.jboss.msc" version="1.0.1.GA"&gt;
-
-    &lt;main-class name="org.jboss.msc.Version"/&gt;
-
-    &lt;properties&gt;
-        &lt;property name="my.property" value="foo"/&gt;
-    &lt;/properties&gt;
-
-    &lt;resources&gt;
-        &lt;resource-root path="jboss-msc-1.0.1.GA.jar"/&gt;
-    &lt;/resources&gt;
-
-    &lt;dependencies&gt;
-        &lt;module name="javax.api"/&gt;
-        &lt;module name="org.jboss.logging"/&gt;
-        &lt;module name="org.jboss.modules"/&gt;
-
-        &lt;!-- Optional deps --&gt;
-        &lt;module name="javax.inject.api" optional="true"/&gt;
-        &lt;module name="org.jboss.threads" optional="true"/&gt;
-        &lt;module name="org.jboss.vfs" optional="true"/&gt;
-    &lt;/dependencies&gt;
-&lt;/module&gt;</pre>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_the_root_module_element">The root module element</h4>
-<div class="paragraph">
-<p>The root element of the module descriptor determines what <em>type</em> of
-module is being specified. There are two types: a regular <strong>module</strong> and a
-<strong>module alias</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Regular module descriptors have a root element named <code>module</code> from the
-<code>urn:jboss:module:xxx</code> namespace. The <code>module</code> element supports the
-following attributes:</p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
-<col style="width: 50%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Attribute</th>
-<th class="tableblock halign-left valign-top">Type</th>
-<th class="tableblock halign-left valign-top">Required?</th>
-<th class="tableblock halign-left valign-top">Version(s)</th>
-<th class="tableblock halign-left valign-top">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">name</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1.0+</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The name of the module. This name must match the name of the module being loaded.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">slot</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1.0-1.5</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The modules slot. If not specified, defaults to ``main''. Deprecated in 1.5, removed in 1.6.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1.6+</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The optional version designation of the module.  Appears in stack traces on Java 9+.</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p>The <code>module</code> element may contain any of the following elements:</p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 14.2857%;">
-<col style="width: 14.2857%;">
-<col style="width: 14.2857%;">
-<col style="width: 57.1429%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Element</th>
-<th class="tableblock halign-left valign-top">Required?</th>
-<th class="tableblock halign-left valign-top">Version(s)</th>
-<th class="tableblock halign-left valign-top">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">main-class</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1.0+</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The main class of this module, if any.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">properties</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1.1+</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">A list of properties to make available on this module.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">resources</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1.0+</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The resources that make up this module.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">dependencies</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1.0+</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The dependencies for this module.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">exports</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1.0+</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The path filter expressions to apply to the export filter of the local resources of this module.</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect3">
-<h4 id="the-main-class-element">The main-class element</h4>
-<div class="paragraph">
-<p>A module which is defined with a <code>main-class</code> element is said to be
-<em>executable</em>. In other words, the module name can be listed on the
-command line, and the standard static <code>main(String[])</code> method in the
-named module’s <code>main-class</code> will be loaded and executed.</p>
-</div>
-<div class="paragraph">
-<p>The <code>main-class</code> element supports the following attributes:</p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
-<col style="width: 50%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Attribute</th>
-<th class="tableblock halign-left valign-top">Type</th>
-<th class="tableblock halign-left valign-top">Required?</th>
-<th class="tableblock halign-left valign-top">Version(s)</th>
-<th class="tableblock halign-left valign-top">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">name</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1.0+</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The name of the main class.</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p>This element may not contain any nested elements.</p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Note</div>
-</td>
-<td class="content">
-The main class need not come from the module’s actual resources, nor
-does it need to be exported. Any public class which is visible to the
-module - which includes all imported dependencies as well as all
-resource roots - is a valid main class, as long as it has a method with
-the signature <code>public static void main(String[] args)</code>.
-</td>
-</tr>
-</table>
-</div>
-</div>
-<div class="sect3">
-<h4 id="the-resources-element">The resources element</h4>
-<div class="paragraph">
-<p>In order for a module to actually have content, you must define the
-<code>resources</code> element with at least one resource root.</p>
-</div>
-<div class="paragraph">
-<p>A <em>resource root</em> is a specification of a location where the class
-loader for a module will look for classes and resources. Each module has
-zero or more resource roots, though most regular modules will contain
-exactly one, which refers to the JAR file with the module’s content.</p>
-</div>
-<div class="paragraph">
-<p>It is possible to define resource roots for a module which correspond to
-JAR files as well as file system directories, just like class paths.
-File system directory resource roots have the additional property of
-supporting the specification of native libraries, which cannot be loaded
-from JAR files.</p>
-</div>
-<div class="paragraph">
-<p>The <code>resources</code> element does not support any attributes; it contains
-zero or more <code>resource-root</code> elements. The <code>resource-root</code> element
-supports the following attributes:</p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
-<col style="width: 50%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Attribute</th>
-<th class="tableblock halign-left valign-top">Type</th>
-<th class="tableblock halign-left valign-top">Required?</th>
-<th class="tableblock halign-left valign-top">Version(s)</th>
-<th class="tableblock halign-left valign-top">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">path</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1.0+</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The path of this resource root, relative to the location of the
-module.xml file.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">name</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1.0+</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The name of the resource root. If not specified, defaults to the
-resource root’s path.</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p>In addition, the <code>resource-root</code> element may contain a nested element:</p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 14.2857%;">
-<col style="width: 14.2857%;">
-<col style="width: 14.2857%;">
-<col style="width: 57.1429%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Element</th>
-<th class="tableblock halign-left valign-top">Required?</th>
-<th class="tableblock halign-left valign-top">Version(s)</th>
-<th class="tableblock halign-left valign-top">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">filter</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1.0+</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">A path filter to apply to this resource root. If not specified, all
-paths are accepted.</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p>See the section on filter definition for more information about defining
-filters.</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="the-properties-element">The properties element</h4>
-<div class="paragraph">
-<p>The modules API exposes a method which can read property (string
-key-value pair) values from a module. To specify values for these
-properties you use the <code>properties</code> element which can contain zero or
-more <code>property</code> elements, each supporting the following attributes:</p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
-<col style="width: 50%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Attribute</th>
-<th class="tableblock halign-left valign-top">Type</th>
-<th class="tableblock halign-left valign-top">Required?</th>
-<th class="tableblock halign-left valign-top">Version(s)</th>
-<th class="tableblock halign-left valign-top">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">name</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1.1+</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The name of the property.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">value</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1.1+</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The property value; if not given, the property value defaults to
-``true''.</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect3">
-<h4 id="the-dependencies-element">The dependencies element</h4>
-<div class="paragraph">
-<p>A module may express one or more dependencies on other module(s) via the
-<code>dependencies</code> element.</p>
-</div>
-<div class="paragraph">
-<p>The <code>dependencies</code> element does not support any attributes. It
-contains zero or more nested elements as follows:</p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 14.2857%;">
-<col style="width: 14.2857%;">
-<col style="width: 14.2857%;">
-<col style="width: 57.1429%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Element</th>
-<th class="tableblock halign-left valign-top">Required?</th>
-<th class="tableblock halign-left valign-top">Version(s)</th>
-<th class="tableblock halign-left valign-top">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">module</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1.0+</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">A module name upon which a dependency should be added.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">system</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1.0+</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">A specification for expressing a dependency upon the system or
-application class path.</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect3">
-<h4 id="module-dependencies">Module dependencies</h4>
-<div class="paragraph">
-<p>The <code>module</code> element supports the following attributes:</p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
-<col style="width: 50%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Attribute</th>
-<th class="tableblock halign-left valign-top">Type</th>
-<th class="tableblock halign-left valign-top">Required?</th>
-<th class="tableblock halign-left valign-top">Version(s)</th>
-<th class="tableblock halign-left valign-top">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">name</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1.0+</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The name of the module upon which this module depends.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">slot</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1.0-1.5</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The version slot of the module upon which this module depends; defaults
-to ``main''.  Deprecated in 1.5, removed in 1.6.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">export</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1.0+</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Specify whether this dependency is re-exported by default; if not
-specified, defaults to ``false''.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">services</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">enum</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1.0+</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Specify whether this dependency’s services
-<sup class="footnote" id="_footnote_spi">[<a id="_footnoteref_1" class="footnote" href="#_footnote_1" title="View footnote.">1</a>]</sup>
-are imported and/or exported. Possible values are <code>none'', </code>import'', or <code>export'';
-defaults to </code>none''.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1.0+</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Specify whether this dependency is optional; defaults to ``false''.</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p>In addition, the <code>module</code> element supports the following nested
-elements:</p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 14.2857%;">
-<col style="width: 14.2857%;">
-<col style="width: 14.2857%;">
-<col style="width: 57.1429%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Element</th>
-<th class="tableblock halign-left valign-top">Required?</th>
-<th class="tableblock halign-left valign-top">Version(s)</th>
-<th class="tableblock halign-left valign-top">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">imports</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1.0+</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">A path filter used to restrict what paths are imported from the dependency.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">exports</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1.0+</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">A path filter used to restrict what imported paths are re-exported from
-this module.</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p>Example of adding an explicit exclude for a dependency</p>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>&lt;dependencies&gt;
-    &lt;module name="org.jboss.example"&gt;
-        &lt;imports&gt;
-            &lt;exclude-set&gt;
-                &lt;path name="org/jboss/example/tests"/&gt;
-            &lt;/exclude-set&gt;
-        &lt;/imports&gt;
-    &lt;/module&gt;
-&lt;/dependencies&gt;</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>See the section on filter definition for more information about filters.</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="system-dependencies">System dependencies</h4>
-<div class="paragraph">
-<p>The <code>system</code> element expresses a dependency which is satisfied by
-accessing paths and packages from the class loader which loaded JBoss
-Modules (this is usually the system’s application class loader). The
-element supports the following attributes:</p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
-<col style="width: 50%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Attribute</th>
-<th class="tableblock halign-left valign-top">Type</th>
-<th class="tableblock halign-left valign-top">Required?</th>
-<th class="tableblock halign-left valign-top">Version(s)</th>
-<th class="tableblock halign-left valign-top">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">export</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1.0+</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Specify whether this dependency is re-exported by default; if not
-specified, defaults to <code>false</code>.</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p>It also contains nested elements as follows:</p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 14.2857%;">
-<col style="width: 14.2857%;">
-<col style="width: 14.2857%;">
-<col style="width: 57.1429%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Element</th>
-<th class="tableblock halign-left valign-top">Required?</th>
-<th class="tableblock halign-left valign-top">Version(s)</th>
-<th class="tableblock halign-left valign-top">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">paths</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1.0+</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Specify the list of paths (or packages, with <code>.'' transformed to </code>/'')
-which are exposed by this dependency.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">exports</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1.0+</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">A filter which restricts the list of packages/paths which are
-re-exported by this module. If not specified, all paths are selected
-(does not apply if the export attribute on the system element is false
-or unspecified).</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect3">
-<h4 id="the-root-module-alias-element">The root module-alias element</h4>
-<div class="paragraph">
-<p>A module alias descriptor defines a module which is simply another name
-for a second module. The root element is called <code>module-alias</code> and
-supports the following attributes:</p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
-<col style="width: 12.5%;">
-<col style="width: 50%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Attribute</th>
-<th class="tableblock halign-left valign-top">Type</th>
-<th class="tableblock halign-left valign-top">Required?</th>
-<th class="tableblock halign-left valign-top">Version(s)</th>
-<th class="tableblock halign-left valign-top">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">name</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1.0+</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The name of the module. This name must match the name of the module
-being loaded.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">slot</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1.0-1.5</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The version slot. If not specified, defaults to ``main''.  Deprecated in 1.5; removed in 1.6.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">target-name</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1.0+</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The name of the module to which this alias refers.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">target-slot</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1.0-1.5</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The version slot of the module to which this alias refers. If not
-specified, defaults to ``main''.  Deprecated in 1.5; removed in 1.6.</p></td>
-</tr>
-</tbody>
-</table>
+<p>This simple system is sufficient for many simple applications.  However, the lack of isolation
+between class path items can cause a variety of problems for more complex systems.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_manifest_module_information">Manifest Module Information</h3>
-<div class="sect3">
-<h4 id="introduction-1">Introduction</h4>
+<h3 id="as-a-concept">2.2. Modules, defined</h3>
 <div class="paragraph">
-<p>The previous chapter discussed how module descriptors are structured and
-the options available when defining modules. This chapter will talk
-about how applications packaged as jars can declare that they depend on
-one or more modules.</p>
-</div>
-<div class="paragraph">
-<p>For example, lets say you have an application packaged in a jar file and
-want to run this code using JBoss Modules. In such cases we need to have
-a way to of telling JBoss Modules what modules our applications depends
-on so that the classes and resources in those modules are available to
-the application. The way this is done is by using a manifest header.</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="dependencies-manifest-header">Dependencies Manifest header</h4>
-<div class="paragraph">
-<p>The Dependencies manifest header is used to specify dependencies that a
-jar file has. The value is a comma-separated list, like this example:</p>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>Dependencies: org.some.module, org.another.module</pre>
-</div>
+<p>The concept of a <em>module</em> in JBoss Modules is based on the notion of <em>isolated</em> class loaders.
+Each module is backed by a single class loader, and is comprised of a small number of <em>resource roots</em>
+(for example, JAR files, or directories on the file system) in combination with a list of <em>dependencies</em> which determine
+the content from other modules that will be <em>imported</em> in to this one.  The graph formed when all
+dependencies are resolved (which may include cycles) determines what content is ultimately <em>visible</em>
+to a module.</p>
 </div>
 <div class="paragraph">
-<p>You can also specify a version slot by appending the version slot after
-the module name like this:</p>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>Dependencies: org.some.module:main, org.another.module:1.0</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Each entry follows this format:</p>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>&lt;module-name&gt; [optional] [export]</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>The <code>optional</code> flag indicates that this dependency is optional (if it
-is not present, no error is thrown). The <code>export</code> flag indicates that
-this dependency’s packages should be re-exported to consumers of the
-current module.</p>
-</div>
-<div class="paragraph">
-<p>Note that some implementations (such as JBoss AS) support more flags or
-arguments than this on each dependency. As such, arguments which are not
-recognized are automatically ignored.</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="adding-the-dependencies-header-using-maven">Adding the Dependencies header using Maven</h4>
-<div class="paragraph">
-<p>Below is an example of how the <em>Depencencies</em> header can be added to a
-projects Maven pom.xml:</p>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>&lt;plugins&gt;
-   &lt;plugin&gt;
-      &lt;groupId&gt;org.apache.maven.plugins&lt;/groupId&gt;
-      &lt;artifactId&gt;maven-jar-plugin&lt;/artifactId&gt;
-      &lt;version&gt;2.3.1&lt;/version&gt;
-      &lt;configuration&gt;
-         &lt;archive&gt;
-            &lt;manifestEntries&gt;
-               &lt;Dependencies&gt;org.some.module, org.another.module&lt;/Dependencies&gt;
-            &lt;/manifestEntries&gt;
-         &lt;/archive&gt;
-     &lt;/configuration&gt;
-   &lt;/plugin&gt;
-&lt;/plugins&gt;</pre>
-</div>
-</div>
+<p>This allows the code in a module to know definitively what classes and resources it is sharing
+a class loader with, which can resolve conflicts caused when (for example) more than one
+version of a library must be used within the same application, or when certain libraries
+need control over what other libraries it loads services or other resources from.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="module-names">Module names</h3>
+<h3 id="loading">2.3. The module loading process</h3>
 <div class="paragraph">
-<p>A module name is a dot-separated string which is used to uniquely identify a module within a module
-loader.  Names are typically organized along the same lines as package
-names, however there is no specific relationship between a module name
-and the packages it contains.  These are all examples of typical module
-names:</p>
+<p>Modules are loaded in a process which is similar (in concept) to the Java class loading process.
+The module loader queries each of its <em>module finders</em> in order, asking for a module
+with the given name.  If found, the module finder may return a <em>specification</em> object which
+describes the module, which is then used by the module loader to establish the new module.
+The new module contains a <em>module class loader</em> which is then used to load the classes in the
+module.</p>
+</div>
+<div class="paragraph">
+<p>If the module finder does not find the module, the module loader may <em>delegate</em> to another
+module loader to find the module.  If there is no delegation process established for the
+module loader, or the delegate module loader(s) did not find the module, then typically
+an exception will be thrown.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="names">2.4. Module names</h3>
+<div class="paragraph">
+<p>Each module has a <em>name</em>.  This is a unique textual string that identifies the module being
+loaded.</p>
+</div>
+<div class="paragraph">
+<p>The name syntax is constrained only by the module loader in use.  The <a href="#basic-repository">filesystem module repository</a> uses a dot-separated, reverse domain name convention which is similar to the
+Java package name convention; here are some examples:</p>
 </div>
 <div class="ulist">
+<div class="title">Typical filesystem repository module names</div>
 <ul>
 <li>
 <p><code>org.apache.commons.logging</code></p>
@@ -1248,16 +798,96 @@ names:</p>
 </ul>
 </div>
 <div class="paragraph">
-<p>Most module loaders support loading a special module called <code>system</code>.
- This module refers to the class loader which loaded the
-<code>jboss-modules.jar</code> itself.  Due to the fact that this class loader may
-include just about anything, rather than using this module directly, one
-should make use
-of <a href="#imports-and-exports">import
-and export filtering</a> to present a reduced version of this module.</p>
+<p>The <a href="#filesystem-repository">filesystem JAR repository</a>
+uses the absolute path name of the JAR (for example, <code class="filename">/opt/jars/commons-lang.jar</code> or
+<code class="filename">C:\MyJars\commons-lang.jar</code>).  Other module loaders may use different conventions.  It is
+the responsibility of each module loader or module finder to enforce any validity checks on module
+names.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="versions">2.5. Module versions</h3>
+<div class="paragraph">
+<p>Since JBoss Modules 1.6, a module may include an optional <em>version</em> string.
+The module version is used for diagnostic purposes, and does not constrain or affect the resolution of the module graph
+(contrast with OSGi, wherein the bundle version is a part of its identity and strongly affects resolution logic).</p>
 </div>
 <div class="sect3">
-<h4 id="version-slots">Version slots</h4>
+<h4 id="version-syntax">2.5.1. Module version syntax</h4>
+<div class="paragraph">
+<p>A module version adheres to a strict syntax, which may described by the following grammar:</p>
+</div>
+<div class="listingblock">
+<div class="title">Version string grammar</div>
+<div class="content">
+<pre class="highlight"><code class="language-abnf" data-lang="abnf">version         = letters-version / numbers-version
+
+letters-version = [ version separator ] letters / numbers-version letters
+
+numbers-version = [ version separator ] numbers / letters-version numbers
+
+separator       = "." / "-" / "+" / "_"
+
+letters         = 1*( letter )
+
+letter          = ; any valid Unicode code point for which Character.isLetter(int) is true
+
+digits          = 1* ( digit )
+
+digit           = ; any valid Unicode code point for which Character.digit(codePoint, 10) returns a valid value</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>JBoss Modules does not enforce one single version string convention; users are encouraged to choose whatever convention
+works best for their situation.  It is common, however, to use the version of the corresponding Maven
+artifact for a module&#8217;s version string, for modules which are based on Maven artifacts.</p>
+</div>
+<div class="paragraph">
+<p>The following are all valid version strings:</p>
+</div>
+<div class="ulist">
+<div class="title">Valid version string examples</div>
+<ul>
+<li>
+<p><code>1.0.Beta3</code></p>
+</li>
+<li>
+<p><code>10</code></p>
+</li>
+<li>
+<p><code>Release9</code></p>
+</li>
+<li>
+<p><code>12r6u4</code></p>
+</li>
+<li>
+<p><code>5.9_224u5-build-2948+2017-11-04_11-32-04.003</code></p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect3">
+<h4 id="versions-examining">2.5.2. Examining versions at run time</h4>
+<div class="paragraph">
+<p>Versions are represented by the <code class="java">Version</code> class in JBoss Modules.  They are <code>Comparable</code> and have a
+stable sort order: short version strings sort before long version strings, and digit segments sort
+before letter segments.  Letter segments are sorted in a lexical (case-sensitive) manner using the
+Unicode code point of each letter.  Numeric segments are sorted by numeric value.
+Separators sort in the order <em>empty</em>, '.', '-', '+', '_' (from highest to lowest).</p>
+</div>
+<div class="paragraph">
+<p>In addition, the <code class="java">org.jboss.modules.Version.Iterator</code> class may be used to iterate the parts of a version, which
+may be useful in certain dynamic or plugin based systems, or for the introduction of a local version
+verification policy, in order to extract semantic information from a given version string.</p>
+</div>
+<div class="paragraph">
+<p>When JBoss Modules runs on Java 9 or later, the module name and version will appear in the stack
+trace of any exceptions, which is useful for diagnostic purposes.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="slots">2.6. Module version slots</h3>
 <div class="paragraph">
 <p>Version slot identifiers were used when you wish to have more than one
 instance of a module in a module loader under the same name.  This may
@@ -1306,9 +936,16 @@ modules:</p>
 parse identifier strings as well as assemble a name or a name plus a
 version slot identifier into a module identifier.</p>
 </div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
 <div class="paragraph">
-<p>The concept of slot names has been deprecated since version 1.5, and removed in 1.6
-and later, in order to more closely align with the future Java Platform&#8217;s module
+<p>The concept of slot names has been deprecated since version 1.5
+in order to more closely align with the future Java Platform&#8217;s module
 system, which has only names.  Legacy module identifiers containing a slot component are transformed
 into plain names in the following way:</p>
 </div>
@@ -1327,10 +964,1180 @@ so that in the final name, it is given as <code>\:</code>.</p>
 </li>
 </ul>
 </div>
+</td>
+</tr>
+</table>
 </div>
 </div>
 <div class="sect2">
-<h3 id="native-libraries">Native Libraries</h3>
+<h3 id="class-loading-order">2.7. Class loading order</h3>
+<div class="paragraph">
+<p>Class loaders in Java can (for the most part) be broadly described as falling in to one of two
+categories: <em>parent-first</em> or <em>child-first</em>.</p>
+</div>
+<div class="paragraph">
+<p>In JBoss Modules, module delegation is done graph-wise, not tree-wise, so modules generally may have
+more than one "parent".  Regardless, each module loader can determine what class loading order is used, including
+exotic hybrid orders wherein some dependencies are parent-first (i.e. checked before the current
+module) and some are child-first (i.e. checked after the current module).  However, all of the module
+loaders which are included with JBoss Modules use <em>child-first</em> loading exclusively.</p>
+</div>
+<div class="paragraph">
+<p>The best reason for this can be described using a simple example.  Given two modules, A and B, which each depend
+on one another, like this:</p>
+</div>
+<div class="imageblock" style="text-align: center">
+<div class="content">
+<img src="img/fig-cycle.png" alt="Module cycle">
+</div>
+<div class="title">Figure 1. Simple cycle</div>
+</div>
+<div class="paragraph">
+<p>If both of these modules contain the same class (or, more likely, resource), then when A attempts
+to load the class or resource, it will get B&#8217;s version; likewise if B loads the class or resource,
+it will get A&#8217;s version.  Needless to say, this can be very surprising at run time, and difficult
+to debug as well.  Using child-first loading, each module will see its own classes, avoiding this problem.</p>
+</div>
+<div class="paragraph">
+<p>However, there is a reason that parent-first loading is used pervasively in the JDK&#8217;s simple
+class loading delegation tree.  If a library is provided by a parent class loader, then it may be
+that the child class loader should not be able to load another copy of it.  Using parent-first loading
+is a simple way to prefer the parent&#8217;s version without affecting the child too much.</p>
+</div>
+<div class="paragraph">
+<p>With JBoss Modules, the better solution to this requirement is to exclude the packages which contain
+duplicated or undesirable resources.  The best approach here is to have care when packaging a given
+module, to ensure that it does not contain redundant classes.  However, container authors will note
+that this sometimes does not happen.  A container can however implement this technique on an automatic
+basis, by examining dependency package names, and pruning that set of package names from the set of
+packages that are to be defined by the module&#8217;s own resources.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="defining">3. Using JBoss Modules to run an application</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Since module definition is essentially pluggable, a module can be
+defined in many different ways.  However, JBoss Modules ships with two
+basic implemented strategies which are most commonly utilized when running
+an application.</p>
+</div>
+<div class="paragraph">
+<p>The first strategy is the <a href="#basic-repository">Filesystem module repository</a>
+approach.  Modules are organized in a directory hierarchy on the
+filesystem which is derived from the name and version of the module.
+ The content of the module&#8217;s specific directory is comprised of a
+simple <a href="#descriptors">module descriptor</a> and all of the content itself
+(JARs or loose files).</p>
+</div>
+<div class="paragraph">
+<p>The second strategy is the <a href="#jar-repository">JAR module repository</a> approach.  This approach
+runs individual JARs as modules.</p>
+</div>
+<div class="sect2">
+<h3 id="basic-repository">3.1. Filesystem module repository</h3>
+<div class="paragraph">
+<p>The filesystem module repository is a module storage format which is used
+for applications which are comprised of a graph of modules.  The basis of
+operation for the filesystem module repository is that modules are located
+by scanning one or more <em>module path</em> directories for a module descriptor
+whose location is determined by converting the dot-separated
+segments of the module name to path elements, followed by a path element
+which consists of the version slot for that module (if any). This path is then
+appended to each module path root in turn until a file named
+<code class="filename">module.xml</code> is found within it.</p>
+</div>
+<div class="paragraph">
+<p>The <code class="filename">module.xml</code> file format is described in the <a href="#descriptors">XML Module descriptors</a> section.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="jar-repository">3.2. JAR module repository</h3>
+<div class="paragraph">
+<p>The JAR-backed module repository format allows individual JARs to run as modules directly.
+This repository type is designed for executing JARs from the
+command line as well as situations where a JAR may be deployed in a
+container such as the JBoss Application Server.</p>
+</div>
+<div class="paragraph">
+<p>Each JAR&#8217;s <code class="filename">MANIFEST.MF</code> file can be used to define dependencies and
+other module-related information.  In addition, JARs which are loaded by this repository
+may themselves contain embedded module repositories which are visible only to that JAR.
+This method of packaging has an advantage over traditional "fat" JAR approaches in that
+each nested module has the full JBoss Modules isolation and linking capabilities available.</p>
+</div>
+<div class="paragraph">
+<p>The format and meaning of the various <code class="filename">MANIFEST.MF</code> attributes are described in the
+<a href="#manifest">JAR repository module descriptors</a> section.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="descriptors">4. XML Module descriptors</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Module loaders may, but are not required to, use an XML <em>module descriptor</em>.
+An XML module descriptor file describes the structure,
+content, dependencies, filtering, and other attributes of a module. This
+format is highly expressive and is tailored for use by
+module loaders which require the module description to
+reside alongside its content, rather than inside it.</p>
+</div>
+<div class="paragraph">
+<p>Below is an example of a module descriptor used by the JBoss Application
+Server:</p>
+</div>
+<div class="listingblock">
+<div class="title">Example module descriptor</div>
+<div class="content">
+<pre>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+
+&lt;module xmlns="urn:jboss:module:1.6" name="org.jboss.msc" version="1.0.1.GA"&gt;
+
+    &lt;main-class name="org.jboss.msc.Version"/&gt;
+
+    &lt;properties&gt;
+        &lt;property name="my.property" value="foo"/&gt;
+    &lt;/properties&gt;
+
+    &lt;resources&gt;
+        &lt;resource-root path="jboss-msc-1.0.1.GA.jar"/&gt;
+    &lt;/resources&gt;
+
+    &lt;dependencies&gt;
+        &lt;module name="javax.api"/&gt;
+        &lt;module name="org.jboss.logging"/&gt;
+        &lt;module name="org.jboss.modules"/&gt;
+
+        &lt;!-- Optional deps --&gt;
+        &lt;module name="javax.inject.api" optional="true"/&gt;
+        &lt;module name="org.jboss.threads" optional="true"/&gt;
+        &lt;module name="org.jboss.vfs" optional="true"/&gt;
+    &lt;/dependencies&gt;
+&lt;/module&gt;</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Not every JBoss Modules release has a corresponding namespace.  The supported namespaces are as
+follows:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 1. Allowed namespaces for <code>module.xml</code> files</caption>
+<colgroup>
+<col style="width: 75%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Namespace</th>
+<th class="tableblock halign-center valign-top">Version(s)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>urn:jboss:module:1.0</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>urn:jboss:module:1.1</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.1+</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>urn:jboss:module:1.2</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.2+</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>urn:jboss:module:1.3</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.3+</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>urn:jboss:module:1.5</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.5+</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>urn:jboss:module:1.6</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.6+</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>Note that every version of JBoss Modules supports the full descriptor formats of all previous
+versions, including elements that were deprecated or removed in later versions.</p>
+</div>
+<div class="sect2">
+<h3 id="root-element">4.1. The root <code>module</code> element</h3>
+<div class="paragraph">
+<p>The root element of the module descriptor determines what type of
+module is being specified. There are two types: a regular <em>module</em> and a
+<em>module alias</em>.</p>
+</div>
+<div class="paragraph">
+<p>Regular module descriptors have a root element named <code>module</code> from the
+<code>urn:jboss:module:xxx</code> namespace. The <code>module</code> element supports the
+following attributes:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 2. Attributes of the <code>module</code> element</caption>
+<colgroup>
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Attribute</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-center valign-top">Use</th>
+<th class="tableblock halign-center valign-top">Version(s)</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>name</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">required</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The name of the module. This name must match the name of the module being loaded.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>slot</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">optional</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0-1.5</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The modules slot. If not specified, defaults to <code>"main"</code>. Deprecated in 1.5, removed in 1.6.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="#versions">version</a></code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">optional</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.6+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The optional version designation of the module.  Appears in stack traces on Java 9+.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>The <code>module</code> element may contain any of the following elements:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 3. Child elements of the <code>module</code> element</caption>
+<colgroup>
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Element</th>
+<th class="tableblock halign-center valign-top">Minimum</th>
+<th class="tableblock halign-center valign-top">Maximum</th>
+<th class="tableblock halign-center valign-top">Version(s)</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="#main-class-element">main-class</a></code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">0</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The name of the main class of this module, if any.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="#properties-element">properties</a></code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">0</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.1+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A list of properties to make available on this module.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="#resources-element">resources</a></code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">0</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The resources that make up this module.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="#dependencies-element">dependencies</a></code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">0</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The dependencies for this module.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="#path-filters">exports</a></code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">0</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The path filter expressions to apply to the export filter of the local resources of this module.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="#permissions-element">permissions</a></code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">0</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.2+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The permissions that are to be granted to this module when a <em>security manager</em> is present.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="sect3">
+<h4 id="main-class-element">4.1.1. The <code>main-class</code> element</h4>
+<div class="paragraph">
+<p>A module which is defined with a <code>main-class</code> element is said to be
+<em>executable</em>. In other words, the module name can be listed on the
+command line, and the standard static <code class="java">main(String[])</code> method in the
+named module&#8217;s <code>main-class</code> will be loaded and executed.</p>
+</div>
+<div class="paragraph">
+<p>The <code>main-class</code> element supports the following attributes:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 4. Attributes of the <code>main-class</code> element</caption>
+<colgroup>
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Attribute</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-center valign-top">Use</th>
+<th class="tableblock halign-center valign-top">Version(s)</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>name</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">required</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The name of the main class, which must be <a href="#visibility">visible</a> from this module.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>This element may not contain any nested elements.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+The main class need not come from the module&#8217;s actual resources, nor
+does it need to be exported. Any public class which is visible to the
+module - which includes all imported dependencies as well as all
+resource roots - is a valid main class, as long as it has a method with
+the signature <code class="java">public static void main(String[] args)</code>.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect3">
+<h4 id="resources-element">4.1.2. The <code>resources</code> element</h4>
+<div class="paragraph">
+<p>In order for a module to actually have content, you must define the
+<code>resources</code> element with at least one resource root.</p>
+</div>
+<div class="paragraph">
+<p>A <em>resource root</em> is a specification of a location where the class
+loader for a module will look for classes and resources. Each module has
+zero or more resource roots, though most regular modules will contain
+exactly one, which refers to the JAR file with the module&#8217;s content.</p>
+</div>
+<div class="paragraph">
+<p>It is possible to define resource roots for a module which correspond to
+JAR files as well as file system directories, just like class paths.
+File system directory resource roots have the additional property of
+supporting the specification of native libraries, which cannot be loaded
+from JAR files.</p>
+</div>
+<div class="paragraph">
+<p>The <code>resources</code> element may contain any of the following elements:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 5. Child elements of the <code>resources</code> element</caption>
+<colgroup>
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Element</th>
+<th class="tableblock halign-center valign-top">Minimum</th>
+<th class="tableblock halign-center valign-top">Maximum</th>
+<th class="tableblock halign-center valign-top">Version(s)</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="#resource-root-element">resource-root</a></code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">0</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">unbounded</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A file or directory on the filesystem whose contents are to be added to the module as classes and resources.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="#artifact-element">artifact</a></code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">0</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">unbounded</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.1+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A Maven artifact whose contents are to be added to the module as classes and resources.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="sect4">
+<h5 id="resource-root-element">4.1.2.1. The <code>resource-root</code> element</h5>
+<div class="paragraph">
+<p>The <code>resources</code> element does not support any attributes; it contains
+zero or more <code>resource-root</code> and/or <code>artifact</code> elements. The <code>resource-root</code> element
+supports the following attributes:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 6. Attributes of the <code>resources</code> element</caption>
+<colgroup>
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Attribute</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-center valign-top">Use</th>
+<th class="tableblock halign-center valign-top">Version(s)</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>path</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">required</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The path of this resource root, relative to the location of the
+module.xml file.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>name</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">optional</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The name of the resource root. If not specified, defaults to the
+resource root&#8217;s path.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>In addition, the <code>resource-root</code> element may contain a nested element:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 7. Child elements of the <code>resource-root</code> element</caption>
+<colgroup>
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Element</th>
+<th class="tableblock halign-center valign-top">Minimum</th>
+<th class="tableblock halign-center valign-top">Maximum</th>
+<th class="tableblock halign-center valign-top">Version(s)</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>filter</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">0</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A path filter to apply to this resource root. If not specified, all
+paths are accepted.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>See the section on filter definition for more information about defining
+filters.</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="artifact-element">4.1.2.2. The <code>artifact</code> element</h5>
+
+</div>
+<div class="sect4">
+<h5 id="properties-element">4.1.2.3. The <code>properties</code> element</h5>
+<div class="paragraph">
+<p>The modules API exposes a method which can read property (string
+key-value pair) values from a module. To specify values for these
+properties you use the <code>properties</code> element which can contain zero or
+more <code>property</code> elements, each supporting the following attributes:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 8. Attributes of the <code>property</code> child element</caption>
+<colgroup>
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Attribute</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-center valign-top">Use</th>
+<th class="tableblock halign-center valign-top">Version(s)</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>name</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">required</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.1+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The name of the property.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>value</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">optional</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.1+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The property value; if not given, the property value defaults to
+<code>true</code>.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect4">
+<h5 id="dependencies-element">4.1.2.4. The <code>dependencies</code> element</h5>
+<div class="paragraph">
+<p>A module may express one or more dependencies on other module(s) via the
+<code>dependencies</code> element.</p>
+</div>
+<div class="paragraph">
+<p>The <code>dependencies</code> element does not support any attributes. It
+contains zero or more nested elements as follows:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 9. Child elements of the <code>dependencies</code> element</caption>
+<colgroup>
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Element</th>
+<th class="tableblock halign-center valign-top">Minimum</th>
+<th class="tableblock halign-center valign-top">Maximum</th>
+<th class="tableblock halign-center valign-top">Version(s)</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>module</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">0</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">unbounded</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A module name upon which a dependency should be added.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>system</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">0</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">unbounded</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A specification for expressing a dependency upon the system or
+application class path.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="sect5">
+<h6 id="dependencies-module-element">The <code>module</code> dependency element</h6>
+<div class="paragraph">
+<p>The <code>module</code> element supports the following attributes:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 10. Attributes of the <code>module</code> dependency element</caption>
+<colgroup>
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Attribute</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-center valign-top">Use</th>
+<th class="tableblock halign-center valign-top">Version(s)</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>name</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">required</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The name of the module upon which this module depends.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>slot</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">optional</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0-1.5</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The version slot of the module upon which this module depends; defaults
+to <code>main</code>.  Deprecated in 1.5, removed in 1.6.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>export</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">optional</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Specify whether this dependency is re-exported by default; if not
+specified, defaults to <code>false</code>.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>services</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">enum</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">optional</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Specify whether this dependency&#8217;s services
+<sup class="footnote" id="_footnote_spi">[<a id="_footnoteref_1" class="footnote" href="#_footnote_1" title="View footnote.">1</a>]</sup>
+are imported and/or exported. Possible values are <code>none</code>, <code>import</code>, or <code>export</code>;
+defaults to <code>none</code>.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>optional</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">optional</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Specify whether this dependency is optional; defaults to <code>false</code>.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>In addition, the <code>module</code> element supports the following nested
+elements:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 11. Child elements of the <code>module</code> dependency element</caption>
+<colgroup>
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Element</th>
+<th class="tableblock halign-center valign-top">Minimum</th>
+<th class="tableblock halign-center valign-top">Maximum</th>
+<th class="tableblock halign-center valign-top">Version(s)</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>imports</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">0</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A path filter used to restrict what paths are imported from the dependency.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>exports</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">0</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A path filter used to restrict what imported paths are re-exported from
+this module.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="listingblock">
+<div class="title">Example of adding an explicit exclude for a dependency</div>
+<div class="content">
+<pre class="highlight"><code class="language-xml" data-lang="xml">&lt;dependencies&gt;
+    &lt;module name="org.jboss.example"&gt;
+        &lt;imports&gt;
+            &lt;exclude-set&gt;
+                &lt;path name="org/jboss/example/tests"/&gt;
+            &lt;/exclude-set&gt;
+        &lt;/imports&gt;
+    &lt;/module&gt;
+&lt;/dependencies&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>See the section on filter definition for more information about filters.</p>
+</div>
+</div>
+<div class="sect5">
+<h6 id="system-dependency-element">The <code>system</code> dependency element</h6>
+<div class="paragraph">
+<p>The <code>system</code> element expresses a dependency which is satisfied by
+accessing paths and packages from the class loader which loaded JBoss
+Modules (this is usually the system&#8217;s application class loader). The
+element supports the following attributes:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 12. Attributes of the <code>system</code> dependency element</caption>
+<colgroup>
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Attribute</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-center valign-top">Use</th>
+<th class="tableblock halign-center valign-top">Version(s)</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>export</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">optional</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Specify whether this dependency is re-exported by default; if not
+specified, defaults to <code>false</code>.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>It also contains nested elements as follows:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 13. Child elements of the <code>system</code> dependency element</caption>
+<colgroup>
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Element</th>
+<th class="tableblock halign-center valign-top">Minimum</th>
+<th class="tableblock halign-center valign-top">Maximum</th>
+<th class="tableblock halign-center valign-top">Version(s)</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>paths</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Specify the list of paths (or packages, with <code>.</code> transformed to <code>/</code>)
+which are exposed by this dependency.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>exports</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">0</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A filter which restricts the list of packages/paths which are
+re-exported by this module. If not specified, all paths are selected
+(does not apply if the export attribute on the system element is false
+or unspecified).</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="permissions-element">4.1.3. The <code>permissions</code> element</h4>
+<div class="paragraph">
+<p>The <code>permissions</code> element contains the following child elements:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 14. Child elements of the <code>permissions</code> element</caption>
+<colgroup>
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Element</th>
+<th class="tableblock halign-center valign-top">Minimum</th>
+<th class="tableblock halign-center valign-top">Maximum</th>
+<th class="tableblock halign-center valign-top">Version(s)</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>permission</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">0</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">unbounded</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.2+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A granted permission.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>The nested <code>permission</code> element supports the following attributes:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 15. Attributes of the <code>permission</code> element</caption>
+<colgroup>
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Attribute</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-center valign-top">Use</th>
+<th class="tableblock halign-center valign-top">Version(s)</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>permission</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">required</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.2+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The qualified class name of the permission to grant.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>name</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">optional</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.2+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The permission name to provide to the permission class constructor.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>actions</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">optional</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.2+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The (optional) list of actions, required by some permission types.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Warning</div>
+</td>
+<td class="content">
+See <a href="#security-manager">JBoss Modules and the Java security manager</a> for important information on using the security manager.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="alias-element">4.2. The root <code>module-alias</code> element</h3>
+<div class="paragraph">
+<p>A module alias descriptor defines a module which is simply another name
+for a second module. The root element is called <code>module-alias</code> and
+supports the following attributes:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 16. Attributes of the <code>module-alias</code> element</caption>
+<colgroup>
+<col style="width: 22.2222%;">
+<col style="width: 11.1111%;">
+<col style="width: 11.1111%;">
+<col style="width: 11.1111%;">
+<col style="width: 44.4445%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Attribute</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-center valign-top">Use</th>
+<th class="tableblock halign-center valign-top">Version(s)</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>name</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">required</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The name of the module. This name must match the name of the module
+being loaded.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>slot</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">optional</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0-1.5</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The version slot. If not specified, defaults to <code>main</code>.
+Deprecated in 1.5; not supported
+module descriptors in the  <code>urn:jboss:module:1.6</code> namespace or later.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>target-name</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">required</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The name of the module to which this alias refers.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>target-slot</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">optional</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0-1.5</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The version slot of the module to which this alias refers. If not
+specified, defaults to <code>main</code>.
+Deprecated in 1.5; not supported
+module descriptors in the  <code>urn:jboss:module:1.6</code> namespace or later.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="path-filters">4.3. Filters</h3>
+<div class="paragraph">
+<p>Many elements in the XML descriptor format support embedding a <em>filter</em> element.  The name
+of the filter element varies by context, but they always support the same content.</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 17. Child elements of a filter element</caption>
+<colgroup>
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Element</th>
+<th class="tableblock halign-center valign-top">Minimum</th>
+<th class="tableblock halign-center valign-top">Maximum</th>
+<th class="tableblock halign-center valign-top">Version(s)</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>include</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">0</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">unbounded</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A <a href="#path-specification">path specification</a> to include.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>exclude</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">0</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">unbounded</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A <a href="#path-specification">path specification</a> to exclude.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>include-set</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">0</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">unbounded</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">An exact <a href="#path-set">path set</a> to include.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>exclude-set</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">0</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">unbounded</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">An exact <a href="#path-set">path set</a> to include.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="sect3">
+<h4 id="path-specification">4.3.1. Path specifications</h4>
+<div class="paragraph">
+<p>A path specification is a special pattern or "glob" which is compared against incoming path names
+to determine if they match the specification.  JBoss Modules paths are a sequence
+of names separated by a literal forward slash <code>/</code>.  A path specification allows wildcard characters
+to take the place of part of the path, and is comprised of a sequence of <code>path</code> elements.</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 18. Attributes of a path specification</caption>
+<colgroup>
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Element</th>
+<th class="tableblock halign-center valign-top">Minimum</th>
+<th class="tableblock halign-center valign-top">Maximum</th>
+<th class="tableblock halign-center valign-top">Version(s)</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>name</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">0</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">unbounded</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A path string, which possibly includes one or more wildcards.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>The following wildcards are supported:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 19. Supported wildcard expressions of a path specification</caption>
+<colgroup>
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 75%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Pattern</th>
+<th class="tableblock halign-center valign-top">Version(s)</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>?</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Match a single character.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>*</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Match a single path component.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>**</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Match all the remaining path components.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect3">
+<h4 id="path-set">4.3.2. Path sets</h4>
+<div class="paragraph">
+<p>A path set is a fixed set of literal path names.  Path sets do not support wildcards, however,
+they are more efficient than path specifications for large numbers of paths because an
+entire set can be checked in one operation, as opposed to path specifications which must be
+checked one pattern at a time.</p>
+</div>
+<div class="paragraph">
+<p>The path set is comprised of a sequence of <code>path</code> elements.</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 20. Path set child elements</caption>
+<colgroup>
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Element</th>
+<th class="tableblock halign-center valign-top">Minimum</th>
+<th class="tableblock halign-center valign-top">Maximum</th>
+<th class="tableblock halign-center valign-top">Version(s)</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>path</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">0</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">unbounded</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">One path found in this set.</p></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 21. Attributes of the path set <code>path</code> element</caption>
+<colgroup>
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Element</th>
+<th class="tableblock halign-center valign-top">Minimum</th>
+<th class="tableblock halign-center valign-top">Maximum</th>
+<th class="tableblock halign-center valign-top">Version(s)</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>name</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">0</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">unbounded</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A literal path string.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="native-libraries">4.4. Native Libraries</h3>
 <div class="paragraph">
 <p>When using the default file system-backed module loader, each module
 defined in the module repository has an additional resource root
@@ -1343,11 +2150,12 @@ in each module root named <code>lib</code>.</p>
 current detected platform into a directory name, appending it to the
 path of the <code>lib</code> directory, and testing the resultant directory for a
 matching native library file. For example, imagine a module named
-``org.foobar.gizmo'' which contains a native library which runs on Linux
+<code>org.foobar.gizmo</code> which contains a native library which runs on Linux
 for Intel 32- and 64-bit processors. It would have a module directory
 structure similar to this:</p>
 </div>
-<div class="literalblock">
+<div class="listingblock">
+<div class="title">Directory structure of a module with native libraries</div>
 <div class="content">
 <pre>org/
 └─ foobar/
@@ -1372,6 +2180,7 @@ be loaded.</p>
 values may be used for the OS name:</p>
 </div>
 <div class="ulist">
+<div class="title">Allowed native operating system names</div>
 <ul>
 <li>
 <p><code>linux</code></p>
@@ -1433,6 +2242,7 @@ values may be used for the OS name:</p>
 <p>The following values are recognized for the CPU name:</p>
 </div>
 <div class="ulist">
+<div class="title">Allowed native CPU architecture names</div>
 <ul>
 <li>
 <p><code>sparcv9</code></p>
@@ -1503,25 +2313,1575 @@ values may be used for the OS name:</p>
 </div>
 </div>
 <div class="sect1">
-<h2 id="module-execution">Module execution</h2>
+<h2 id="manifest">5. JAR repository module descriptors</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>There are normally two ways in which a module may be directly executed.
- The module may be launched <a href="#executable-modules">by name from the static
-repository</a> like this:</p>
+<p>When JARs are loaded by the <a href="#jar-repository">JAR repository loader</a>, the metainformation of the
+module is stored within its <code class="filename">META-INF/MANIFEST.MF</code> file.</p>
 </div>
-<div class="literalblock">
+<div class="sect2">
+<h3 id="manifest-main">5.1. Main manifest attributes</h3>
+<div class="paragraph">
+<p>The following attributes are supported
+in the main section of the manifest:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 22. Main manifest attributes</caption>
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 10%;">
+<col style="width: 10%;">
+<col style="width: 20%;">
+<col style="width: 40%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Attribute</th>
+<th class="tableblock halign-center valign-top">Use</th>
+<th class="tableblock halign-center valign-top">Version(s)</th>
+<th class="tableblock halign-center valign-top">Specified By</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="#manifest-dependencies">Dependencies</a></code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">optional</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">JBoss Modules</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A comma-separated list of module dependency specifications, as described in <a href="#manifest-dependencies">The <code>Dependencies</code> manifest attribute</a>.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Class-Path</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">optional</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Standard JAR</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A whitespace-separated list of paths (relative URLs) of JARs that this JAR depends on.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Main-Class</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">optional</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Standard JAR</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The name of the main class of this JAR module.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="#versions">Module-Version</a></code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">optional</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.7+</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">JBoss Modules</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The version string to use for the module represented by this JAR.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Extension-List</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">unsupported</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.7+</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Standard JAR</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Not presently supported; this functionality is expected to be removed from Java.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+As of JBoss Modules version 1.7 and later, each JAR listed in the <code>Class-Path</code>
+is loaded as a separate module.  Prior to 1.7, the class path was collapsed into a
+single module with multiple resources.
+</td>
+</tr>
+</table>
+</div>
+<div class="sect3">
+<h4 id="manifest-dependencies">5.1.1. The <code>Dependencies</code> manifest attribute</h4>
+<div class="paragraph">
+<p>The <code>Dependencies</code> manifest attribute specifies a comma-delimited list of module
+dependencies to add to the JAR module.  The module
+dependency may be located within the JAR itself, or it may be loaded from the
+<a href="#basic-repository">filesystem repository</a> by way of the module path.</p>
+</div>
+<div class="paragraph">
+<p>The dependency attribute has the following overall syntax:</p>
+</div>
+<div class="listingblock">
+<div class="title">Dependency attribute grammar</div>
 <div class="content">
-<pre>   java -jar jboss-modules.jar com.your.module</pre>
+<pre class="highlight"><code class="language-abnf" data-lang="abnf">dependencies    = module-name *( " " modifier ) *( "," module-name *( " " modifier ) )
+
+module-name     = ; any valid module name
+
+modifier        = "optional" / "export" / "services"</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>Or, the module may be executed as a <a href="#819697">JAR file given on the
-command line</a> like this:</p>
+<p>The following modifiers are supported:</p>
 </div>
-<div class="literalblock">
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 23. <code>Dependency</code> manifest attribute modifiers</caption>
+<colgroup>
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 62.5%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Modifier</th>
+<th class="tableblock halign-center valign-top">Use</th>
+<th class="tableblock halign-center valign-top">Version(s)</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>optional</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">optional</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Specify that the dependency is optional.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>export</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">optional</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Specify that the paths imported from the dependency should be re-exported to modules
+which import this module.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>services</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">optional</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.7+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Specify that the given dependency&#8217;s <code>ServiceLoader</code>-based services should be imported into this module.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+Some implementations (such as WildFly) support additional flags
+which are not listed here. Flags which are not recognized are silently ignored.
+</td>
+</tr>
+</table>
+</div>
+<div class="sect4">
+<h5 id="manifest-dependencies-maven">5.1.1.1. Adding the <code>Dependencies</code> attribute using Maven</h5>
+<div class="paragraph">
+<p>Below is an example of how the <code>Dependencies</code> attribute can be added to a
+projects Maven pom.xml.</p>
+</div>
+<div class="listingblock">
+<div class="title">Maven snippet to add <code>Dependencies</code> to the manifest</div>
 <div class="content">
-<pre>   java -jar jboss-module.jar -jar your-app.jar</pre>
+<pre class="highlight"><code class="language-xml" data-lang="xml">&lt;plugins&gt;
+   &lt;plugin&gt;
+      &lt;artifactId&gt;maven-jar-plugin&lt;/artifactId&gt;
+      &lt;version&gt;2.3.1&lt;/version&gt;
+      &lt;configuration&gt;
+         &lt;archive&gt;
+            &lt;manifestEntries&gt;
+               &lt;Dependencies&gt;org.some.module, org.another.module&lt;/Dependencies&gt;
+            &lt;/manifestEntries&gt;
+         &lt;/archive&gt;
+     &lt;/configuration&gt;
+   &lt;/plugin&gt;
+&lt;/plugins&gt;</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="jar-permissions">5.2. JAR Permissions</h3>
+<div class="paragraph">
+<p>As of JBoss Modules 1.7, support has been added to allow JAR module permissions to be
+specified using a standard Java EE <code>META-INF/permissions.xml</code> file.  If this file is found
+within the JAR, then that file is read and the permissions that are listed therein are
+used as the static permission set of the module&#8217;s protection domain.  The set of permissions
+may be additionally restricted, depending on the execution environment.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+While the <code>permissions.xml</code> format is based on the Java EE standard, JBoss Modules does
+not require that the root element be qualified with a namespace or version attribute.
+</td>
+</tr>
+</table>
+</div>
+<div class="listingblock">
+<div class="title">Example of a <code>META-INF/permissions.xml</code> file</div>
+<div class="content">
+<pre class="highlight"><code class="language-xml" data-lang="xml">&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+
+&lt;permissions&gt;
+    &lt;permission&gt;
+        &lt;class-name&gt;java.util.PropertyPermission&lt;/class-name&gt;
+        &lt;name&gt;org.mycompany.*&lt;/name&gt;
+        &lt;actions&gt;read&lt;/actions&gt;
+    &lt;/permission&gt;
+    &lt;permission&gt;
+        &lt;class-name&gt;java.io.FilePermission&lt;/class-name&gt;
+        &lt;name&gt;/opt/application/data/-&lt;/name&gt;
+        &lt;actions&gt;*&lt;/actions&gt;
+    &lt;/permission&gt;
+&lt;/permissions&gt;</code></pre>
+</div>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Warning</div>
+</td>
+<td class="content">
+See <a href="#security-manager">JBoss Modules and the Java security manager</a> for important information on using the security manager.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="jar-nested">5.3. Nested module repository</h3>
+<div class="paragraph">
+<p>JARs which are launched on the command line (or programmatically established as modules) can optionally
+include a private, nested repository.</p>
+</div>
+<div class="paragraph">
+<p>The root of this repository is the <code class="filename">modules</code> directory within the root of the archive.
+Within this directory, files are laid out exactly as described in the <a href="#basic-repository">Filesystem module repository</a> section,
+with one difference: JAR file content is not supported, so during the assembly
+of such a repository, the nested JAR must be extracted.  Note that Maven artifact resources are
+supported.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+Prior to JBoss Modules 1.7, only the primary JAR given on the command line or as the main
+argument to <code>JarModuleFinder</code> could contain embedded modules, and they were not private to that JAR,
+being visible to other JARs in the transitive <code>Class-Path</code>.
+In 1.7 and later, every JAR included in the transitive <code>Class-Path</code> can have
+its own embedded module repository; <code>JarModuleFinder</code> has been deprecated in favor of
+the more robust <code>FileSystemClassPathModuleFinder</code>.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="running">6. Running JBoss Modules</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>In order to actually use a modular application, JBoss Modules has to be bootstrapped in some way.
+Most commonly, it will be launched directly from the command line, passing one or more command line
+arguments.</p>
+</div>
+<div class="paragraph">
+<p>The command line structure depends on the type of modular application being executed.  However, for
+all modes, the structure of the command line is like this:</p>
+</div>
+<div class="listingblock">
+<div class="title">Command line syntax</div>
+<div class="content">
+<pre class="highlight"><code>java [ &lt;jvm option&gt;... ] -jar jboss-modules.jar [ &lt;option&gt;... ] &lt;program spec&gt; [ args... ]</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The syntax of the <code>program spec</code> is as follows:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 24. Supported execution modes</caption>
+<colgroup>
+<col style="width: 14.2857%;">
+<col style="width: 14.2857%;">
+<col style="width: 28.5714%;">
+<col style="width: 7.1428%;">
+<col style="width: 35.7144%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Switch</th>
+<th class="tableblock halign-left valign-top">Name</th>
+<th class="tableblock halign-left valign-top">Argument(s)</th>
+<th class="tableblock halign-center valign-top">Version</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>&lt;none&gt;</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">module</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>&lt;module-name&gt;</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Run the named module&#8217;s <code>main-class</code>.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>&lt;none&gt;</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">module+class</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>&lt;module-name&gt;/&lt;class-name&gt;</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.7+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Run the named class in the named module.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>-jar</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">JAR</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>&lt;file-name&gt;</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Run the given JAR file name as a module.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>-cp<br>
+-classpath</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">class path</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>&lt;path-spec&gt; &lt;class-name&gt;</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Build a set of modules representing the class path, and run the given class name (implies <code>-class</code>,
+hence the extra argument). The set
+is delimited by the standard path separator for the platform.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>-class</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">class</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>&lt;class-name&gt;</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Run the given class name, which must be found in JBoss Modules or the platform class path.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+Prior to JBoss Modules 1.7, the JAR and class path modes were implemented using a single
+module for the entire class path.  Since 1.7, each item is now a separate module.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>The supported options are as follows:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 25. Supported command line options</caption>
+<colgroup>
+<col style="width: 16.6666%;">
+<col style="width: 16.6666%;">
+<col style="width: 8.3333%;">
+<col style="width: 8.3333%;">
+<col style="width: 50.0002%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Option</th>
+<th class="tableblock halign-left valign-top">Argument</th>
+<th class="tableblock halign-center valign-top">Modes</th>
+<th class="tableblock halign-center valign-top">Version</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>-help</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>&lt;none&gt;</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">all</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Display a summary of supported command line options, and exit.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>-version</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>&lt;none&gt;</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">all</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Display the version of JBoss Modules, and exit.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>-mp<br>
+-modulepath</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>&lt;path-spec&gt;</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">all</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Specify the set of paths to scan in order to find modules in
+the <a href="#basic-repository">filesystem repository</a>.  The set
+is delimited by the standard path separator for the platform.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>-dep<br>
+-dependencies</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>&lt;module-specs&gt;</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">class, class&nbsp;path</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Specify a comma-delimited list of dependencies to add to the given class path modules.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>-secmgr</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>&lt;none&gt;</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">all</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.2+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Indicate that the application should be loaded with the
+<a href="#security-manager">security manager</a> active, discovering it from the target module, and
+falling back to the default security manager implementation.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>-secmgrmodule</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>&lt;module-name&gt;</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">all</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.2+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Indicate that the application should be loaded with the
+<a href="#security-manager">security manager</a> active, loading it from the given module.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>-debuglog</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>&lt;none&gt;</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">all</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Enable trace logging to the console at startup.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+See the section <a href="#security-manager">JBoss Modules and the Java security manager</a> for more information about running
+a JBoss Modules-based application within a security manager.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="security-manager">7. JBoss Modules and the Java security manager</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>JBoss Modules is designed to be able to easily run applications within a security manager.  The
+primary benefit of the security manager is to prevent applications from being exploited for
+malicious purposes, by allowing each module to define a maximum permission set that it must
+adhere to.  This makes it more difficult for an attacker to cause a program to perform actions
+which were not intentionally allowed.</p>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Warning</div>
+</td>
+<td class="content">
+Using the security manager is not guaranteed to provide safety when running untrusted
+code and should never be used for this purpose.  Only the operating system can provide a
+sufficient level of safety in such a scenario.  In particular, if the JAR module repository loader
+is used in this manner, the JAR should first be examined for embedded <code>permissions.xml</code> files as
+well as <code>&lt;permissions&gt;</code> stanzas within any embedded module descriptors.
+</td>
+</tr>
+</table>
+</div>
+<div class="sect2">
+<h3 id="security-manager-basics">7.1. Security manager basics</h3>
+<div class="paragraph">
+<p>The mechanism by which this is accomplished is through the specification of a <em>protection domain</em>
+when module classes are defined.  The protection domain is comprised of a <em>code source</em>
+and a set of permissions which are to be granted to the module.  The code source in turn
+is assembled from a URL in
+combination with an array of code signers.</p>
+</div>
+<div class="paragraph">
+<p>Protection domains can be <em>static</em> or <em>dynamic</em>.  A static protection domain has a fixed set
+of permissions and can be evaluated quickly.  A dynamic protection domain requires that each
+access be re-checked against the installed system <code>java.security.Policy</code> to determine what
+permissions apply to that access.</p>
+</div>
+<div class="paragraph">
+<p>The protection domain which is assigned to each class in each module is determined by the
+corresponding module loader.
+All the module loaders which are included in JBoss Modules use the same
+general strategy: permissions are extracted from the module definition, and used to assemble
+a static protection domain whose code source is the location of the resource loader which loaded
+the class in question.  Code signers are extracted from signed JARs in a standard way.</p>
+</div>
+<div class="sect3">
+<h4 id="permission-checking">7.1.1. Permission checking</h4>
+<div class="paragraph">
+<p>Permissions are most commonly checked by an application, library, or the JDK using
+a block of code like this:</p>
+</div>
+<div class="listingblock">
+<div class="title">Permission checking example</div>
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">public class MyClass {
+    // [ ... ]
+
+    /**
+     * Permission instance to use for our permission check.
+     */
+    static final Permission PERM_TO_CHECK = new RuntimePermission("getClassLoader");
+
+    // [ ... ]
+
+    /**
+     * Perform an operation.
+     *
+     * @throws SecurityException if a security manager is installed and the
+     *     caller does not have the {@code getClassLoader} {@link RuntimePermission}
+     */
+    public void performOperation() throws SecurityException {
+        // we can only check if there is a security manager installed
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            // here's the actual permission check; throws an exception on failure
+            sm.checkPermission(PERM_TO_CHECK);
+        }
+        // now it's safe to perform the operation
+
+        // [ ... ]
+    }
+
+    // [ ... ]
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="access-control-context">7.1.2. Access control context</h4>
+<div class="paragraph">
+<p>The <em>access control context</em> is what determines the permission set that is applicable at the
+point where the permission is checked.  It is comprised of a list of all the protection domains
+that are in effect for a given calling context, which in turn is derived from the combination
+of the current thread&#8217;s call stack and any inherited context that was set either when the thread
+was created or explicitly by way of a <a href="#doprivileged-saved-acc">special method call</a>.</p>
+</div>
+<div class="paragraph">
+<p>The currently effective access control context can be captured by calling the
+static <code>AccessController.getContext()</code> method, which returns an instance of
+<code>AccessControlContext</code> which represents the access control context in effect
+when that method was called.</p>
+</div>
+<div class="paragraph">
+<p>The effective permission set used for access checks on a given access control context
+is the <em>intersection</em> of
+all the permissions granted to each protection domain which is a part of the access control
+context.  This means that calling a method can never grant additional permissions.</p>
+</div>
+<div class="paragraph">
+<p>This can be a problem if a class must perform an action for which <em>it</em> is authorized but
+<em>its caller</em> is not.  In such a situation, the class performing the action must use the
+<code>doPrivileged</code> method of the <code>java.security.AccessController</code> class.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="doprivileged">7.1.3. <code>AccessController.doPrivileged()</code></h4>
+<div class="paragraph">
+<p>When a different set of permissions is required by a given program unit, the <code>doPrivileged</code>
+method must be called.  This method can run an action which returns a value, or
+an action which returns a value and throws an exception, under a different access control
+context than the one that is effective when the method was called.</p>
+</div>
+<div class="sect4">
+<h5 id="doprivileged-full">7.1.3.1. Running an action with full privileges</h5>
+<div class="paragraph">
+<p>The most common form of <code>doPrivileged</code> usage is to run a given action with the full privileges
+of the class which calls the <code>doPrivileged</code> method.  This is accomplished like this, building on
+the permission checking example above:</p>
+</div>
+<div class="listingblock">
+<div class="title">Basic <code>doPrivileged</code> example</div>
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">public class MyClass {
+    // [ ... ]
+
+    /**
+     * Permission instance to use for our permission check.
+     */
+    static final Permission PERM_TO_CHECK = new RuntimePermission("getClassLoader");
+
+    // [ ... ]
+
+    /**
+     * Perform an operation.
+     *
+     * @throws SecurityException if a security manager is installed and the
+     *     caller does not have the {@code getClassLoader} {@link RuntimePermission}
+     */
+    public void performOperation() throws SecurityException {
+        // we can only check if there is a security manager installed
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            // here's the actual permission check; throws an exception on failure
+            sm.checkPermission(PERM_TO_CHECK);
+        }
+        // now it's safe to perform the operation
+        // we need extra permissions to do our work!
+        AccessController.doPrivileged(new PrivilegedAction&lt;Void&gt;() {
+            Void run() {
+                // perform the operation with full privileges
+                // [ ... ]
+                return null;
+            }
+        });
+    }
+
+    // [ ... ]
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Note that we are only performing the <code>doPrivileged</code> call <em>after</em> we&#8217;ve checked another permission
+first.</p>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Warning</div>
+</td>
+<td class="content">
+It is very important that the <code>doPrivileged</code> method never be used in this way
+<em>unless</em> it can be shown that the only paths to that method call all introduce a permission
+check of their own which mediates access to that operation.  This is necessary in order to
+avoid the possibility that such a call path would be able to circumvent one or more other
+access checks.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect4">
+<h5 id="doprivileged-restricted">7.1.3.2. Running an action with restricted permissions</h5>
+<div class="paragraph">
+<p>It is sometimes the case that a method must perform an action with some limited set of
+privileges.  There exists a variation of <code>doPrivileged</code> which accepts a variable number
+of permissions which are to form the upper bound of permissions.  Here is an example:</p>
+</div>
+<div class="listingblock">
+<div class="title">Restricted <code>doPrivileged</code> example</div>
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">    // [ ... ]
+
+    AccessController.doPrivileged(new PrivilegedAction&lt;Void&gt;() {
+        Void run() {
+            // [ ... ]
+            return null;
+        }
+    }, null, new FilePermission("/some/restricted/path/-", "read"));
+
+    // [ ... ]</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Note that the second parameter should be left <code>null</code> in this case.</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="doprivileged-saved-acc">7.1.3.3. Running an action with a saved access control context</h5>
+<div class="paragraph">
+<p>Sometimes it is necessary for a method to perform an action using an access control
+context which was captured previously.  For example, a class may capture the access
+control context during its constructor and use it for its operations, so that the privileges
+that were in effect when the object was constructed are granted to any users of that object&#8217;s
+operation.</p>
+</div>
+<div class="paragraph">
+<p>This can be accomplished using one of the <code>doPrivileged</code> variants which accept an
+<code>AccessControlContext</code> as a parameter.</p>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Warning</div>
+</td>
+<td class="content">
+Anyone can construct an access control context with as many (or as few) restrictions
+as they like!  Therefore it is very important that secure code must <em>never</em> accept an access
+control object, or directly use such an object that was accepted, from untrusted sources.  It
+is generally best to only use contexts that you have captured yourself using
+<code>AccessController.getContext()</code> directly.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="security-manager-discovery">7.2. Security manager discovery</h3>
+<div class="paragraph">
+<p>When starting with the <code>-secmgr</code> flag, JBoss Modules will attempt to discover a security
+manager implementation to use from the module of the main class.  The
+<code>java.util.ServiceLoader</code> SPI mechanism is used after that module is loaded (but before it is run)
+to find and instantiate the security manager to use.  If no security manager instance is found
+or could be instantiated, then the default system <code>SecurityManager</code> implementation is installed.</p>
+</div>
+<div class="paragraph">
+<p>Note that the <code>-secmgrmodule &lt;module-name&gt;</code> flag works in a similar manner, except that the SPI mechanism
+searches the given module instead of the boot module.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="security-best-practices">7.3. Best practices</h3>
+<div class="paragraph">
+<p>Giving a full analysis of security manager operation in Java is well beyond the scope of this
+guide.  However, there are a few basic techniques that are worth iterating which will help avoid
+some common pitfalls.</p>
+</div>
+<div class="ulist">
+<div class="title">Some security manager best practices</div>
+<ul>
+<li>
+<p>Always perform a permission check before running a publicly accessible method that employs
+one or more full-privileged or restricted-privileged <code>doPrivileged</code> call(s).</p>
+</li>
+<li>
+<p>Never accept an access control context from untrusted code; always use
+<code>AccessController.getContext()</code> from an unprivileged context to acquire a caller&#8217;s context.</p>
+</li>
+<li>
+<p>Consider using restricted-permission <code>doPrivileged</code> calls when possible.</p>
+</li>
+<li>
+<p>Use constant permission objects whenever possible for permission checks and
+restricted-permission <code>doPrivileged</code> calls.</p>
+</li>
+<li>
+<p>It is tempting to skip <code>doPrivileged</code> calls when a security manager is not installed; however,
+this can cause problems when a security manager is installed later in execution, which can happen
+in some container environments, particularly if such a call is expected to be long-running or
+if the body of the call may call an operation which captures the access control context for later
+use.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="the-api">8. Working with the JBoss Modules API</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Writing applications which take advantage of the capabilities of JBoss Modules require usage
+of the API. This section outlines the important constructs of the API and how to use them.</p>
+</div>
+<div class="sect2">
+<h3 id="modules-and-class-loaders">8.1. Modules and module class loaders</h3>
+<div class="paragraph">
+<p>Every module is backed by a <code>Module</code> instance and a corresponding <code>ModuleClassLoader</code> instance.
+You can navigate from one to the other using the <code>Module.getClassLoader()</code> and
+<code>ModuleClassLoader.getModule()</code> methods.  Note however that the <code>Module.getClassLoader()</code> method
+is governed by the <code>getClassLoader</code> <code>RuntimePermission</code> in security manager environments.</p>
+</div>
+<div class="paragraph">
+<p>The <code>ModuleClassLoader</code> instance is what is used by the JDK to load and link classes for a given module.
+It can also be used to directly load resources and classes using the standard <code>ClassLoader</code> API.</p>
+</div>
+<div class="paragraph">
+<p>The <code>Module</code> instance can be used to load exported classes, resources, and services from the module.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="module-loaders">8.2. Module loaders and module finders</h3>
+<div class="paragraph">
+<p>The <code>ModuleLoader</code> class is responsible for locating, loading, and linking modules.  The
+<code>loadModule()</code> method can be used to find a module by name, returning its <code>Module</code> instance
+on success.  In addition, the module loader for
+a given class or class loader may be found using the static
+<code>forClass()</code> and <code>forClassLoader()</code> utility methods.</p>
+</div>
+<div class="paragraph">
+<p>A module loader may delegate the task of locating modules to one or more implementations of
+the <code>ModuleFinder</code> interface, which in turn must find the module and construct its specification.</p>
+</div>
+<div class="sect3">
+<h4 id="boot-module-loader">8.2.1. The boot module loader</h4>
+<div class="paragraph">
+<p>During initialization of JBoss Modules, the <em>boot module loader</em> is established.  This is generally
+a module loader corresponding to a filesystem-backed module repository.  The boot module loader
+is typically used to load from a base set of modules which is bundled with a modular application.
+It can be determined by calling the static <code>Module.getBootModuleLoader()</code> method.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="context-class-loader">8.2.2. The context class loader</h4>
+<div class="paragraph">
+<p>The thread context class loader (also known as the <em>TCCL</em>) is used to identify the class loader
+of the application being run.  When JBoss Modules starts up, the TCCL is initialized to the module
+containing the main class.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="custom-module-loaders">8.3. Implementing your own module loaders and finders</h3>
+<div class="paragraph">
+<p>Plugin and deployment based systems which have a need to implement custom behavior must
+generally implement their own module loaders and module finders.</p>
+</div>
+<div class="paragraph">
+<p>In most cases, custom module loading behavior can be achieved wholly by implementing
+<code>ModuleFinder</code> and using it with an instance of the base <code>ModuleLoader</code> class.</p>
+</div>
+<div class="listingblock">
+<div class="title">An example of a custom module finder</div>
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">/**
+ * This module loader loads module content from a plugin directory.  The
+ * module name is the name of the JAR minus its extension (if any).
+ */
+public final class PluginModuleFinder implements ModuleFinder {
+    private final Path basePath;
+
+    public PluginModuleFinder(Path basePath) {
+        if (basePath == null) throw new IllegalArgumentException("null basePath");
+        this.basePath = basePath;
+    }
+
+    public ModuleSpec findModule(String name, ModuleLoader delegateLoader)
+        throws ModuleLoadException
+    {
+        // 8&lt; --- 8&lt;
+        // (construct and return the module specification)
+        // 8&lt; --- 8&lt;
+    }
+}</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+The <code>ModuleFinder</code> interface has two <code>findModule</code> methods, both of which are marked <code>default</code>.
+This is because earlier versions of the API used the <code>ModuleIdentifier</code> class to locate modules.
+New implementations of <code>ModuleFinder</code> should implement the <code>findModule</code> method which accepts
+a <code>String</code> name, and disregard the other (deprecated) method, which may be removed in a future
+release.
+</td>
+</tr>
+</table>
+</div>
+<div class="sect3">
+<h4 id="_finding_and_specifying_a_module">8.3.1. Finding and specifying a module</h4>
+<div class="paragraph">
+<p>The custom module finder must do the work of locating the actual module, given
+its name.  The module finder must construct a <code>ModuleSpec</code> for the module being built.  This
+can be done by way of a <code>ModuleSpec.Builder</code>, instantiated by the <code>ModuleSpec.builder()</code> static
+method.  The module specification builder has methods to set the module name, its contents, and its
+dependencies, and to construct the final immutable <code>ModuleSpec</code> instance.</p>
+</div>
+<div class="paragraph">
+<p>In our simple plugin implementation, the module name is just the name of the JAR
+file without its <code>.jar</code> extension.  We also want to take some precaution to prevent clever hackers from escaping our plugin
+path using an absolute path or <code>..</code> path segments.</p>
+</div>
+<div class="listingblock">
+<div class="title">Finding and specifying the module</div>
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">    public ModuleSpec findModule(String name, ModuleLoader delegateLoader)
+        throws ModuleLoadException
+    {
+        // Make sure nobody escapes using a .. in the plugin name
+        name = PathUtils.relativize(PathUtils.canonicalize(name));
+        Path jarPath = basePath.resolve(name + ".jar");
+        if (Files.exists(jarPath)) {
+            ModuleSpec.Builder builder = ModuleSpec.build(name);
+            // 8&lt; --- 8&lt;
+            // (fill in the module specification)
+            // 8&lt; --- 8&lt;
+            ModuleSpec moduleSpec = builder.create();
+            return moduleSpec;
+        }
+        return null;
+    }</code></pre>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_resource_specifications">8.3.1.1. Resource specifications</h5>
+<div class="paragraph">
+<p>Most (but not all) modules include some kind of content.  This can be in the form of a JAR file,
+filesystem data, or simply some static in-memory content.</p>
+</div>
+<div class="paragraph">
+<p>In our example we want to use the JAR file content for our plugin.  In this example we will
+use the NIO.2 JAR filesystem API to provide the content.</p>
+</div>
+<div class="listingblock">
+<div class="title">Providing the module content</div>
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">            // Add the module JAR content
+            URI uri = URI.create("jar:" + jarPath.toUri());
+            FileSystem fs;
+            try {
+                fs = FileSystems.newFileSystem(uri, Collections.emptyMap());
+            } catch (IOException e) {
+                throw new ModuleLoadException(e);
+            }
+            final Path rootPath = fs.getRootDirectories().iterator().next();
+            builder.addResourceRoot(
+                ResourceLoaderSpec.createResourceLoaderSpec(
+                    ResourceLoaders.createPathResourceLoader("root", rootPath)
+                )
+            );</code></pre>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_dependency_specifications">8.3.1.2. Dependency specifications</h5>
+<div class="paragraph">
+<p>Modules cannot function without dependency specifications.  The module&#8217;s own content as well as
+the content of dependencies will only be visible to the module through adding dependencies.</p>
+</div>
+<div class="paragraph">
+<p>The order of dependencies is significant.  Since the module&#8217;s own content must be added, its
+position in the order determines whether the module&#8217;s class loader will behave in a parent-first,
+a child-first, or a hybrid manner.</p>
+</div>
+<div class="sect5">
+<h6 id="_including_the_module_s_own_content">Including the module&#8217;s own content</h6>
+<div class="paragraph">
+<p>The module&#8217;s own content can be included by adding a dependency using a specification acquired
+from the no-argument <code>DependencySpec.createLocalDependencySpec()</code> method.  Let&#8217;s add it in to
+our example.</p>
+</div>
+<div class="listingblock">
+<div class="title">Providing the module content dependency</div>
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">            // Add the module's own content
+            builder.addDependency(DependencySpec.OWN_DEPENDENCY);</code></pre>
+</div>
+</div>
+</div>
+<div class="sect5">
+<h6 id="depending-other-modules">Depending on other modules</h6>
+<div class="paragraph">
+<p>Adding a dependency on another module within the same module loader is done using the
+<code>ModuleDependencySpecBuilder</code> class in this way:</p>
+</div>
+<div class="listingblock">
+<div class="title">A simple module dependency specification</div>
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">DependencySpec dep = new ModuleDependencySpecBuilder()
+    .setName("the-dependency-name")
+    .build();</code></pre>
+</div>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Tip</div>
+</td>
+<td class="content">
+In versions of JBoss Modules prior to 1.7, dependencies on other modules were created
+using the <code>DependencySpec.createModuleDependencySpec()</code> method.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect5">
+<h6 id="depending-other-module-loaders">Depending on modules from other module loaders</h6>
+<div class="paragraph">
+<p>Adding a dependency on a module from another module loader is done by using the
+<code>setModuleLoader</code> method on <code>ModuleDependencySpecBuilder</code>.  The dependency
+will be looked up from that module loader instead of the module&#8217;s own loader.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Tip</div>
+</td>
+<td class="content">
+In versions of JBoss Modules prior to 1.7, dependencies on modules from other module
+loaders was achieved using a form of the <code>DependencySpec.createModuleDependencySpec()</code> method
+which includes a <code>ModuleLoader</code> typed parameter.  In 1.7 and later, this method is deprecated.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>This is useful when there is more than one way to declare a dependency, and each type must
+come from a different namespace.  For example, file system JAR references might come from
+a <code>FileSystemClassPathModuleFinder</code>-based <code>ModuleLoader</code>, whereas <code>dot.separated.names</code> might
+come from a <code>LocalModuleLoader</code>.</p>
+</div>
+<div class="paragraph">
+<p>This strategy can be used not only for adding dependencies on modules in different name spaces,
+but also to add a dependency on your own module, even if you do not know your module&#8217;s name
+or even the module loader that loaded it.  Here&#8217;s an example:</p>
+</div>
+<div class="listingblock">
+<div class="title">Adding your own module as a dependency</div>
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">            // Add my own module as a dependency
+            final Module myModule = Module.forClass(getClass());
+            builder.addDependency(
+                new ModuleDependencySpecBuilder()
+                    .setModuleLoader(myModule.getModuleLoader())
+                    .setName(myModule.getName())
+                    .build()
+            );</code></pre>
+</div>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Tip</div>
+</td>
+<td class="content">
+The <code>ModuleFinder</code> interface&#8217;s <code>findModule</code> method accepts a <code>ModuleLoader</code> which represents
+the module loader for delegation.  If this module loader is used in a dependency specification,
+it is the same as if the <a href="#depending-other-modules">simple form</a> of <code>createModuleDependencySpec</code>
+is used.
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+Module loaders which implement "fall-through" or "layered" delegation, where some modules
+in a given namespace might be loaded from one module loader and others might be loaded from a
+"parent" layer, should <em>not</em> use this delegation strategy.  Instead, the
+<a href="#module-loader-delegation">module loader delegation</a> approach should be used.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect5">
+<h6 id="depending-on-system">Depending on content from the JDK</h6>
+<div class="paragraph">
+<p>In some cases it is necessary to create a dependency to make system content visible.  This can
+be done using a "local" dependency specification, for example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">DependencySpec spec = DependencySpec.createSystemDependencySpec(
+    Collections.singleton("javax/smartcardio")
+);</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The given set should contain all the packages (in pathname form) that should be included
+in the dependency.  No other paths will be visible to the module being built, unless they
+come from other dependencies.</p>
+</div>
+</div>
+<div class="sect5">
+<h6 id="depending-on-non-modules">Depending on content from non-module sources</h6>
+<div class="paragraph">
+<p>In rare cases it is necessary to create a dependency on some other class loader or source.  This
+is accomplished using the <code>createLocalDependencySpec</code> methods which accept a <code>LocalLoader</code> instance.
+These methods also require a set of path names which are to be delegated to the given dependency.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="complete-plugin-example">8.3.2. The complete example</h4>
+<div class="listingblock">
+<div class="title">The complete simple custom module loading example</div>
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">package example.plugins;
+
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Collections;
+
+import org.jboss.modules.DependencySpec;
+import org.jboss.modules.Module;
+import org.jboss.modules.ModuleDependencySpecBuilder;
+import org.jboss.modules.ModuleFinder;
+import org.jboss.modules.ModuleLoader;
+import org.jboss.modules.ModuleSpec;
+import org.jboss.modules.ModuleLoadException;
+import org.jboss.modules.PathUtils;
+import org.jboss.modules.ResourceLoaderSpec;
+import org.jboss.modules.ResourceLoaders;
+
+/**
+ * This module loader loads module content from a plugin directory.  The
+ * module name is the name of the JAR minus its extension (if any).
+ */
+public final class PluginModuleFinder implements ModuleFinder {
+    private final Path basePath;
+
+    public PluginModuleFinder(Path basePath) {
+        if (basePath == null) throw new IllegalArgumentException("null basePath");
+        this.basePath = basePath;
+    }
+
+    public ModuleSpec findModule(String name, ModuleLoader delegateLoader)
+        throws ModuleLoadException
+    {
+        // Make sure nobody escapes using a .. in the plugin name
+        name = PathUtils.relativize(PathUtils.canonicalize(name));
+        Path jarPath = basePath.resolve(name + ".jar");
+        if (Files.exists(jarPath)) {
+            ModuleSpec.Builder builder = ModuleSpec.build(name);
+            // Add all JDK classes
+            builder.addDependency(
+                DependencySpec.createSystemDependencySpec(
+                    PathUtils.getPathSet(null)
+                )
+            );
+            // Add the module's own content
+            builder.addDependency(DependencySpec.OWN_DEPENDENCY);
+            // Add my own module as a dependency
+            final Module myModule = Module.forClass(getClass());
+            builder.addDependency(
+                new ModuleDependencySpecBuilder()
+                    .setModuleLoader(myModule.getModuleLoader())
+                    .setName(myModule.getName())
+                    .build()
+            );
+            // Add the module JAR content
+            URI uri = URI.create("jar:" + jarPath.toUri());
+            FileSystem fs;
+            try {
+                fs = FileSystems.newFileSystem(uri, Collections.emptyMap());
+            } catch (IOException e) {
+                throw new ModuleLoadException(e);
+            }
+            final Path rootPath = fs.getRootDirectories().iterator().next();
+            builder.addResourceRoot(
+                ResourceLoaderSpec.createResourceLoaderSpec(
+                    ResourceLoaders.createPathResourceLoader("root", rootPath)
+                )
+            );
+            ModuleSpec moduleSpec = builder.create();
+            return moduleSpec;
+        }
+        return null;
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The example above is intended to be compiled into a JAR and launched either as a command-line
+<code>-jar</code> to <code>jboss-modules.jar</code>, or as a module itself.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="module-loader-delegation">8.3.3. Delegating to another module loader</h4>
+<div class="paragraph">
+<p>The default behavior of the <code>loadModule</code> method of the <code>ModuleLoader</code> class is to search each of
+its <code>ModuleFinder</code> instances for modules of a given name.  If the module is not found, then
+a <code>ModuleNotFoundException</code> is thrown.</p>
+</div>
+<div class="paragraph">
+<p>In cases where (for example) your module loader is acting as a "layer" over another module loader, this
+behavior can be modified by overriding the <code>preloadModule(String)</code> method.  The implementation must
+return a module, if one is found, or <code>null</code> if the module loader cannot find a module with the
+given name.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+Module loaders which must handle multiple name spaces should <em>not</em> use this delegation
+strategy.  For example, the filesystem class path loader can load modules either by file name
+(<code>/foo/bar/baz.jar</code>) from the file system module loader,
+or by RDN (<code>org.jboss.modules</code>) from the local module loader.  The
+name spaces do not overlap and dependencies for each are declared in separate ways.  The best
+way to achieve this kind of delegation is to use <a href="#depending-other-module-loaders">the
+dependency-based approach</a> instead.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>To search for modules in the module loader&#8217;s own module finder set, the <code>protected</code> method
+<code>loadModuleLocal</code> should be used.  This method returns <code>null</code> if the module finder set does
+not contain a module, and throws a <code>ModuleLoadException</code> if the module exists but failed to
+be loaded for some reason (including, but not limited to, a missing dependency).</p>
+</div>
+<div class="paragraph">
+<p>To search other module loaders for a module, your module loader must use the <code>protected static</code>
+method <code>preloadModule(String, ModuleLoader)</code>.  The delegate module loader is passed in as the
+second parameter.</p>
+</div>
+<div class="paragraph">
+<p>Since JBoss Modules 1.7, there is a <code>DelegatingModuleLoader</code> class which extends <code>ModuleLoader</code> and
+accepts a <code>ModuleLoader</code> and an array of <code>ModuleFinder</code> instances, and implements a the common
+use case of a child-first (delegate-last) loading policy,
+where the module finders are searched first before delegating to the module loader.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="class-loader-names">8.3.4. Module class loader names</h4>
+<div class="paragraph">
+<p>Since JBoss Modules 1.6, module loaders can assign a name to the class loaders of the
+modules which they load.  The name will appear in stack traces and, in some cases, can appear
+in log messages and other diagnostics when running under Java 9 or later.</p>
+</div>
+<div class="paragraph">
+<p>By default, the name of the module class loader is set to the module name and version.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+Future versions of JBoss Modules may change the default, particularly as JBoss Modules
+introduces direct support for JPMS integration.  The name of class loaders is purely diagnostic,
+and should not be relied upon for program flow control.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>You can customize the class loader name used by your module loader by extending the <code>ModuleLoader</code>
+class and overriding its <code>org.jboss.modules.ModuleLoader.getModuleDescription</code> method.  The name
+can be set to any arbitrary string.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="provided-module-loaders">8.3.5. Using the provided module loaders and finders</h4>
+<div class="paragraph">
+<p>JBoss Modules includes several useful module loaders and finders which it uses for its standard
+operation.  These loader implementations are available for reuse.</p>
+</div>
+<div class="sect4">
+<h5 id="provided-local-module-loader">8.3.5.1. The local filesystem module loader</h5>
+<div class="paragraph">
+<p>The local filesystem module loader is implemented in two parts.  The bulk of the functionality
+exists in the <code>LocalModuleFinder</code> class.  Instances can be constructed using the constructor(s)
+found on that class, which specify the file system paths to use as the module roots (or
+<em>module path</em>) and optionally a filter which may be applied to exclude certain paths from
+consideration as modules.</p>
+</div>
+<div class="paragraph">
+<p>The module finder may be instantiated and used by itself in any module loader, or it may be
+used by way of the <code>LocalModuleLoader</code> class, which also has a <code>close</code> method which can be called
+to release any resources used by the module finder instance.</p>
+</div>
+<div class="paragraph">
+<p>The <em>boot module loader</em>, which is accessible by way of the <code>Module.getBootModuleLoader()</code> method,
+is generally a <code>LocalModuleLoader</code>-based loader by default, unless it is explicitly overridden.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Tip</div>
+</td>
+<td class="content">
+To reuse the modules from the module path, it is recommended to use the boot module loader
+rather than instantiating multiple module loaders over the same paths, in order to avoid extra
+memory usage and potentially hard-to-debug <code>ClassCastException</code> and similar occurrences.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect4">
+<h5 id="provided-file-system-module-loader">8.3.5.2. The file system class path module loader</h5>
+<div class="paragraph">
+<p>The filesystem (class path) module loader is used to load JAR content directly as modules, including
+support for JAR- or path-embedded module repositories.</p>
+</div>
+<div class="paragraph">
+<p>This functionality is provided by the <code>FileSystemClassPathModuleFinder</code> class.  The constructor
+for this class accepts <code>Supplier</code> instances which yield module loaders for "regular" module
+dependencies (like <code>org.jboss.modules</code>) and "extension" module dependencies (which are specified
+in the JAR file specification, but are not presently supported by any JBoss Modules module loader
+or module finder implementation).  These module loaders are used as delegates for the corresponding
+dependencies.  Class path dependencies are always resolved internally.</p>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="custom-module-class-loader">8.3.6. Custom <code>ModuleClassLoader</code> subclasses</h4>
+<div class="paragraph">
+<p>Some special environments require that the class loader be a subtype of <code>ModuleClassLoader</code>.  For
+example, OSGi class loaders must implement a specific interface.</p>
+</div>
+<div class="paragraph">
+<p>The module class loader construction process can be intercepted by providing an implementation
+of <code>ModuleClassLoaderFactory</code> to the <code>ModuleSpec.Builder</code>.  Implementations of this interface
+accept an opaque configuration object, which must be passed verbatim to the constructor of the
+<code>ModuleClassLoader</code> class by the subclass constructor&#8217;s <code>super()</code> call.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="resource-loaders">8.4. Resource loaders</h3>
+<div class="paragraph">
+<p>The content of a module is determined by its <em>resource loaders</em>.  Resource loaders are defined
+by implementing the <code>ResourceLoader</code> interface.  A resource loader is responsible for providing
+<em>resources</em>, classes, and packages, and may also be used to locate native libraries.</p>
+</div>
+<div class="paragraph">
+<p>Each resource loader has a <em>root name</em>, returned by the <code>getRootName()</code> method of <code>ResourceLoader</code>.
+The root name is used to identify a particular
+resource root when a module has more than one, and should be unique per module.  It is permissible
+to return an empty string <code>""</code> in the case where only one resource loader is present in a module.</p>
+</div>
+<div class="paragraph">
+<p>The resource loader must also be able to produce its complete set of <em>paths</em> via the
+<code>ResourceLoader.getPaths()</code> method.  These paths are always <code>/</code>-separated.  This method is normally
+called only once per module that the resource loader is included in.</p>
+</div>
+<div class="paragraph">
+<p>The resource loader may optionally implement the <code>getLocation()</code> method, which provides a URI to
+display for the output of management (JMX) operations.  This is sometimes useful for diagnostic
+purposes.</p>
+</div>
+<div class="sect3">
+<h4 id="finding-resources">8.4.1. Finding resources</h4>
+<div class="paragraph">
+<p>The <code>ResourceLoader.getResource(String)</code> method finds resources by name.  If the resource is not
+found, <code>null</code> is returned; otherwise, an instance of the <code>Resource</code> interface is returned.</p>
+</div>
+<div class="paragraph">
+<p>The <code>Resource</code> interface in turn defines several operations.</p>
+</div>
+<div class="paragraph">
+<p>The <code>getName()</code> method returns the resource name, and usually should reflect the exact name
+that was sent in to the <code>ResourceLoader.getResource(String)</code> method.</p>
+</div>
+<div class="paragraph">
+<p>The <code>getURL()</code> method returns a <code>java.net.URL</code> instance which contains the location of the
+resource.  This <code>URL</code> object may be used by application code to read the resource content, so
+it should either be an exact location, or its <code>URLStreamHandler</code> should be capable of providing
+the resource content.</p>
+</div>
+<div class="paragraph">
+<p>The <code>getSize()</code> method should return the size of the resource, if it is possible to determine.
+If the size is indeterminate, for whatever reason, then <code>0</code> should be returned.</p>
+</div>
+<div class="paragraph">
+<p>The <code>openStream()</code> method returns a non-<code>null</code> <code>InputStream</code> that efficiently yields the
+content of the resource.  The caller of this method is responsible for closing the stream.  The
+resource must be capable of opening the stream multiple times, and it must support multiple
+streams open at the same time from the same resource.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="finding-classes">8.4.2. Finding classes</h4>
+<div class="paragraph">
+<p>The <code>ResourceLoader.getClassSpec(String)</code> method finds classes by name.  If the class is found
+then an object of type <code>ClassSpec</code> must be returned, otherwise <code>null</code> is returned.</p>
+</div>
+<div class="paragraph">
+<p>The class bytes may be set on the class specification instance by calling <code>setBytes()</code> with
+a <code>byte[]</code>, or by calling <code>setByteBuffer()</code> with a <code>ByteBuffer</code>.  One of these two methods
+must be called for the class load operation to succeed.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+Support for <code>ByteBuffer</code> class bytes was added in JBoss Modules 1.7.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>The class specification must also have a <em>code source</em> set on it.  The <code>setCodeSource()</code> method
+may be called to set the code source.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="finding-packages">8.4.3. Finding packages</h4>
+<div class="paragraph">
+<p>The <code>ResourceLoader.getPackageSpec(String)</code> method finds information about a package.  The
+implementation of this method must return a <code>PackageSpec</code> for known packages, or <code>null</code> if the
+package is not known.</p>
+</div>
+<div class="paragraph">
+<p>The attributes of the <code>PackageSpec</code> class correspond with information that normally comes from
+the <code>MANIFEST.MF</code> of a JAR, including the legacy specification and implementation version information
+(if any), and the package seal base URL (if the package is sealed).</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="finding-native-libraries">8.4.4. Finding native libraries</h4>
+<div class="paragraph">
+<p>A resource loader has the ability to provide native library locations to the module.  Native
+libraries found in this way are directly accessible to the module that includes the resource
+loader.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Tip</div>
+</td>
+<td class="content">
+If your resource loader must support native libraries, consider extending
+<a href="#native-resource-loader">the native resource loader</a>.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>To provide native library support for a module, implement the <code>ResourceLoader.getLibrary(String)</code>
+method.  The implementation of this method should usually call <code>System.mapLibraryName(String)</code>
+to determine the correct native library name.  The result of the method call should be the absolute
+path of the location of the library on the file system.  In other words, the result of this method
+may not be a JAR path, an NIO.2 non-filesystem Path, etc.</p>
+</div>
+<div class="paragraph">
+<p>The static <code>NativeLibraryResourceLoader.getArchName()</code> method may be used to acquire a string
+which may be used to help locate the correct platform native library.</p>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Warning</div>
+</td>
+<td class="content">
+It is not recommended for general purpose applications and libraries to use this
+mechanism to implement any kind of automatic native library extraction or downloads from JAR files
+or other sources.  Restricted OS environments, such as <a href="https://selinuxproject.org">SELinux</a>,
+may forbid linkage to shared libraries that are written to disk by user applications.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect3">
+<h4 id="resource-subloaders">8.4.5. Resource subloaders</h4>
+<div class="paragraph">
+<p>As of JBoss Modules 1.7, a resource loader may optionally support the ability to construct a
+subloader.  This capability may be used when (for example) a module loader supports more than
+one module in the same JAR archive.</p>
+</div>
+<div class="paragraph">
+<p>To provide the ability to produce sub-loaders, override the <code>ResourceLoader.createSubloader()</code>
+method.  This method accepts two arguments which specify the relative path and the name of the
+new resource loader.  If a name or path is not valid, or the resource loader does not support
+subloaders, this method returns <code>null</code>; otherwise, it returns the new nested <code>ResourceLoader</code>
+instance.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="iterable-resource-loaders">8.4.6. Iterable resource loaders</h4>
+<div class="paragraph">
+<p>As of JBoss Modules 1.2, a module loader may optionally implement the <code>IterableResourceLoader</code>
+interface.  Iterable resource loaders have an additional method called <code>iterateResources</code>
+which returns an <code>Iterator</code> over the <code>Resource</code> instances of the loader.</p>
+</div>
+<div class="paragraph">
+<p>The <code>iterateResource</code> method accepts two parameters: a start path (as a string), and a flag
+indicating that the iteration should (or should) not be recursive.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="provided-resource-loaders">8.4.7. Using the provided resource loaders</h4>
+<div class="paragraph">
+<p>Like module loaders, JBoss Modules includes several resource loader implementations that may
+be reused.</p>
+</div>
+<div class="sect4">
+<h5 id="path-resource-loader">8.4.7.1. The <code>Path</code> resource loader</h5>
+<div class="paragraph">
+<p>The NIO.2 <code>Path</code> construct is supported using the <code>Path</code> resource loader.  The
+static <code>ResourceLoaders.createPathResourceLoader()</code> method may be invoked to
+create a new instance of the <code>Path</code> resource loader.  This method accepts two parameters:
+the name of the resource root, and the <code>Path</code> that represents the base path of the
+resource loader&#8217;s content.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Tip</div>
+</td>
+<td class="content">
+In JBoss Modules 1.4 and earlier, only file resource loaders were supported.  The
+<code>ResourceLoaders.createFileResourceLoader()</code> method was used to create instances of this
+resource loader using a <code>File</code> instead of a <code>Path</code>.  Since 1.5, the method is now
+implemented as a special case of the <code>Path</code> resource loader.
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Tip</div>
+</td>
+<td class="content">
+Since Java 7, the JDK has included an NIO.2-based JAR <code>FileSystem</code> implementation which
+may be used with this resource loader instead of using the <a href="#jar-resource-loader">JAR resource
+loader</a> (see the <a href="#complete-plugin-example">plugin example</a>).  However, using the JAR <code>FileSystem</code>
+currently consumes more CPU and memory resources than <code>JarFile</code> does; in addition, the <code>Path</code>
+resource loader does not fully support JAR code signer verification.  For cases where performance
+is more important than convenience, or where code signing support is required,
+it is recommended to use the JAR resource loader instead.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect4">
+<h5 id="jar-resource-loader">8.4.7.2. The JAR file resource loader</h5>
+<div class="paragraph">
+<p>A special resource loader which specifically supports instances of <code>JarFile</code> is available.  To
+create instances of this resource loader, call the <code>createJarResourceLoader</code>
+method of the <code>ResourceLoaders</code> class.  The method accepts the resource root name and the
+<code>JarFile</code> instance, and optionally, a relative path within the JAR where the content root
+should be located.</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="native-resource-loader">8.4.7.3. The native resource loader</h5>
+<div class="paragraph">
+<p>The <code>NativeLibraryResourceLoader</code> class may be used directly or extended in order to provide
+module content which includes native libraries on the file system.  The constructor of this
+class accepts a single <code>File</code> argument that represents the root location of the loader&#8217;s content,
+which may include native libraries.  The location is available from the <code>getRoot()</code> method of
+that class, and it is also used for the URI value returned by <code>getLocation()</code>.</p>
+</div>
+<div class="paragraph">
+<p>Native libraries are returned in the manner described by the <a href="#native-libraries">Native Libraries</a> section.</p>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -1530,12 +3890,12 @@ command line</a> like this:</p>
 <div id="footnotes">
 <hr>
 <div class="footnote" id="_footnote_1">
-<a href="#_footnoteref_1">1</a>. For an introduction to Java language’s service provider interface mechanism, refer to: http://download.oracle.com/javase/tutorial/sound/SPI-intro.html
+<a href="#_footnoteref_1">1</a>. For an introduction to the Java language&#8217;s service provider interface mechanism, refer to: <a href="http://download.oracle.com/javase/tutorial/sound/SPI-intro.html" class="bare">http://download.oracle.com/javase/tutorial/sound/SPI-intro.html</a>
 </div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2017-05-15 17:24:32 CDT
+Last updated 2017-12-01 16:48:54 CST
 </div>
 </div>
 </body>
