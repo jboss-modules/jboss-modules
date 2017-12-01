@@ -19,6 +19,7 @@
 package org.jboss.modules;
 
 import java.lang.reflect.InvocationTargetException;
+import java.nio.ByteBuffer;
 import java.security.PermissionCollection;
 import java.security.ProtectionDomain;
 import java.util.IdentityHashMap;
@@ -353,9 +354,11 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         return list.isEmpty() ? Collections.<Resource>emptyList() : list;
     }
 
-    private Class<?> doDefineOrLoadClass(final String className, final byte[] bytes, int off, int len, ProtectionDomain protectionDomain) {
+    private Class<?> doDefineOrLoadClass(final String className, final byte[] bytes, final ByteBuffer byteBuffer, ProtectionDomain protectionDomain) {
         try {
-            final Class<?> definedClass = defineClass(className, bytes, off, len, protectionDomain);
+            final Class<?> definedClass = bytes != null ?
+                defineClass(className, bytes, 0, bytes.length, protectionDomain) :
+                defineClass(className, byteBuffer, protectionDomain);
             module.getModuleLoader().incClassCount();
             return definedClass;
         } catch (LinkageError e) {
@@ -422,9 +425,16 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         final Class<?> newClass;
         try {
             byte[] bytes = classSpec.getBytes();
+            ByteBuffer byteBuffer = classSpec.getByteBuffer();
             try {
                 final ProtectionDomain protectionDomain = getProtectionDomain(classSpec.getCodeSource());
                 if (transformer != null) {
+                    if (bytes == null) {
+                        final ByteBuffer dup = byteBuffer.duplicate();
+                        byteBuffer = null;
+                        bytes = new byte[dup.remaining()];
+                        dup.get(bytes);
+                    }
                     try {
                         bytes = transformer.transform(this, name.replace('.', '/'), null, protectionDomain, bytes);
                     } catch (Exception e) {
@@ -434,7 +444,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
                     }
                 }
                 final long start = Metrics.getCurrentCPUTime();
-                newClass = doDefineOrLoadClass(name, bytes, 0, bytes.length, protectionDomain);
+                newClass = doDefineOrLoadClass(name, bytes, byteBuffer, protectionDomain);
                 module.getModuleLoader().addClassLoadTime(Metrics.getCurrentCPUTime() - start);
                 log.classDefined(name, module);
             } catch (LinkageError e) {

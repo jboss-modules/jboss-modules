@@ -18,6 +18,7 @@
 
 package org.jboss.modules;
 
+import java.nio.ByteBuffer;
 import java.security.CodeSource;
 
 /**
@@ -28,6 +29,7 @@ import java.security.CodeSource;
  */
 public final class ClassSpec {
     private byte[] bytes;
+    private ByteBuffer byteBuffer;
     private CodeSource codeSource;
     private AssertionSetting assertionSetting = AssertionSetting.INHERIT;
 
@@ -38,21 +40,43 @@ public final class ClassSpec {
     }
 
     /**
-     * Get the class file bytes.
+     * Get the class file bytes, if they are set.
      *
-     * @return the class file bytes
+     * @return the class file bytes, if they are set; {@code null} otherwise
      */
     public byte[] getBytes() {
         return bytes;
     }
 
     /**
-     * Set the class file bytes.
+     * Set the class file bytes.  Calling this method will clear any previously set {@code ByteBuffer}.
      *
      * @param bytes the class file bytes
      */
     public void setBytes(final byte[] bytes) {
         this.bytes = bytes;
+        byteBuffer = null;
+    }
+
+    /**
+     * Get the class byte buffer, if one is set.
+     *
+     * @return the class byte buffer, if one is set; {@code null} otherwise
+     */
+    public ByteBuffer getByteBuffer() {
+        return byteBuffer;
+    }
+
+    /**
+     * Set the class byte buffer.  Calling this method will clear any previously set class {@code byte[]}.
+     *
+     * @param byteBuffer the class byte buffer
+     * @return this class specification
+     */
+    public ClassSpec setByteBuffer(final ByteBuffer byteBuffer) {
+        this.byteBuffer = byteBuffer;
+        bytes = null;
+        return this;
     }
 
     /**
