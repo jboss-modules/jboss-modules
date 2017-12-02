@@ -1,0 +1,6 @@
+org.jboss.modules
+org.jboss.modules.filter
+org.jboss.modules.log
+org.jboss.modules.management
+org.jboss.modules.ref
+org.jboss.modules.security
