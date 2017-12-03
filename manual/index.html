@@ -820,7 +820,7 @@ The module version is used for diagnostic purposes, and does not constrain or af
 <div class="listingblock">
 <div class="title">Version string grammar</div>
 <div class="content">
-<pre class="highlight"><code class="language-abnf" data-lang="abnf">version         = letters-version / numbers-version
+<pre class="highlightjs highlight"><code class="language-abnf hljs" data-lang="abnf">version         = letters-version / numbers-version
 
 letters-version = [ version separator ] letters / numbers-version letters
 
@@ -1093,7 +1093,7 @@ Server:</p>
 <div class="listingblock">
 <div class="title">Example module descriptor</div>
 <div class="content">
-<pre>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;?xml version="1.0" encoding="UTF-8"?&gt;
 
 &lt;module xmlns="urn:jboss:module:1.6" name="org.jboss.msc" version="1.0.1.GA"&gt;
 
@@ -1117,7 +1117,7 @@ Server:</p>
         &lt;module name="org.jboss.threads" optional="true"/&gt;
         &lt;module name="org.jboss.vfs" optional="true"/&gt;
     &lt;/dependencies&gt;
-&lt;/module&gt;</pre>
+&lt;/module&gt;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -1486,7 +1486,76 @@ filters.</p>
 </div>
 <div class="sect4">
 <h5 id="artifact-element">4.1.2.2. The <code>artifact</code> element</h5>
-
+<div class="paragraph">
+<p>Since JBoss Modules 1.3, the <code>artifact</code> element can be used to cause a module&#8217;s
+contents to be built from one or more Maven artifacts,
+and can be used in place of <code>resource-root</code>.  The <code>artifact</code> element may
+contain the following attributes:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 8. Attributes of the <code>artifact</code> element</caption>
+<colgroup>
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Attribute</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-center valign-top">Use</th>
+<th class="tableblock halign-center valign-top">Version(s)</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>name</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">required</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.3+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The colon-delimited Maven coordinates (GAV) of the artifact to include.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>In addition, since JBoss Modules 1.5, the <code>artifact</code> element may contain a nested element:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 9. Child elements of the <code>artifact</code> element</caption>
+<colgroup>
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Element</th>
+<th class="tableblock halign-center valign-top">Minimum</th>
+<th class="tableblock halign-center valign-top">Maximum</th>
+<th class="tableblock halign-center valign-top">Version(s)</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>filter</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">0</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.5+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A path filter to apply to this resource root. If not specified, all
+paths are accepted.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>See the section on filter definition for more information about defining
+filters.</p>
+</div>
 </div>
 <div class="sect4">
 <h5 id="properties-element">4.1.2.3. The <code>properties</code> element</h5>
@@ -1497,7 +1566,7 @@ properties you use the <code>properties</code> element which can contain zero or
 more <code>property</code> elements, each supporting the following attributes:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 8. Attributes of the <code>property</code> child element</caption>
+<caption class="title">Table 10. Attributes of the <code>property</code> child element</caption>
 <colgroup>
 <col style="width: 12.5%;">
 <col style="width: 12.5%;">
@@ -1544,7 +1613,7 @@ more <code>property</code> elements, each supporting the following attributes:</
 contains zero or more nested elements as follows:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 9. Child elements of the <code>dependencies</code> element</caption>
+<caption class="title">Table 11. Child elements of the <code>dependencies</code> element</caption>
 <colgroup>
 <col style="width: 12.5%;">
 <col style="width: 12.5%;">
@@ -1585,7 +1654,7 @@ application class path.</p></td>
 <p>The <code>module</code> element supports the following attributes:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 10. Attributes of the <code>module</code> dependency element</caption>
+<caption class="title">Table 12. Attributes of the <code>module</code> dependency element</caption>
 <colgroup>
 <col style="width: 12.5%;">
 <col style="width: 12.5%;">
@@ -1650,7 +1719,7 @@ defaults to <code>none</code>.</p></td>
 elements:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 11. Child elements of the <code>module</code> dependency element</caption>
+<caption class="title">Table 13. Child elements of the <code>module</code> dependency element</caption>
 <colgroup>
 <col style="width: 12.5%;">
 <col style="width: 12.5%;">
@@ -1688,7 +1757,7 @@ this module.</p></td>
 <div class="listingblock">
 <div class="title">Example of adding an explicit exclude for a dependency</div>
 <div class="content">
-<pre class="highlight"><code class="language-xml" data-lang="xml">&lt;dependencies&gt;
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;dependencies&gt;
     &lt;module name="org.jboss.example"&gt;
         &lt;imports&gt;
             &lt;exclude-set&gt;
@@ -1712,7 +1781,7 @@ Modules (this is usually the system&#8217;s application class loader). The
 element supports the following attributes:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 12. Attributes of the <code>system</code> dependency element</caption>
+<caption class="title">Table 14. Attributes of the <code>system</code> dependency element</caption>
 <colgroup>
 <col style="width: 12.5%;">
 <col style="width: 12.5%;">
@@ -1744,7 +1813,7 @@ specified, defaults to <code>false</code>.</p></td>
 <p>It also contains nested elements as follows:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 13. Child elements of the <code>system</code> dependency element</caption>
+<caption class="title">Table 15. Child elements of the <code>system</code> dependency element</caption>
 <colgroup>
 <col style="width: 12.5%;">
 <col style="width: 12.5%;">
@@ -1791,7 +1860,7 @@ or unspecified).</p></td>
 <p>The <code>permissions</code> element contains the following child elements:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 14. Child elements of the <code>permissions</code> element</caption>
+<caption class="title">Table 16. Child elements of the <code>permissions</code> element</caption>
 <colgroup>
 <col style="width: 12.5%;">
 <col style="width: 12.5%;">
@@ -1822,7 +1891,7 @@ or unspecified).</p></td>
 <p>The nested <code>permission</code> element supports the following attributes:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 15. Attributes of the <code>permission</code> element</caption>
+<caption class="title">Table 17. Attributes of the <code>permission</code> element</caption>
 <colgroup>
 <col style="width: 12.5%;">
 <col style="width: 12.5%;">
@@ -1885,7 +1954,7 @@ for a second module. The root element is called <code>module-alias</code> and
 supports the following attributes:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 16. Attributes of the <code>module-alias</code> element</caption>
+<caption class="title">Table 18. Attributes of the <code>module-alias</code> element</caption>
 <colgroup>
 <col style="width: 22.2222%;">
 <col style="width: 11.1111%;">
@@ -1947,7 +2016,7 @@ module descriptors in the  <code>urn:jboss:module:1.6</code> namespace or later.
 of the filter element varies by context, but they always support the same content.</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 17. Child elements of a filter element</caption>
+<caption class="title">Table 19. Child elements of a filter element</caption>
 <colgroup>
 <col style="width: 12.5%;">
 <col style="width: 12.5%;">
@@ -2004,7 +2073,7 @@ of names separated by a literal forward slash <code>/</code>.  A path specificat
 to take the place of part of the path, and is comprised of a sequence of <code>path</code> elements.</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 18. Attributes of a path specification</caption>
+<caption class="title">Table 20. Attributes of a path specification</caption>
 <colgroup>
 <col style="width: 12.5%;">
 <col style="width: 12.5%;">
@@ -2035,7 +2104,7 @@ to take the place of part of the path, and is comprised of a sequence of <code>p
 <p>The following wildcards are supported:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 19. Supported wildcard expressions of a path specification</caption>
+<caption class="title">Table 21. Supported wildcard expressions of a path specification</caption>
 <colgroup>
 <col style="width: 12.5%;">
 <col style="width: 12.5%;">
@@ -2079,7 +2148,7 @@ checked one pattern at a time.</p>
 <p>The path set is comprised of a sequence of <code>path</code> elements.</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 20. Path set child elements</caption>
+<caption class="title">Table 22. Path set child elements</caption>
 <colgroup>
 <col style="width: 12.5%;">
 <col style="width: 12.5%;">
@@ -2107,7 +2176,7 @@ checked one pattern at a time.</p>
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 21. Attributes of the path set <code>path</code> element</caption>
+<caption class="title">Table 23. Attributes of the path set <code>path</code> element</caption>
 <colgroup>
 <col style="width: 12.5%;">
 <col style="width: 12.5%;">
@@ -2326,7 +2395,7 @@ module is stored within its <code class="filename">META-INF/MANIFEST.MF</code> f
 in the main section of the manifest:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 22. Main manifest attributes</caption>
+<caption class="title">Table 24. Main manifest attributes</caption>
 <colgroup>
 <col style="width: 20%;">
 <col style="width: 10%;">
@@ -2409,7 +2478,7 @@ dependency may be located within the JAR itself, or it may be loaded from the
 <div class="listingblock">
 <div class="title">Dependency attribute grammar</div>
 <div class="content">
-<pre class="highlight"><code class="language-abnf" data-lang="abnf">dependencies    = module-name *( " " modifier ) *( "," module-name *( " " modifier ) )
+<pre class="highlightjs highlight"><code class="language-abnf hljs" data-lang="abnf">dependencies    = module-name *( " " modifier ) *( "," module-name *( " " modifier ) )
 
 module-name     = ; any valid module name
 
@@ -2420,7 +2489,7 @@ modifier        = "optional" / "export" / "services"</code></pre>
 <p>The following modifiers are supported:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 23. <code>Dependency</code> manifest attribute modifiers</caption>
+<caption class="title">Table 25. <code>Dependency</code> manifest attribute modifiers</caption>
 <colgroup>
 <col style="width: 12.5%;">
 <col style="width: 12.5%;">
@@ -2479,7 +2548,7 @@ projects Maven pom.xml.</p>
 <div class="listingblock">
 <div class="title">Maven snippet to add <code>Dependencies</code> to the manifest</div>
 <div class="content">
-<pre class="highlight"><code class="language-xml" data-lang="xml">&lt;plugins&gt;
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;plugins&gt;
    &lt;plugin&gt;
       &lt;artifactId&gt;maven-jar-plugin&lt;/artifactId&gt;
       &lt;version&gt;2.3.1&lt;/version&gt;
@@ -2522,7 +2591,7 @@ not require that the root element be qualified with a namespace or version attri
 <div class="listingblock">
 <div class="title">Example of a <code>META-INF/permissions.xml</code> file</div>
 <div class="content">
-<pre class="highlight"><code class="language-xml" data-lang="xml">&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;?xml version="1.0" encoding="UTF-8"?&gt;
 
 &lt;permissions&gt;
     &lt;permission&gt;
@@ -2599,14 +2668,14 @@ all modes, the structure of the command line is like this:</p>
 <div class="listingblock">
 <div class="title">Command line syntax</div>
 <div class="content">
-<pre class="highlight"><code>java [ &lt;jvm option&gt;... ] -jar jboss-modules.jar [ &lt;option&gt;... ] &lt;program spec&gt; [ args... ]</code></pre>
+<pre class="highlightjs highlight"><code>java [ &lt;jvm option&gt;... ] -jar jboss-modules.jar [ &lt;option&gt;... ] &lt;program spec&gt; [ args... ]</code></pre>
 </div>
 </div>
 <div class="paragraph">
 <p>The syntax of the <code>program spec</code> is as follows:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 24. Supported execution modes</caption>
+<caption class="title">Table 26. Supported execution modes</caption>
 <colgroup>
 <col style="width: 14.2857%;">
 <col style="width: 14.2857%;">
@@ -2681,7 +2750,7 @@ module for the entire class path.  Since 1.7, each item is now a separate module
 <p>The supported options are as follows:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 25. Supported command line options</caption>
+<caption class="title">Table 27. Supported command line options</caption>
 <colgroup>
 <col style="width: 16.6666%;">
 <col style="width: 16.6666%;">
@@ -2830,7 +2899,7 @@ a block of code like this:</p>
 <div class="listingblock">
 <div class="title">Permission checking example</div>
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">public class MyClass {
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">public class MyClass {
     // [ ... ]
 
     /**
@@ -2908,7 +2977,7 @@ the permission checking example above:</p>
 <div class="listingblock">
 <div class="title">Basic <code>doPrivileged</code> example</div>
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">public class MyClass {
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">public class MyClass {
     // [ ... ]
 
     /**
@@ -2977,7 +3046,7 @@ of permissions which are to form the upper bound of permissions.  Here is an exa
 <div class="listingblock">
 <div class="title">Restricted <code>doPrivileged</code> example</div>
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">    // [ ... ]
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">    // [ ... ]
 
     AccessController.doPrivileged(new PrivilegedAction&lt;Void&gt;() {
         Void run() {
@@ -3143,7 +3212,7 @@ generally implement their own module loaders and module finders.</p>
 <div class="listingblock">
 <div class="title">An example of a custom module finder</div>
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">/**
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">/**
  * This module loader loads module content from a plugin directory.  The
  * module name is the name of the JAR minus its extension (if any).
  */
@@ -3198,7 +3267,7 @@ path using an absolute path or <code>..</code> path segments.</p>
 <div class="listingblock">
 <div class="title">Finding and specifying the module</div>
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">    public ModuleSpec findModule(String name, ModuleLoader delegateLoader)
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">    public ModuleSpec findModule(String name, ModuleLoader delegateLoader)
         throws ModuleLoadException
     {
         // Make sure nobody escapes using a .. in the plugin name
@@ -3229,7 +3298,7 @@ use the NIO.2 JAR filesystem API to provide the content.</p>
 <div class="listingblock">
 <div class="title">Providing the module content</div>
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">            // Add the module JAR content
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">            // Add the module JAR content
             URI uri = URI.create("jar:" + jarPath.toUri());
             FileSystem fs;
             try {
@@ -3267,7 +3336,7 @@ our example.</p>
 <div class="listingblock">
 <div class="title">Providing the module content dependency</div>
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">            // Add the module's own content
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">            // Add the module's own content
             builder.addDependency(DependencySpec.OWN_DEPENDENCY);</code></pre>
 </div>
 </div>
@@ -3281,7 +3350,7 @@ our example.</p>
 <div class="listingblock">
 <div class="title">A simple module dependency specification</div>
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">DependencySpec dep = new ModuleDependencySpecBuilder()
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">DependencySpec dep = new ModuleDependencySpecBuilder()
     .setName("the-dependency-name")
     .build();</code></pre>
 </div>
@@ -3335,7 +3404,7 @@ or even the module loader that loaded it.  Here&#8217;s an example:</p>
 <div class="listingblock">
 <div class="title">Adding your own module as a dependency</div>
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">            // Add my own module as a dependency
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">            // Add my own module as a dependency
             final Module myModule = Module.forClass(getClass());
             builder.addDependency(
                 new ModuleDependencySpecBuilder()
@@ -3384,7 +3453,7 @@ be done using a "local" dependency specification, for example:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">DependencySpec spec = DependencySpec.createSystemDependencySpec(
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">DependencySpec spec = DependencySpec.createSystemDependencySpec(
     Collections.singleton("javax/smartcardio")
 );</code></pre>
 </div>
@@ -3410,7 +3479,7 @@ These methods also require a set of path names which are to be delegated to the 
 <div class="listingblock">
 <div class="title">The complete simple custom module loading example</div>
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">package example.plugins;
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example.plugins;
 
 import java.io.IOException;
 import java.net.URI;
@@ -3895,8 +3964,11 @@ that class, and it is also used for the URI value returned by <code>getLocation(
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2017-12-01 16:48:54 CST
+Last updated 2017-12-03 13:21:36 CST
 </div>
 </div>
+<link rel="stylesheet" href="highlight/styles/github.min.css">
+<script src="highlight/highlight.min.js"></script>
+<script>hljs.initHighlighting()</script>
 </body>
 </html>
