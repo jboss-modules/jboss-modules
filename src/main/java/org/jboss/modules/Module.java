@@ -246,13 +246,13 @@ public final class Module {
         //noinspection ThisEscapedInObjectConstruction
         final ModuleClassLoader.Configuration configuration = new ModuleClassLoader.Configuration(this, spec.getAssertionSetting(), spec.getResourceLoaders(), spec.getClassFileTransformer());
         final ModuleClassLoaderFactory factory = spec.getModuleClassLoaderFactory();
+        final Map<String, String> properties = spec.getProperties();
+        this.properties = properties.isEmpty() ? Collections.<String, String>emptyMap() : new LinkedHashMap<String, String>(properties);
+        this.version = spec.getVersion();
         ModuleClassLoader moduleClassLoader = null;
         if (factory != null) moduleClassLoader = factory.create(configuration);
         if (moduleClassLoader == null) moduleClassLoader = new ModuleClassLoader(configuration);
         this.moduleClassLoader = moduleClassLoader;
-        final Map<String, String> properties = spec.getProperties();
-        this.properties = properties.isEmpty() ? Collections.<String, String>emptyMap() : new LinkedHashMap<String, String>(properties);
-        this.version = spec.getVersion();
     }
 
     private static PermissionCollection noPermissions() {
