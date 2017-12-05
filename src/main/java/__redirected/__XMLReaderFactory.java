@@ -19,9 +19,7 @@
 package __redirected;
 
 import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
+import java.util.function.Supplier;
 
 import org.jboss.modules.ModuleIdentifier;
 import org.jboss.modules.ModuleLoader;
@@ -34,7 +32,6 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXNotRecognizedException;
 import org.xml.sax.SAXNotSupportedException;
 import org.xml.sax.XMLReader;
-import org.xml.sax.helpers.XMLReaderFactory;
 
 /**
  * A redirected SAXParserFactory
@@ -43,44 +40,10 @@ import org.xml.sax.helpers.XMLReaderFactory;
  * @author Jason T. Greene
  */
 public final class __XMLReaderFactory implements XMLReader {
-    private static final Constructor<? extends XMLReader> PLATFORM_FACTORY;
-    private static volatile Constructor<? extends XMLReader> DEFAULT_FACTORY;
+    private static final Supplier<XMLReader> PLATFORM_FACTORY = JDKSpecific.getPlatformXmlReaderSupplier();
+    private static volatile Supplier<XMLReader> DEFAULT_FACTORY;
 
-    private static final String SAX_DRIVER = "org.xml.sax.driver";
-
-    static {
-        Thread thread = Thread.currentThread();
-        ClassLoader old = thread.getContextClassLoader();
-
-        // Unfortunately we can not use null because of a stupid bug in the jdk JAXP factory finder.
-        // Lack of tccl causes the provider file discovery to fallback to the jaxp loader (bootclasspath)
-        // which is correct. However, after parsing it, it then disables the fallback for the loading of the class.
-        // Thus, the class can not be found.
-        //
-        // Work around the problem by using the System CL, although in the future we may want to just "inherit"
-        // the environment's TCCL
-        thread.setContextClassLoader(ClassLoader.getSystemClassLoader());
-        // MODULES-248: XMLReaderFactory fields tracking if jar files were already scanned needs to reset
-        // before and after switching class loader
-        resetScanTracking();
-        try {
-            if (System.getProperty(SAX_DRIVER, "").equals(__XMLReaderFactory.class.getName())) {
-                System.clearProperty(SAX_DRIVER);
-            }
-            XMLReader factory = XMLReaderFactory.createXMLReader();
-            try {
-               DEFAULT_FACTORY = PLATFORM_FACTORY = factory.getClass().getConstructor();
-            } catch (NoSuchMethodException e) {
-                throw __RedirectedUtils.wrapped(new NoSuchMethodError(e.getMessage()), e);
-            }
-            System.setProperty(SAX_DRIVER, __XMLReaderFactory.class.getName());
-        } catch (SAXException e) {
-             throw __RedirectedUtils.wrapped(new RuntimeException(e.getMessage()), e);
-        } finally {
-            resetScanTracking();
-            thread.setContextClassLoader(old);
-        }
-    }
+    static final String SAX_DRIVER = "org.xml.sax.driver";
 
     @Deprecated
     public static void changeDefaultFactory(ModuleIdentifier id, ModuleLoader loader) {
@@ -88,13 +51,9 @@ public final class __XMLReaderFactory implements XMLReader {
     }
 
     public static void changeDefaultFactory(String id, ModuleLoader loader) {
-        Class<? extends XMLReader> clazz = __RedirectedUtils.loadProvider(id, XMLReader.class, loader, SAX_DRIVER);
-        if (clazz != null) {
-            try {
-                DEFAULT_FACTORY = clazz.getConstructor();
-            } catch (NoSuchMethodException e) {
-                throw __RedirectedUtils.wrapped(new NoSuchMethodError(e.getMessage()), e);
-            }
+        final Supplier<XMLReader> supplier = __RedirectedUtils.loadProvider(id, XMLReader.class, loader, SAX_DRIVER);
+        if (supplier != null) {
+            DEFAULT_FACTORY = supplier;
         }
     }
 
@@ -107,44 +66,18 @@ public final class __XMLReaderFactory implements XMLReader {
      */
     public static void init() {}
 
-    private static void resetScanTracking() {
-        try {
-            Field clsFromJar = XMLReaderFactory.class.getDeclaredField("_clsFromJar");
-            clsFromJar.setAccessible(true);
-            clsFromJar.set(XMLReaderFactory.class, null);
-            Field jarread = XMLReaderFactory.class.getDeclaredField("_jarread");
-            jarread.setAccessible(true);
-            jarread.setBoolean(XMLReaderFactory.class, false);
-        } catch (NoSuchFieldException e) {
-            //no-op, original SAX XMLReaderFactory hasn't helper fields _clsFromJar and _jarread
-        } catch (IllegalAccessException e) {
-            throw __RedirectedUtils.wrapped(new RuntimeException(e.getMessage()), e);
-        }
-    }
-
     /**
      * Construct a new instance.
      */
     public __XMLReaderFactory() {
-        Constructor<? extends XMLReader> factory = DEFAULT_FACTORY;
         ClassLoader loader = Thread.currentThread().getContextClassLoader();
-        try {
-            if (loader != null) {
-                Class<? extends XMLReader> provider = __RedirectedUtils.loadProvider(XMLReader.class, loader, SAX_DRIVER);
-                if (provider != null)
-                    factory = provider.getConstructor();
-            }
-
-            actual = factory.newInstance();
-        } catch (InstantiationException e) {
-            throw __RedirectedUtils.wrapped(new InstantiationError(e.getMessage()), e);
-        } catch (IllegalAccessException e) {
-            throw __RedirectedUtils.wrapped(new IllegalAccessError(e.getMessage()), e);
-        } catch (InvocationTargetException e) {
-            throw __RedirectedUtils.rethrowCause(e);
-        } catch (NoSuchMethodException e) {
-            throw __RedirectedUtils.wrapped(new NoSuchMethodError(e.getMessage()), e);
+        Supplier<XMLReader> factory = null;
+        if (loader != null) {
+            factory = __RedirectedUtils.loadProvider(XMLReader.class, loader, SAX_DRIVER);
         }
+        if (factory == null) factory = DEFAULT_FACTORY;
+
+        actual = factory.get();
     }
 
     private final XMLReader actual;
