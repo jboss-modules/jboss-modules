@@ -134,7 +134,7 @@ public final class Main {
         boolean addIndex = false;
         boolean modifyInPlace = false;
         boolean debuglog = false;
-        for (int i = 0, argsLength = argsLen; i < argsLength; i++) {
+        for (int i = 0; i < argsLen; i++) {
             final String arg = args[i];
             try {
                 if (arg.charAt(0) == '-') {
@@ -435,7 +435,7 @@ public final class Main {
         final Pattern versionPattern = Pattern.compile("(?:1\\.)?(\\d+)");
         final Matcher requireMatcher = versionPattern.matcher(requireJavaVersion);
         final Matcher ourMatcher = versionPattern.matcher(ourJavaVersion);
-        if (requireMatcher.matches() && ourMatcher.matches() && Integer.valueOf(requireMatcher.group(1)) > Integer.valueOf(ourMatcher.group(1))) {
+        if (requireMatcher.matches() && ourMatcher.matches() && Integer.parseInt(requireMatcher.group(1)) > Integer.parseInt(ourMatcher.group(1))) {
             System.err.printf("This application requires Java specification version %s or later to run (this Java virtual machine implements specification version %s)%n", requireJavaVersion, ourJavaVersion);
             System.exit(1);
         }
