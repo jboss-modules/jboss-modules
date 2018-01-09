@@ -113,6 +113,7 @@ public final class ModuleXmlParser {
     // there is no 1.4
     private static final String MODULE_1_5 = "urn:jboss:module:1.5";
     private static final String MODULE_1_6 = "urn:jboss:module:1.6";
+    private static final String MODULE_1_7 = "urn:jboss:module:1.7";
 
     private static final String E_MODULE = "module";
     private static final String E_ARTIFACT = "artifact";
@@ -137,6 +138,9 @@ public final class ModuleXmlParser {
     private static final String E_PROPERTY = "property";
     private static final String E_PERMISSIONS = "permissions";
     private static final String E_GRANT = "grant";
+    private static final String E_CONDITIONS = "conditions";
+    private static final String E_PROPERTY_EQUAL = "property-equal";
+    private static final String E_PROPERTY_NOT_EQUAL = "property-not-equal";
 
     private static final String A_NAME = "name";
     private static final String A_SLOT = "slot";
@@ -379,13 +383,18 @@ public final class ModuleXmlParser {
             case MODULE_1_3:
             case MODULE_1_5:
             case MODULE_1_6:
+            case MODULE_1_7:
                 break;
             default: throw unexpectedContent(reader);
         }
     }
 
     private static boolean atLeast1_6(final XmlPullParser reader) {
-            return MODULE_1_6.equals(reader.getNamespace());
+            return MODULE_1_6.equals(reader.getNamespace()) || MODULE_1_7.equals(reader.getNamespace());
+    }
+
+    private static boolean atLeast1_7(final XmlPullParser reader) {
+        return MODULE_1_7.equals(reader.getNamespace());
     }
 
     private static void assertNoAttributes(final XmlPullParser reader) throws XmlPullParserException {
@@ -902,20 +911,31 @@ public final class ModuleXmlParser {
             throw missingAttributes(reader, required);
         }
 
+        final SystemPropertyConditionBuilder conditionBuilder = new SystemPropertyConditionBuilder();
+        final Set<String> encountered = new HashSet<>();
         int eventType;
         for (;;) {
             eventType = reader.nextTag();
             switch (eventType) {
                 case END_TAG: {
                     try {
-                        createMavenNativeArtifactLoader(mavenResolver, name, reader, specBuilder);
+                        if (conditionBuilder.resolve()) {
+                            createMavenNativeArtifactLoader(mavenResolver, name, reader, specBuilder);
+                        }
                     } catch (IOException e) {
                         throw new XmlPullParserException(String.format("Failed to add artifact '%s'", name), reader, e);
                     }
                     return;
                 }
                 case START_TAG: {
-                    throw unexpectedContent(reader);
+                    validateNamespace(reader);
+                    final String element = reader.getName();
+                    if (! encountered.add(element)) throw unexpectedContent(reader);
+                    switch (element) {
+                        case E_CONDITIONS: parseConditions(reader, conditionBuilder); break;
+                        default: throw unexpectedContent(reader);
+                    }
+                    break;
                 }
                 default: {
                     throw unexpectedContent(reader);
@@ -942,6 +962,7 @@ public final class ModuleXmlParser {
         }
 
         final MultiplePathFilterBuilder filterBuilder = PathFilters.multiplePathFilterBuilder(true);
+        final SystemPropertyConditionBuilder conditionBuilder = new SystemPropertyConditionBuilder();
         final ResourceLoader resourceLoader;
 
         final Set<String> encountered = new HashSet<>();
@@ -950,13 +971,15 @@ public final class ModuleXmlParser {
             eventType = reader.nextTag();
             switch (eventType) {
                 case END_TAG: {
-                    try {
-                        resourceLoader = MavenArtifactUtil.createMavenArtifactLoader(mavenResolver, name);
-                    } catch (IOException e) {
-                        throw new XmlPullParserException(String.format("Failed to add artifact '%s'", name), reader, e);
+                    if(conditionBuilder.resolve()) {
+                        try {
+                            resourceLoader = MavenArtifactUtil.createMavenArtifactLoader(mavenResolver, name);
+                        } catch (IOException e) {
+                            throw new XmlPullParserException(String.format("Failed to add artifact '%s'", name), reader, e);
+                        }
+                        if (resourceLoader == null) throw new XmlPullParserException(String.format("Failed to resolve artifact '%s'", name), reader, null);
+                            specBuilder.addResourceRoot(ResourceLoaderSpec.createResourceLoaderSpec(resourceLoader, filterBuilder.create()));
                     }
-                    if (resourceLoader == null) throw new XmlPullParserException(String.format("Failed to resolve artifact '%s'", name), reader, null);
-                    specBuilder.addResourceRoot(ResourceLoaderSpec.createResourceLoaderSpec(resourceLoader, filterBuilder.create()));
                     return;
                 }
                 case START_TAG: {
@@ -965,6 +988,7 @@ public final class ModuleXmlParser {
                     if (! encountered.add(element)) throw unexpectedContent(reader);
                     switch (element) {
                         case E_FILTER: parseFilterList(reader, filterBuilder); break;
+                        case E_CONDITIONS: parseConditions(reader, conditionBuilder); break;
                         default: throw unexpectedContent(reader);
                     }
                     break;
@@ -997,6 +1021,8 @@ public final class ModuleXmlParser {
         if (name == null) name = path;
 
         final MultiplePathFilterBuilder filterBuilder = PathFilters.multiplePathFilterBuilder(true);
+        final SystemPropertyConditionBuilder conditionBuilder = new SystemPropertyConditionBuilder();
+
         final ResourceLoader resourceLoader;
 
         final Set<String> encountered = new HashSet<>();
@@ -1005,12 +1031,14 @@ public final class ModuleXmlParser {
             eventType = reader.nextTag();
             switch (eventType) {
                 case END_TAG: {
-                    try {
-                        resourceLoader = factory.createResourceLoader(rootPath, path, name);
-                    } catch (IOException e) {
-                        throw new XmlPullParserException(String.format("Failed to add resource root '%s' at path '%s'", name, path), reader, e);
+                    if(conditionBuilder.resolve()) {
+                        try {
+                            resourceLoader = factory.createResourceLoader(rootPath, path, name);
+                        } catch (IOException e) {
+                            throw new XmlPullParserException(String.format("Failed to add resource root '%s' at path '%s'", name, path), reader, e);
+                        }
+                        specBuilder.addResourceRoot(ResourceLoaderSpec.createResourceLoaderSpec(resourceLoader, filterBuilder.create()));
                     }
-                    specBuilder.addResourceRoot(ResourceLoaderSpec.createResourceLoaderSpec(resourceLoader, filterBuilder.create()));
                     return;
                 }
                 case START_TAG: {
@@ -1019,6 +1047,7 @@ public final class ModuleXmlParser {
                     if (! encountered.add(element)) throw unexpectedContent(reader);
                     switch (element) {
                         case E_FILTER: parseFilterList(reader, filterBuilder); break;
+                        case E_CONDITIONS: parseConditions(reader, conditionBuilder); break;
                         default: throw unexpectedContent(reader);
                     }
                     break;
@@ -1028,6 +1057,58 @@ public final class ModuleXmlParser {
                 }
             }
         }
+    }
+
+    private static void parseConditions(XmlPullParser reader, SystemPropertyConditionBuilder conditionBuilder) throws XmlPullParserException, IOException {
+        if(!atLeast1_7(reader)) {
+            throw unexpectedContent(reader);
+        }
+        assertNoAttributes(reader);
+        // xsd:choice
+        int eventType;
+        for (;;) {
+            eventType = reader.nextTag();
+            switch (eventType) {
+                case END_TAG: {
+                    return;
+                }
+                case START_TAG: {
+                    validateNamespace(reader);
+                    switch (reader.getName()) {
+                        case E_PROPERTY_EQUAL: parseConditionalProperty(reader, true, conditionBuilder); break;
+                        case E_PROPERTY_NOT_EQUAL: parseConditionalProperty(reader, false, conditionBuilder); break;
+                        default: throw unexpectedContent(reader);
+                    }
+                    break;
+                }
+                default: {
+                    throw unexpectedContent(reader);
+                }
+            }
+        }
+    }
+
+    private static void parseConditionalProperty(XmlPullParser reader, boolean equal, SystemPropertyConditionBuilder builder) throws XmlPullParserException, IOException {
+        String name = null;
+        String value = null;
+        final Set<String> required = new HashSet<>(Arrays.asList(A_NAME, A_VALUE));
+        final int count = reader.getAttributeCount();
+        for (int i = 0; i < count; i ++) {
+            validateAttributeNamespace(reader, i);
+            final String attribute = reader.getAttributeName(i);
+            required.remove(attribute);
+            switch (attribute) {
+                case A_NAME: name = reader.getAttributeValue(i); break;
+                case A_VALUE: value = reader.getAttributeValue(i); break;
+                default: throw unknownAttribute(reader, i);
+            }
+        }
+        if (! required.isEmpty()) {
+            throw missingAttributes(reader, required);
+        }
+        builder.add(name, value, equal);
+        // consume remainder of element
+        parseNoContent(reader);
     }
 
     private static void parseFilterList(final XmlPullParser reader, final MultiplePathFilterBuilder builder) throws XmlPullParserException, IOException {
