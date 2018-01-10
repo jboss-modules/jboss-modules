@@ -45,6 +45,7 @@ import java.util.zip.ZipFile;
 import org.jboss.modules.AssertionSetting;
 import org.jboss.modules.DependencySpec;
 import org.jboss.modules.LocalDependencySpecBuilder;
+import org.jboss.modules.ModuleDependencySpec;
 import org.jboss.modules.ModuleDependencySpecBuilder;
 import org.jboss.modules.Version;
 import org.jboss.modules.VersionDetection;
@@ -88,6 +89,9 @@ import static org.jboss.modules.xml.XmlPullParser.TEXT;
  */
 public final class ModuleXmlParser {
 
+    static final ModuleDependencySpec DEP_JAVA_SE = new ModuleDependencySpecBuilder().setName("java.se").build();
+    static final ModuleDependencySpec DEP_JDK_UNSUPPORTED = new ModuleDependencySpecBuilder().setName("jdk.unsupported").setOptional(true).build();
+
     /**
      * A factory for resource roots, based on a root path, loader path, and loader name.  Normally it is sufficient to
      * accept the default.
@@ -116,6 +120,7 @@ public final class ModuleXmlParser {
     private static final String MODULE_1_5 = "urn:jboss:module:1.5";
     private static final String MODULE_1_6 = "urn:jboss:module:1.6";
     private static final String MODULE_1_7 = "urn:jboss:module:1.7";
+    private static final String MODULE_1_8 = "urn:jboss:module:1.8";
 
     private static final String E_MODULE = "module";
     private static final String E_ARTIFACT = "artifact";
@@ -386,17 +391,22 @@ public final class ModuleXmlParser {
             case MODULE_1_5:
             case MODULE_1_6:
             case MODULE_1_7:
+            case MODULE_1_8:
                 break;
             default: throw unexpectedContent(reader);
         }
     }
 
     private static boolean atLeast1_6(final XmlPullParser reader) {
-            return MODULE_1_6.equals(reader.getNamespace()) || MODULE_1_7.equals(reader.getNamespace());
+        return MODULE_1_6.equals(reader.getNamespace()) || atLeast1_7(reader);
     }
 
     private static boolean atLeast1_7(final XmlPullParser reader) {
-        return MODULE_1_7.equals(reader.getNamespace());
+        return MODULE_1_7.equals(reader.getNamespace()) || atLeast1_8(reader);
+    }
+
+    private static boolean atLeast1_8(final XmlPullParser reader) {
+        return MODULE_1_8.equals(reader.getNamespace());
     }
 
     private static void assertNoAttributes(final XmlPullParser reader) throws XmlPullParserException {
@@ -594,16 +604,16 @@ public final class ModuleXmlParser {
         final int count = reader.getAttributeCount();
         String name = null;
         String slot = null;
-        boolean noSlots = atLeast1_6(reader);
+        boolean is1_6 = atLeast1_6(reader);
         Version version = null;
-        final Set<String> required = noSlots ? new HashSet<>(LIST_A_NAME) : new HashSet<>(LIST_A_NAME);
+        final Set<String> required = is1_6 ? new HashSet<>(LIST_A_NAME) : new HashSet<>(LIST_A_NAME);
         for (int i = 0; i < count; i ++) {
             validateAttributeNamespace(reader, i);
             final String attribute = reader.getAttributeName(i);
             required.remove(attribute);
             switch (attribute) {
                 case A_NAME:    name = reader.getAttributeValue(i); break;
-                case A_SLOT:    if (noSlots) throw unknownAttribute(reader, i); else slot = reader.getAttributeValue(i); break;
+                case A_SLOT:    if (is1_6) throw unknownAttribute(reader, i); else slot = reader.getAttributeValue(i); break;
                 case A_VERSION:
                     try {
                         version = Version.parse(reader.getAttributeValue(i));
@@ -618,7 +628,7 @@ public final class ModuleXmlParser {
             throw missingAttributes(reader, required);
         }
         final String realModuleName;
-        if (noSlots) {
+        if (is1_6) {
             realModuleName = name;
         } else {
             realModuleName = ModuleIdentifier.create(name, slot).toString();
@@ -631,6 +641,12 @@ public final class ModuleXmlParser {
         // xsd:all
         MultiplePathFilterBuilder exportsBuilder = PathFilters.multiplePathFilterBuilder(true);
         ArrayList<DependencySpec> dependencies = new ArrayList<>();
+        final boolean is1_8 = atLeast1_8(reader);
+        if (! is1_8) {
+            // add default system dependencies
+            specBuilder.addDependency(DEP_JAVA_SE);
+            specBuilder.addDependency(DEP_JDK_UNSUPPORTED);
+        }
         Set<String> visited = new HashSet<>();
         int eventType;
         boolean gotPerms = false;
@@ -686,7 +702,7 @@ public final class ModuleXmlParser {
                     validateNamespace(reader);
                     switch (reader.getName()) {
                         case E_MODULE: parseModuleDependency(reader, dependencies); break;
-                        case E_SYSTEM: parseSystemDependency(reader, dependencies); break;
+                        case E_SYSTEM: if (! atLeast1_8(reader)) { parseSystemDependency(reader, dependencies); break; }
                         default: throw unexpectedContent(reader);
                     }
                     break;

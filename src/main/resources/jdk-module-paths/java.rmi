@@ -1,0 +1,6 @@
+java/rmi
+java/rmi/activation
+java/rmi/dgc
+java/rmi/registry
+java/rmi/server
+javax/rmi/ssl

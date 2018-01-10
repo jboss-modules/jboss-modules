@@ -88,9 +88,7 @@ public final class Module {
 
         final String pkgsString = AccessController.doPrivileged(new PropertyReadAction("jboss.modules.system.pkgs"));
         final List<String> list = new ArrayList<String>();
-        list.add("java.");
-        list.add("sun.reflect.");
-        list.add("jdk.internal.reflect.");
+        JDKSpecific.addInternalPackages(list);
         if (pkgsString != null) {
             int i;
             int nc = -1;
@@ -537,6 +535,16 @@ public final class Module {
         return loader;
     }
 
+    /**
+     * Get the system module loader.  This is the module loader which contains the Java platform modules, plus
+     * a module for JBoss Modules itself, called {@code org.jboss.modules}.
+     *
+     * @return the system module loader
+     */
+    public static ModuleLoader getSystemModuleLoader() {
+        return Utils.JDK_MODULE_LOADER;
+    }
+
     static void initBootModuleLoader(ModuleLoader loader) {
         BOOT_MODULE_LOADER.set(loader);
     }
@@ -746,26 +754,32 @@ public final class Module {
         }
         log.trace("Attempting to find resource %s in %s", canonPath, this);
         final String path = pathOf(canonPath);
+        final URLConnectionResource jaxpResource = ModuleClassLoader.jaxpImplResources.get(name);
         final Map<String, List<LocalLoader>> paths = getPathsUnchecked();
         final List<LocalLoader> loaders = paths.get(path);
         if (loaders != null) {
             for (LocalLoader loader : loaders) {
-                final List<Resource> resourceList = loader.loadResourceLocal(canonPath);
-                for (Resource resource : resourceList) {
-                    return resource.getURL();
+                final Iterator<Resource> iterator = loader.loadResourceLocal(canonPath).iterator();
+                if (iterator.hasNext()) {
+                    final URL url = iterator.next().getURL();
+                    if (jaxpResource != null) log.jaxpResourceLoaded(url, this);
+                    return url;
                 }
             }
         }
         final LocalLoader fallbackLoader = this.fallbackLoader;
         if (fallbackLoader != null) {
-            final List<Resource> resourceList = fallbackLoader.loadResourceLocal(canonPath);
-            for (Resource resource : resourceList) {
-                return resource.getURL();
+            final Iterator<Resource> iterator = fallbackLoader.loadResourceLocal(canonPath).iterator();
+            if (iterator.hasNext()) {
+                final URL url = iterator.next().getURL();
+                if (jaxpResource != null) log.jaxpResourceLoaded(url, this);
+                return url;
             }
         }
-        final URLConnectionResource resource = ModuleClassLoader.jaxpImplResources.get(name);
-        if (resource != null) {
-            return resource.getURL();
+        if (jaxpResource != null) {
+            final URL url = jaxpResource.getURL();
+            log.jaxpResourceLoaded(url, this);
+            return url;
         }
         return null;
     }
@@ -785,12 +799,16 @@ public final class Module {
         }
         log.trace("Attempting to find resource %s in %s", canonPath, this);
         final String path = pathOf(canonPath);
+        final URLConnectionResource jaxpResource = ModuleClassLoader.jaxpImplResources.get(name);
         final Map<String, List<LocalLoader>> paths = getPathsUnchecked();
         final List<LocalLoader> loaders = paths.get(path);
         if (loaders != null) {
             for (LocalLoader loader : loaders) {
                 final List<Resource> resourceList = loader.loadResourceLocal(canonPath);
-                for (Resource resource : resourceList) {
+                final Iterator<Resource> iterator = resourceList.iterator();
+                if (iterator.hasNext()) {
+                    final Resource resource = iterator.next();
+                    if (jaxpResource != null) log.jaxpResourceLoaded(resource.getURL(), this);
                     return resource.openStream();
                 }
             }
@@ -798,13 +816,16 @@ public final class Module {
         final LocalLoader fallbackLoader = this.fallbackLoader;
         if (fallbackLoader != null) {
             final List<Resource> resourceList = fallbackLoader.loadResourceLocal(canonPath);
-            for (Resource resource : resourceList) {
+            final Iterator<Resource> iterator = resourceList.iterator();
+            if (iterator.hasNext()) {
+                final Resource resource = iterator.next();
+                if (jaxpResource != null) log.jaxpResourceLoaded(resource.getURL(), this);
                 return resource.openStream();
             }
         }
-        final URLConnectionResource resource = ModuleClassLoader.jaxpImplResources.get(name);
-        if (resource != null) {
-            return resource.openStream();
+        if (jaxpResource != null) {
+            log.jaxpResourceLoaded(jaxpResource.getURL(), this);
+            return jaxpResource.openStream();
         }
         return null;
     }
@@ -828,6 +849,7 @@ public final class Module {
         }
         log.trace("Attempting to find all resources %s in %s", canonPath, this);
         final String path = pathOf(canonPath);
+        final URLConnectionResource jaxpResource = ModuleClassLoader.jaxpImplResources.get(name);
         final Map<String, List<LocalLoader>> paths = getPathsUnchecked();
         final List<LocalLoader> loaders = paths.get(path);
 
@@ -836,7 +858,9 @@ public final class Module {
             for (LocalLoader loader : loaders) {
                 final List<Resource> resourceList = loader.loadResourceLocal(canonPath);
                 for (Resource resource : resourceList) {
-                    list.add(resource.getURL());
+                    final URL url = resource.getURL();
+                    if (jaxpResource != null) log.jaxpResourceLoaded(url, this);
+                    list.add(url);
                 }
             }
         }
@@ -844,12 +868,15 @@ public final class Module {
         if (fallbackLoader != null) {
             final List<Resource> resourceList = fallbackLoader.loadResourceLocal(canonPath);
             for (Resource resource : resourceList) {
-                list.add(resource.getURL());
+                final URL url = resource.getURL();
+                if (jaxpResource != null) log.jaxpResourceLoaded(url, this);
+                list.add(url);
             }
         }
-        final URLConnectionResource resource = ModuleClassLoader.jaxpImplResources.get(name);
-        if (resource != null) {
-            list.add(resource.getURL());
+        if (jaxpResource != null) {
+            final URL url = jaxpResource.getURL();
+            log.jaxpResourceLoaded(url, this);
+            list.add(url);
         }
 
         return list.size() == 0 ? ConcurrentClassLoader.EMPTY_ENUMERATION : Collections.enumeration(list);

@@ -38,7 +38,7 @@ public class FileSystemClassPathModuleLoaderTest {
         final File repoRoot = Util.getResourceFile(getClass(), "test/repo");
         ModuleLoader localModuleLoader = new LocalModuleLoader(new File[] {repoRoot});
         moduleFinder = new FileSystemClassPathModuleFinder(localModuleLoader);
-        moduleLoader = new ModuleLoader(moduleFinder);
+        moduleLoader = new DelegatingModuleLoader(Module.getSystemModuleLoader(), moduleFinder);
     }
 
     @Test

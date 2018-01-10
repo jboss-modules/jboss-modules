@@ -235,7 +235,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         final ModuleLogger log = Module.log;
         loadedClass = jaxpClassesByName.get(className);
         if (loadedClass != null) {
-            log.trace("Found jaxp class %s from %s", loadedClass, module);
+            log.jaxpClassLoaded(loadedClass, module);
             if (resolve) {
                 resolveClass(loadedClass);
             }
@@ -302,7 +302,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         }
         loadedClass = jaxpClassesByName.get(className);
         if (loadedClass != null) {
-            log.trace("Found jaxp class %s from %s", loadedClass, module);
+            log.jaxpClassLoaded(loadedClass, module);
             if (resolve) {
                 resolveClass(loadedClass);
             }
@@ -375,12 +375,15 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         final Map<String, List<ResourceLoader>> paths = this.paths.get().getAllPaths();
 
         final String path = Module.pathOf(name);
+        final URLConnectionResource jaxpResource = jaxpImplResources.get(name);
 
         final List<ResourceLoader> loaders = paths.get(path);
         if (loaders != null) {
             for (ResourceLoader loader : loaders) {
                 if (root.equals(loader.getRootName())) {
-                    return loader.getResource(name);
+                    final Resource resource = loader.getResource(name);
+                    if (jaxpResource != null) Module.log.jaxpResourceLoaded(resource.getURL(), module);
+                    return resource;
                 }
             }
         }
@@ -397,6 +400,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         final Map<String, List<ResourceLoader>> paths = this.paths.get().getAllPaths();
 
         final String path = Module.pathOf(name);
+        final URLConnectionResource jaxpResource = jaxpImplResources.get(name);
 
         final List<ResourceLoader> loaders = paths.get(path);
         final List<Resource> list = new ArrayList<Resource>(loaders == null ? 1 : loaders.size());
@@ -404,6 +408,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
             for (ResourceLoader loader : loaders) {
                 final Resource resource = loader.getResource(name);
                 if (resource != null) {
+                    if (jaxpResource != null) Module.log.jaxpResourceLoaded(resource.getURL(), module);
                     list.add(resource);
                 }
             }

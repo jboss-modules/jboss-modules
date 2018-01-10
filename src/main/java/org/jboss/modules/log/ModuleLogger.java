@@ -18,6 +18,7 @@
 
 package org.jboss.modules.log;
 
+import java.net.URL;
 import org.jboss.modules.Module;
 import org.jboss.modules.ModuleIdentifier;
 import org.jboss.modules.ModuleLoader;
@@ -64,4 +65,8 @@ public interface ModuleLogger {
     void classDefined(String name, Module module);
 
     void providerUnloadable(String name, ClassLoader loader);
+
+    void jaxpClassLoaded(Class<?> jaxpClass, Module module);
+
+    void jaxpResourceLoaded(URL resourceURL, Module module);
 }

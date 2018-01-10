@@ -28,7 +28,7 @@ import org.jboss.modules.filter.PathFilters;
  * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class LocalModuleLoader extends ModuleLoader implements AutoCloseable {
+public final class LocalModuleLoader extends DelegatingModuleLoader implements AutoCloseable {
 
     /**
      * Construct a new instance.
@@ -46,7 +46,7 @@ public final class LocalModuleLoader extends ModuleLoader implements AutoCloseab
      * @param pathFilter the path filter to apply to roots
      */
     public LocalModuleLoader(final File[] repoRoots, final PathFilter pathFilter) {
-        super(new ModuleFinder[] { new LocalModuleFinder(repoRoots, pathFilter)});
+        super(Utils.JDK_MODULE_LOADER, new ModuleFinder[] { new LocalModuleFinder(repoRoots, pathFilter)});
     }
 
     /**
@@ -54,7 +54,7 @@ public final class LocalModuleLoader extends ModuleLoader implements AutoCloseab
      * to get the list of module repository roots.
      */
     public LocalModuleLoader() {
-        super(new ModuleFinder[] { new LocalModuleFinder() });
+        super(Utils.JDK_MODULE_LOADER, new ModuleFinder[] { new LocalModuleFinder() });
     }
 
     public String toString() {

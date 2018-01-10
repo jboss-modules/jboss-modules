@@ -26,6 +26,16 @@ import org.jboss.modules.filter.PathFilter;
  */
 public final class ModuleDependencySpec extends DependencySpec {
 
+    /**
+     * A simple dependency on the {@code java.base} module.
+     */
+    public static final ModuleDependencySpec JAVA_BASE = new ModuleDependencySpecBuilder().setModuleLoader(Utils.JDK_MODULE_LOADER).setName("java.base").build();
+
+    /**
+     * A simple dependency on the {@code java.se} module.
+     */
+    public static final ModuleDependencySpec JAVA_SE = new ModuleDependencySpecBuilder().setModuleLoader(Utils.JDK_MODULE_LOADER).setName("java.se").build();
+
     private final ModuleLoader moduleLoader;
     private final String name;
     private final boolean optional;

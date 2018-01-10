@@ -72,10 +72,6 @@ final class JDKSpecific {
 
     // === the actual JDK-specific API ===
 
-    static JarFile getJarFile(final String name, final boolean verify) throws IOException {
-        return new JarFile(new File(name), verify, JarFile.OPEN_READ, JarFile.runtimeVersion());
-    }
-
     static JarFile getJarFile(final File name, final boolean verify) throws IOException {
         return new JarFile(name, verify, JarFile.OPEN_READ, JarFile.runtimeVersion());
     }
@@ -149,7 +145,7 @@ final class JDKSpecific {
 
     static URL getSystemResource(final String name) {
         final URL resource = getPlatformClassLoader().getResource(name);
-        return resource != null ? resource : OUR_CLASS_LOADER.getResource(name);
+        return resource != null ? resource : OUR_CLASS_LOADER != null ? OUR_CLASS_LOADER.getResource(name) : ClassLoader.getSystemResource(name);
     }
 
     static Enumeration<URL> getSystemResources(final String name) throws IOException {
@@ -159,15 +155,19 @@ final class JDKSpecific {
 
     static InputStream getSystemResourceAsStream(final String name) {
         final InputStream stream = getPlatformClassLoader().getResourceAsStream(name);
-        return stream != null ? stream : OUR_CLASS_LOADER.getSystemResourceAsStream(name);
+        return stream != null ? stream : OUR_CLASS_LOADER != null ? OUR_CLASS_LOADER.getResourceAsStream(name) : ClassLoader.getSystemResourceAsStream(name);
     }
 
-    static Class<?> getSystemClass(@SuppressWarnings("unused") final ConcurrentClassLoader caller, final String className) throws ClassNotFoundException {
+    static Class<?> getSystemClass(final ConcurrentClassLoader caller, final String className) throws ClassNotFoundException {
         try {
             return getPlatformClassLoader().loadClass(className);
         } catch (ClassNotFoundException ignored) {
-            return OUR_CLASS_LOADER.loadClass(className);
+            return OUR_CLASS_LOADER != null ? OUR_CLASS_LOADER.loadClass(className) : caller.findSystemClassInternal(className);
         }
+    }
+
+    static void addInternalPackages(final List<String> list) {
+        // none in Java 9+
     }
 
     // === nested util stuff, non-API ===
