@@ -39,7 +39,7 @@ import org.xml.sax.SAXNotSupportedException;
  */
 public final class __SAXParserFactory extends SAXParserFactory {
     private static final Supplier<SAXParserFactory> PLATFORM_FACTORY = JDKSpecific.getPlatformSaxParserFactorySupplier();
-    private static volatile Supplier<SAXParserFactory> DEFAULT_FACTORY;
+    private static volatile Supplier<SAXParserFactory> DEFAULT_FACTORY = PLATFORM_FACTORY;
 
     @Deprecated
     public static void changeDefaultFactory(ModuleIdentifier id, ModuleLoader loader) {
