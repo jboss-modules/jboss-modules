@@ -43,7 +43,7 @@ import org.xml.sax.SAXNotSupportedException;
  */
 public final class __SchemaFactory extends SchemaFactory {
     private static final Supplier<SchemaFactory> PLATFORM_FACTORY = JDKSpecific.getPlatformSchemaFactorySupplier();
-    private static volatile Supplier<SchemaFactory> DEFAULT_FACTORY;
+    private static volatile Supplier<SchemaFactory> DEFAULT_FACTORY = PLATFORM_FACTORY;
 
     @Deprecated
     public static void changeDefaultFactory(ModuleIdentifier id, ModuleLoader loader) {

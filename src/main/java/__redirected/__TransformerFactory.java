@@ -43,7 +43,7 @@ import org.xml.sax.XMLFilter;
  */
 public final class __TransformerFactory extends SAXTransformerFactory {
     private static final Supplier<TransformerFactory> PLATFORM_FACTORY = JDKSpecific.getPlatformSaxTransformerFactorySupplier();
-    private static volatile Supplier<TransformerFactory> DEFAULT_FACTORY;
+    private static volatile Supplier<TransformerFactory> DEFAULT_FACTORY = PLATFORM_FACTORY;
 
     @Deprecated
     public static void changeDefaultFactory(ModuleIdentifier id, ModuleLoader loader) {

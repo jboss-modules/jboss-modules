@@ -36,7 +36,7 @@ import java.util.function.Supplier;
  */
 public final class __XPathFactory extends XPathFactory {
     private static final Supplier<XPathFactory> PLATFORM_FACTORY = JDKSpecific.getPlatformXPathFactorySupplier();
-    private static volatile Supplier<XPathFactory> DEFAULT_FACTORY;
+    private static volatile Supplier<XPathFactory> DEFAULT_FACTORY = PLATFORM_FACTORY;
 
     public static void changeDefaultFactory(ModuleIdentifier id, ModuleLoader loader) {
         changeDefaultFactory(id.toString(), loader);

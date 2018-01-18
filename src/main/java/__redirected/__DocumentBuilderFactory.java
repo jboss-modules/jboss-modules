@@ -36,7 +36,7 @@ import org.jboss.modules.ModuleLoader;
  */
 public final class __DocumentBuilderFactory extends DocumentBuilderFactory {
     private static final Supplier<DocumentBuilderFactory> PLATFORM_FACTORY = JDKSpecific.getPlatformDocumentBuilderFactorySupplier();
-    private static volatile Supplier<DocumentBuilderFactory> DEFAULT_FACTORY;
+    private static volatile Supplier<DocumentBuilderFactory> DEFAULT_FACTORY = PLATFORM_FACTORY;
 
     /**
      * Init method.

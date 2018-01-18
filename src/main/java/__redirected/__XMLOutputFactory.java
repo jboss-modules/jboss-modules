@@ -39,7 +39,7 @@ import org.jboss.modules.ModuleLoader;
  */
 public final class __XMLOutputFactory extends XMLOutputFactory {
     private static final Supplier<XMLOutputFactory> PLATFORM_FACTORY = JDKSpecific.getPlatformXmlOutputFactorySupplier();
-    private static volatile Supplier<XMLOutputFactory> DEFAULT_FACTORY;
+    private static volatile Supplier<XMLOutputFactory> DEFAULT_FACTORY = PLATFORM_FACTORY;
 
     @Deprecated
     public static void changeDefaultFactory(ModuleIdentifier id, ModuleLoader loader) {
