@@ -62,14 +62,14 @@ public final class ResourceLoaderModuleFinder implements ModuleFinder {
 
     public ModuleSpec findModule(final String name, final ModuleLoader delegateLoader) throws ModuleLoadException {
         final ResourceLoader resourceLoader = this.resourceLoader;
-        String basePath = modulesDirectory + "/" + toPathString(name);
+        final String path = PathUtils.basicModuleNameToPath(name);
+        if (path == null) {
+            return null; // not valid, so not found
+        }
+        String basePath = modulesDirectory + "/" + path;
         Resource moduleXmlResource = resourceLoader.getResource(basePath + "/" + MODULE_FILE);
         if (moduleXmlResource == null) {
-            basePath = modulesDirectory + "/" + toLegacyPathString(name);
-            moduleXmlResource = resourceLoader.getResource(basePath + "/" + MODULE_FILE);
-            if (moduleXmlResource == null) {
-                return null;
-            }
+            return null;
         }
         ModuleSpec moduleSpec;
         try {
@@ -80,16 +80,6 @@ public final class ResourceLoaderModuleFinder implements ModuleFinder {
             throw new ModuleLoadException("Failed to read " + MODULE_FILE + " file", e);
         }
         return moduleSpec;
-    }
-
-    private static String toPathString(final String moduleName) {
-        return moduleName.replace('.', '/');
-    }
-
-    @SuppressWarnings("deprecation")
-    private static String toLegacyPathString(final String moduleName) {
-        final ModuleIdentifier moduleIdentifier = ModuleIdentifier.fromString(moduleName);
-        return moduleIdentifier.getName().replace('.', '/') + '/' + moduleIdentifier.getSlot();
     }
 
     static class NestedResourceRootFactory implements ModuleXmlParser.ResourceRootFactory {

@@ -175,26 +175,13 @@ public final class LocalModuleFinder implements ModuleFinder, AutoCloseable {
         return files;
     }
 
-    private static String toPathString(final String moduleName) {
-        return moduleName.replace('.', File.separatorChar);
-    }
-
-    @SuppressWarnings("deprecation")
-    private static String toLegacyPathString(final String moduleName) {
-        final ModuleIdentifier moduleIdentifier = ModuleIdentifier.fromString(moduleName);
-        final String name = moduleIdentifier.getName();
-        final String slot = moduleIdentifier.getSlot();
-        final StringBuilder builder = new StringBuilder(name.length() + slot.length() + 2);
-        builder.append(name.replace('.', File.separatorChar));
-        builder.append(File.separatorChar).append(slot);
-        return builder.toString();
-    }
-
     public ModuleSpec findModule(final String name, final ModuleLoader delegateLoader) throws ModuleLoadException {
-        final String child1 = toPathString(name);
-        final String child2 = toLegacyPathString(name);
+        final String child = PathUtils.basicModuleNameToPath(name);
+        if (child == null) {
+            return null; // not valid, so not found
+        }
         final PathFilter pathFilter = this.pathFilter;
-        if (pathFilter.accept(child1 + "/") || pathFilter.accept(child2 + "/")) {
+        if (pathFilter.accept(child + "/")) {
             try {
                 return doPrivileged((PrivilegedExceptionAction<ModuleSpec>) () -> parseModuleXmlFile(resourceRootFactory, name, delegateLoader, repoRoots), accessControlContext);
             } catch (PrivilegedActionException e) {
@@ -243,15 +230,13 @@ public final class LocalModuleFinder implements ModuleFinder, AutoCloseable {
     }
 
     static ModuleSpec parseModuleXmlFile(final ModuleXmlParser.ResourceRootFactory factory, final String name, final ModuleLoader delegateLoader, final File... roots) throws IOException, ModuleLoadException {
-        final String child1 = toPathString(name);
-        final String child2 = toLegacyPathString(name);
+        final String child = PathUtils.basicModuleNameToPath(name);
+        if (child == null) {
+            return null; // not valid, so not found
+        }
         for (File root : roots) {
-            File file = new File(root, child1);
+            File file = new File(root, child);
             File moduleXml = new File(file, MODULE_FILE);
-            if (! moduleXml.exists()) {
-                file = new File(root, child2);
-                moduleXml = new File(file, MODULE_FILE);
-            }
             if (moduleXml.exists()) {
                 final ModuleSpec spec = ModuleXmlParser.parseModuleXml(factory, delegateLoader, name, file, moduleXml);
                 if (spec == null) break;

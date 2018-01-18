@@ -26,6 +26,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -284,6 +285,97 @@ public final class PathUtils {
     public static boolean isSeparator(final char ch) {
         // the second half of this compare will optimize away on / OSes
         return ch == '/' || File.separatorChar != '/' && ch == File.separatorChar;
+    }
+
+    private static boolean isAllowedPunct(final int cp) {
+        return cp == '_' || cp == '$' || cp == '%' || cp == '^'
+            || cp == '&' || cp == '(' || cp == ')' || cp == '-'
+            || cp == '+' || cp == '=' || cp == ';' || cp == '['
+            || cp == ']' || cp == '{' || cp == '}' || cp == '<'
+            || cp == '>' || cp == ',' || cp == '"' || cp == '\'';
+    }
+
+    /**
+     * Convert a "basic" module name to a relative path specification.
+     *
+     * @param moduleName the basic module name
+     * @return the path specification, or {@code null} if the name is not valid
+     */
+    public static String basicModuleNameToPath(final String moduleName) {
+        final String normalized = Normalizer.normalize(moduleName, Normalizer.Form.NFKC);
+        final int length = normalized.length();
+        StringBuilder builder = new StringBuilder(length + 5);
+        boolean slot = false; // are we in the slot part?
+        boolean sep = false; // is a '.' or ':' (to '/') separator allowed here?
+        boolean dot = false; // is a '/' (to '.') separator allowed here?
+        boolean esc = false; // was a '\\' previously given?
+        for (int i = 0; i < length; i = normalized.offsetByCodePoints(i, 1)) {
+            int cp = normalized.codePointAt(i);
+            if (Character.isLetterOrDigit(cp) || isAllowedPunct(cp)) {
+                builder.appendCodePoint(cp);
+                esc = false;
+                sep = true;
+                dot = true;
+            } else if (cp == '\\') {
+                if (esc) return null;
+                esc = true;
+            } else if (cp == ':') {
+                if (esc) {
+                    builder.append(':');
+                    esc = false;
+                    sep = true;
+                    dot = true;
+                } else if (slot) {
+                    builder.append(':');
+                    esc = false;
+                    sep = true;
+                    dot = true;
+                } else if (! sep) {
+                    return null;
+                } else {
+                    builder.append('/');
+                    slot = true;
+                    sep = false;
+                    dot = false;
+                }
+            } else if (cp == '.') {
+                if (slot) {
+                    if (! dot) {
+                        return null;
+                    }
+                    builder.append('.');
+                    sep = true;
+                    esc = false;
+                } else {
+                    if (! sep) {
+                        return null;
+                    } else {
+                        builder.append('/');
+                        sep = false;
+                        dot = false;
+                        esc = false;
+                    }
+                }
+            } else if (cp == '/') {
+                if (! dot) {
+                    return null;
+                }
+                builder.append('.');
+                sep = true;
+                dot = false;
+                esc = false;
+            } else {
+                return null;
+            }
+        }
+        if (! dot || ! sep || esc) {
+            // invalid end
+            return null;
+        }
+        if (! slot) {
+            builder.append("/main");
+        }
+        return builder.toString();
     }
 
     /**
