@@ -41,7 +41,7 @@ import org.xml.sax.XMLReader;
  */
 public final class __XMLReaderFactory implements XMLReader {
     private static final Supplier<XMLReader> PLATFORM_FACTORY = JDKSpecific.getPlatformXmlReaderSupplier();
-    private static volatile Supplier<XMLReader> DEFAULT_FACTORY;
+    private static volatile Supplier<XMLReader> DEFAULT_FACTORY = PLATFORM_FACTORY;
 
     static final String SAX_DRIVER = "org.xml.sax.driver";
 
