@@ -482,12 +482,7 @@ public class ModuleLoader {
             return futureModule.getModule();
         }
 
-        FutureModule newFuture = new FutureModule(name);
-        futureModule = moduleMap.putIfAbsent(name, newFuture);
-        if (futureModule != null) {
-            return futureModule.getModule();
-        }
-
+        final FutureModule newFuture = new FutureModule(name);
         boolean ok = false;
         try {
             final ModuleLogger log = Module.log;
@@ -501,6 +496,10 @@ public class ModuleLoader {
             }
             if (! moduleSpec.getName().equals(name)) {
                 throw new ModuleLoadException("Module loader found a module with the wrong name");
+            }
+            futureModule = moduleMap.putIfAbsent(name, newFuture);
+            if (futureModule != null) {
+                return futureModule.getModule();
             }
             final Module module;
             if (moduleSpec instanceof AliasModuleSpec) {
