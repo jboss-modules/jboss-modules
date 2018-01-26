@@ -6,7 +6,7 @@ JBoss Modules is designed to work with any existing library or application witho
 
 ## Documentation
 
-All documentation lives at https://docs.jboss.org/author/display/MODULES/Home
+All documentation lives at http://jboss-modules.github.io/jboss-modules/manual/
 
 ## Issue tracker
 
