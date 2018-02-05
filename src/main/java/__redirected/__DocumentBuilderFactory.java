@@ -38,6 +38,10 @@ public final class __DocumentBuilderFactory extends DocumentBuilderFactory {
     private static final Supplier<DocumentBuilderFactory> PLATFORM_FACTORY = JDKSpecific.getPlatformDocumentBuilderFactorySupplier();
     private static volatile Supplier<DocumentBuilderFactory> DEFAULT_FACTORY = PLATFORM_FACTORY;
 
+    static {
+        System.setProperty(DocumentBuilderFactory.class.getName(), __DocumentBuilderFactory.class.getName());
+    }
+
     /**
      * Init method.
      */

@@ -45,6 +45,10 @@ public final class __SchemaFactory extends SchemaFactory {
     private static final Supplier<SchemaFactory> PLATFORM_FACTORY = JDKSpecific.getPlatformSchemaFactorySupplier();
     private static volatile Supplier<SchemaFactory> DEFAULT_FACTORY = PLATFORM_FACTORY;
 
+    static {
+        System.setProperty(SchemaFactory.class.getName() + ":" + XMLConstants.W3C_XML_SCHEMA_NS_URI, __SchemaFactory.class.getName());
+    }
+
     @Deprecated
     public static void changeDefaultFactory(ModuleIdentifier id, ModuleLoader loader) {
         changeDefaultFactory(id.toString(), loader);
