@@ -423,8 +423,7 @@ public final class ModuleXmlParser {
                     final String element = reader.getName();
                     switch (element) {
                         case E_MODULE: {
-                            final ModuleSpec.Builder specBuilder = ModuleSpec.build(moduleName);
-                            parseModuleContents(mavenResolver, reader, factory, moduleLoader, moduleName, specBuilder, rootPath);
+                            final ModuleSpec.Builder specBuilder = parseModuleContents(mavenResolver, reader, factory, moduleLoader, moduleName, rootPath);
                             parseEndDocument(reader);
                             return specBuilder.create();
                         }
@@ -459,8 +458,7 @@ public final class ModuleXmlParser {
                     final String element = reader.getName();
                     switch (element) {
                         case E_MODULE: {
-                            final ModuleSpec.Builder specBuilder = ModuleSpec.build(moduleName);
-                            parseModuleContents(mavenResolver, reader, factory, moduleLoader, moduleName, specBuilder, rootPath);
+                            final ModuleSpec.Builder specBuilder = parseModuleContents(mavenResolver, reader, factory, moduleLoader, moduleName, rootPath);
                             parseEndDocument(reader);
                             return specBuilder.create();
                         }
@@ -509,13 +507,15 @@ public final class ModuleXmlParser {
         if (! required.isEmpty()) {
             throw missingAttributes(reader, required);
         }
-        if (noSlots) {
-            if (! moduleName.equals(name)) {
-                throw invalidModuleName(reader, moduleName);
-            }
-        } else {
-            if (! ModuleIdentifier.fromString(moduleName).equals(ModuleIdentifier.create(name, slot))) {
-                throw invalidModuleName(reader, moduleName);
+        if (moduleName != null) {
+            if (noSlots) {
+                if (! moduleName.equals(name)) {
+                    throw invalidModuleName(reader, moduleName);
+                }
+            } else {
+                if (! ModuleIdentifier.fromString(moduleName).equals(ModuleIdentifier.create(name, slot))) {
+                    throw invalidModuleName(reader, moduleName);
+                }
             }
         }
         int eventType;
@@ -524,9 +524,9 @@ public final class ModuleXmlParser {
             switch (eventType) {
                 case END_TAG: {
                     if (noSlots) {
-                        return ModuleSpec.buildAlias(moduleName, targetName).create();
+                        return ModuleSpec.buildAlias(name, targetName).create();
                     } else {
-                        return ModuleSpec.buildAlias(ModuleIdentifier.fromString(moduleName), ModuleIdentifier.create(targetName, targetSlot)).create();
+                        return ModuleSpec.buildAlias(ModuleIdentifier.create(name, slot), ModuleIdentifier.create(targetName, targetSlot)).create();
                     }
                 }
                 default: {
@@ -588,7 +588,7 @@ public final class ModuleXmlParser {
         return permissions;
     }
 
-    private static void parseModuleContents(final MavenResolver mavenResolver, final XmlPullParser reader, final ResourceRootFactory factory, final ModuleLoader moduleLoader, final String moduleName, final ModuleSpec.Builder specBuilder, final String rootPath) throws XmlPullParserException, IOException {
+    private static ModuleSpec.Builder parseModuleContents(final MavenResolver mavenResolver, final XmlPullParser reader, final ResourceRootFactory factory, final ModuleLoader moduleLoader, final String moduleName, final String rootPath) throws XmlPullParserException, IOException {
         final int count = reader.getAttributeCount();
         String name = null;
         String slot = null;
@@ -615,15 +615,16 @@ public final class ModuleXmlParser {
         if (! required.isEmpty()) {
             throw missingAttributes(reader, required);
         }
+        final String realModuleName;
         if (noSlots) {
-            if (! specBuilder.getName().equals(name)) {
-                throw invalidModuleName(reader, specBuilder.getName());
-            }
+            realModuleName = name;
         } else {
-            if (! specBuilder.getIdentifier().equals(ModuleIdentifier.create(name, slot))) {
-                throw invalidModuleName(reader, specBuilder.getIdentifier().toString());
-            }
+            realModuleName = ModuleIdentifier.create(name, slot).toString();
         }
+        if (moduleName != null && ! realModuleName.equals(moduleName)) {
+            throw invalidModuleName(reader, realModuleName);
+        }
+        final ModuleSpec.Builder specBuilder = ModuleSpec.build(realModuleName);
         specBuilder.setVersion(version);
         // xsd:all
         MultiplePathFilterBuilder exportsBuilder = PathFilters.multiplePathFilterBuilder(true);
@@ -642,7 +643,7 @@ public final class ModuleXmlParser {
                         specBuilder.addDependency(dependency);
                     }
                     if (! gotPerms) specBuilder.setPermissionCollection(DEFAULT_PERMISSION_COLLECTION);
-                    return;
+                    return specBuilder;
                 }
                 case START_TAG: {
                     validateNamespace(reader);
@@ -657,7 +658,7 @@ public final class ModuleXmlParser {
                         case E_MAIN_CLASS:   parseMainClass(reader, specBuilder); break;
                         case E_RESOURCES:    parseResources(mavenResolver, factory, rootPath, reader, specBuilder); break;
                         case E_PROPERTIES:   parseProperties(reader, specBuilder); break;
-                        case E_PERMISSIONS:  parsePermissions(reader, moduleLoader, moduleName, specBuilder); gotPerms = true; break;
+                        case E_PERMISSIONS:  parsePermissions(reader, moduleLoader, realModuleName, specBuilder); gotPerms = true; break;
                         default: throw unexpectedContent(reader);
                     }
                     break;

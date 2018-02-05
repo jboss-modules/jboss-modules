@@ -21,14 +21,23 @@ package org.jboss.modules;
 import java.io.File;
 import java.io.FilePermission;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.UndeclaredThrowableException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.function.Predicate;
 
 import org.jboss.modules.filter.PathFilter;
 import org.jboss.modules.filter.PathFilters;
@@ -44,7 +53,7 @@ import static org.jboss.modules.Utils.MODULE_FILE;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  */
-public final class LocalModuleFinder implements ModuleFinder, AutoCloseable {
+public final class LocalModuleFinder implements IterableModuleFinder, AutoCloseable {
 
     private static final File[] NO_FILES = new File[0];
 
@@ -244,6 +253,74 @@ public final class LocalModuleFinder implements ModuleFinder, AutoCloseable {
             }
         }
         return null;
+    }
+
+    private static final Path MODULE_FILE_PATH = new File(MODULE_FILE).toPath();
+
+    private static final Predicate<Path> ITER_FILTER = new Predicate<Path>() {
+        public boolean test(final Path path) {
+            final Path fileName = path.getFileName();
+            return fileName != null && fileName.equals(MODULE_FILE_PATH);
+        }
+    };
+
+    public Iterator<String> iterateModules(final String baseName, final boolean recursive) {
+        return new Iterator<String>() {
+            private final Iterator<File> rootIter = Arrays.asList(repoRoots).iterator();
+            private final Set<String> found = new HashSet<>();
+            private Path rootPath;
+            private Iterator<Path> pathIter;
+            private String next;
+
+            public boolean hasNext() {
+                while (next == null) {
+                    while (pathIter == null) {
+                        if (! rootIter.hasNext()) {
+                            return false;
+                        }
+                        Path path = rootIter.next().toPath();
+                        rootPath = path;
+                        if (baseName != null && ! baseName.isEmpty()) {
+                            path = path.resolve(PathUtils.basicModuleNameToPath(baseName));
+                        }
+                        try {
+                            pathIter = Files.walk(path, recursive ? Integer.MAX_VALUE : 1).filter(ITER_FILTER).iterator();
+                        } catch (IOException ignored) {
+                            pathIter = null;
+                            continue;
+                        }
+                    }
+                    if (pathIter.hasNext()) {
+                        final Path nextPath = pathIter.next();
+                        if (nextPath.getParent() == null) {
+                            continue;
+                        }
+                        try (InputStream stream = Files.newInputStream(nextPath)) {
+                            final ModuleSpec moduleSpec = ModuleXmlParser.parseModuleXml(ModuleXmlParser.ResourceRootFactory.getDefault(), nextPath.getParent().toString(), stream, nextPath.toString(), null, (String)null);
+                            this.next = moduleSpec.getName();
+                            if (found.add(this.next)) {
+                                return true;
+                            }
+                            this.next = null;
+                        } catch (IOException | ModuleLoadException e) {
+                            // ignore
+                        }
+                    } else {
+                        pathIter = null;
+                    }
+                }
+                return true;
+            }
+
+            public String next() {
+                if (! hasNext()) throw new NoSuchElementException();
+                try {
+                    return next;
+                } finally {
+                    next = null;
+                }
+            }
+        };
     }
 
     public String toString() {
