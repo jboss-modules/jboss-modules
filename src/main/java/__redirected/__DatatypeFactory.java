@@ -40,6 +40,10 @@ public final class __DatatypeFactory extends DatatypeFactory {
     private static final Supplier<DatatypeFactory> PLATFORM_FACTORY = JDKSpecific.getPlatformDatatypeFactorySupplier();
     private static volatile Supplier<DatatypeFactory> DEFAULT_FACTORY = PLATFORM_FACTORY;
 
+    static {
+        System.setProperty(DatatypeFactory.class.getName(), __DatatypeFactory.class.getName());
+    }
+
     @Deprecated
     public static void changeDefaultFactory(ModuleIdentifier id, ModuleLoader loader) {
         changeDefaultFactory(id.toString(), loader);

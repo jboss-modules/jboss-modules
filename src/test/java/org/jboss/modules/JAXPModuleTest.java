@@ -23,7 +23,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.Writer;
-import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Calendar;
@@ -129,6 +128,7 @@ import org.xml.sax.SAXNotRecognizedException;
 import org.xml.sax.SAXNotSupportedException;
 import org.xml.sax.XMLFilter;
 import org.xml.sax.XMLReader;
+import sun.misc.Unsafe;
 
 /**
  * Tests JAXP, including all of the possible ways to trigger redirection
@@ -244,6 +244,7 @@ public class JAXPModuleTest extends AbstractModuleTestCase {
         ClassLoader old = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(cl);
+            Assert.assertTrue(JDKPaths.JDK.contains("javax/xml/parsers"));
             checkDom(clazz, true);
             checkSax(clazz, true);
             checkTransformer(clazz, true);
@@ -267,13 +268,14 @@ public class JAXPModuleTest extends AbstractModuleTestCase {
      */
     @Test
     public void testMain() throws Throwable {
+        final java.lang.reflect.Field unsafeField = Unsafe.class.getDeclaredField("theUnsafe");
+        unsafeField.setAccessible(true);
+        Unsafe unsafe = (Unsafe) unsafeField.get(null);
         java.lang.reflect.Field field = DefaultBootModuleLoaderHolder.class.getDeclaredField("INSTANCE");
-        java.lang.reflect.Field modifiersField = java.lang.reflect.Field.class.getDeclaredField("modifiers");
-        modifiersField.setAccessible(true);
-        modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
-        field.setAccessible(true);
         ModuleLoader oldMl = (ModuleLoader) field.get(null);
-        field.set(null, moduleLoader);
+        final Object fieldBase = unsafe.staticFieldBase(field);
+        final long fieldOffset = unsafe.staticFieldOffset(field);
+        unsafe.putObjectVolatile(fieldBase, fieldOffset, moduleLoader);
 
         Main.main(new String[] {"-jaxpmodule", "fake-jaxp", "test-jaxp"});
         ModuleClassLoader cl = moduleLoader.loadModule(ModuleIdentifier.fromString("test-jaxp")).getClassLoader();
@@ -293,7 +295,7 @@ public class JAXPModuleTest extends AbstractModuleTestCase {
             checkSchema(clazz, true);
             checkXMLReader(clazz, true);
         } finally {
-            field.set(null, oldMl);
+            unsafe.putObjectVolatile(fieldBase, fieldOffset, oldMl);
             Thread.currentThread().setContextClassLoader(old);
             __JAXPRedirected.restorePlatformFactory();
         }

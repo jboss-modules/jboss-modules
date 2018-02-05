@@ -45,6 +45,10 @@ public final class __TransformerFactory extends SAXTransformerFactory {
     private static final Supplier<TransformerFactory> PLATFORM_FACTORY = JDKSpecific.getPlatformSaxTransformerFactorySupplier();
     private static volatile Supplier<TransformerFactory> DEFAULT_FACTORY = PLATFORM_FACTORY;
 
+    static {
+        System.setProperty(TransformerFactory.class.getName(), __TransformerFactory.class.getName());
+    }
+
     @Deprecated
     public static void changeDefaultFactory(ModuleIdentifier id, ModuleLoader loader) {
         changeDefaultFactory(id.toString(), loader);

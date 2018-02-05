@@ -45,6 +45,10 @@ public final class __XMLReaderFactory implements XMLReader {
 
     static final String SAX_DRIVER = "org.xml.sax.driver";
 
+    static {
+        System.setProperty(SAX_DRIVER, __XMLReaderFactory.class.getName());
+    }
+
     @Deprecated
     public static void changeDefaultFactory(ModuleIdentifier id, ModuleLoader loader) {
         changeDefaultFactory(id.toString(), loader);

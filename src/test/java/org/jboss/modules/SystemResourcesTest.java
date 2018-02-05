@@ -35,7 +35,7 @@ public class SystemResourcesTest  {
     private static final ModuleIdentifier MODULE_A = ModuleIdentifier.fromString("A");
 
     static {
-        System.setProperty("jboss.modules.system.pkgs", "javax.activation");
+        System.setProperty("jboss.modules.system.pkgs", "javax.naming");
     }
 
 
@@ -50,7 +50,7 @@ public class SystemResourcesTest  {
         Module module = moduleLoader.loadModule(MODULE_A);
         ClassLoader cl = module.getClassLoader();
 
-        Enumeration<URL> resources = cl.getResources("javax/activation/DataHandler.class");
+        Enumeration<URL> resources = cl.getResources("javax/naming/Context.class");
         Assert.assertTrue(resources.hasMoreElements());
 
         resources = cl.getResources("javax/sql/RowSet.class");

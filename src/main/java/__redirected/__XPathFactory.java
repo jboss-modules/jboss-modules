@@ -38,6 +38,10 @@ public final class __XPathFactory extends XPathFactory {
     private static final Supplier<XPathFactory> PLATFORM_FACTORY = JDKSpecific.getPlatformXPathFactorySupplier();
     private static volatile Supplier<XPathFactory> DEFAULT_FACTORY = PLATFORM_FACTORY;
 
+    static {
+        System.setProperty(XPathFactory.class.getName() + ":" + XPathFactory.DEFAULT_OBJECT_MODEL_URI, __XPathFactory.class.getName());
+    }
+
     public static void changeDefaultFactory(ModuleIdentifier id, ModuleLoader loader) {
         changeDefaultFactory(id.toString(), loader);
     }
