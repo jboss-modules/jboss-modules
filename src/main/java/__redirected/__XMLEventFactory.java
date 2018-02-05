@@ -52,6 +52,10 @@ public final class __XMLEventFactory extends XMLEventFactory {
     private static final Supplier<XMLEventFactory> PLATFORM_FACTORY = JDKSpecific.getPlatformXmlEventFactorySupplier();
     private static volatile Supplier<XMLEventFactory> DEFAULT_FACTORY = PLATFORM_FACTORY;
 
+    static {
+        System.setProperty(XMLEventFactory.class.getName(), __XMLEventFactory.class.getName());
+    }
+
     @Deprecated
     public static void changeDefaultFactory(ModuleIdentifier id, ModuleLoader loader) {
         changeDefaultFactory(id.toString(), loader);
