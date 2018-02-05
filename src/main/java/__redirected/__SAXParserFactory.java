@@ -41,6 +41,10 @@ public final class __SAXParserFactory extends SAXParserFactory {
     private static final Supplier<SAXParserFactory> PLATFORM_FACTORY = JDKSpecific.getPlatformSaxParserFactorySupplier();
     private static volatile Supplier<SAXParserFactory> DEFAULT_FACTORY = PLATFORM_FACTORY;
 
+    static {
+        System.setProperty(SAXParserFactory.class.getName(), __SAXParserFactory.class.getName());
+    }
+
     @Deprecated
     public static void changeDefaultFactory(ModuleIdentifier id, ModuleLoader loader) {
         changeDefaultFactory(id.toString(), loader);
