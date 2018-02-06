@@ -100,7 +100,7 @@ public final class ResourceLoaderModuleFinder implements ModuleFinder {
         }
 
         public ResourceLoader createResourceLoader(final String rootPath, final String loaderPath, final String loaderName) throws IOException {
-            final ResourceLoader subloader = resourceLoader.createSubloader(loaderPath, loaderName);
+            final ResourceLoader subloader = resourceLoader.createSubloader(rootPath + "/" + loaderPath, loaderName);
             if (subloader == null) {
                 throw new IllegalArgumentException("Nested resource loaders not supported by " + resourceLoader);
             }
