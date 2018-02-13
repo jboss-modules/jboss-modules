@@ -29,7 +29,7 @@ import java.security.PrivilegedAction;
  * @author <a href="mailto:jshepherd@redhat.com">Jason Shepherd</a>
  */
 
-class PolicyExpander {
+public class PolicyExpander {
 
     private static final int INITIAL = 0;
     private static final int GOT_DOLLAR = 1;
