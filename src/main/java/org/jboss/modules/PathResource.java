@@ -34,21 +34,18 @@ import static org.jboss.modules.PathResourceLoader.doPrivilegedIfNeeded;
 class PathResource implements Resource {
 
     private final Path path;
+    private final String name;
     private final AccessControlContext context;
 
-    PathResource(Path path, AccessControlContext context) {
+    PathResource(Path path, final String name, AccessControlContext context) {
         this.path = path;
+        this.name = name;
         this.context = context;
     }
 
     @Override
     public String getName() {
-        final String separator = path.getFileSystem().getSeparator();
-        if (separator.equals("/")) {
-            return path.toString();
-        } else {
-            return path.toString().replace(separator, "/");
-        }
+        return name;
     }
 
     @Override

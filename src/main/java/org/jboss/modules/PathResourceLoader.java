@@ -133,13 +133,14 @@ class PathResourceLoader extends AbstractResourceLoader implements IterableResou
 
     @Override
     public Resource getResource(final String name) {
-        final Path file = root.resolve(PathUtils.canonicalize(PathUtils.relativize(name)));
+        final String cleanName = PathUtils.canonicalize(PathUtils.relativize(name));
+        final Path file = root.resolve(cleanName);
 
         if (!doPrivilegedIfNeeded(context, () -> Files.exists(file))) {
             return null;
         }
 
-        return new PathResource(file, context);
+        return new PathResource(file, cleanName, context);
     }
 
     @Override
@@ -148,8 +149,7 @@ class PathResourceLoader extends AbstractResourceLoader implements IterableResou
             Path path = root.resolve(PathUtils.canonicalize(PathUtils.relativize(startPath)));
             return Files.walk(path, recursive ? Integer.MAX_VALUE : 1)
                     .filter(it -> !Files.isDirectory(it))
-                    .map(root::relativize)
-                    .<Resource>map(resourcePath -> new PathResource(resourcePath, context))
+                    .<Resource>map(resourcePath -> new PathResource(resourcePath, root.relativize(resourcePath).toString(), context))
                     .iterator();
         } catch (IOException e) {
             return Collections.emptyIterator();
