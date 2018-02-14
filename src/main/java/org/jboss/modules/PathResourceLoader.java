@@ -130,13 +130,14 @@ class PathResourceLoader extends AbstractResourceLoader implements IterableResou
 
     @Override
     public Resource getResource(final String name) {
-        final Path file = root.resolve(PathUtils.canonicalize(PathUtils.relativize(name)));
+        final String cleanName = PathUtils.canonicalize(PathUtils.relativize(name));
+        final Path file = root.resolve(cleanName);
 
         if (!doPrivilegedIfNeeded(context, () -> Files.exists(file))) {
             return null;
         }
 
-        return new PathResource(file, context);
+        return new PathResource(file, cleanName, context);
     }
 
     @Override
@@ -145,8 +146,7 @@ class PathResourceLoader extends AbstractResourceLoader implements IterableResou
             Path path = root.resolve(PathUtils.canonicalize(PathUtils.relativize(startPath)));
             return Files.walk(path, recursive ? Integer.MAX_VALUE : 1)
                     .filter(it -> !Files.isDirectory(it))
-                    .map(root::relativize)
-                    .<Resource>map(resourcePath -> new PathResource(resourcePath, context))
+                    .<Resource>map(resourcePath -> new PathResource(resourcePath, PathUtils.toGenericSeparators(root.relativize(resourcePath).toString()), context))
                     .iterator();
         } catch (IOException e) {
             return Collections.emptyIterator();
@@ -156,13 +156,11 @@ class PathResourceLoader extends AbstractResourceLoader implements IterableResou
     @Override
     public Collection<String> getPaths() {
         try {
-            final String separator = root.getFileSystem().getSeparator();
-
             return doPrivilegedIfNeeded(context, IOException.class, () -> Files.walk(root)
                     .filter(Files::isDirectory)
                     .map(dir -> {
                         final String result = root.relativize(dir).toString();
-                        final String canonical = separator.equals("/") ? result : result.replace(separator, "/");
+                        final String canonical = PathUtils.toGenericSeparators(result);
 
                         // JBoss modules expect folders not to end with a slash, so we have to strip it.
                         if (canonical.endsWith("/")) {
