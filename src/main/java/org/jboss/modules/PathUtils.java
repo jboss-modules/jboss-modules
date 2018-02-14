@@ -254,6 +254,16 @@ public final class PathUtils {
     }
 
     /**
+     * Get the given path name with OS-specific separators replaced with the generic {@code /} separator character.
+     *
+     * @param original the original string
+     * @return the same string with OS-specific separators replaced with {@code /}
+     */
+    public static String toGenericSeparators(String original) {
+        return File.separatorChar == '/' ? original : original.replace(File.separatorChar, '/');
+    }
+
+    /**
      * Determine whether a path name is relative.
      *
      * @param path the path name
