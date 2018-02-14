@@ -112,21 +112,18 @@ public class FileSystemClassPathModuleFinder implements ModuleFinder {
     }
 
     public ModuleSpec findModule(final String name, final ModuleLoader delegateLoader) throws ModuleLoadException {
-        if (PathUtils.isRelative(name)) {
+        final Path path = Paths.get(name);
+        if (! path.isAbsolute()) {
             return null;
         }
-        final String canonName = PathUtils.canonicalize(name);
-        if (! name.equals(canonName)) {
-            return null;
-        }
-        final String fileName = PathUtils.fileNameOfPath(canonName);
-        if (fileName.isEmpty()) {
+        final Path normalizedPath = path.normalize();
+        if (! path.equals(normalizedPath)) {
             return null;
         }
         try {
             final Manifest manifest;
-            final ModuleSpec.Builder builder = ModuleSpec.build(canonName);
-            final Path path = Paths.get(canonName);
+            final String fileName = path.toString();
+            final ModuleSpec.Builder builder = ModuleSpec.build(fileName);
             final ResourceLoader resourceLoader;
             final ModuleLoader fatModuleLoader;
             final ModuleLoader baseModuleLoader = baseModuleLoaderSupplier.get();
@@ -145,7 +142,7 @@ public class FileSystemClassPathModuleFinder implements ModuleFinder {
                 fatModuleLoader = new DelegatingModuleLoader(baseModuleLoader, new LocalModuleFinder(new File[]{ path.resolve(MODULES_DIR).toFile() }));
             } else {
                 // assume some kind of JAR file
-                final JarFile jarFile = JDKSpecific.getJarFile(canonName, true);
+                final JarFile jarFile = JDKSpecific.getJarFile(path.toFile(), true);
                 try {
                     try {
                         manifest = jarFile.getManifest();
