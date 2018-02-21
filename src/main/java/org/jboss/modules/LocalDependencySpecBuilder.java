@@ -143,25 +143,9 @@ public final class LocalDependencySpecBuilder extends DependencySpecBuilder {
         final LocalLoader localLoader = this.localLoader;
         final Set<String> loaderPaths = this.loaderPaths;
         if (localLoader == null) {
-            return new DependencySpec(importFilter, exportFilter, resourceImportFilter, resourceExportFilter, classImportFilter, classExportFilter) {
-                Dependency getDependency(final Module module) {
-                    return new ModuleClassLoaderDependency(getExportFilter(), getImportFilter(), getResourceExportFilter(), getResourceImportFilter(), getClassExportFilter(), getClassImportFilter(), module.getClassLoaderPrivate());
-                }
-
-                public String toString() {
-                    return "dependency on local resources";
-                }
-            };
+            return new ModuleClassLoaderDependencySpec(importFilter, exportFilter, resourceImportFilter, resourceExportFilter, classImportFilter, classExportFilter);
         } else {
-            return new DependencySpec(importFilter, exportFilter, resourceImportFilter, resourceExportFilter, classImportFilter, classExportFilter) {
-                Dependency getDependency(final Module module) {
-                    return new LocalDependency(getExportFilter(), getImportFilter(), getResourceExportFilter(), getResourceImportFilter(), getClassExportFilter(), getClassImportFilter(), localLoader, loaderPaths);
-                }
-
-                public String toString() {
-                    return "dependency on local loader " + localLoader;
-                }
-            };
+            return new LocalDependencySpec(importFilter, exportFilter, resourceImportFilter, resourceExportFilter, classImportFilter, classExportFilter, localLoader, loaderPaths);
         }
     }
 }
