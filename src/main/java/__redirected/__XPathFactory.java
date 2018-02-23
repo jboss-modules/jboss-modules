@@ -26,7 +26,6 @@ import javax.xml.xpath.XPathFactory;
 import javax.xml.xpath.XPathFactoryConfigurationException;
 import javax.xml.xpath.XPathFunctionResolver;
 import javax.xml.xpath.XPathVariableResolver;
-import java.util.List;
 import java.util.function.Supplier;
 
 /**
@@ -37,10 +36,6 @@ import java.util.function.Supplier;
 public final class __XPathFactory extends XPathFactory {
     private static final Supplier<XPathFactory> PLATFORM_FACTORY = JDKSpecific.getPlatformXPathFactorySupplier();
     private static volatile Supplier<XPathFactory> DEFAULT_FACTORY = PLATFORM_FACTORY;
-
-    static {
-        System.setProperty(XPathFactory.class.getName() + ":" + XPathFactory.DEFAULT_OBJECT_MODEL_URI, __XPathFactory.class.getName());
-    }
 
     public static void changeDefaultFactory(ModuleIdentifier id, ModuleLoader loader) {
         changeDefaultFactory(id.toString(), loader);
@@ -60,25 +55,14 @@ public final class __XPathFactory extends XPathFactory {
     /**
      * Init method.
      */
+    @Deprecated
     public static void init() {}
 
     /**
      * Construct a new instance.
      */
     public __XPathFactory() {
-        ClassLoader loader = Thread.currentThread().getContextClassLoader();
-        XPathFactory foundInstance = null;
-        if (loader != null) {
-            final List<Supplier<XPathFactory>> providers = __RedirectedUtils.loadProviders(XPathFactory.class, loader);
-            for (Supplier<XPathFactory> provider : providers) {
-                XPathFactory instance = provider.get();
-                if (instance.isObjectModelSupported(XPathFactory.DEFAULT_OBJECT_MODEL_URI)) {
-                    foundInstance = instance;
-                    break;
-                }
-            }
-        }
-        actual = foundInstance != null ? foundInstance : DEFAULT_FACTORY.get();
+        actual = DEFAULT_FACTORY.get();
     }
 
     private final XPathFactory actual;

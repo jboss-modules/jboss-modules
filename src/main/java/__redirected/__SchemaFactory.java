@@ -20,10 +20,8 @@ package __redirected;
 
 import java.io.File;
 import java.net.URL;
-import java.util.List;
 import java.util.function.Supplier;
 
-import javax.xml.XMLConstants;
 import javax.xml.transform.Source;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
@@ -45,10 +43,6 @@ public final class __SchemaFactory extends SchemaFactory {
     private static final Supplier<SchemaFactory> PLATFORM_FACTORY = JDKSpecific.getPlatformSchemaFactorySupplier();
     private static volatile Supplier<SchemaFactory> DEFAULT_FACTORY = PLATFORM_FACTORY;
 
-    static {
-        System.setProperty(SchemaFactory.class.getName() + ":" + XMLConstants.W3C_XML_SCHEMA_NS_URI, __SchemaFactory.class.getName());
-    }
-
     @Deprecated
     public static void changeDefaultFactory(ModuleIdentifier id, ModuleLoader loader) {
         changeDefaultFactory(id.toString(), loader);
@@ -68,25 +62,14 @@ public final class __SchemaFactory extends SchemaFactory {
     /**
      * Init method.
      */
+    @Deprecated
     public static void init() {}
 
     /**
      * Construct a new instance.
      */
     public __SchemaFactory() {
-        ClassLoader loader = Thread.currentThread().getContextClassLoader();
-        SchemaFactory foundInstance = null;
-        if (loader != null) {
-            final List<Supplier<SchemaFactory>> providers = __RedirectedUtils.loadProviders(SchemaFactory.class, loader);
-            for (Supplier<SchemaFactory> provider : providers) {
-                SchemaFactory instance = provider.get();
-                if (instance.isSchemaLanguageSupported(XMLConstants.W3C_XML_SCHEMA_NS_URI)) {
-                    foundInstance = instance;
-                    break;
-                }
-            }
-        }
-        actual = foundInstance != null ? foundInstance : DEFAULT_FACTORY.get();
+        actual = DEFAULT_FACTORY.get();
     }
 
 
