@@ -119,4 +119,8 @@ final class JDKSpecific {
             }
         };
     }
+
+    static void installDefaultXMLReader() {
+        // no action necessary; Java 9+ correctly loads providers
+    }
 }

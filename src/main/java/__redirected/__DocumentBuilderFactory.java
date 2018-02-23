@@ -38,13 +38,10 @@ public final class __DocumentBuilderFactory extends DocumentBuilderFactory {
     private static final Supplier<DocumentBuilderFactory> PLATFORM_FACTORY = JDKSpecific.getPlatformDocumentBuilderFactorySupplier();
     private static volatile Supplier<DocumentBuilderFactory> DEFAULT_FACTORY = PLATFORM_FACTORY;
 
-    static {
-        System.setProperty(DocumentBuilderFactory.class.getName(), __DocumentBuilderFactory.class.getName());
-    }
-
     /**
      * Init method.
      */
+    @Deprecated
     public static void init() {}
 
     @Deprecated
@@ -67,14 +64,7 @@ public final class __DocumentBuilderFactory extends DocumentBuilderFactory {
      * Construct a new instance.
      */
     public __DocumentBuilderFactory() {
-        ClassLoader loader = Thread.currentThread().getContextClassLoader();
-        Supplier<DocumentBuilderFactory> factory = null;
-        if (loader != null) {
-            factory = __RedirectedUtils.loadProvider(DocumentBuilderFactory.class, loader);
-        }
-        if (factory == null) factory = DEFAULT_FACTORY;
-
-        actual = factory.get();
+        actual = DEFAULT_FACTORY.get();
     }
 
     private final DocumentBuilderFactory actual;

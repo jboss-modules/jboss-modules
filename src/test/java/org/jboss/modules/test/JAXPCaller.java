@@ -52,7 +52,7 @@ public class JAXPCaller {
         try {
             return factory.newDocumentBuilder().newDocument();
         } catch (ParserConfigurationException e) {
-            throw new IllegalStateException();
+            throw new IllegalStateException(e);
         }
     }
 
@@ -64,7 +64,7 @@ public class JAXPCaller {
         try {
             return DocumentBuilderFactory.newInstance().newDocumentBuilder();
         } catch (ParserConfigurationException e) {
-            throw new IllegalStateException();
+            throw new IllegalStateException(e);
         }
     }
 
@@ -76,7 +76,7 @@ public class JAXPCaller {
         try {
             return SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema();
         } catch (SAXException e) {
-            throw new IllegalStateException();
+            throw new IllegalStateException(e);
         }
     }
 
@@ -84,7 +84,7 @@ public class JAXPCaller {
         try {
             return XMLReaderFactory.createXMLReader();
         } catch (SAXException e) {
-            throw new IllegalStateException();
+            throw new IllegalStateException(e);
         }
     }
 
@@ -96,7 +96,7 @@ public class JAXPCaller {
         try {
             return SAXParserFactory.newInstance().newSAXParser();
         } catch (Exception e) {
-            throw new IllegalStateException();
+            throw new IllegalStateException(e);
         }
     }
 
@@ -108,7 +108,7 @@ public class JAXPCaller {
         try {
             return XPathFactory.newInstance().newXPath();
         } catch (Exception e) {
-            throw new IllegalStateException();
+            throw new IllegalStateException(e);
         }
     }
 
@@ -120,7 +120,7 @@ public class JAXPCaller {
         try {
             return transformerFactory().newTransformer();
         } catch (Exception e) {
-            throw new IllegalStateException();
+            throw new IllegalStateException(e);
         }
     }
 
@@ -128,7 +128,7 @@ public class JAXPCaller {
         try {
             return ((SAXTransformerFactory)transformerFactory()).newTransformerHandler();
         } catch (Exception e) {
-            throw new IllegalStateException();
+            throw new IllegalStateException(e);
         }
     }
 
@@ -164,7 +164,7 @@ public class JAXPCaller {
         try {
             return DatatypeFactory.newInstance();
         } catch (DatatypeConfigurationException e) {
-            throw new IllegalStateException();
+            throw new IllegalStateException(e);
         }
     }
 
