@@ -24,6 +24,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.InvocationTargetException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.security.AccessController;
@@ -54,7 +55,6 @@ import org.jboss.modules.filter.PathFilters;
 import org.jboss.modules.log.ModuleLogger;
 import org.jboss.modules.log.NoopModuleLogger;
 
-import __redirected.__JAXPRedirected;
 import org.jboss.modules.security.ModularPermissionFactory;
 
 /**
@@ -92,7 +92,6 @@ public final class Module {
         list.add("java.");
         list.add("sun.reflect.");
         list.add("jdk.internal.reflect.");
-        list.add("__redirected.");
         if (pkgsString != null) {
             int i;
             int nc = -1;
@@ -132,9 +131,6 @@ public final class Module {
                 } catch (Throwable t) {
                     // todo log a warning or something
                 }
-
-                __JAXPRedirected.initAll();
-
                 return null;
             }
         });
@@ -759,6 +755,10 @@ public final class Module {
                 return resource.getURL();
             }
         }
+        final URLConnectionResource resource = ModuleClassLoader.jaxpImplResources.get(name);
+        if (resource != null) {
+            return resource.getURL();
+        }
         return null;
     }
 
@@ -793,6 +793,10 @@ public final class Module {
             for (Resource resource : resourceList) {
                 return resource.openStream();
             }
+        }
+        final URLConnectionResource resource = ModuleClassLoader.jaxpImplResources.get(name);
+        if (resource != null) {
+            return resource.openStream();
         }
         return null;
     }
@@ -834,6 +838,10 @@ public final class Module {
             for (Resource resource : resourceList) {
                 list.add(resource.getURL());
             }
+        }
+        final URLConnectionResource resource = ModuleClassLoader.jaxpImplResources.get(name);
+        if (resource != null) {
+            list.add(resource.getURL());
         }
 
         return list.size() == 0 ? ConcurrentClassLoader.EMPTY_ENUMERATION : Collections.enumeration(list);

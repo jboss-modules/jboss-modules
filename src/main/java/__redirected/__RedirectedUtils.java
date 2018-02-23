@@ -163,6 +163,8 @@ public final class __RedirectedUtils {
                 line = line.trim();
                 if (line.length() == 0)
                     continue;
+                if (line.startsWith("__redirected"))
+                    continue;
 
                 list.add(line);
             }

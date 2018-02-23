@@ -26,6 +26,7 @@ import javax.xml.XMLConstants;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
 import javax.xml.stream.XMLEventFactory;
 import javax.xml.stream.XMLInputFactory;
@@ -66,10 +67,7 @@ final class JDKSpecific {
         ClassLoader old = thread.getContextClassLoader();
         thread.setContextClassLoader(SAFE_CL);
         try {
-            clearProperty(DatatypeFactory.class, __DatatypeFactory.class);
-            final Supplier<DatatypeFactory> supplier = getConstructorSupplier(DatatypeFactory.newInstance());
-            System.setProperty(DatatypeFactory.class.getName(), __DatatypeFactory.class.getName());
-            return supplier;
+            return getConstructorSupplier(DatatypeFactory.newInstance());
         } catch (DatatypeConfigurationException e) {
             throw new IllegalArgumentException("Problem configuring DatatypeFactory", e);
         } finally {
@@ -82,10 +80,7 @@ final class JDKSpecific {
         ClassLoader old = thread.getContextClassLoader();
         thread.setContextClassLoader(SAFE_CL);
         try {
-            clearProperty(DocumentBuilderFactory.class, __DocumentBuilderFactory.class);
-            final Supplier<DocumentBuilderFactory> supplier = getConstructorSupplier(DocumentBuilderFactory.newInstance());
-            System.setProperty(DocumentBuilderFactory.class.getName(), __DocumentBuilderFactory.class.getName());
-            return supplier;
+            return getConstructorSupplier(DocumentBuilderFactory.newInstance());
         } finally {
             thread.setContextClassLoader(old);
         }
@@ -96,10 +91,7 @@ final class JDKSpecific {
         ClassLoader old = thread.getContextClassLoader();
         thread.setContextClassLoader(SAFE_CL);
         try {
-            clearProperty(SAXParserFactory.class, __SAXParserFactory.class);
-            final Supplier<SAXParserFactory> supplier = getConstructorSupplier(SAXParserFactory.newInstance());
-            System.setProperty(SAXParserFactory.class.getName(), __SAXParserFactory.class.getName());
-            return supplier;
+            return getConstructorSupplier(SAXParserFactory.newInstance());
         } finally {
             thread.setContextClassLoader(old);
         }
@@ -110,10 +102,7 @@ final class JDKSpecific {
         ClassLoader old = thread.getContextClassLoader();
         thread.setContextClassLoader(SAFE_CL);
         try {
-            clearProperty(SchemaFactory.class, __SchemaFactory.class);
-            final Supplier<SchemaFactory> supplier = getConstructorSupplier(SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI));
-            System.setProperty(SchemaFactory.class.getName() + ":" + XMLConstants.W3C_XML_SCHEMA_NS_URI, __SchemaFactory.class.getName());
-            return supplier;
+            return getConstructorSupplier(SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI));
         } finally {
             thread.setContextClassLoader(old);
         }
@@ -124,10 +113,7 @@ final class JDKSpecific {
         ClassLoader old = thread.getContextClassLoader();
         thread.setContextClassLoader(SAFE_CL);
         try {
-            clearProperty(TransformerFactory.class, __TransformerFactory.class);
-            final Supplier<TransformerFactory> supplier = getConstructorSupplier(TransformerFactory.newInstance());
-            System.setProperty(TransformerFactory.class.getName(), __TransformerFactory.class.getName());
-            return supplier;
+            return getConstructorSupplier(TransformerFactory.newInstance());
         } finally {
             thread.setContextClassLoader(old);
         }
@@ -138,10 +124,7 @@ final class JDKSpecific {
         ClassLoader old = thread.getContextClassLoader();
         thread.setContextClassLoader(SAFE_CL);
         try {
-            clearProperty(XMLEventFactory.class, __XMLEventFactory.class);
-            final Supplier<XMLEventFactory> supplier = getConstructorSupplier(XMLEventFactory.newInstance());
-            System.setProperty(XMLEventFactory.class.getName(), __XMLEventFactory.class.getName());
-            return supplier;
+            return getConstructorSupplier(XMLEventFactory.newInstance());
         } finally {
             thread.setContextClassLoader(old);
         }
@@ -152,10 +135,7 @@ final class JDKSpecific {
         ClassLoader old = thread.getContextClassLoader();
         thread.setContextClassLoader(SAFE_CL);
         try {
-            clearProperty(XMLInputFactory.class, __XMLInputFactory.class);
-            final Supplier<XMLInputFactory> supplier = getConstructorSupplier(XMLInputFactory.newInstance());
-            System.setProperty(XMLInputFactory.class.getName(), __XMLInputFactory.class.getName());
-            return supplier;
+            return getConstructorSupplier(XMLInputFactory.newInstance());
         } finally {
             thread.setContextClassLoader(old);
         }
@@ -166,33 +146,23 @@ final class JDKSpecific {
         ClassLoader old = thread.getContextClassLoader();
         thread.setContextClassLoader(SAFE_CL);
         try {
-            clearProperty(XMLOutputFactory.class, __XMLOutputFactory .class);
-            final Supplier<XMLOutputFactory> supplier = getConstructorSupplier(XMLOutputFactory.newInstance());
-            System.setProperty(XMLOutputFactory.class.getName(), __XMLOutputFactory.class.getName());
-            return supplier;
+            return getConstructorSupplier(XMLOutputFactory.newInstance());
         } finally {
             thread.setContextClassLoader(old);
         }
     }
 
     static Supplier<XMLReader> getPlatformXmlReaderSupplier() {
-        Thread thread = Thread.currentThread();
-        ClassLoader old = thread.getContextClassLoader();
-        thread.setContextClassLoader(SAFE_CL);
-        // MODULES-248: XMLReaderFactory fields tracking if jar files were already scanned needs to reset
-        // before and after switching class loader
-        resetScanTracking();
-        try {
-            clearProperty(__XMLReaderFactory.SAX_DRIVER, __XMLReaderFactory.class);
-            final Supplier<XMLReader> supplier = getConstructorSupplier(XMLReaderFactory.createXMLReader());
-            System.setProperty(__XMLReaderFactory.SAX_DRIVER, __XMLReaderFactory.class.getName());
-            return supplier;
-        } catch (SAXException e) {
-             throw __RedirectedUtils.wrapped(new RuntimeException(e.getMessage()), e);
-        } finally {
-            resetScanTracking();
-            thread.setContextClassLoader(old);
-        }
+        final SAXParserFactory parserFactory = getPlatformSaxParserFactorySupplier().get();
+        return new Supplier<XMLReader>() {
+            public XMLReader get() {
+                try {
+                    return parserFactory.newSAXParser().getXMLReader();
+                } catch (SAXException | ParserConfigurationException e) {
+                    throw __RedirectedUtils.wrapped(new RuntimeException(e.getMessage()), e);
+                }
+            }
+        };
     }
 
     static Supplier<XPathFactory> getPlatformXPathFactorySupplier() {
@@ -200,23 +170,32 @@ final class JDKSpecific {
         ClassLoader old = thread.getContextClassLoader();
         thread.setContextClassLoader(SAFE_CL);
         try {
-            clearProperty(XPathFactory.class, __XPathFactory.class);
-            final Supplier<XPathFactory> supplier = getConstructorSupplier(XPathFactory.newInstance());
-            System.setProperty(XPathFactory.class.getName() + ":" + XPathFactory.DEFAULT_OBJECT_MODEL_URI, __XPathFactory.class.getName());
-            return supplier;
+            return getConstructorSupplier(XPathFactory.newInstance());
         } finally {
             thread.setContextClassLoader(old);
         }
     }
 
-    private static void resetScanTracking() {
+    static void installDefaultXMLReader() {
         try {
             Field clsFromJar = XMLReaderFactory.class.getDeclaredField("_clsFromJar");
             clsFromJar.setAccessible(true);
-            clsFromJar.set(XMLReaderFactory.class, null);
+            clsFromJar.set(XMLReaderFactory.class, __XMLReaderFactory.class.getName());
             Field jarread = XMLReaderFactory.class.getDeclaredField("_jarread");
             jarread.setAccessible(true);
-            jarread.setBoolean(XMLReaderFactory.class, false);
+            jarread.setBoolean(XMLReaderFactory.class, true);
+            final Thread thread = Thread.currentThread();
+            final ClassLoader oldCl = thread.getContextClassLoader();
+            try {
+                thread.setContextClassLoader(__XMLReaderFactory.class.getClassLoader());
+                try {
+                    XMLReaderFactory.createXMLReader();
+                } catch (SAXException e) {
+                    throw __RedirectedUtils.wrapped(new RuntimeException(e.getMessage()), e);
+                }
+            } finally {
+                thread.setContextClassLoader(oldCl);
+            }
         } catch (NoSuchFieldException e) {
             //no-op, original SAX XMLReaderFactory hasn't helper fields _clsFromJar and _jarread
         } catch (IllegalAccessException e) {
@@ -230,16 +209,6 @@ final class JDKSpecific {
             return new ConstructorSupplier<T>((Constructor<? extends T>) factory.getClass().getConstructor());
         } catch (NoSuchMethodException e) {
             throw __RedirectedUtils.wrapped(new NoSuchMethodError(e.getMessage()), e);
-        }
-    }
-
-    private static void clearProperty(final Class<?> propertyClass, final Class<?> expectClass) {
-        clearProperty(propertyClass.getName(), expectClass);
-    }
-
-    private static void clearProperty(final String propertyName, final Class<?> expectClass) {
-        if (System.getProperty(propertyName, "").equals(expectClass.getName())) {
-            System.clearProperty(propertyName);
         }
     }
 }
