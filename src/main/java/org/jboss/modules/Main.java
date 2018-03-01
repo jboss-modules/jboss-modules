@@ -387,19 +387,18 @@ public final class Main {
             moduleName = rootPath.resolve(nameArgument).normalize().toString();
             className = null;
         } else if (classpathDefined || classDefined) {
-            AccessController.doPrivileged(new PropertyWriteAction("java.class.path", classpath));
-            final String[] items = classpath.split(Pattern.quote(File.pathSeparator));
-            if (items.length == 0) {
-                loader = new ModuleLoader();
-                moduleName = null;
+            final String[] items;
+            if (classpath != null) {
+                AccessController.doPrivileged(new PropertyWriteAction("java.class.path", classpath));
+                items = classpath.split(Pattern.quote(File.pathSeparator));
             } else {
-                for (int i = 0; i < items.length; i++) {
-                    items[i] = rootPath.resolve(items[i]).normalize().toString();
-                }
-                loader = new ModuleLoader(new ClassPathModuleFinder(environmentLoader, items, deps, nameArgument));
-                moduleName = items[items.length - 1];
+                items = NO_STRINGS;
             }
-            className = null;
+            for (int i = 0; i < items.length; i++) {
+                items[i] = rootPath.resolve(items[i]).normalize().toString();
+            }
+            loader = new ModuleLoader(new ClassPathModuleFinder(environmentLoader, items, deps, nameArgument));
+            moduleName = "<classpath>";
         } else {
             loader = environmentLoader;
             final int idx = nameArgument.lastIndexOf('/');
@@ -550,12 +549,7 @@ public final class Main {
         }
 
         try {
-            final String[] mainArgs = argsList.toArray(new String[argsList.size()]);
-            if (className != null) {
-                module.runMainMethod(className, mainArgs);
-            } else {
-                module.run(mainArgs);
-            }
+            module.run(argsList.toArray(new String[argsList.size()]));
         } catch (InvocationTargetException e) {
             throw e.getCause();
         }
