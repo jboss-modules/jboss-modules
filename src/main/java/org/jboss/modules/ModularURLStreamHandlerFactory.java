@@ -98,6 +98,9 @@ final class ModularURLStreamHandlerFactory implements URLStreamHandlerFactory {
                 }
             }
         }
+        if (protocol.equals("data")) {
+            return DataURLStreamHandler.getInstance();
+        }
 
         return null;
     }
