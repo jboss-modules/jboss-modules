@@ -43,6 +43,26 @@ final class ClassPathModuleFinder extends FileSystemClassPathModuleFinder {
         this(new SimpleSupplier<>(baseModuleLoader), classpath, dependencies == null ? Utils.NO_STRINGS : dependencies.split(","), mainClass);
     }
 
+    public ModuleSpec findModule(final String name, final ModuleLoader delegateLoader) throws ModuleLoadException {
+        if (name.equals("<classpath>")) {
+            // special initial module
+            ModuleSpec.Builder builder = ModuleSpec.build(name);
+            for (String dependency : dependencies) {
+                builder.addDependency(DependencySpec.createModuleDependencySpec(PathFilters.acceptAll(), PathFilters.acceptAll(), null, dependency, false));
+            }
+            for (String item : classPath) {
+                builder.addDependency(DependencySpec.createModuleDependencySpec(PathFilters.acceptAll(), PathFilters.acceptAll(), null, item, true));
+            }
+            if (mainClass != null) {
+                builder.setMainClass(mainClass);
+            }
+            addSystemDependencies(builder);
+            return builder.create();
+        } else {
+            return super.findModule(name, delegateLoader);
+        }
+    }
+
     void addExtensionDependencies(final ModuleSpec.Builder builder, final Attributes mainAttributes, final ModuleLoader extensionModuleLoader) {
         // not supported
     }
