@@ -24,7 +24,6 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.InvocationTargetException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.security.AccessController;
@@ -318,13 +317,22 @@ public final class Module {
      * @throws ClassNotFoundException if the main class is not found
      */
     public void run(final String[] args) throws NoSuchMethodException, InvocationTargetException, ClassNotFoundException {
-        if (mainClassName == null) {
-            throw new NoSuchMethodException("No main class defined for " + this);
-        }
-        runMainMethod(mainClassName, args);
+        run(mainClassName, args);
     }
 
-    void runMainMethod(final String className, final String[] args) throws NoSuchMethodException, InvocationTargetException, ClassNotFoundException {
+    /**
+     * Run the given main class in this module.
+     *
+     * @param className the class name to run (must not be {@code null})
+     * @param args the arguments to pass
+     * @throws NoSuchMethodException if there is no main method
+     * @throws InvocationTargetException if the main method failed
+     * @throws ClassNotFoundException if the main class is not found
+     */
+    public void run(final String className, final String[] args) throws NoSuchMethodException, InvocationTargetException, ClassNotFoundException {
+        if (className == null) {
+            throw new NoSuchMethodException("No main class defined for " + this);
+        }
         final ClassLoader oldClassLoader = SecurityActions.setContextClassLoader(moduleClassLoader);
         try {
             final Class<?> mainClass = Class.forName(className, false, moduleClassLoader);

@@ -399,6 +399,7 @@ public final class Main {
             }
             loader = new DelegatingModuleLoader(environmentLoader, new ClassPathModuleFinder(environmentLoader, items, deps, nameArgument));
             moduleName = "<classpath>";
+            className = null;
         } else {
             loader = environmentLoader;
             final int idx = nameArgument.lastIndexOf('/');
@@ -549,7 +550,8 @@ public final class Main {
         }
 
         try {
-            module.run(argsList.toArray(new String[argsList.size()]));
+            final String[] argsArray = argsList.toArray(NO_STRINGS);
+            if (className != null) module.run(className, argsArray); else module.run(argsArray);
         } catch (InvocationTargetException e) {
             throw e.getCause();
         }
