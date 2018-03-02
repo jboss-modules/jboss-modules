@@ -31,6 +31,13 @@ import java.util.jar.Manifest;
  * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  */
 public abstract class AbstractResourceLoader implements ResourceLoader {
+
+    /**
+     * Construct a new instance.
+     */
+    protected AbstractResourceLoader() {
+    }
+
     private static String getDefinedAttribute(Attributes.Name name, Attributes entryAttribute, Attributes mainAttribute) {
         final String value = entryAttribute == null ? null : entryAttribute.getValue(name);
         return value == null ? mainAttribute == null ? null : mainAttribute.getValue(name) : value;
