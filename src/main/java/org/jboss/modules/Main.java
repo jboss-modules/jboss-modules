@@ -397,7 +397,7 @@ public final class Main {
             for (int i = 0; i < items.length; i++) {
                 items[i] = rootPath.resolve(items[i]).normalize().toString();
             }
-            loader = new ModuleLoader(new ClassPathModuleFinder(environmentLoader, items, deps, nameArgument));
+            loader = new DelegatingModuleLoader(environmentLoader, new ClassPathModuleFinder(environmentLoader, items, deps, nameArgument));
             moduleName = "<classpath>";
         } else {
             loader = environmentLoader;
