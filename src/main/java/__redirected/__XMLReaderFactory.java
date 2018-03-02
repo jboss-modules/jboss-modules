@@ -43,11 +43,7 @@ public final class __XMLReaderFactory implements XMLReader {
     private static final Supplier<XMLReader> PLATFORM_FACTORY = JDKSpecific.getPlatformXmlReaderSupplier();
     private static volatile Supplier<XMLReader> DEFAULT_FACTORY = PLATFORM_FACTORY;
 
-    static final String SAX_DRIVER = "org.xml.sax.driver";
-
-    static {
-        System.setProperty(SAX_DRIVER, __XMLReaderFactory.class.getName());
-    }
+    public static final String SAX_DRIVER = "org.xml.sax.driver";
 
     @Deprecated
     public static void changeDefaultFactory(ModuleIdentifier id, ModuleLoader loader) {
@@ -68,12 +64,18 @@ public final class __XMLReaderFactory implements XMLReader {
     /**
      * Init method.
      */
+    @Deprecated
     public static void init() {}
 
     /**
      * Construct a new instance.
      */
     public __XMLReaderFactory() {
+        /*
+           This one works a little differently; since XMLReaderFactory (in Java 8) is essentially broken,
+           we forcibly install this class as the global default provider and do the "real" lookup ourselves.
+           Once we require Java 9 (or higher), this should be changed to work like the other factories again.
+         */
         ClassLoader loader = Thread.currentThread().getContextClassLoader();
         Supplier<XMLReader> factory = null;
         if (loader != null) {

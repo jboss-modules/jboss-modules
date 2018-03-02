@@ -41,10 +41,6 @@ public final class __XMLOutputFactory extends XMLOutputFactory {
     private static final Supplier<XMLOutputFactory> PLATFORM_FACTORY = JDKSpecific.getPlatformXmlOutputFactorySupplier();
     private static volatile Supplier<XMLOutputFactory> DEFAULT_FACTORY = PLATFORM_FACTORY;
 
-    static {
-        System.setProperty(XMLOutputFactory.class.getName(), __XMLOutputFactory.class.getName());
-    }
-
     @Deprecated
     public static void changeDefaultFactory(ModuleIdentifier id, ModuleLoader loader) {
         changeDefaultFactory(id.toString(), loader);
@@ -64,20 +60,14 @@ public final class __XMLOutputFactory extends XMLOutputFactory {
     /**
      * Init method.
      */
+    @Deprecated
     public static void init() {}
 
     /**
      * Construct a new instance.
      */
     public __XMLOutputFactory() {
-        ClassLoader loader = Thread.currentThread().getContextClassLoader();
-        Supplier<XMLOutputFactory> factory = null;
-        if (loader != null) {
-            factory = __RedirectedUtils.loadProvider(XMLOutputFactory.class, loader);
-        }
-        if (factory == null) factory = DEFAULT_FACTORY;
-
-        actual = factory.get();
+        actual = DEFAULT_FACTORY.get();
     }
 
     private final XMLOutputFactory actual;

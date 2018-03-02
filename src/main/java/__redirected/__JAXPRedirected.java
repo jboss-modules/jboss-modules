@@ -78,20 +78,4 @@ public class __JAXPRedirected {
         __SchemaFactory.restorePlatformFactory();
         __XMLReaderFactory.restorePlatformFactory();
     }
-
-    /**
-     * Initializes the JAXP redirection system.
-     */
-    public static void initAll() {
-        __DocumentBuilderFactory.init();
-        __SAXParserFactory.init();
-        __TransformerFactory.init();
-        __XPathFactory.init();
-        __XMLEventFactory.init();
-        __XMLInputFactory.init();
-        __XMLOutputFactory.init();
-        __DatatypeFactory.init();
-        __SchemaFactory.init();
-        __XMLReaderFactory.init();
-    }
 }
