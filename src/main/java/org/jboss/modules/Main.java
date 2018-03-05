@@ -299,6 +299,7 @@ public final class Main {
         }
 
         if (addIndex) {
+            System.err.println("WARNING: -addindex is deprecated and may be removed in a future release");
             if (nameArgument == null) {
                 System.err.println("-addindex requires a target JAR name");
                 usage();
