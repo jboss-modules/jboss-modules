@@ -41,6 +41,7 @@ import java.security.Security;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Properties;
 import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
@@ -104,6 +105,8 @@ public final class Main {
         System.out.println("    -secmgr       Run with a security manager installed; not compatible with -secmgrmodule");
         System.out.println("    -secmgrmodule <module-spec>");
         System.out.println("                  Run with a security manager module; not compatible with -secmgr");
+        System.out.println("    -add-provider <module-name>[/<class-name>]");
+        System.out.println("                  Add a security provider of the given module and class (can be given more than once)");
         System.out.println("    -addindex     Specify that the final argument is a");
         System.out.println("                  jar to create an index for");
         System.out.println("    -modify       Modify the indexes jar in-place");
@@ -134,6 +137,7 @@ public final class Main {
         boolean addIndex = false;
         boolean modifyInPlace = false;
         boolean debuglog = false;
+        final List<String> addedProviders = new ArrayList<>();
         for (int i = 0; i < argsLen; i++) {
             final String arg = args[i];
             try {
@@ -265,7 +269,9 @@ public final class Main {
                             System.err.println("-secmgrmodule may not be specified when -secmgr is given");
                             System.exit(1);
                         }
-                        secMgrModule = args[++i];
+                        secMgrModule = args[++ i];
+                    } else if ("-add-provider".equals(arg)) {
+                        addedProviders.add(args[++ i]);
                     } else {
                         System.err.printf("Invalid option '%s'\n", arg);
                         usage();
@@ -337,6 +343,9 @@ public final class Main {
                 System.err.println("-secmgrmodule may not be used with -addindex");
                 usage();
                 System.exit(1);
+            }
+            if (! addedProviders.isEmpty()) {
+                System.err.println("-add-provider may not be used with -addindex");
             }
             if (depTree) {
                 System.err.println("-deptree may not be used with -addindex");
@@ -524,6 +533,38 @@ public final class Main {
             ManagementFactory.getPlatformMBeanServer();
         }
 
+        for (String addedProvider : addedProviders) {
+            final int idx = addedProvider.indexOf('/');
+            if (idx != -1) {
+                final String provModule = addedProvider.substring(0, idx);
+                final String provClazz = addedProvider.substring(idx + 1);
+                final Class<? extends Provider> providerClass;
+                try {
+                    providerClass = Class.forName(provClazz, false, environmentLoader.loadModule(provModule).getClassLoaderPrivate()).asSubclass(Provider.class);
+                    // each provider needs permission to install itself
+                    doPrivileged(new AddProviderAction(providerClass.getConstructor().newInstance()), getProviderContext(providerClass));
+                } catch (Exception e) {
+                    Module.getModuleLogger().trace(e, "Failed to initialize a security provider");
+                }
+            } else {
+                final ModuleClassLoader classLoader = environmentLoader.loadModule(addedProvider).getClassLoaderPrivate();
+                final ServiceLoader<Provider> providerServiceLoader = ServiceLoader.load(Provider.class, classLoader);
+                final Iterator<Provider> iterator = providerServiceLoader.iterator();
+                for (;;) try {
+                    if (! (iterator.hasNext())) {
+                        Module.getModuleLogger().trace("Module \"%s\" did not contain a security provider service", addedProvider);
+                        break;
+                    }
+                    final Provider provider = iterator.next();
+                    final Class<? extends Provider> providerClass = provider.getClass();
+                    // each provider needs permission to install itself
+                    doPrivileged(new AddProviderAction(provider), getProviderContext(providerClass));
+                } catch (ServiceConfigurationError | RuntimeException e) {
+                    Module.getModuleLogger().trace(e, "Failed to initialize a security provider");
+                }
+            }
+        }
+
         final ServiceLoader<Provider> providerServiceLoader = ServiceLoader.load(Provider.class, bootClassLoader);
         Iterator<Provider> iterator = providerServiceLoader.iterator();
         for (;;) try {
@@ -531,10 +572,7 @@ public final class Main {
             final Provider provider = iterator.next();
             final Class<? extends Provider> providerClass = provider.getClass();
             // each provider needs permission to install itself
-            doPrivileged((PrivilegedAction<Void>) () -> {
-                Security.addProvider(provider);
-                return null;
-            }, new AccessControlContext(new ProtectionDomain[] { providerClass.getProtectionDomain() }));
+            doPrivileged(new AddProviderAction(provider), getProviderContext(providerClass));
         } catch (ServiceConfigurationError | RuntimeException e) {
             Module.getModuleLogger().trace(e, "Failed to initialize a security provider");
         }
@@ -556,6 +594,10 @@ public final class Main {
             throw e.getCause();
         }
         return;
+    }
+
+    private static AccessControlContext getProviderContext(final Class<? extends Provider> providerClass) {
+        return new AccessControlContext(new ProtectionDomain[] { providerClass.getProtectionDomain() });
     }
 
     private static String getServiceName(ClassLoader classLoader, String className) throws IOException {
@@ -611,5 +653,18 @@ public final class Main {
      */
     public static String getVersionString() {
         return VERSION_STRING;
+    }
+
+    static final class AddProviderAction implements PrivilegedAction<Void> {
+        private final Provider provider;
+
+        AddProviderAction(final Provider provider) {
+            this.provider = provider;
+        }
+
+        public Void run() {
+            Security.addProvider(provider);
+            return null;
+        }
     }
 }
