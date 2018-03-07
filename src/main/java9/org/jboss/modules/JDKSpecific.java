@@ -187,10 +187,10 @@ final class JDKSpecific {
         return null;
     }
 
-    private static void processRuntimeImages(final Set<String> jarSet) {
+    private static void processRuntimeImages(final Set<String> pathSet) {
         try {
             for (final Path root : FileSystems.getFileSystem(new URI("jrt:/")).getRootDirectories()) {
-                Files.walkFileTree(root, new JrtFileVisitor(jarSet));
+                Files.walkFileTree(root, new JrtFileVisitor(pathSet));
             }
         } catch (final URISyntaxException |IOException e) {
             throw new IllegalStateException("Unable to process java runtime images");
@@ -215,8 +215,9 @@ final class JDKSpecific {
 
         @Override
         public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) throws IOException {
-            String f = file.toString();
-            pathSet.add(f.substring(PACKAGES.length() + 1, f.lastIndexOf(SLASH)).replace('.', '/'));
+            if (file.getNameCount() >= 3 && file.getName(0).toString().equals("packages")) {
+                pathSet.add(file.getName(1).toString().replace('.', '/'));
+            }
             return CONTINUE;
         }
 
