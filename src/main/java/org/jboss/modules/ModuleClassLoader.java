@@ -54,6 +54,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiFunction;
 
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -117,7 +118,8 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
     }
 
     private final Module module;
-    private final ClassFileTransformer transformer;
+    private final ClassFileTransformer legacyClassFileTransformer;
+    private final BiFunction<String, ByteBuffer, ByteBuffer> transformer;
 
     private final AtomicReference<Paths<ResourceLoader, ResourceLoaderSpec>> paths = new AtomicReference<>(Paths.<ResourceLoader, ResourceLoaderSpec>none());
 
@@ -167,6 +169,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         if (setting != AssertionSetting.INHERIT) {
             setDefaultAssertionStatus(setting == AssertionSetting.ENABLED);
         }
+        legacyClassFileTransformer = configuration.getLegacyClassFileTransformer();
         transformer = configuration.getTransformer();
     }
 
@@ -490,8 +493,19 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
             byte[] bytes = classSpec.getBytes();
             ByteBuffer byteBuffer = classSpec.getByteBuffer();
             try {
-                final ProtectionDomain protectionDomain = getProtectionDomain(classSpec.getCodeSource());
                 if (transformer != null) {
+                    ByteBuffer buffer = byteBuffer;
+                    if (buffer == null) {
+                        buffer = ByteBuffer.wrap(bytes);
+                    }
+                    ByteBuffer transformed = transformer.apply(name, buffer);
+                    if (transformed != null && transformed != buffer) {
+                        byteBuffer = transformed;
+                        bytes = null;
+                    }
+                }
+                final ProtectionDomain protectionDomain = getProtectionDomain(classSpec.getCodeSource());
+                if (legacyClassFileTransformer != null) {
                     if (bytes == null) {
                         final ByteBuffer dup = byteBuffer.duplicate();
                         byteBuffer = null;
@@ -499,7 +513,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
                         dup.get(bytes);
                     }
                     try {
-                        bytes = transformer.transform(this, name.replace('.', '/'), null, protectionDomain, bytes);
+                        bytes = legacyClassFileTransformer.transform(this, name.replace('.', '/'), null, protectionDomain, bytes);
                     } catch (Exception e) {
                         ClassFormatError error = new ClassFormatError(e.getMessage());
                         error.initCause(e);
@@ -833,12 +847,14 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         private final Module module;
         private final AssertionSetting assertionSetting;
         private final ResourceLoaderSpec[] resourceLoaders;
-        private final ClassFileTransformer transformer;
+        private final ClassFileTransformer legacyClassFileTransformer;
+        private final BiFunction<String, ByteBuffer, ByteBuffer> transformer;
 
-        Configuration(final Module module, final AssertionSetting assertionSetting, final ResourceLoaderSpec[] resourceLoaders, final ClassFileTransformer transformer) {
+        Configuration(final Module module, final AssertionSetting assertionSetting, final ResourceLoaderSpec[] resourceLoaders, final ClassFileTransformer legacyClassFileTransformer, final BiFunction<String, ByteBuffer, ByteBuffer> transformer) {
             this.module = module;
             this.assertionSetting = assertionSetting;
             this.resourceLoaders = resourceLoaders;
+            this.legacyClassFileTransformer = legacyClassFileTransformer;
             this.transformer = transformer;
         }
 
@@ -854,7 +870,11 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
             return resourceLoaders;
         }
 
-        ClassFileTransformer getTransformer() {
+        ClassFileTransformer getLegacyClassFileTransformer() {
+            return legacyClassFileTransformer;
+        }
+
+        BiFunction<String, ByteBuffer, ByteBuffer> getTransformer() {
             return transformer;
         }
     }

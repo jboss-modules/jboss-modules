@@ -19,12 +19,14 @@
 package org.jboss.modules;
 
 import java.lang.instrument.ClassFileTransformer;
+import java.nio.ByteBuffer;
 import java.security.AllPermission;
 import java.security.PermissionCollection;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 
 /**
  * A {@code Module} specification which is used by a {@code ModuleLoader} to define new modules.
@@ -71,7 +73,8 @@ public abstract class ModuleSpec {
             private final Map<String, String> properties = new LinkedHashMap<String, String>(0);
             private LocalLoader fallbackLoader;
             private ModuleClassLoaderFactory moduleClassLoaderFactory;
-            private ClassFileTransformer classFileTransformer;
+            private ClassFileTransformer legacyClassFileTransformer;
+            private BiFunction<String, ByteBuffer, ByteBuffer> classFileTransformer;
             private PermissionCollection permissionCollection;
             private Version version;
 
@@ -111,9 +114,18 @@ public abstract class ModuleSpec {
                 return this;
             }
 
+            @Deprecated
             @Override
             public Builder setClassFileTransformer(final ClassFileTransformer classFileTransformer) {
-                this.classFileTransformer = classFileTransformer;
+                this.legacyClassFileTransformer = classFileTransformer;
+                this.classFileTransformer = null;
+                return this;
+            }
+
+            @Override
+            public Builder setClassFileTransformer(final BiFunction<String, ByteBuffer, ByteBuffer> transformer) {
+                this.legacyClassFileTransformer = null;
+                this.classFileTransformer = transformer;
                 return this;
             }
 
@@ -137,7 +149,7 @@ public abstract class ModuleSpec {
 
             @Override
             public ModuleSpec create() {
-                return new ConcreteModuleSpec(name, mainClass, assertionSetting, resourceLoaders.toArray(new ResourceLoaderSpec[resourceLoaders.size()]), dependencies.toArray(new DependencySpec[dependencies.size()]), fallbackLoader, moduleClassLoaderFactory, classFileTransformer, properties, permissionCollection, version);
+                return new ConcreteModuleSpec(name, mainClass, assertionSetting, resourceLoaders.toArray(new ResourceLoaderSpec[resourceLoaders.size()]), dependencies.toArray(new DependencySpec[dependencies.size()]), fallbackLoader, moduleClassLoaderFactory, legacyClassFileTransformer, classFileTransformer, properties, permissionCollection, version);
             }
 
             @Override
@@ -294,8 +306,19 @@ public abstract class ModuleSpec {
          *
          * @param classFileTransformer the class file transformer
          * @return this builder
+         * @deprecated Use {@link #setClassFileTransformer(BiFunction)} instead.
          */
+        @Deprecated
         ModuleSpec.Builder setClassFileTransformer(ClassFileTransformer classFileTransformer);
+
+        /**
+         * Set the class file transformer function to use for this module.  If the given function returns {@code null}
+         * then no transformation will take place.  The function may accept and return a direct or heap byte buffer.
+         *
+         * @param transformer the class file transformer (must not be {@code null})
+         * @return this builder
+         */
+        ModuleSpec.Builder setClassFileTransformer(BiFunction<String, ByteBuffer, ByteBuffer> transformer);
 
         /**
          * Add a property to this module specification.
