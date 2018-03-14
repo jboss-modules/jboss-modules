@@ -74,7 +74,7 @@ public abstract class ModuleSpec {
             private LocalLoader fallbackLoader;
             private ModuleClassLoaderFactory moduleClassLoaderFactory;
             private ClassFileTransformer legacyClassFileTransformer;
-            private BiFunction<String, ByteBuffer, ByteBuffer> classFileTransformer;
+            private ClassTransformer classFileTransformer;
             private PermissionCollection permissionCollection;
             private Version version;
 
@@ -123,7 +123,7 @@ public abstract class ModuleSpec {
             }
 
             @Override
-            public Builder setClassFileTransformer(final BiFunction<String, ByteBuffer, ByteBuffer> transformer) {
+            public Builder setClassFileTransformer(final ClassTransformer transformer) {
                 this.legacyClassFileTransformer = null;
                 this.classFileTransformer = transformer;
                 return this;
@@ -306,7 +306,7 @@ public abstract class ModuleSpec {
          *
          * @param classFileTransformer the class file transformer
          * @return this builder
-         * @deprecated Use {@link #setClassFileTransformer(BiFunction)} instead.
+         * @deprecated Use {@link #setClassFileTransformer(ClassTransformer)} instead.
          */
         @Deprecated
         ModuleSpec.Builder setClassFileTransformer(ClassFileTransformer classFileTransformer);
@@ -318,7 +318,7 @@ public abstract class ModuleSpec {
          * @param transformer the class file transformer (must not be {@code null})
          * @return this builder
          */
-        ModuleSpec.Builder setClassFileTransformer(BiFunction<String, ByteBuffer, ByteBuffer> transformer);
+        ModuleSpec.Builder setClassFileTransformer(ClassTransformer transformer);
 
         /**
          * Add a property to this module specification.

@@ -54,7 +54,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BiFunction;
 
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -119,7 +118,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
 
     private final Module module;
     private final ClassFileTransformer legacyClassFileTransformer;
-    private final BiFunction<String, ByteBuffer, ByteBuffer> transformer;
+    private final ClassTransformer transformer;
 
     private final AtomicReference<Paths<ResourceLoader, ResourceLoaderSpec>> paths = new AtomicReference<>(Paths.<ResourceLoader, ResourceLoaderSpec>none());
 
@@ -493,24 +492,30 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
             byte[] bytes = classSpec.getBytes();
             ByteBuffer byteBuffer = classSpec.getByteBuffer();
             try {
+                final ProtectionDomain protectionDomain = getProtectionDomain(classSpec.getCodeSource());
                 if (transformer != null) {
                     ByteBuffer buffer = byteBuffer;
                     if (buffer == null) {
                         buffer = ByteBuffer.wrap(bytes);
                     }
-                    ByteBuffer transformed = transformer.apply(name, buffer);
-                    if (transformed != null && transformed != buffer) {
+                    int pos = buffer.position();
+                    int lim = buffer.limit();
+                    ByteBuffer transformed = transformer.transform(this, name, protectionDomain, buffer);
+                    if (transformed != null) {
                         byteBuffer = transformed;
                         bytes = null;
+                    } else {
+                        byteBuffer.position(0);
+                        byteBuffer.limit(lim);
+                        byteBuffer.position(pos);
                     }
                 }
-                final ProtectionDomain protectionDomain = getProtectionDomain(classSpec.getCodeSource());
                 if (legacyClassFileTransformer != null) {
                     if (bytes == null) {
-                        final ByteBuffer dup = byteBuffer.duplicate();
+                        ByteBuffer buffer = byteBuffer;
                         byteBuffer = null;
-                        bytes = new byte[dup.remaining()];
-                        dup.get(bytes);
+                        bytes = new byte[buffer.remaining()];
+                        buffer.get(bytes);
                     }
                     try {
                         bytes = legacyClassFileTransformer.transform(this, name.replace('.', '/'), null, protectionDomain, bytes);
@@ -848,9 +853,9 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         private final AssertionSetting assertionSetting;
         private final ResourceLoaderSpec[] resourceLoaders;
         private final ClassFileTransformer legacyClassFileTransformer;
-        private final BiFunction<String, ByteBuffer, ByteBuffer> transformer;
+        private final ClassTransformer transformer;
 
-        Configuration(final Module module, final AssertionSetting assertionSetting, final ResourceLoaderSpec[] resourceLoaders, final ClassFileTransformer legacyClassFileTransformer, final BiFunction<String, ByteBuffer, ByteBuffer> transformer) {
+        Configuration(final Module module, final AssertionSetting assertionSetting, final ResourceLoaderSpec[] resourceLoaders, final ClassFileTransformer legacyClassFileTransformer, final ClassTransformer transformer) {
             this.module = module;
             this.assertionSetting = assertionSetting;
             this.resourceLoaders = resourceLoaders;
@@ -874,7 +879,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
             return legacyClassFileTransformer;
         }
 
-        BiFunction<String, ByteBuffer, ByteBuffer> getTransformer() {
+        ClassTransformer getTransformer() {
             return transformer;
         }
     }
