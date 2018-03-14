@@ -43,7 +43,6 @@ import org.jboss.modules.security.ModularProtectionDomain;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.instrument.ClassFileTransformer;
 import java.net.URL;
 import java.security.CodeSource;
 import java.util.ArrayList;
@@ -117,7 +116,6 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
     }
 
     private final Module module;
-    private final ClassFileTransformer legacyClassFileTransformer;
     private final ClassTransformer transformer;
 
     private final AtomicReference<Paths<ResourceLoader, ResourceLoaderSpec>> paths = new AtomicReference<>(Paths.<ResourceLoader, ResourceLoaderSpec>none());
@@ -168,7 +166,6 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         if (setting != AssertionSetting.INHERIT) {
             setDefaultAssertionStatus(setting == AssertionSetting.ENABLED);
         }
-        legacyClassFileTransformer = configuration.getLegacyClassFileTransformer();
         transformer = configuration.getTransformer();
     }
 
@@ -500,7 +497,14 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
                     }
                     int pos = buffer.position();
                     int lim = buffer.limit();
-                    ByteBuffer transformed = transformer.transform(this, name, protectionDomain, buffer);
+                    ByteBuffer transformed;
+                    try {
+                        transformed = transformer.transform(this, name, protectionDomain, buffer);
+                    } catch (Exception e) {
+                        ClassFormatError error = new ClassFormatError(e.getMessage());
+                        error.initCause(e);
+                        throw error;
+                    }
                     if (transformed != null) {
                         byteBuffer = transformed;
                         bytes = null;
@@ -508,21 +512,6 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
                         byteBuffer.position(0);
                         byteBuffer.limit(lim);
                         byteBuffer.position(pos);
-                    }
-                }
-                if (legacyClassFileTransformer != null) {
-                    if (bytes == null) {
-                        ByteBuffer buffer = byteBuffer;
-                        byteBuffer = null;
-                        bytes = new byte[buffer.remaining()];
-                        buffer.get(bytes);
-                    }
-                    try {
-                        bytes = legacyClassFileTransformer.transform(this, name.replace('.', '/'), null, protectionDomain, bytes);
-                    } catch (Exception e) {
-                        ClassFormatError error = new ClassFormatError(e.getMessage());
-                        error.initCause(e);
-                        throw error;
                     }
                 }
                 final long start = Metrics.getCurrentCPUTime();
@@ -852,14 +841,12 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         private final Module module;
         private final AssertionSetting assertionSetting;
         private final ResourceLoaderSpec[] resourceLoaders;
-        private final ClassFileTransformer legacyClassFileTransformer;
         private final ClassTransformer transformer;
 
-        Configuration(final Module module, final AssertionSetting assertionSetting, final ResourceLoaderSpec[] resourceLoaders, final ClassFileTransformer legacyClassFileTransformer, final ClassTransformer transformer) {
+        Configuration(final Module module, final AssertionSetting assertionSetting, final ResourceLoaderSpec[] resourceLoaders, final ClassTransformer transformer) {
             this.module = module;
             this.assertionSetting = assertionSetting;
             this.resourceLoaders = resourceLoaders;
-            this.legacyClassFileTransformer = legacyClassFileTransformer;
             this.transformer = transformer;
         }
 
@@ -873,10 +860,6 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
 
         ResourceLoaderSpec[] getResourceLoaders() {
             return resourceLoaders;
-        }
-
-        ClassFileTransformer getLegacyClassFileTransformer() {
-            return legacyClassFileTransformer;
         }
 
         ClassTransformer getTransformer() {

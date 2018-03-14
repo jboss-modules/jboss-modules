@@ -239,7 +239,7 @@ public final class Module {
         final PermissionCollection permissionCollection = spec.getPermissionCollection();
         this.permissionCollection = permissionCollection == null ? NO_PERMISSIONS : permissionCollection.isReadOnly() ? permissionCollection : copyPermissions(permissionCollection);
         //noinspection ThisEscapedInObjectConstruction
-        final ModuleClassLoader.Configuration configuration = new ModuleClassLoader.Configuration(this, spec.getAssertionSetting(), spec.getResourceLoaders(), spec.getLegacyClassFileTransformer(), spec.getClassFileTransformer());
+        final ModuleClassLoader.Configuration configuration = new ModuleClassLoader.Configuration(this, spec.getAssertionSetting(), spec.getResourceLoaders(), spec.getClassFileTransformer());
         final ModuleClassLoaderFactory factory = spec.getModuleClassLoaderFactory();
         final Map<String, String> properties = spec.getProperties();
         this.properties = properties.isEmpty() ? Collections.<String, String>emptyMap() : new LinkedHashMap<String, String>(properties);

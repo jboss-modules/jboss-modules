@@ -18,7 +18,6 @@
 
 package org.jboss.modules;
 
-import java.lang.instrument.ClassFileTransformer;
 import java.security.PermissionCollection;
 import java.util.Map;
 
@@ -38,13 +37,12 @@ public final class ConcreteModuleSpec extends ModuleSpec {
     private final DependencySpec[] dependencies;
     private final LocalLoader fallbackLoader;
     private final ModuleClassLoaderFactory moduleClassLoaderFactory;
-    private final ClassFileTransformer legacyClassFileTransformer;
     private final ClassTransformer classFileTransformer;
     private final Map<String, String> properties;
     private final PermissionCollection permissionCollection;
     private final Version version;
 
-    ConcreteModuleSpec(final String name, final String mainClass, final AssertionSetting assertionSetting, final ResourceLoaderSpec[] resourceLoaders, final DependencySpec[] dependencies, final LocalLoader fallbackLoader, final ModuleClassLoaderFactory moduleClassLoaderFactory, final ClassFileTransformer legacyClassFileTransformer, final ClassTransformer classFileTransformer, final Map<String, String> properties, final PermissionCollection permissionCollection, final Version version) {
+    ConcreteModuleSpec(final String name, final String mainClass, final AssertionSetting assertionSetting, final ResourceLoaderSpec[] resourceLoaders, final DependencySpec[] dependencies, final LocalLoader fallbackLoader, final ModuleClassLoaderFactory moduleClassLoaderFactory, final ClassTransformer classFileTransformer, final Map<String, String> properties, final PermissionCollection permissionCollection, final Version version) {
         super(name);
         this.mainClass = mainClass;
         this.assertionSetting = assertionSetting;
@@ -52,7 +50,6 @@ public final class ConcreteModuleSpec extends ModuleSpec {
         this.dependencies = dependencies;
         this.fallbackLoader = fallbackLoader;
         this.moduleClassLoaderFactory = moduleClassLoaderFactory;
-        this.legacyClassFileTransformer = legacyClassFileTransformer;
         this.classFileTransformer = classFileTransformer;
         this.properties = properties;
         this.permissionCollection = permissionCollection;
@@ -85,10 +82,6 @@ public final class ConcreteModuleSpec extends ModuleSpec {
 
     ModuleClassLoaderFactory getModuleClassLoaderFactory() {
         return moduleClassLoaderFactory;
-    }
-
-    ClassFileTransformer getLegacyClassFileTransformer() {
-        return legacyClassFileTransformer;
     }
 
     ClassTransformer getClassFileTransformer() {
