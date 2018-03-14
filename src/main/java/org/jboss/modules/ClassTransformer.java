@@ -48,6 +48,7 @@ public interface ClassTransformer {
      */
     default ClassTransformer andThen(ClassTransformer other) {
         if (other == null) throw new IllegalArgumentException("other is null");
+        if (other == IDENTITY) return this;
         return new ClassTransformer() {
             public ByteBuffer transform(final ClassLoader loader, final String className, final ProtectionDomain protectionDomain, final ByteBuffer classBytes) throws IllegalArgumentException {
                 ByteBuffer firstStage = ClassTransformer.this.transform(loader, className, protectionDomain, classBytes);
