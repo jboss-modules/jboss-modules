@@ -56,6 +56,6 @@ public final class JLIClassTransformer implements ClassTransformer {
         } catch (IllegalClassFormatException e) {
             throw new IllegalArgumentException(e);
         }
-        return result == null ? classBytes : ByteBuffer.wrap(result);
+        return result == null || result == bytes ? classBytes : ByteBuffer.wrap(result);
     }
 }
