@@ -93,7 +93,7 @@ public final class PathUtils {
                     }
                     if (file.exists()) {
                         if (file.isDirectory()) {
-                            JDKPaths.processDirectory0(paths, file);
+                            JDKPaths.processDirectory(paths, file);
                         } else {
                             try {
                                 JDKPaths.processJar(paths, file);

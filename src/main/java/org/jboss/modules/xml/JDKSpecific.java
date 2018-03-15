@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2014 Red Hat, Inc., and individual contributors
+ * Copyright 2016 Red Hat, Inc., and individual contributors
  * as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,30 +16,21 @@
  * limitations under the License.
  */
 
-package org.jboss.modules;
+package org.jboss.modules.xml;
 
-import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.util.jar.JarFile;
 
 /**
- * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * JDK-specific classes which are replaced for different JDK major versions.  This one is for Java 8 only.
+ *
+ * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  */
-final class StreamUtil {
+final class JDKSpecific {
 
-    static void copy(InputStream in, OutputStream out) throws IOException {
-        byte[] buf = new byte[16384];
-        int len;
-        while ((len = in.read(buf)) > 0) {
-            out.write(buf, 0, len);
-        }
-        out.flush();
+    static JarFile getJarFile(final File name, final boolean verify) throws IOException {
+        return new JarFile(name, verify);
     }
 
-    static void safeClose(Closeable closeable) {
-        if (closeable != null) try {
-            closeable.close();
-        } catch (Throwable ignored) {}
-    }
 }

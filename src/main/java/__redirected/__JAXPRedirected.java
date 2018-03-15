@@ -34,18 +34,32 @@ public class __JAXPRedirected {
      *
      * @param id the id for the jaxp module
      * @param loader the loader containing the jaxp module
+     * @deprecated Use {@link #changeAll(String, ModuleLoader)} instead.
      */
+    @Deprecated
     public static void changeAll(ModuleIdentifier id, ModuleLoader loader) {
-        __DocumentBuilderFactory.changeDefaultFactory(id, loader);
-        __SAXParserFactory.changeDefaultFactory(id, loader);
-        __TransformerFactory.changeDefaultFactory(id, loader);
-        __XPathFactory.changeDefaultFactory(id, loader);
-        __XMLEventFactory.changeDefaultFactory(id, loader);
-        __XMLInputFactory.changeDefaultFactory(id, loader);
-        __XMLOutputFactory.changeDefaultFactory(id, loader);
-        __DatatypeFactory.changeDefaultFactory(id, loader);
-        __SchemaFactory.changeDefaultFactory(id, loader);
-        __XMLReaderFactory.changeDefaultFactory(id, loader);
+        changeAll(id.toString(), loader);
+    }
+
+    /**
+     * Change all provided factories to the ones contained in the
+     * specified module using the standard META-INF/services lookup
+     * pattern.
+     *
+     * @param name the name for the jaxp module
+     * @param loader the loader containing the jaxp module
+     */
+    public static void changeAll(String name, ModuleLoader loader) {
+        __DocumentBuilderFactory.changeDefaultFactory(name, loader);
+        __SAXParserFactory.changeDefaultFactory(name, loader);
+        __TransformerFactory.changeDefaultFactory(name, loader);
+        __XPathFactory.changeDefaultFactory(name, loader);
+        __XMLEventFactory.changeDefaultFactory(name, loader);
+        __XMLInputFactory.changeDefaultFactory(name, loader);
+        __XMLOutputFactory.changeDefaultFactory(name, loader);
+        __DatatypeFactory.changeDefaultFactory(name, loader);
+        __SchemaFactory.changeDefaultFactory(name, loader);
+        __XMLReaderFactory.changeDefaultFactory(name, loader);
     }
 
     /**

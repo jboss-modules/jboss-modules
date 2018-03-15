@@ -31,7 +31,6 @@ import java.util.List;
 
 import org.jboss.modules.Module;
 import org.jboss.modules.ModuleClassLoader;
-import org.jboss.modules.ModuleIdentifier;
 import org.jboss.modules.ModuleLoadException;
 import org.jboss.modules.ModuleLoader;
 import org.jboss.modules.log.ModuleLogger;
@@ -40,7 +39,7 @@ import org.jboss.modules.log.ModuleLogger;
  * Common utilities for redirected factories
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
- * @authore Jason T. Greene
+ * @author Jason T. Greene
  */
 public final class __RedirectedUtils {
 
@@ -78,11 +77,11 @@ public final class __RedirectedUtils {
         return e;
     }
 
-    static <T> Class<? extends T> loadProvider(ModuleIdentifier id, Class<T> intf, ModuleLoader moduleLoader) {
+    static <T> Class<? extends T> loadProvider(String id, Class<T> intf, ModuleLoader moduleLoader) {
         return loadProvider(id, intf, moduleLoader, null);
     }
 
-    static <T> Class<? extends T> loadProvider(ModuleIdentifier id, Class<T> intf, ModuleLoader moduleLoader, String name) {
+    static <T> Class<? extends T> loadProvider(String id, Class<T> intf, ModuleLoader moduleLoader, String name) {
         Module module;
         try {
             module = moduleLoader.loadModule(id);

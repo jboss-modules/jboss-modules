@@ -46,7 +46,7 @@ import org.jboss.modules.ModuleLoader;
  * A redirected XMLEventFactory
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
- * @authore Jason T. Greene
+ * @author Jason T. Greene
  */
 @SuppressWarnings("unchecked")
 public final class __XMLEventFactory extends XMLEventFactory {
@@ -81,7 +81,12 @@ public final class __XMLEventFactory extends XMLEventFactory {
         }
     }
 
+    @Deprecated
     public static void changeDefaultFactory(ModuleIdentifier id, ModuleLoader loader) {
+        changeDefaultFactory(id.toString(), loader);
+    }
+
+    public static void changeDefaultFactory(String id, ModuleLoader loader) {
         Class<? extends XMLEventFactory> clazz = __RedirectedUtils.loadProvider(id, XMLEventFactory.class, loader);
         if (clazz != null) {
             try {

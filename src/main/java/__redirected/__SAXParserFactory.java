@@ -36,7 +36,7 @@ import org.xml.sax.SAXNotSupportedException;
  * A redirected SAXParserFactory
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
- * @authore Jason T. Greene
+ * @author Jason T. Greene
  */
 public final class __SAXParserFactory extends SAXParserFactory {
     private static final Constructor<? extends SAXParserFactory> PLATFORM_FACTORY;
@@ -70,7 +70,12 @@ public final class __SAXParserFactory extends SAXParserFactory {
         }
     }
 
+    @Deprecated
     public static void changeDefaultFactory(ModuleIdentifier id, ModuleLoader loader) {
+        changeDefaultFactory(id.toString(), loader);
+    }
+
+    public static void changeDefaultFactory(String id, ModuleLoader loader) {
         Class<? extends SAXParserFactory> clazz = __RedirectedUtils.loadProvider(id, SAXParserFactory.class, loader);
         if (clazz != null) {
             try {

@@ -29,36 +29,36 @@ final class JarModuleLoader extends ModuleLoader {
     static final String[] NO_STRINGS = new String[0];
     private final ModuleLoader delegate;
     private final JarFile jarFile;
-    private final ModuleIdentifier myIdentifier;
+    private final String myName;
 
     JarModuleLoader(final ModuleLoader delegate, final JarFile jarFile) {
         super(new ModuleFinder[] { new JarModuleFinder(simpleNameOf(jarFile), jarFile) });
         this.delegate = delegate;
         this.jarFile = jarFile;
-        myIdentifier = simpleNameOf(jarFile);
+        myName = simpleNameOf(jarFile);
     }
 
-    private static ModuleIdentifier simpleNameOf(JarFile jarFile) {
+    private static String simpleNameOf(JarFile jarFile) {
         String jarName = jarFile.getName();
         String simpleJarName = jarName.substring(jarName.lastIndexOf(File.separatorChar) + 1);
-        return ModuleIdentifier.create(simpleJarName);
+        return simpleJarName;
     }
 
-    protected Module preloadModule(final ModuleIdentifier identifier) throws ModuleLoadException {
-        if (identifier.equals(myIdentifier)) {
-            return loadModuleLocal(identifier);
+    protected Module preloadModule(final String name) throws ModuleLoadException {
+        if (name.equals(myName)) {
+            return loadModuleLocal(name);
         } else {
-            Module module = loadModuleLocal(identifier);
+            Module module = loadModuleLocal(name);
             if (module == null) {
-                return preloadModule(identifier, delegate);
+                return preloadModule(name, delegate);
             } else {
                 return module;
             }
         }
     }
 
-    ModuleIdentifier getMyIdentifier() {
-        return myIdentifier;
+    String getMyName() {
+        return myName;
     }
 
     public String toString() {

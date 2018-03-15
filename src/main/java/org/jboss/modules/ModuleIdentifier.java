@@ -21,9 +21,6 @@ package org.jboss.modules;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
-import java.lang.reflect.Field;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 
 /**
  * A unique identifier for a module within a module loader.
@@ -32,8 +29,11 @@ import java.security.PrivilegedAction;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  * @author Jason T. Greene
  *
+ * @deprecated This class has been deprecated in favor of name strings; however, programs using identifiers will
+ * continue to function correctly.
  * @apiviz.landmark
  */
+@Deprecated
 public final class ModuleIdentifier implements Serializable {
 
     private static final long serialVersionUID = 118533026624827995L;
@@ -43,29 +43,12 @@ public final class ModuleIdentifier implements Serializable {
     private final String name;
     private final String slot;
 
-    private final transient int hashCode;
-
-    private static final Field hashField;
-
-    static {
-        hashField = AccessController.doPrivileged(new PrivilegedAction<Field>() {
-            public Field run() {
-                final Field field;
-                try {
-                    field = ModuleIdentifier.class.getDeclaredField("hashCode");
-                    field.setAccessible(true);
-                } catch (NoSuchFieldException e) {
-                    throw new NoSuchFieldError(e.getMessage());
-                }
-                return field;
-            }
-        });
-    }
+    private transient volatile int hashCode;
 
     /**
      * The class path module (only present if booted from a class path).
      */
-    public static final ModuleIdentifier CLASSPATH = new ModuleIdentifier("Classpath", DEFAULT_SLOT);
+    public static final ModuleIdentifier CLASSPATH = new ModuleIdentifier(ClassPathModuleLoader.CLASSPATH_STRING, DEFAULT_SLOT);
 
     private ModuleIdentifier(final String name, final String slot) {
         this.name = name;
@@ -135,16 +118,13 @@ public final class ModuleIdentifier implements Serializable {
      */
     @Override
     public String toString() {
-        return escapeName(name) + ":" + escapeSlot(slot);
+        final String escapeName = escapeName(name);
+        return slot.equals(DEFAULT_SLOT) ? escapeName : escapeName + ":" + escapeSlot(slot);
     }
 
     private void readObject(ObjectInputStream ois) throws ClassNotFoundException, IOException {
         ois.defaultReadObject();
-        try {
-            hashField.setInt(this, calculateHashCode(name, slot));
-        } catch (IllegalAccessException e) {
-            throw new IllegalAccessError(e.getMessage());
-        }
+        hashCode = calculateHashCode(name, slot);
     }
 
     private static String escapeName(String name) {

@@ -129,19 +129,19 @@ public abstract class ModulesTestBase {
     static class ModuleLoaderSupport extends ModuleLoader {
 
         private String loaderName;
-        private Map<ModuleIdentifier, ModuleSpec> modules = new HashMap<ModuleIdentifier, ModuleSpec>();
+        private Map<String, ModuleSpec> modules = new HashMap<>();
 
         ModuleLoaderSupport(String loaderName) {
             this.loaderName = loaderName;
         }
 
         void addModuleSpec(ModuleSpec moduleSpec) {
-            modules.put(moduleSpec.getModuleIdentifier(), moduleSpec);
+            modules.put(moduleSpec.getName(), moduleSpec);
         }
 
         @Override
-        protected ModuleSpec findModule(ModuleIdentifier identifier) throws ModuleLoadException {
-            ModuleSpec moduleSpec = modules.get(identifier);
+        protected ModuleSpec findModule(String name) throws ModuleLoadException {
+            ModuleSpec moduleSpec = modules.get(name);
             return moduleSpec;
         }
 

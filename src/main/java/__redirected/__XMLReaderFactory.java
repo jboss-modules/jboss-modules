@@ -40,7 +40,7 @@ import org.xml.sax.helpers.XMLReaderFactory;
  * A redirected SAXParserFactory
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
- * @authore Jason T. Greene
+ * @author Jason T. Greene
  */
 public final class __XMLReaderFactory implements XMLReader {
     private static final Constructor<? extends XMLReader> PLATFORM_FACTORY;
@@ -62,16 +62,7 @@ public final class __XMLReaderFactory implements XMLReader {
         thread.setContextClassLoader(ClassLoader.getSystemClassLoader());
         // MODULES-248: XMLReaderFactory fields tracking if jar files were already scanned needs to reset
         // before and after switching class loader
-        try {
-            Field clsFromJar = XMLReaderFactory.class.getDeclaredField("_clsFromJar");
-            clsFromJar.setAccessible(true);
-            clsFromJar.set(XMLReaderFactory.class, null);
-            Field jarread = XMLReaderFactory.class.getDeclaredField("_jarread");
-            jarread.setAccessible(true);
-            jarread.setBoolean(XMLReaderFactory.class, false);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            throw __RedirectedUtils.wrapped(new RuntimeException(e.getMessage()), e);
-        }
+        resetScanTracking();
         try {
             if (System.getProperty(SAX_DRIVER, "").equals(__XMLReaderFactory.class.getName())) {
                 System.clearProperty(SAX_DRIVER);
@@ -86,21 +77,17 @@ public final class __XMLReaderFactory implements XMLReader {
         } catch (SAXException e) {
              throw __RedirectedUtils.wrapped(new RuntimeException(e.getMessage()), e);
         } finally {
-            try {
-                Field clsFromJar = XMLReaderFactory.class.getDeclaredField("_clsFromJar");
-                clsFromJar.setAccessible(true);
-                clsFromJar.set(XMLReaderFactory.class, null);
-                Field jarread = XMLReaderFactory.class.getDeclaredField("_jarread");
-                jarread.setAccessible(true);
-                jarread.setBoolean(XMLReaderFactory.class, false);
-            } catch (NoSuchFieldException | IllegalAccessException e) {
-                throw __RedirectedUtils.wrapped(new RuntimeException(e.getMessage()), e);
-            }
+            resetScanTracking();
             thread.setContextClassLoader(old);
         }
     }
 
+    @Deprecated
     public static void changeDefaultFactory(ModuleIdentifier id, ModuleLoader loader) {
+        changeDefaultFactory(id.toString(), loader);
+    }
+
+    public static void changeDefaultFactory(String id, ModuleLoader loader) {
         Class<? extends XMLReader> clazz = __RedirectedUtils.loadProvider(id, XMLReader.class, loader, SAX_DRIVER);
         if (clazz != null) {
             try {
@@ -119,6 +106,21 @@ public final class __XMLReaderFactory implements XMLReader {
      * Init method.
      */
     public static void init() {}
+
+    private static void resetScanTracking() {
+        try {
+            Field clsFromJar = XMLReaderFactory.class.getDeclaredField("_clsFromJar");
+            clsFromJar.setAccessible(true);
+            clsFromJar.set(XMLReaderFactory.class, null);
+            Field jarread = XMLReaderFactory.class.getDeclaredField("_jarread");
+            jarread.setAccessible(true);
+            jarread.setBoolean(XMLReaderFactory.class, false);
+        } catch (NoSuchFieldException e) {
+            //no-op, original SAX XMLReaderFactory hasn't helper fields _clsFromJar and _jarread
+        } catch (IllegalAccessException e) {
+            throw __RedirectedUtils.wrapped(new RuntimeException(e.getMessage()), e);
+        }
+    }
 
     /**
      * Construct a new instance.

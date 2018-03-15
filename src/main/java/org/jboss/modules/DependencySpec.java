@@ -349,9 +349,21 @@ public abstract class DependencySpec {
      *
      * @param identifier the module identifier
      * @return the dependency spec
+     * @deprecated Use {@link #createModuleDependencySpec(String)} instead.
      */
+    @Deprecated
     public static DependencySpec createModuleDependencySpec(final ModuleIdentifier identifier) {
-        return createModuleDependencySpec(identifier, false);
+        return createModuleDependencySpec(identifier.toString());
+    }
+
+    /**
+     * Create a dependency on the given module.
+     *
+     * @param name the module name
+     * @return the dependency spec
+     */
+    public static DependencySpec createModuleDependencySpec(final String name) {
+        return createModuleDependencySpec(name, false);
     }
 
     /**
@@ -360,9 +372,22 @@ public abstract class DependencySpec {
      * @param identifier the module identifier
      * @param export {@code true} if the dependency should be exported by default
      * @return the dependency spec
+     * @deprecated Use {@link #createModuleDependencySpec(String,boolean)} instead.
      */
+    @Deprecated
     public static DependencySpec createModuleDependencySpec(final ModuleIdentifier identifier, final boolean export) {
-        return createModuleDependencySpec(identifier, export, false);
+        return createModuleDependencySpec(identifier.toString(), export);
+    }
+
+    /**
+     * Create a dependency on the given module.
+     *
+     * @param name the module name
+     * @param export {@code true} if the dependency should be exported by default
+     * @return the dependency spec
+     */
+    public static DependencySpec createModuleDependencySpec(final String name, final boolean export) {
+        return createModuleDependencySpec(name, export, false);
     }
 
     /**
@@ -372,9 +397,23 @@ public abstract class DependencySpec {
      * @param export {@code true} if this is a fully re-exported dependency, {@code false} if it should not be exported
      * @param optional {@code true} if the dependency is optional, {@code false} if it is mandatory
      * @return the dependency spec
+     * @deprecated Use {@link #createModuleDependencySpec(String,boolean,boolean)} instead.
      */
+    @Deprecated
     public static DependencySpec createModuleDependencySpec(final ModuleIdentifier identifier, final boolean export, final boolean optional) {
-        return createModuleDependencySpec(PathFilters.getDefaultImportFilter(), export ? PathFilters.acceptAll() : PathFilters.rejectAll(), null, identifier, optional);
+        return createModuleDependencySpec(identifier.toString(), export, optional);
+    }
+
+    /**
+     * Create a dependency on the given module.
+     *
+     * @param name the module name
+     * @param export {@code true} if this is a fully re-exported dependency, {@code false} if it should not be exported
+     * @param optional {@code true} if the dependency is optional, {@code false} if it is mandatory
+     * @return the dependency spec
+     */
+    public static DependencySpec createModuleDependencySpec(final String name, final boolean export, final boolean optional) {
+        return createModuleDependencySpec(PathFilters.getDefaultImportFilter(), export ? PathFilters.acceptAll() : PathFilters.rejectAll(), null, name, optional);
     }
 
     /**
@@ -384,9 +423,23 @@ public abstract class DependencySpec {
      * @param identifier the module identifier
      * @param export {@code true} if this is a fully re-exported dependency, {@code false} if it should not be exported
      * @return the dependency spec
+     * @deprecated Use {@link #createModuleDependencySpec(ModuleLoader, String, boolean)} instead.
      */
+    @Deprecated
     public static DependencySpec createModuleDependencySpec(final ModuleLoader moduleLoader, final ModuleIdentifier identifier, final boolean export) {
-        return createModuleDependencySpec(PathFilters.getDefaultImportFilter(), export ? PathFilters.acceptAll() : PathFilters.rejectAll(), moduleLoader, identifier, false);
+        return createModuleDependencySpec(moduleLoader, identifier.toString(), export);
+    }
+
+    /**
+     * Create a dependency on the given module.
+     *
+     * @param moduleLoader the specific module loader from which the module should be acquired
+     * @param name the module name
+     * @param export {@code true} if this is a fully re-exported dependency, {@code false} if it should not be exported
+     * @return the dependency spec
+     */
+    public static DependencySpec createModuleDependencySpec(final ModuleLoader moduleLoader, final String name, final boolean export) {
+        return createModuleDependencySpec(PathFilters.getDefaultImportFilter(), export ? PathFilters.acceptAll() : PathFilters.rejectAll(), moduleLoader, name, false);
     }
 
     /**
@@ -397,9 +450,24 @@ public abstract class DependencySpec {
      * @param export {@code true} if this is a fully re-exported dependency, {@code false} if it should not be exported
      * @param optional {@code true} if the dependency is optional, {@code false} if it is mandatory
      * @return the dependency spec
+     * @deprecated Use {@link #createModuleDependencySpec(ModuleLoader,String,boolean,boolean)} instead.
      */
+    @Deprecated
     public static DependencySpec createModuleDependencySpec(final ModuleLoader moduleLoader, final ModuleIdentifier identifier, final boolean export, final boolean optional) {
-        return createModuleDependencySpec(PathFilters.getDefaultImportFilter(), export ? PathFilters.acceptAll() : PathFilters.rejectAll(), moduleLoader, identifier, optional);
+        return createModuleDependencySpec(moduleLoader, identifier.toString(), export, optional);
+    }
+
+    /**
+     * Create a dependency on the given module.
+     *
+     * @param moduleLoader the specific module loader from which the module should be acquired
+     * @param name the module name
+     * @param export {@code true} if this is a fully re-exported dependency, {@code false} if it should not be exported
+     * @param optional {@code true} if the dependency is optional, {@code false} if it is mandatory
+     * @return the dependency spec
+     */
+    public static DependencySpec createModuleDependencySpec(final ModuleLoader moduleLoader, final String name, final boolean export, final boolean optional) {
+        return createModuleDependencySpec(PathFilters.getDefaultImportFilter(), export ? PathFilters.acceptAll() : PathFilters.rejectAll(), moduleLoader, name, optional);
     }
 
     /**
@@ -409,9 +477,23 @@ public abstract class DependencySpec {
      * @param identifier the module identifier
      * @param optional {@code true} if the dependency is optional, {@code false} if it is mandatory
      * @return the dependency spec
+     * @deprecated Use {@link #createModuleDependencySpec(PathFilter,String,boolean)} instead.
      */
+    @Deprecated
     public static DependencySpec createModuleDependencySpec(final PathFilter exportFilter, final ModuleIdentifier identifier, final boolean optional) {
-        return createModuleDependencySpec(PathFilters.getDefaultImportFilter(), exportFilter, null, identifier, optional);
+        return createModuleDependencySpec(exportFilter, identifier.toString(), optional);
+    }
+
+    /**
+     * Create a dependency on the given module.
+     *
+     * @param exportFilter the export filter to apply
+     * @param name the module name
+     * @param optional {@code true} if the dependency is optional, {@code false} if it is mandatory
+     * @return the dependency spec
+     */
+    public static DependencySpec createModuleDependencySpec(final PathFilter exportFilter, final String name, final boolean optional) {
+        return createModuleDependencySpec(PathFilters.getDefaultImportFilter(), exportFilter, null, name, optional);
     }
 
     /**
@@ -422,9 +504,23 @@ public abstract class DependencySpec {
      * @param identifier the module identifier
      * @param optional {@code true} if the dependency is optional, {@code false} if it is mandatory
      * @return the dependency spec
+     * @deprecated Use {@link #createModuleDependencySpec(PathFilter,ModuleLoader,String,boolean)} instead.
      */
     public static DependencySpec createModuleDependencySpec(final PathFilter exportFilter, final ModuleLoader moduleLoader, final ModuleIdentifier identifier, final boolean optional) {
-        return createModuleDependencySpec(PathFilters.getDefaultImportFilter(), exportFilter, moduleLoader, identifier, optional);
+        return createModuleDependencySpec(exportFilter, moduleLoader, identifier.toString(), optional);
+    }
+
+    /**
+     * Create a dependency on the given module.
+     *
+     * @param exportFilter the export filter to apply
+     * @param moduleLoader the specific module loader from which the module should be acquired
+     * @param name the module name
+     * @param optional {@code true} if the dependency is optional, {@code false} if it is mandatory
+     * @return the dependency spec
+     */
+    public static DependencySpec createModuleDependencySpec(final PathFilter exportFilter, final ModuleLoader moduleLoader, final String name, final boolean optional) {
+        return createModuleDependencySpec(PathFilters.getDefaultImportFilter(), exportFilter, moduleLoader, name, optional);
     }
 
     /**
@@ -436,9 +532,25 @@ public abstract class DependencySpec {
      * @param identifier the module identifier
      * @param optional {@code true} if the dependency is optional, {@code false} if it is mandatory
      * @return the dependency spec
+     * @deprecated Use {@link #createModuleDependencySpec(PathFilter, PathFilter, PathFilter, PathFilter, ClassFilter, ClassFilter, ModuleLoader, String, boolean)} instead.
      */
+    @Deprecated
     public static DependencySpec createModuleDependencySpec(final PathFilter importFilter, final PathFilter exportFilter, final ModuleLoader moduleLoader, final ModuleIdentifier identifier, final boolean optional) {
         return createModuleDependencySpec(importFilter, exportFilter, PathFilters.acceptAll(), PathFilters.acceptAll(), ClassFilters.acceptAll(), ClassFilters.acceptAll(), moduleLoader, identifier, optional);
+    }
+
+    /**
+     * Create a dependency on the given module.
+     *
+     * @param importFilter the import filter to apply
+     * @param exportFilter the export filter to apply
+     * @param moduleLoader the specific module loader from which the module should be acquired
+     * @param name the module name
+     * @param optional {@code true} if the dependency is optional, {@code false} if it is mandatory
+     * @return the dependency spec
+     */
+    public static DependencySpec createModuleDependencySpec(final PathFilter importFilter, final PathFilter exportFilter, final ModuleLoader moduleLoader, final String name, final boolean optional) {
+        return createModuleDependencySpec(importFilter, exportFilter, PathFilters.acceptAll(), PathFilters.acceptAll(), ClassFilters.acceptAll(), ClassFilters.acceptAll(), moduleLoader, name, optional);
     }
 
     /**
@@ -454,16 +566,36 @@ public abstract class DependencySpec {
      * @param identifier the module identifier
      * @param optional {@code true} if the dependency is optional, {@code false} if it is mandatory
      * @return the dependency spec
+     * @deprecated Use {@link #createModuleDependencySpec(PathFilter,PathFilter,PathFilter,PathFilter,ClassFilter,ClassFilter,ModuleLoader,String,boolean)} instead.
      */
+    @Deprecated
     public static DependencySpec createModuleDependencySpec(final PathFilter importFilter, final PathFilter exportFilter, final PathFilter resourceImportFilter, final PathFilter resourceExportFilter, final ClassFilter classImportFilter, final ClassFilter classExportFilter, final ModuleLoader moduleLoader, final ModuleIdentifier identifier, final boolean optional) {
+        return createModuleDependencySpec(importFilter, exportFilter, resourceImportFilter, resourceExportFilter, classImportFilter, classExportFilter, moduleLoader, identifier.toString(), optional);
+    }
+
+    /**
+     * Create a dependency on the given module.
+     *
+     * @param importFilter the import filter to apply
+     * @param exportFilter the export filter to apply
+     * @param resourceImportFilter the resource import filter to apply
+     * @param resourceExportFilter the resource export filter to apply
+     * @param classImportFilter the class import filter to apply
+     * @param classExportFilter the class export filter to apply
+     * @param moduleLoader the specific module loader from which the module should be acquired
+     * @param name the module name
+     * @param optional {@code true} if the dependency is optional, {@code false} if it is mandatory
+     * @return the dependency spec
+     */
+    public static DependencySpec createModuleDependencySpec(final PathFilter importFilter, final PathFilter exportFilter, final PathFilter resourceImportFilter, final PathFilter resourceExportFilter, final ClassFilter classImportFilter, final ClassFilter classExportFilter, final ModuleLoader moduleLoader, final String name, final boolean optional) {
         if (importFilter == null) {
             throw new IllegalArgumentException("importFilter is null");
         }
         if (exportFilter == null) {
             throw new IllegalArgumentException("exportFilter is null");
         }
-        if (identifier == null) {
-            throw new IllegalArgumentException("identifier is null");
+        if (name == null) {
+            throw new IllegalArgumentException("name is null");
         }
         if (classImportFilter == null) {
             throw new IllegalArgumentException("classImportFilter is null");
@@ -477,6 +609,6 @@ public abstract class DependencySpec {
         if (resourceExportFilter == null) {
             throw new IllegalArgumentException("resourceExportFilter is null");
         }
-        return new ModuleDependencySpec(importFilter, exportFilter, resourceImportFilter, resourceExportFilter, classImportFilter, classExportFilter, moduleLoader, identifier, optional);
+        return new ModuleDependencySpec(importFilter, exportFilter, resourceImportFilter, resourceExportFilter, classImportFilter, classExportFilter, moduleLoader, name, optional);
     }
 }

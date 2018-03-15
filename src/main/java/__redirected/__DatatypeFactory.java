@@ -72,7 +72,12 @@ public final class __DatatypeFactory extends DatatypeFactory {
         }
     }
 
+    @Deprecated
     public static void changeDefaultFactory(ModuleIdentifier id, ModuleLoader loader) {
+        changeDefaultFactory(id.toString(), loader);
+    }
+
+    public static void changeDefaultFactory(String id, ModuleLoader loader) {
         Class<? extends DatatypeFactory> clazz = __RedirectedUtils.loadProvider(id, DatatypeFactory.class, loader);
         if (clazz != null) {
             try {

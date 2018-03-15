@@ -33,13 +33,21 @@ import org.jboss.modules.filter.MultiplePathFilterBuilder;
 import org.jboss.modules.filter.PathFilters;
 import org.jboss.modules.xml.ModuleXmlParser;
 
+import static org.jboss.modules.Utils.DEPENDENCIES;
+import static org.jboss.modules.Utils.EXPORT;
+import static org.jboss.modules.Utils.OPTIONAL;
+import static org.jboss.modules.Utils.MODULES_DIR;
+import static org.jboss.modules.Utils.MODULE_FILE;
+
 /**
  * A module finder which uses a JAR file as a module repository.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  */
 public final class JarModuleFinder implements ModuleFinder {
-    private final ModuleIdentifier myIdentifier;
+
+    private final String myName;
     private final JarFile jarFile;
     private final AccessControlContext context;
 
@@ -50,13 +58,23 @@ public final class JarModuleFinder implements ModuleFinder {
      * @param jarFile the JAR file to encapsulate
      */
     public JarModuleFinder(final ModuleIdentifier myIdentifier, final JarFile jarFile) {
-        this.myIdentifier = myIdentifier;
+        this(myIdentifier.toString(), jarFile);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param myName the name to use for the JAR itself
+     * @param jarFile the JAR file to encapsulate
+     */
+    public JarModuleFinder(final String myName, final JarFile jarFile) {
+        this.myName = myName;
         this.jarFile = jarFile;
         context = AccessController.getContext();
     }
 
-    public ModuleSpec findModule(final ModuleIdentifier identifier, final ModuleLoader delegateLoader) throws ModuleLoadException {
-        if (identifier.equals(myIdentifier)) {
+    public ModuleSpec findModule(final String name, final ModuleLoader delegateLoader) throws ModuleLoadException {
+        if (name.equals(myName)) {
             // special root JAR module
             Manifest manifest;
             try {
@@ -64,17 +82,17 @@ public final class JarModuleFinder implements ModuleFinder {
             } catch (IOException e) {
                 throw new ModuleLoadException("Failed to load MANIFEST from JAR", e);
             }
-            ModuleSpec.Builder builder = ModuleSpec.build(identifier);
+            ModuleSpec.Builder builder = ModuleSpec.build(name);
             Attributes mainAttributes = manifest.getMainAttributes();
             String mainClass = mainAttributes.getValue(Attributes.Name.MAIN_CLASS);
             if (mainClass != null) {
                 builder.setMainClass(mainClass);
             }
             String classPath = mainAttributes.getValue(Attributes.Name.CLASS_PATH);
-            String dependencies = mainAttributes.getValue("Dependencies");
+            String dependencies = mainAttributes.getValue(DEPENDENCIES);
             MultiplePathFilterBuilder pathFilterBuilder = PathFilters.multiplePathFilterBuilder(true);
-            pathFilterBuilder.addFilter(PathFilters.is("modules"), false);
-            pathFilterBuilder.addFilter(PathFilters.isChildOf("modules"), false);
+            pathFilterBuilder.addFilter(PathFilters.is(MODULES_DIR), false);
+            pathFilterBuilder.addFilter(PathFilters.isChildOf(MODULES_DIR), false);
             builder.addResourceRoot(ResourceLoaderSpec.createResourceLoaderSpec(new JarFileResourceLoader("", jarFile), pathFilterBuilder.create()));
             String[] classPathEntries = classPath == null ? JarModuleLoader.NO_STRINGS : classPath.split("\\s+");
             for (String entry : classPathEntries) {
@@ -83,7 +101,7 @@ public final class JarModuleFinder implements ModuleFinder {
                         // invalid
                         continue;
                     }
-                    File root = null;
+                    File root;
                     try {
                         File path = new File(new URI(entry));
                         if (path.isAbsolute()) {
@@ -104,7 +122,7 @@ public final class JarModuleFinder implements ModuleFinder {
                         // assume a JAR
                         JarFile childJarFile;
                         try {
-                            childJarFile = new JarFile(root, true);
+                            childJarFile = JDKSpecific.getJarFile(root, true);
                         } catch (IOException e) {
                             // ignore and continue
                             continue;
@@ -126,38 +144,47 @@ public final class JarModuleFinder implements ModuleFinder {
                     String moduleName = fields[0];
                     for (int i = 1; i < fields.length; i++) {
                         String field = fields[i];
-                        if (field.equals("optional")) {
+                        if (field.equals(OPTIONAL)) {
                             optional = true;
-                        } else if (field.equals("export")) {
+                        } else if (field.equals(EXPORT)) {
                             export = true;
                         }
                         // else ignored
                     }
-                    builder.addDependency(DependencySpec.createModuleDependencySpec(ModuleIdentifier.fromString(moduleName), export, optional));
+                    builder.addDependency(DependencySpec.createModuleDependencySpec(moduleName, export, optional));
                 }
             }
             builder.addDependency(DependencySpec.createSystemDependencySpec(JDKPaths.JDK));
             builder.addDependency(DependencySpec.createLocalDependencySpec());
             return builder.create();
         } else {
-            String namePath = identifier.getName().replace('.', '/');
-            String basePath = "modules/" + namePath + "/" + identifier.getSlot();
-            JarEntry moduleXmlEntry = jarFile.getJarEntry(basePath + "/module.xml");
+            String basePath = MODULES_DIR + "/" + toPathString(name);
+            JarEntry moduleXmlEntry = jarFile.getJarEntry(basePath + "/" + MODULE_FILE);
             if (moduleXmlEntry == null) {
-                return null;
+                basePath = MODULES_DIR + "/" + toLegacyPathString(name);
+                moduleXmlEntry = jarFile.getJarEntry(basePath + "/" + MODULE_FILE);
+                if (moduleXmlEntry == null) {
+                    return null;
+                }
             }
             ModuleSpec moduleSpec;
             try {
-                InputStream inputStream = jarFile.getInputStream(moduleXmlEntry);
-                try {
-                    moduleSpec = ModuleXmlParser.parseModuleXml((rootPath, loaderPath, loaderName) -> new JarFileResourceLoader(loaderName, jarFile, loaderPath), basePath, inputStream, moduleXmlEntry.getName(), delegateLoader, identifier);
-                } finally {
-                    StreamUtil.safeClose(inputStream);
+                try (final InputStream inputStream = jarFile.getInputStream(moduleXmlEntry)) {
+                    moduleSpec = ModuleXmlParser.parseModuleXml((rootPath, loaderPath, loaderName) -> new JarFileResourceLoader(loaderName, jarFile, loaderPath), basePath, inputStream, moduleXmlEntry.getName(), delegateLoader, name);
                 }
             } catch (IOException e) {
-                throw new ModuleLoadException("Failed to read module.xml file", e);
+                throw new ModuleLoadException("Failed to read " + MODULE_FILE + " file", e);
             }
             return moduleSpec;
         }
+    }
+
+    private static String toPathString(final String moduleName) {
+        return moduleName.replace('.', '/');
+    }
+
+    private static String toLegacyPathString(final String moduleName) {
+        final ModuleIdentifier moduleIdentifier = ModuleIdentifier.fromString(moduleName);
+        return moduleIdentifier.getName().replace('.', '/') + '/' + moduleIdentifier.getSlot();
     }
 }

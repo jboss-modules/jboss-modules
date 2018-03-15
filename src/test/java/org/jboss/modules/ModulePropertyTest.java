@@ -41,7 +41,7 @@ public class ModulePropertyTest extends AbstractModuleTestCase {
 
     @Test
     public void testBasic() throws Exception {
-        Module module = moduleLoader.loadModule(MODULE_ID);
+        Module module = moduleLoader.loadModule("test.test");
         assertNull(module.getProperty("non-existent"));
         assertEquals("blah", module.getProperty("non-existent", "blah"));
         assertEquals("true", module.getProperty("test.prop.1"));

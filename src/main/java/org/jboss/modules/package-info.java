@@ -18,8 +18,8 @@
  */
 
 /**
- * The primary JBoss Modules API.  The key classes in this package are {@link Module}, {@link ModuleLoader},
- * {@link ConcurrentClassLoader}, and {@link ModuleClassLoader}.  These classes make up the backbone of the module
+ * The primary JBoss Modules API.  The key classes in this package are {@link org.jboss.modules.Module Module}, {@link org.jboss.modules.ModuleLoader ModuleLoader},
+ * {@link org.jboss.modules.ConcurrentClassLoader ConcurrentClassLoader}, and {@link org.jboss.modules.ModuleClassLoader ModuleClassLoader}.  These classes make up the backbone of the module
  * system.
  */
 package org.jboss.modules;

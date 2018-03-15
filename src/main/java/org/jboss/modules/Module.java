@@ -20,9 +20,10 @@ package org.jboss.modules;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLConnection;
 import java.security.AccessController;
@@ -34,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -71,6 +73,7 @@ import org.jboss.modules.security.ModularPermissionFactory;
 public final class Module {
 
     private static final AtomicReference<ModuleLoader> BOOT_MODULE_LOADER;
+    private static final MethodType MAIN_METHOD_TYPE = MethodType.methodType(void.class, String[].class);
 
     static {
         log = NoopModuleLogger.getInstance();
@@ -154,7 +157,7 @@ public final class Module {
      * @throws SecurityException always
      */
     public static ModulesPrivateAccess getPrivateAccess() {
-        if (CallerContext.getCallingClass() == ModularPermissionFactory.class) {
+        if (JDKSpecific.getCallingClass() == ModularPermissionFactory.class) {
             return PRIVATE_ACCESS;
         }
         throw new SecurityException();
@@ -171,9 +174,9 @@ public final class Module {
     // immutable properties
 
     /**
-     * The identifier of this module.
+     * The name of this module.
      */
-    private final ModuleIdentifier identifier;
+    private final String name;
     /**
      * The name of the main class, if any (may be {@code null}).
      */
@@ -204,6 +207,10 @@ public final class Module {
     private final Version version;
 
     // mutable properties
+    /**
+     * Module aliases
+     */
+    volatile Set<String> aliases = new HashSet<>();
 
     /**
      * The linkage state.
@@ -231,7 +238,7 @@ public final class Module {
         this.moduleLoader = moduleLoader;
 
         // Initialize state from the spec.
-        identifier = spec.getModuleIdentifier();
+        name = spec.getName();
         mainClassName = spec.getMainClass();
         fallbackLoader = spec.getFallbackLoader();
         final PermissionCollection permissionCollection = spec.getPermissionCollection();
@@ -315,31 +322,31 @@ public final class Module {
      * @throws ClassNotFoundException if the main class is not found
      */
     public void run(final String[] args) throws NoSuchMethodException, InvocationTargetException, ClassNotFoundException {
+        if (mainClassName == null) {
+            throw new NoSuchMethodException("No main class defined for " + this);
+        }
+        final ClassLoader oldClassLoader = SecurityActions.setContextClassLoader(moduleClassLoader);
         try {
-            if (mainClassName == null) {
-                throw new NoSuchMethodException("No main class defined for " + this);
-            }
-            final ClassLoader oldClassLoader = SecurityActions.setContextClassLoader(moduleClassLoader);
+            final Class<?> mainClass = Class.forName(mainClassName, false, moduleClassLoader);
             try {
-                final Class<?> mainClass = Class.forName(mainClassName, false, moduleClassLoader);
-                try {
-                    Class.forName(mainClassName, true, moduleClassLoader);
-                } catch (Throwable t) {
-                    throw new InvocationTargetException(t, "Failed to initialize main class '" + mainClassName + "'");
-                }
-                final Method mainMethod = mainClass.getMethod("main", String[].class);
-                final int modifiers = mainMethod.getModifiers();
-                if (! Modifier.isStatic(modifiers)) {
-                    throw new NoSuchMethodException("Main method is not static for " + this);
-                }
-                // ignore the return value
-                mainMethod.invoke(null, new Object[] {args});
-            } finally {
-                SecurityActions.setContextClassLoader(oldClassLoader);
+                Class.forName(mainClassName, true, moduleClassLoader);
+            } catch (Throwable t) {
+                throw new InvocationTargetException(t, "Failed to initialize main class '" + mainClassName + "'");
             }
-        } catch (IllegalAccessException e) {
-            // unexpected; should be public
-            throw new IllegalAccessError(e.getMessage());
+            final MethodHandles.Lookup lookup = MethodHandles.lookup();
+            final MethodHandle methodHandle;
+            try {
+                methodHandle = lookup.findStatic(mainClass, "main", MAIN_METHOD_TYPE);
+            } catch (IllegalAccessException e) {
+                throw new NoSuchMethodException("The main method is not public");
+            }
+            try {
+                methodHandle.invokeExact(args);
+            } catch (Throwable throwable) {
+                throw new InvocationTargetException(throwable);
+            }
+        } finally {
+            SecurityActions.setContextClassLoader(oldClassLoader);
         }
     }
 
@@ -347,9 +354,20 @@ public final class Module {
      * Get this module's identifier.
      *
      * @return the identifier
+     * @deprecated Use {@link #getName()} instead.
      */
+    @Deprecated
     public ModuleIdentifier getIdentifier() {
-        return identifier;
+        return ModuleIdentifier.fromString(getName());
+    }
+
+    /**
+     * Get this module's name.
+     *
+     * @return this module's name
+     */
+    public String getName() {
+        return name;
     }
 
     /**
@@ -407,9 +425,27 @@ public final class Module {
      * @param serviceType the service type class
      * @return the loaded service from the caller's module
      * @throws ModuleLoadException if the named module failed to load
+     * @deprecated Use {@link #loadServiceFromCallerModuleLoader(String, Class)} instead.
      */
+    @Deprecated
     public static <S> ServiceLoader<S> loadServiceFromCallerModuleLoader(ModuleIdentifier identifier, Class<S> serviceType) throws ModuleLoadException {
-        return getCallerModuleLoader().loadModule(identifier).loadService(serviceType);
+        return loadServiceFromCallerModuleLoader(identifier.toString(), serviceType);
+    }
+
+    /**
+     * Load a service loader from a module in the caller's module loader. The caller's
+     * module loader refers to the loader of the module of the class that calls this method.
+     * Note that {@link #loadService(Class)} is more efficient since it does not need to crawl
+     * the stack.
+     *
+     * @param <S> the the service type
+     * @param name the module name containing the service loader
+     * @param serviceType the service type class
+     * @return the loaded service from the caller's module
+     * @throws ModuleLoadException if the named module failed to load
+     */
+    public static <S> ServiceLoader<S> loadServiceFromCallerModuleLoader(String name, Class<S> serviceType) throws ModuleLoadException {
+        return getCallerModuleLoader().loadModule(name).loadService(serviceType);
     }
 
     /**
@@ -529,9 +565,24 @@ public final class Module {
      * @param identifier the module identifier
      * @return the module
      * @throws ModuleLoadException if the module could not be loaded
+     * @deprecated Use {@link #getModuleFromCallerModuleLoader(String)} instead.
      */
+    @Deprecated
     public static Module getModuleFromCallerModuleLoader(final ModuleIdentifier identifier) throws ModuleLoadException {
-        return getCallerModuleLoader().loadModule(identifier);
+        return getModuleFromCallerModuleLoader(identifier.toString());
+    }
+
+    /**
+     * Get a module from the current module loader. Note that this must crawl the
+     * stack to determine this, so other mechanisms are more efficient.
+     * @see #getCallerModuleLoader()
+     *
+     * @param name the module name
+     * @return the module
+     * @throws ModuleLoadException if the module could not be loaded
+     */
+    public static Module getModuleFromCallerModuleLoader(final String name) throws ModuleLoadException {
+        return getCallerModuleLoader().loadModule(name);
     }
 
     /**
@@ -542,7 +593,7 @@ public final class Module {
      * @return the current module
      */
     public static Module getCallerModule() {
-        return forClass(CallerContext.getCallingClass());
+        return forClass(JDKSpecific.getCallingUserClass());
     }
 
     /**
@@ -551,9 +602,22 @@ public final class Module {
      * @param identifier the module identifier
      * @return the module
      * @throws ModuleLoadException if an error occurs
+     * @deprecated Use {@link #getModule(String)} instead.
      */
+    @Deprecated
     public Module getModule(final ModuleIdentifier identifier) throws ModuleLoadException {
-        return moduleLoader.loadModule(identifier);
+        return getModule(identifier.toString());
+    }
+
+    /**
+     * Get the module with the given identifier from the module loader used by this module.
+     *
+     * @param name the module name
+     * @return the module
+     * @throws ModuleLoadException if an error occurs
+     */
+    public Module getModule(final String name) throws ModuleLoadException {
+        return moduleLoader.loadModule(name);
     }
 
     /**
@@ -567,10 +631,29 @@ public final class Module {
      * @return the class
      * @throws ModuleLoadException if the module could not be loaded
      * @throws ClassNotFoundException if the class could not be loaded
+     * @deprecated Use {@link #loadClassFromBootModuleLoader(String, String)} instead.
      */
+    @Deprecated
     public static Class<?> loadClassFromBootModuleLoader(final ModuleIdentifier moduleIdentifier, final String className)
             throws ModuleLoadException, ClassNotFoundException {
-        return Class.forName(className, true, getBootModuleLoader().loadModule(moduleIdentifier).getClassLoader());
+        return loadClassFromBootModuleLoader(moduleIdentifier.toString(), className);
+    }
+
+    /**
+     * Load a class from a module in the system module loader.
+     *
+     * @see #getBootModuleLoader()
+     *
+     * @param name the name of the module from which the class
+     *        should be loaded
+     * @param className the class name to load
+     * @return the class
+     * @throws ModuleLoadException if the module could not be loaded
+     * @throws ClassNotFoundException if the class could not be loaded
+     */
+    public static Class<?> loadClassFromBootModuleLoader(final String name, final String className)
+            throws ModuleLoadException, ClassNotFoundException {
+        return Class.forName(className, true, getBootModuleLoader().loadModule(name).getClassLoader());
     }
 
     /**
@@ -584,10 +667,28 @@ public final class Module {
      * @return the class
      * @throws ModuleLoadException if the module could not be loaded
      * @throws ClassNotFoundException if the class could not be loaded
+     * @deprecated Use {@link #loadClassFromCallerModuleLoader(String, String)} instead.
      */
     public static Class<?> loadClassFromCallerModuleLoader(final ModuleIdentifier moduleIdentifier, final String className)
             throws ModuleLoadException, ClassNotFoundException {
-        return Class.forName(className, true, getModuleFromCallerModuleLoader(moduleIdentifier).getClassLoader());
+        return loadClassFromCallerModuleLoader(moduleIdentifier.toString(), className);
+    }
+
+    /**
+     * Load a class from a module in the caller's module loader.
+     *
+     * @see #getCallerModuleLoader()
+     *
+     * @param name the name of the module from which the class
+     *        should be loaded
+     * @param className the class name to load
+     * @return the class
+     * @throws ModuleLoadException if the module could not be loaded
+     * @throws ClassNotFoundException if the class could not be loaded
+     */
+    public static Class<?> loadClassFromCallerModuleLoader(final String name, final String className)
+            throws ModuleLoadException, ClassNotFoundException {
+        return Class.forName(className, true, getModuleFromCallerModuleLoader(name).getClassLoader());
     }
 
     /**
@@ -947,7 +1048,7 @@ public final class Module {
     public String toString() {
         StringBuilder b = new StringBuilder();
         b.append("Module \"");
-        b.append(identifier);
+        b.append(getName());
         b.append("\"");
         if (version != null) {
             b.append(" version ").append(version);
@@ -1093,13 +1194,13 @@ public final class Module {
             if (dependency instanceof ModuleDependency) {
                 final ModuleDependency moduleDependency = (ModuleDependency) dependency;
                 final ModuleLoader moduleLoader = moduleDependency.getModuleLoader();
-                final ModuleIdentifier id = moduleDependency.getIdentifier();
+                final String name = moduleDependency.getName();
                 final Module module;
 
                 try {
                     long pauseStart = Metrics.getCurrentCPUTime();
                     try {
-                        module = moduleLoader.preloadModule(id);
+                        module = moduleLoader.preloadModule(name);
                     } finally {
                         subtract += Metrics.getCurrentCPUTime() - pauseStart;
                     }
@@ -1107,13 +1208,13 @@ public final class Module {
                     if (moduleDependency.isOptional()) {
                         continue;
                     } else {
-                        log.trace("Module %s, dependency %s preload failed: %s", getIdentifier(), moduleDependency.getIdentifier(), ex);
+                        log.trace("Module %s, dependency %s preload failed: %s", getIdentifier(), moduleDependency.getName(), ex);
                         throw ex;
                     }
                 }
                 if (module == null) {
                     if (!moduleDependency.isOptional()) {
-                        throw new ModuleNotFoundException(id.toString());
+                        throw new ModuleNotFoundException(name);
                     }
                     continue;
                 }
@@ -1244,13 +1345,13 @@ public final class Module {
                 if (dependency instanceof ModuleDependency) {
                     final ModuleDependency moduleDependency = (ModuleDependency) dependency;
                     final ModuleLoader moduleLoader = moduleDependency.getModuleLoader();
-                    final ModuleIdentifier id = moduleDependency.getIdentifier();
+                    final String name  = moduleDependency.getName();
                     final Module module;
 
                     try {
                         long pauseStart = Metrics.getCurrentCPUTime();
                         try {
-                            module = moduleLoader.preloadModule(id);
+                            module = moduleLoader.preloadModule(name);
                         } finally {
                             subtract += Metrics.getCurrentCPUTime() - pauseStart;
                         }
@@ -1258,13 +1359,13 @@ public final class Module {
                         if (moduleDependency.isOptional()) {
                             continue;
                         } else {
-                            log.trace("Module %s, dependency %s preload failed: %s", getIdentifier(), moduleDependency.getIdentifier(), ex);
+                            log.trace("Module %s, dependency %s preload failed: %s", getIdentifier(), moduleDependency.getName(), ex);
                             throw ex;
                         }
                     }
                     if (module == null) {
                         if (!moduleDependency.isOptional()) {
-                            throw new ModuleNotFoundException(id.toString());
+                            throw new ModuleNotFoundException(name);
                         }
                         continue;
                     }

@@ -31,12 +31,14 @@ import org.jboss.modules.filter.PathFilters;
 import org.jboss.modules.xml.ModuleXmlParser;
 
 import static java.security.AccessController.doPrivileged;
+import static org.jboss.modules.Utils.MODULE_FILE;
 
 /**
  * A module finder which locates module specifications which are stored in a local module
  * repository on the filesystem, which uses {@code module.xml} descriptors.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  */
 public final class LocalModuleFinder implements ModuleFinder {
 
@@ -129,41 +131,36 @@ public final class LocalModuleFinder implements ModuleFinder {
         return files;
     }
 
-    private static String toPathString(ModuleIdentifier moduleIdentifier) {
-        final StringBuilder builder = new StringBuilder(40);
-        builder.append(moduleIdentifier.getName().replace('.', File.separatorChar));
-        builder.append(File.separatorChar).append(moduleIdentifier.getSlot());
-        builder.append(File.separatorChar);
+    private static String toPathString(final String moduleName) {
+        return moduleName.replace('.', File.separatorChar);
+    }
+
+    private static String toLegacyPathString(final String moduleName) {
+        final ModuleIdentifier moduleIdentifier = ModuleIdentifier.fromString(moduleName);
+        final String name = moduleIdentifier.getName();
+        final String slot = moduleIdentifier.getSlot();
+        final StringBuilder builder = new StringBuilder(name.length() + slot.length() + 2);
+        builder.append(name.replace('.', File.separatorChar));
+        builder.append(File.separatorChar).append(slot);
         return builder.toString();
     }
 
-    public ModuleSpec findModule(final ModuleIdentifier identifier, final ModuleLoader delegateLoader) throws ModuleLoadException {
-        final String child = toPathString(identifier);
-        if (pathFilter.accept(child)) {
+    public ModuleSpec findModule(final String name, final ModuleLoader delegateLoader) throws ModuleLoadException {
+        final String child1 = toPathString(name);
+        final String child2 = toLegacyPathString(name);
+        final PathFilter pathFilter = this.pathFilter;
+        if (pathFilter.accept(child1 + "/") || pathFilter.accept(child2 + "/")) {
             try {
-                return doPrivileged((PrivilegedExceptionAction<ModuleSpec>) () -> {
-                    for (File root : repoRoots) {
-                        final File file = new File(root, child);
-                        final File moduleXml = new File(file, "module.xml");
-                        if (moduleXml.exists()) {
-                            final ModuleSpec spec = ModuleXmlParser.parseModuleXml(delegateLoader, identifier, file, moduleXml);
-                            if (spec == null) break;
-                            return spec;
-                        }
-                    }
-                    return null;
-                }, accessControlContext);
+                return doPrivileged((PrivilegedExceptionAction<ModuleSpec>) () -> parseModuleXmlFile(name, delegateLoader, repoRoots), accessControlContext);
             } catch (PrivilegedActionException e) {
                 try {
-                    throw e.getException();
-                } catch (RuntimeException e1) {
+                    throw e.getCause();
+                } catch (IOException e1) {
+                    throw new ModuleLoadException(e1);
+                } catch (RuntimeException | Error | ModuleLoadException e1) {
                     throw e1;
-                } catch (ModuleLoadException e1) {
-                    throw e1;
-                } catch (Error e1) {
-                    throw e1;
-                } catch (Exception e1) {
-                    throw new UndeclaredThrowableException(e1);
+                } catch (Throwable t) {
+                    throw new UndeclaredThrowableException(t);
                 }
             }
         }
@@ -179,14 +176,35 @@ public final class LocalModuleFinder implements ModuleFinder {
      * @return the module specification
      * @throws IOException if reading the module file failed
      * @throws ModuleLoadException if creating the module specification failed (e.g. due to a parse error)
+     * @deprecated Use {@link #parseModuleXmlFile(String, ModuleLoader, File...)} instead.
      */
+    @Deprecated
     public static ModuleSpec parseModuleXmlFile(final ModuleIdentifier identifier, final ModuleLoader delegateLoader, final File... roots) throws IOException, ModuleLoadException {
-        final String child = toPathString(identifier);
+        return parseModuleXmlFile(identifier.toString(), delegateLoader, roots);
+    }
+
+    /**
+     * Parse a {@code module.xml} file and return the corresponding module specification.
+     *
+     * @param name the name of the module to load
+     * @param delegateLoader the delegate module loader to use for module specifications
+     * @param roots the repository root paths to search
+     * @return the module specification
+     * @throws IOException if reading the module file failed
+     * @throws ModuleLoadException if creating the module specification failed (e.g. due to a parse error)
+     */
+    public static ModuleSpec parseModuleXmlFile(final String name, final ModuleLoader delegateLoader, final File... roots) throws IOException, ModuleLoadException {
+        final String child1 = toPathString(name);
+        final String child2 = toLegacyPathString(name);
         for (File root : roots) {
-            final File file = new File(root, child);
-            final File moduleXml = new File(file, "module.xml");
+            File file = new File(root, child1);
+            File moduleXml = new File(file, MODULE_FILE);
+            if (! moduleXml.exists()) {
+                file = new File(root, child2);
+                moduleXml = new File(file, MODULE_FILE);
+            }
             if (moduleXml.exists()) {
-                final ModuleSpec spec = ModuleXmlParser.parseModuleXml(delegateLoader, identifier, file, moduleXml);
+                final ModuleSpec spec = ModuleXmlParser.parseModuleXml(delegateLoader, name, file, moduleXml);
                 if (spec == null) break;
                 return spec;
             }

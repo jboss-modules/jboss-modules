@@ -20,7 +20,6 @@ package org.jboss.modules;
 
 import java.io.File;
 import java.io.IOException;
-import java.security.AccessController;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Set;
@@ -33,29 +32,35 @@ import java.util.zip.ZipFile;
  * switches.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  */
 final class JDKPaths {
     static final Set<String> JDK;
 
     static {
-        final Set<String> pathSet = new FastCopyHashSet<String>(1024);
-        final Set<String> jarSet = new FastCopyHashSet<String>(1024);
-        final String sunBootClassPath = AccessController.doPrivileged(new PropertyReadAction("sun.boot.class.path"));
-        final String javaClassPath = AccessController.doPrivileged(new PropertyReadAction("java.class.path"));
-        processClassPathItem(sunBootClassPath, jarSet, pathSet);
-        processClassPathItem(javaClassPath, jarSet, pathSet);
-        pathSet.add("org/jboss/modules");
-        pathSet.add("org/jboss/modules/filter");
-        pathSet.add("org/jboss/modules/log");
-        pathSet.add("org/jboss/modules/management");
-        pathSet.add("org/jboss/modules/ref");
+        final Set<String> pathSet = JDKSpecific.getJDKPaths();
+        if (pathSet.size() == 0) throw new IllegalStateException("Something went wrong with system paths set up");
         JDK = Collections.unmodifiableSet(pathSet);
     }
 
     private JDKPaths() {
     }
 
-    private static void processClassPathItem(final String classPath, final Set<String> jarSet, final Set<String> pathSet) {
+    static void processJar(final Set<String> pathSet, final File file) throws IOException {
+        try (final ZipFile zipFile = new ZipFile(file)) {
+            final Enumeration<? extends ZipEntry> entries = zipFile.entries();
+            while (entries.hasMoreElements()) {
+                final ZipEntry entry = entries.nextElement();
+                final String name = entry.getName();
+                final int lastSlash = name.lastIndexOf('/');
+                if (lastSlash != -1) {
+                    pathSet.add(name.substring(0, lastSlash));
+                }
+            }
+        }
+    }
+
+    static void processClassPathItem(final String classPath, final Set<String> jarSet, final Set<String> pathSet) {
         if (classPath == null) return;
         int s = 0, e;
         do {
@@ -64,7 +69,7 @@ final class JDKPaths {
             if (! jarSet.contains(item)) {
                 final File file = new File(item);
                 if (file.isDirectory()) {
-                    processDirectory0(pathSet, file);
+                    processDirectory(pathSet, file);
                 } else {
                     try {
                         processJar(pathSet, file);
@@ -77,25 +82,7 @@ final class JDKPaths {
         } while (e != -1);
     }
 
-    static void processJar(final Set<String> pathSet, final File file) throws IOException {
-        final ZipFile zipFile = new ZipFile(file);
-        try {
-            final Enumeration<? extends ZipEntry> entries = zipFile.entries();
-            while (entries.hasMoreElements()) {
-                final ZipEntry entry = entries.nextElement();
-                final String name = entry.getName();
-                final int lastSlash = name.lastIndexOf('/');
-                if (lastSlash != -1) {
-                    pathSet.add(name.substring(0, lastSlash));
-                }
-            }
-            zipFile.close();
-        } finally {
-            StreamUtil.safeClose(zipFile);
-        }
-    }
-
-    static void processDirectory0(final Set<String> pathSet, final File file) {
+    static void processDirectory(final Set<String> pathSet, final File file) {
         for (File entry : file.listFiles()) {
             if (entry.isDirectory()) {
                 processDirectory1(pathSet, entry, file.getPath());
@@ -106,7 +93,7 @@ final class JDKPaths {
         }
     }
 
-    static void processDirectory1(final Set<String> pathSet, final File file, final String pathBase) {
+    private static void processDirectory1(final Set<String> pathSet, final File file, final String pathBase) {
         for (File entry : file.listFiles()) {
             if (entry.isDirectory()) {
                 processDirectory1(pathSet, entry, pathBase);

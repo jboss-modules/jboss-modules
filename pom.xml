@@ -23,13 +23,13 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.jboss.modules</groupId>
     <artifactId>jboss-modules</artifactId>
-    <version>1.6.0.Beta2-SNAPSHOT</version>
+    <version>1.6.0.Beta9-SNAPSHOT</version>
     <name>JBoss Modules</name>
 
     <parent>
         <groupId>org.jboss</groupId>
         <artifactId>jboss-parent</artifactId>
-        <version>19</version>
+        <version>21</version>
     </parent>
 
     <licenses>
@@ -41,19 +41,28 @@
     </licenses>
 
     <properties>
-        <skip.enforcer>false</skip.enforcer>
         <skip.compile>false</skip.compile>
+        <version.org.wildfly.checkstyle-config>1.0.5.Final</version.org.wildfly.checkstyle-config>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <version.org.wildfly.checkstyle-config>1.0.4.Final</version.org.wildfly.checkstyle-config>
-        <version.checkstyle>6.13</version.checkstyle>
     </properties>
 
     <build>
         <resources>
             <resource>
-                <directory>src/main/resources</directory>
+                <directory>src/main/java</directory>
                 <filtering>true</filtering>
+                <includes>
+                    <include>**/*.properties</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+            </resource>
+            <resource>
+                <directory>target/generated-resources</directory>
+                <filtering>false</filtering>
             </resource>
         </resources>
 
@@ -93,7 +102,9 @@
         <plugins>
             <!-- Compiler -->
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>${version.compiler.plugin}</version>
                 <configuration>
                     <showDeprecation>true</showDeprecation>
                     <showWarnings>true</showWarnings>
@@ -118,6 +129,27 @@
                 </configuration>
             </plugin>
 
+            <!-- Remote resources -->
+            <plugin>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>add-java9-supplement</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>unpack-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <includeGroupIds>org.jboss.modules</includeGroupIds>
+                            <includeArtifactIds>jboss-modules-jdk9-supplement</includeArtifactIds>
+                            <excludeTransitive>true</excludeTransitive>
+                            <includes>**/*.class</includes>
+                            <outputDirectory>${project.build.directory}/generated-resources/META-INF/versions/9</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
             <!-- JAR -->
             <plugin>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -127,6 +159,7 @@
                             <mainClass>org.jboss.modules.Main</mainClass>
                         </manifest>
                         <manifestEntries>
+                            <Multi-Release>true</Multi-Release>
                             <Jar-Version>${project.version}</Jar-Version>
                             <Jar-Name>${project.artifactId}</Jar-Name>
                         </manifestEntries>
@@ -134,14 +167,11 @@
                 </configuration>
             </plugin>
 
-            <!-- Source -->
-            <plugin>
-                <artifactId>maven-source-plugin</artifactId>
-            </plugin>
-
             <!-- Javadoc -->
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
+                <version>${version.javadoc.plugin}</version>
                 <configuration>
                     <doclet>net.gleamynode.apiviz.APIviz</doclet>
                     <docletArtifact>
@@ -153,20 +183,21 @@
                     <excludePackageNames>org.jboss.modules._private</excludePackageNames>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-checkstyle-plugin</artifactId>
-            </plugin>
-            <!-- Enforcer -->
-            <plugin>
-                <artifactId>maven-enforcer-plugin</artifactId>
-                <configuration>
-                    <skip>${skip.enforcer}</skip>
-                </configuration>
-            </plugin>
         </plugins>
     </build>
     <dependencies>
+        <dependency>
+            <groupId>org.jboss.modules</groupId>
+            <artifactId>jboss-modules-jdk9-supplement</artifactId>
+            <version>1.2.Final</version>
+            <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.jboss.modules</groupId>
+                    <artifactId>jboss-modules</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
         <dependency>
             <groupId>org.jboss.shrinkwrap</groupId>
             <artifactId>shrinkwrap-impl-base</artifactId>

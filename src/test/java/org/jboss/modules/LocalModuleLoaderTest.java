@@ -42,7 +42,7 @@ public class LocalModuleLoaderTest extends AbstractModuleTestCase {
 
     @Test
     public void testBasicLoad() throws Exception {
-        Module module = moduleLoader.loadModule(MODULE_ID);
+        Module module = moduleLoader.loadModule("test.test");
         assertNotNull(module);
     }
 

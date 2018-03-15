@@ -82,8 +82,8 @@ public class ResourceRootPathsTest extends AbstractModuleTestCase {
 
         //create module.xml
         final File moduleXml = new File(testModuleRoot, "module.xml");
-        String moduleXmlContent = MODULE_XML_TEMPLATE.replaceAll("@absolutejar@", jarOutsideModule.getCanonicalPath());
-        moduleXmlContent = moduleXmlContent.replaceAll("@absolutedir@", fileResourceRoot.getCanonicalPath());
+        String moduleXmlContent = MODULE_XML_TEMPLATE.replaceAll("@absolutejar@", jarOutsideModule.getCanonicalPath().replace(File.separatorChar, '/'));
+        moduleXmlContent = moduleXmlContent.replaceAll("@absolutedir@", fileResourceRoot.getCanonicalPath().replace(File.separatorChar, '/'));
         Files.write(moduleXml.toPath(), moduleXmlContent.getBytes(), StandardOpenOption.CREATE_NEW);
 
         moduleLoader = new LocalModuleLoader(new File[] {repoRoot});
@@ -91,7 +91,7 @@ public class ResourceRootPathsTest extends AbstractModuleTestCase {
 
     @Test
     public void testPaths() throws Exception {
-        ConcreteModuleSpec moduleSpec = (ConcreteModuleSpec) moduleLoader.findModule(MODULE_ID);
+        ConcreteModuleSpec moduleSpec = (ConcreteModuleSpec) moduleLoader.findModule("test.test");
         ResourceLoaderSpec[] resourceLoaders = moduleSpec.getResourceLoaders();
         int checkCount = 0;
         for (ResourceLoaderSpec r : resourceLoaders) {

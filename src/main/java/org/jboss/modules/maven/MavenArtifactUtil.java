@@ -158,7 +158,7 @@ public final class MavenArtifactUtil {
             return;
         }
         final URL url = new URL(src);
-        final URLConnection connection = url.openConnection();
+        final URLConnection connection = MavenSettings.getSettings().openConnection(url);
         boolean message = Boolean.getBoolean("maven.download.message");
 
         try (InputStream bis = connection.getInputStream()){
@@ -190,7 +190,7 @@ public final class MavenArtifactUtil {
     public static ResourceLoader createMavenArtifactLoader(final MavenResolver mavenResolver, final String name) throws IOException {
         File fp = mavenResolver.resolveJarArtifact(ArtifactCoordinates.fromString(name));
         if (fp == null) return null;
-        JarFile jarFile = new JarFile(fp, true);
+        JarFile jarFile = JDKSpecific.getJarFile(fp, true);
         return ResourceLoaders.createJarResourceLoader(name, jarFile);
     }
 

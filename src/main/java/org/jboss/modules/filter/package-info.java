@@ -17,7 +17,7 @@
  */
 
 /**
- * Classes related to filtering.  See the {@link PathFilter} interface for the contract of path filters.  See
- * {@link PathFilters} for factory methods for creating simple and complex filters.
+ * Classes related to filtering.  See the {@link org.jboss.modules.filter.PathFilter PathFilter} interface for the contract of path filters.  See
+ * {@link org.jboss.modules.filter.PathFilters PathFilters} for factory methods for creating simple and complex filters.
  */
 package org.jboss.modules.filter;

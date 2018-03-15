@@ -36,7 +36,7 @@ import org.jboss.modules.ModuleLoader;
  * A redirected XMLOutputFactory
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
- * @authore Jason T. Greene
+ * @author Jason T. Greene
  */
 public final class __XMLOutputFactory extends XMLOutputFactory {
     private static final Constructor<? extends XMLOutputFactory> PLATFORM_FACTORY;
@@ -70,7 +70,12 @@ public final class __XMLOutputFactory extends XMLOutputFactory {
         }
     }
 
+    @Deprecated
     public static void changeDefaultFactory(ModuleIdentifier id, ModuleLoader loader) {
+        changeDefaultFactory(id.toString(), loader);
+    }
+
+    public static void changeDefaultFactory(String id, ModuleLoader loader) {
         Class<? extends XMLOutputFactory> clazz = __RedirectedUtils.loadProvider(id, XMLOutputFactory.class, loader);
         if (clazz != null) {
             try {

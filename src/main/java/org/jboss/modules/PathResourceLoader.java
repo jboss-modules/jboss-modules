@@ -23,6 +23,7 @@ import java.lang.reflect.UndeclaredThrowableException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.AccessControlContext;
@@ -97,11 +98,13 @@ class PathResourceLoader extends AbstractResourceLoader implements IterableResou
 
     @Override
     public String getLibrary(String name) {
-        final String mappedName = System.mapLibraryName(name);
-        for (String path : NativeLibraryResourceLoader.Identification.NATIVE_SEARCH_PATHS) {
-            Path testFile = root.resolve(path).resolve(mappedName);
-            if (Files.exists(testFile)) {
-                return testFile.toAbsolutePath().toString();
+        if (root.getFileSystem() == FileSystems.getDefault()) {
+            final String mappedName = System.mapLibraryName(name);
+            for (String path : NativeLibraryResourceLoader.Identification.NATIVE_SEARCH_PATHS) {
+                Path testFile = root.resolve(path).resolve(mappedName);
+                if (Files.exists(testFile)) {
+                    return testFile.toAbsolutePath().toString();
+                }
             }
         }
         return null;
@@ -162,12 +165,13 @@ class PathResourceLoader extends AbstractResourceLoader implements IterableResou
                     .filter(Files::isDirectory)
                     .map(dir -> {
                         final String result = root.relativize(dir).toString();
+                        final String canonical = separator.equals("/") ? result : result.replace(separator, "/");
 
                         // JBoss modules expect folders not to end with a slash, so we have to strip it.
-                        if (result.endsWith(separator)) {
-                            return result.substring(0, result.length() - separator.length());
+                        if (canonical.endsWith("/")) {
+                            return canonical.substring(0, canonical.length() - 1);
                         } else {
-                            return result;
+                            return canonical;
                         }
                     })
                     .collect(Collectors.toList()));

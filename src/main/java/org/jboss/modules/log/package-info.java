@@ -19,6 +19,6 @@
 /**
  * The logging interface for JBoss Modules.  Logging is abstracted in order to support logging services being provided
  * by a module.  To change the logger in use, use the {@link org.jboss.modules.Module#setModuleLogger(ModuleLogger)} method.
- * See {@link ModuleLogger} for the logging contract.
+ * See {@link org.jboss.modules.log.ModuleLogger ModuleLogger} for the logging contract.
  */
 package org.jboss.modules.log;

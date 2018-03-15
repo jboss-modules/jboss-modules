@@ -18,6 +18,6 @@
 
 /**
  * Classes which implement reference types which can be cleaned up automatically by a background thread.  See
- * {@link Reference} and its subtypes, and {@link Reaper} for more information.
+ * {@link org.jboss.modules.ref.Reference Reference} and its subtypes, and {@link org.jboss.modules.ref.Reaper Reaper} for more information.
  */
 package org.jboss.modules.ref;

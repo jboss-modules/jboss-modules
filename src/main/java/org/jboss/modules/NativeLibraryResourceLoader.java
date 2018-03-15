@@ -118,13 +118,7 @@ public class NativeLibraryResourceLoader extends AbstractResourceLoader {
                                 cpuName = "sparc";
                             } else if (sysArch.startsWith("X86_64") || sysArch.startsWith("AMD64")) {
                                 cpuName = "x86_64";
-                            } else if (sysArch.startsWith("I386")) {
-                                cpuName = "i386";
-                            } else if (sysArch.startsWith("I486")) {
-                                cpuName = "i486";
-                            } else if (sysArch.startsWith("I586")) {
-                                cpuName = "i586";
-                            } else if (sysArch.startsWith("I686") || sysArch.startsWith("X86") || sysArch.contains("IA32")) {
+                            } else if (sysArch.startsWith("I386") || sysArch.startsWith("I486") || sysArch.startsWith("I586") || sysArch.startsWith("I686") || sysArch.startsWith("X86") || sysArch.contains("IA32")) {
                                 cpuName = "i686";
                             } else if (sysArch.startsWith("X32")) {
                                 cpuName = "x32";
@@ -244,6 +238,8 @@ public class NativeLibraryResourceLoader extends AbstractResourceLoader {
                                 cpuName = cpuNames.get(0);
                             }
                         }
+                    } else {
+                        cpuNames.add(cpuName);
                     }
 
                     // Finally, search paths.

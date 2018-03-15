@@ -25,14 +25,31 @@ package org.jboss.modules;
  */
 public final class AliasModuleSpec extends ModuleSpec {
 
-    private final ModuleIdentifier aliasTarget;
+    private final String aliasName;
 
-    AliasModuleSpec(final ModuleIdentifier moduleIdentifier, final ModuleIdentifier aliasTarget) {
-        super(moduleIdentifier);
-        this.aliasTarget = aliasTarget;
+    AliasModuleSpec(final String name, final String aliasName) {
+        super(name);
+        this.aliasName = aliasName;
     }
 
+    /**
+     * Get the module alias target.
+     *
+     * @return the module alias target
+     * @deprecated Use {@link #getAliasName()} instead.
+     */
+    @Deprecated
     public ModuleIdentifier getAliasTarget() {
-        return aliasTarget;
+        return ModuleIdentifier.fromString(aliasName);
     }
+
+    /**
+     * Get the module alias name.
+     *
+     * @return the module alias name
+     */
+    public String getAliasName() {
+        return aliasName;
+    }
+
 }
