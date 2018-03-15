@@ -25,6 +25,7 @@ import java.net.URI;
 import java.net.URL;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.security.AccessControlContext;
 import java.security.AccessController;
@@ -101,7 +102,12 @@ class PathResourceLoader extends AbstractResourceLoader implements IterableResou
         if (root.getFileSystem() == FileSystems.getDefault()) {
             final String mappedName = System.mapLibraryName(name);
             for (String path : NativeLibraryResourceLoader.Identification.NATIVE_SEARCH_PATHS) {
-                Path testFile = root.resolve(path).resolve(mappedName);
+                Path testFile;
+                try {
+                    testFile = root.resolve(path).resolve(mappedName);
+                } catch (InvalidPathException ignored) {
+                    return null;
+                }
                 if (Files.exists(testFile)) {
                     return testFile.toAbsolutePath().toString();
                 }
@@ -112,7 +118,12 @@ class PathResourceLoader extends AbstractResourceLoader implements IterableResou
 
     @Override
     public ClassSpec getClassSpec(final String fileName) throws IOException {
-        final Path file = root.resolve(fileName);
+        final Path file;
+        try {
+            file = root.resolve(fileName);
+        } catch (InvalidPathException ignored) {
+            return null;
+        }
 
         return doPrivilegedIfNeeded(context, IOException.class, () -> {
             if (!Files.exists(file)) {
@@ -134,7 +145,12 @@ class PathResourceLoader extends AbstractResourceLoader implements IterableResou
     @Override
     public Resource getResource(final String name) {
         final String cleanName = PathUtils.canonicalize(PathUtils.relativize(name));
-        final Path file = root.resolve(cleanName);
+        final Path file;
+        try {
+            file = root.resolve(cleanName);
+        } catch (InvalidPathException ignored) {
+            return null;
+        }
 
         if (!doPrivilegedIfNeeded(context, () -> Files.exists(file))) {
             return null;
@@ -146,7 +162,12 @@ class PathResourceLoader extends AbstractResourceLoader implements IterableResou
     @Override
     public Iterator<Resource> iterateResources(final String startPath, final boolean recursive) {
         try {
-            Path path = root.resolve(PathUtils.canonicalize(PathUtils.relativize(startPath)));
+            Path path;
+            try {
+                path = root.resolve(PathUtils.canonicalize(PathUtils.relativize(startPath)));
+            } catch (InvalidPathException ignored) {
+                return Collections.emptyIterator();
+            }
             return Files.walk(path, recursive ? Integer.MAX_VALUE : 1)
                     .filter(it -> !Files.isDirectory(it))
                     .<Resource>map(resourcePath -> new PathResource(resourcePath, root.relativize(resourcePath).toString(), context))
