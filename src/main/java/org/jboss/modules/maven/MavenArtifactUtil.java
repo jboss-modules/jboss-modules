@@ -188,10 +188,23 @@ public final class MavenArtifactUtil {
      * @throws IOException if the artifact could not be resolved
      */
     public static ResourceLoader createMavenArtifactLoader(final MavenResolver mavenResolver, final String name) throws IOException {
-        File fp = mavenResolver.resolveJarArtifact(ArtifactCoordinates.fromString(name));
+        return createMavenArtifactLoader(mavenResolver, ArtifactCoordinates.fromString(name), name);
+    }
+
+    /**
+     * A utility method to create a Maven artifact resource loader for the given artifact coordinates.
+     *
+     * @param name the resource root name to use (must not be {@code null})
+     * @param coordinates the artifact coordinates to use (must not be {@code null})
+     * @param mavenResolver the Maven resolver to use (must not be {@code null})
+     * @return the resource loader
+     * @throws IOException if the artifact could not be resolved
+     */
+    public static ResourceLoader createMavenArtifactLoader(final MavenResolver mavenResolver, final ArtifactCoordinates coordinates, final String rootName) throws IOException {
+        File fp = mavenResolver.resolveJarArtifact(coordinates);
         if (fp == null) return null;
         JarFile jarFile = JDKSpecific.getJarFile(fp, true);
-        return ResourceLoaders.createJarResourceLoader(name, jarFile);
+        return ResourceLoaders.createJarResourceLoader(rootName, jarFile);
     }
 
     static <T> T doIo(PrivilegedExceptionAction<T> action) throws IOException {

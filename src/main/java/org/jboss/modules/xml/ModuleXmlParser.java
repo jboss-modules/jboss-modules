@@ -34,6 +34,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -46,6 +47,7 @@ import org.jboss.modules.DependencySpec;
 import org.jboss.modules.LocalDependencySpecBuilder;
 import org.jboss.modules.ModuleDependencySpecBuilder;
 import org.jboss.modules.Version;
+import org.jboss.modules.VersionDetection;
 import org.jboss.modules.maven.ArtifactCoordinates;
 import org.jboss.modules.maven.MavenArtifactUtil;
 import org.jboss.modules.ModuleIdentifier;
@@ -853,8 +855,23 @@ public final class ModuleXmlParser {
         int eventType;
         for (;;) {
             eventType = reader.nextTag();
+            List<Version> detectedVersions = new ArrayList<>();
             switch (eventType) {
                 case END_TAG: {
+                    final Version specifiedVersion = specBuilder.getVersion();
+                    if (specifiedVersion == null) {
+                        final Iterator<Version> iterator = detectedVersions.iterator();
+                        if (iterator.hasNext()) {
+                            Version guess = iterator.next();
+                            while (iterator.hasNext()) {
+                                if (! guess.equals(iterator.next())) {
+                                    guess = null;
+                                    break;
+                                }
+                            }
+                            if (guess != null) specBuilder.setVersion(guess);
+                        }
+                    }
                     specBuilder.addResourceRoot(ResourceLoaderSpec.createResourceLoaderSpec(new NativeLibraryResourceLoader(new File(rootPath, "lib")), PathFilters.rejectAll()));
                     return;
                 }
@@ -862,11 +879,13 @@ public final class ModuleXmlParser {
                     validateNamespace(reader);
                     switch (reader.getName()) {
                         case E_RESOURCE_ROOT: {
-                            parseResourceRoot(factory, rootPath, reader, specBuilder);
+                            final Version version = parseResourceRoot(factory, rootPath, reader, specBuilder);
+                            if (version != null) detectedVersions.add(version);
                             break;
                         }
                         case E_ARTIFACT: {
-                            parseArtifact(mavenResolver, reader, specBuilder);
+                            final Version version = parseArtifact(mavenResolver, reader, specBuilder);
+                            if (version != null) detectedVersions.add(version);
                             break;
                         }
                         case E_NATIVE_ARTIFACT: {
@@ -945,7 +964,7 @@ public final class ModuleXmlParser {
         }
     }
 
-    private static void parseArtifact(final MavenResolver mavenResolver, final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
+    private static Version parseArtifact(final MavenResolver mavenResolver, final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
         String name = null;
         final Set<String> required = new HashSet<>(LIST_A_NAME);
         final int count = reader.getAttributeCount();
@@ -973,15 +992,23 @@ public final class ModuleXmlParser {
             switch (eventType) {
                 case END_TAG: {
                     if(conditionBuilder.resolve()) {
+                        final ArtifactCoordinates coordinates;
                         try {
-                            resourceLoader = MavenArtifactUtil.createMavenArtifactLoader(mavenResolver, name);
-                        } catch (IOException e) {
+                            coordinates = ArtifactCoordinates.fromString(name);
+                            resourceLoader = MavenArtifactUtil.createMavenArtifactLoader(mavenResolver, coordinates, name);
+                        } catch (IOException | IllegalArgumentException e) {
                             throw new XmlPullParserException(String.format("Failed to add artifact '%s'", name), reader, e);
                         }
                         if (resourceLoader == null) throw new XmlPullParserException(String.format("Failed to resolve artifact '%s'", name), reader, null);
-                            specBuilder.addResourceRoot(ResourceLoaderSpec.createResourceLoaderSpec(resourceLoader, filterBuilder.create()));
+                        specBuilder.addResourceRoot(ResourceLoaderSpec.createResourceLoaderSpec(resourceLoader, filterBuilder.create()));
+                        final String version = coordinates.getVersion();
+                        try {
+                            return Version.parse(version);
+                        } catch (IllegalArgumentException ignored) {
+                            return null;
+                        }
                     }
-                    return;
+                    return null;
                 }
                 case START_TAG: {
                     validateNamespace(reader);
@@ -1001,7 +1028,7 @@ public final class ModuleXmlParser {
         }
     }
 
-    private static void parseResourceRoot(final ResourceRootFactory factory, final String rootPath, final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
+    private static Version parseResourceRoot(final ResourceRootFactory factory, final String rootPath, final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
         String name = null;
         String path = null;
         final Set<String> required = new HashSet<>(LIST_A_PATH);
@@ -1039,8 +1066,14 @@ public final class ModuleXmlParser {
                             throw new XmlPullParserException(String.format("Failed to add resource root '%s' at path '%s'", name, path), reader, e);
                         }
                         specBuilder.addResourceRoot(ResourceLoaderSpec.createResourceLoaderSpec(resourceLoader, filterBuilder.create()));
+                        if (specBuilder.getVersion() == null) {
+                            return VersionDetection.detectVersion(resourceLoader);
+                        } else {
+                            return null;
+                        }
+                    } else {
+                        return null;
                     }
-                    return;
                 }
                 case START_TAG: {
                     validateNamespace(reader);

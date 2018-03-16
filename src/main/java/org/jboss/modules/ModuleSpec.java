@@ -143,6 +143,11 @@ public abstract class ModuleSpec {
             }
 
             @Override
+            public Version getVersion() {
+                return version;
+            }
+
+            @Override
             public ModuleSpec create() {
                 return new ConcreteModuleSpec(name, mainClass, assertionSetting, resourceLoaders.toArray(new ResourceLoaderSpec[resourceLoaders.size()]), dependencies.toArray(new DependencySpec[dependencies.size()]), fallbackLoader, moduleClassLoaderFactory, classFileTransformer, properties, permissionCollection, version);
             }
@@ -340,6 +345,13 @@ public abstract class ModuleSpec {
          * @return this builder
          */
         ModuleSpec.Builder setVersion(Version version);
+
+        /**
+         * Get the version for this module specification, or {@code null} if none was set.
+         *
+         * @return the currently-set version, or {@code null} if none was set
+         */
+        Version getVersion();
     }
 
     /**
