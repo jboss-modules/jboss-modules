@@ -23,10 +23,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.UndeclaredThrowableException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -145,36 +149,41 @@ public final class __RedirectedUtils {
         if (name == null)
             name = intf.getName();
 
-        final InputStream stream = loader.getResourceAsStream("META-INF/services/" + name);
-        if (stream == null)
-            return Collections.emptyList();
-
-
-        List<String> list = new ArrayList<String>();
         try {
-            final BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
+            final Enumeration<URL> resources = loader.getResources("META-INF/services/" + name);
+            if (resources.hasMoreElements()) {
+                List<String> list = new ArrayList<String>();
+                do {
+                    final URL url = resources.nextElement();
+                    final URLConnection connection = url.openConnection();
+                    try (InputStream is = connection.getInputStream()) {
+                        try (InputStreamReader isr = new InputStreamReader(is, StandardCharsets.UTF_8)) {
+                            try (BufferedReader reader = new BufferedReader(isr)) {
+                                String line;
+                                while ((line = readLine(reader)) != null) {
+                                    final int i = line.indexOf('#');
+                                    if (i != -1) {
+                                        line = line.substring(0, i);
+                                    }
+                                    line = line.trim();
+                                    if (line.length() == 0)
+                                        continue;
+                                    if (line.startsWith("__redirected"))
+                                        continue;
 
-            String line;
-            while ((line = readLine(reader)) != null) {
-                final int i = line.indexOf('#');
-                if (i != -1) {
-                    line = line.substring(0, i);
-                }
-                line = line.trim();
-                if (line.length() == 0)
-                    continue;
-                if (line.startsWith("__redirected"))
-                    continue;
-
-                list.add(line);
+                                    list.add(line);
+                                }
+                            }
+                        }
+                    } catch (IOException ignored) {
+                        // go on to next item
+                    }
+                } while (resources.hasMoreElements());
+                return list;
             }
-        } finally {
-            try {
-                stream.close();
-            } catch (IOException ignored) {
-            }
+        } catch (IOException ignored) {
         }
-        return list;
+        return Collections.emptyList();
     }
 
     private static String readLine(final BufferedReader reader) {
