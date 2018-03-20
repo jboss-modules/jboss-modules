@@ -499,7 +499,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
                     int lim = buffer.limit();
                     ByteBuffer transformed;
                     try {
-                        transformed = transformer.transform(this, name, protectionDomain, buffer);
+                        transformed = transformer.transform(this, name.replace('.', '/'), protectionDomain, buffer);
                     } catch (Exception e) {
                         ClassFormatError error = new ClassFormatError(e.getMessage());
                         error.initCause(e);
