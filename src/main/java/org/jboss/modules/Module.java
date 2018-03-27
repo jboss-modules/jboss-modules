@@ -756,7 +756,7 @@ public final class Module {
         }
         log.trace("Attempting to find resource %s in %s", canonPath, this);
         final String path = pathOf(canonPath);
-        final URLConnectionResource jaxpResource = ModuleClassLoader.jaxpImplResources.get(name);
+        final URLConnectionResource jaxpResource = ModuleClassLoader.jaxpImplResources.get(canonPath);
         final Map<String, List<LocalLoader>> paths = getPathsUnchecked();
         final List<LocalLoader> loaders = paths.get(path);
         if (loaders != null) {
@@ -801,7 +801,7 @@ public final class Module {
         }
         log.trace("Attempting to find resource %s in %s", canonPath, this);
         final String path = pathOf(canonPath);
-        final URLConnectionResource jaxpResource = ModuleClassLoader.jaxpImplResources.get(name);
+        final URLConnectionResource jaxpResource = ModuleClassLoader.jaxpImplResources.get(canonPath);
         final Map<String, List<LocalLoader>> paths = getPathsUnchecked();
         final List<LocalLoader> loaders = paths.get(path);
         if (loaders != null) {
@@ -851,7 +851,7 @@ public final class Module {
         }
         log.trace("Attempting to find all resources %s in %s", canonPath, this);
         final String path = pathOf(canonPath);
-        final URLConnectionResource jaxpResource = ModuleClassLoader.jaxpImplResources.get(name);
+        final URLConnectionResource jaxpResource = ModuleClassLoader.jaxpImplResources.get(canonPath);
         final Map<String, List<LocalLoader>> paths = getPathsUnchecked();
         final List<LocalLoader> loaders = paths.get(path);
 

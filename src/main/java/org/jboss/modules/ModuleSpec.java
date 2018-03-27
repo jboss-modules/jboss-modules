@@ -22,9 +22,11 @@ import java.lang.instrument.ClassFileTransformer;
 import java.security.AllPermission;
 import java.security.PermissionCollection;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.jboss.modules.filter.PathFilters;
 
 /**
  * A {@code Module} specification which is used by a {@code ModuleLoader} to define new modules.
@@ -73,6 +75,7 @@ public abstract class ModuleSpec {
             private final List<ResourceLoaderSpec> resourceLoaders = new ArrayList<ResourceLoaderSpec>(0);
             private final List<DependencySpec> dependencies = new ArrayList<DependencySpec>();
             private final Map<String, String> properties = new LinkedHashMap<String, String>(0);
+            private final Map<String, List<String>> provides = new HashMap<>(0);
             private LocalLoader fallbackLoader;
             private ModuleClassLoaderFactory moduleClassLoaderFactory;
             private ClassTransformer classFileTransformer;
@@ -147,13 +150,34 @@ public abstract class ModuleSpec {
             }
 
             @Override
+            public Builder addProvide(final String serviceTypeName, final String serviceImplClassName) {
+                List<String> infos = provides.get(serviceTypeName);
+                if (infos == null) {
+                    provides.put(serviceTypeName, infos = new ArrayList<>(1));
+                }
+                infos.add(serviceImplClassName);
+                return this;
+            }
+
+            @Override
             public Version getVersion() {
                 return version;
             }
 
             @Override
             public ModuleSpec create() {
-                return new ConcreteModuleSpec(name, mainClass, assertionSetting, resourceLoaders.toArray(new ResourceLoaderSpec[resourceLoaders.size()]), dependencies.toArray(new DependencySpec[dependencies.size()]), fallbackLoader, moduleClassLoaderFactory, classFileTransformer, properties, permissionCollection, version);
+                final List<ResourceLoaderSpec> resourceLoaders;
+                if (provides.isEmpty()) {
+                    resourceLoaders = this.resourceLoaders;
+                } else {
+                    resourceLoaders = new ArrayList<>(this.resourceLoaders.size() + 1);
+                    resourceLoaders.add(new ResourceLoaderSpec(
+                            ResourceLoaders.createServiceResourceLoader(provides), PathFilters.acceptAll()
+                    ));
+                    resourceLoaders.addAll(this.resourceLoaders);
+                }
+
+                return new ConcreteModuleSpec(name, mainClass, assertionSetting, resourceLoaders.toArray(ResourceLoaderSpec.NO_RESOURCE_LOADERS), dependencies.toArray(dependencies.toArray(DependencySpec.NO_DEPENDENCIES)), fallbackLoader, moduleClassLoaderFactory, classFileTransformer, properties, permissionCollection, version);
             }
 
             @Override
@@ -353,6 +377,16 @@ public abstract class ModuleSpec {
         ModuleSpec.Builder setVersion(Version version);
 
         /**
+         * Declare that this module provides a service with the given type name with the implementation class with
+         * the given class name.
+         *
+         * @param serviceTypeName the service type name (must not be {@code null})
+         * @param serviceImplClassName the service implementation class name (must not be {@code null})
+         * @return this builder
+         */
+        ModuleSpec.Builder addProvide(String serviceTypeName, String serviceImplClassName);
+
+        /**
          * Get the version for this module specification, or {@code null} if none was set.
          *
          * @return the currently-set version, or {@code null} if none was set
@@ -407,5 +441,24 @@ public abstract class ModuleSpec {
          * @return the module name
          */
         String getAliasName();
+    }
+
+    static final class ServiceInfo {
+        private final String serviceTypeName;
+        private final String implClassName;
+
+        ServiceInfo(final String serviceTypeName, final String implClassName) {
+            this.serviceTypeName = serviceTypeName;
+            this.implClassName = implClassName;
+        }
+
+        String getServiceTypeName() {
+            return serviceTypeName;
+        }
+
+        String getImplClassName() {
+            return implClassName;
+        }
+
     }
 }

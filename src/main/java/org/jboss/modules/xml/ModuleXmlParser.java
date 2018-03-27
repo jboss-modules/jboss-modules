@@ -148,6 +148,9 @@ public final class ModuleXmlParser {
     private static final String E_CONDITIONS = "conditions";
     private static final String E_PROPERTY_EQUAL = "property-equal";
     private static final String E_PROPERTY_NOT_EQUAL = "property-not-equal";
+    private static final String E_PROVIDES = "provides";
+    private static final String E_SERVICE = "service";
+    private static final String E_WITH_CLASS = "with-class";
 
     private static final String A_NAME = "name";
     private static final String A_SLOT = "slot";
@@ -677,6 +680,7 @@ public final class ModuleXmlParser {
                         case E_RESOURCES:    parseResources(mavenResolver, factory, rootPath, reader, specBuilder); break;
                         case E_PROPERTIES:   parseProperties(reader, specBuilder); break;
                         case E_PERMISSIONS:  parsePermissions(reader, moduleLoader, realModuleName, specBuilder); gotPerms = true; break;
+                        case E_PROVIDES:     if (is1_8) parseProvidesType(reader, specBuilder); else throw unexpectedContent(reader); break;
                         default: throw unexpectedContent(reader);
                     }
                     break;
@@ -844,7 +848,7 @@ public final class ModuleXmlParser {
         }
     }
 
-    private static void parseMainClass(final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
+    private static String parseClassNameType(final XmlPullParser reader) throws IOException, XmlPullParserException {
         String name = null;
         final Set<String> required = new HashSet<>(LIST_A_NAME);
         final int count = reader.getAttributeCount();
@@ -860,9 +864,13 @@ public final class ModuleXmlParser {
         if (! required.isEmpty()) {
             throw missingAttributes(reader, required);
         }
-        specBuilder.setMainClass(name);
         // consume remainder of element
         parseNoContent(reader);
+        return name;
+    }
+
+    private static void parseMainClass(final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
+        specBuilder.setMainClass(parseClassNameType(reader));
     }
 
     private static void parseResources(final MavenResolver mavenResolver, final ResourceRootFactory factory, final String rootPath, final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
@@ -1379,6 +1387,72 @@ public final class ModuleXmlParser {
 
         // consume remainder of element
         parseNoContent(reader);
+    }
+
+    private static void parseProvidesType(final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
+        assertNoAttributes(reader);
+        int eventType;
+        for (;;) {
+            eventType = reader.nextTag();
+            switch (eventType) {
+                case END_TAG: {
+                    return;
+                }
+                case START_TAG: {
+                    validateNamespace(reader);
+                    switch (reader.getName()) {
+                        case E_SERVICE: {
+                            parseProvidedServiceType(reader, specBuilder);
+                            break;
+                        }
+                        default: throw unexpectedContent(reader);
+                    }
+                    break;
+                }
+                default: {
+                    throw unexpectedContent(reader);
+                }
+            }
+        }
+    }
+
+    private static void parseProvidedServiceType(final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
+        String name = null;
+        final int count = reader.getAttributeCount();
+        for (int i = 0; i < count; i ++) {
+            validateAttributeNamespace(reader, i);
+            final String attribute = reader.getAttributeName(i);
+            switch (attribute) {
+                case A_NAME: name = reader.getAttributeValue(i); break;
+                default: throw unknownAttribute(reader, i);
+            }
+        }
+        if (name == null) {
+            throw missingAttributes(reader, Collections.singleton("name"));
+        }
+        int eventType;
+        for (;;) {
+            eventType = reader.nextTag();
+            switch (eventType) {
+                case END_TAG: {
+                    return;
+                }
+                case START_TAG: {
+                    validateNamespace(reader);
+                    switch (reader.getName()) {
+                        case E_WITH_CLASS: {
+                            specBuilder.addProvide(name, parseClassNameType(reader));
+                            break;
+                        }
+                        default: throw unexpectedContent(reader);
+                    }
+                    break;
+                }
+                default: {
+                    throw unexpectedContent(reader);
+                }
+            }
+        }
     }
 
     private static void expandName(final ModuleLoader moduleLoader, final String moduleName,

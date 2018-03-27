@@ -18,12 +18,10 @@
   ~ limitations under the License.
   -->
 
-<module xmlns="urn:jboss:module:1.0" name="test.service">
-    <resources>
-        <resource-root path="."/>
-        <!-- Insert resources here -->
-    </resources>
-
-    <dependencies>
-    </dependencies>
+<module xmlns="urn:jboss:module:1.8" name="test.service">
+    <provides>
+        <service name="dummy">
+            <with-class name="dummy"/>
+        </service>
+    </provides>
 </module>
