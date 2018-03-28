@@ -32,9 +32,9 @@ import java.security.PermissionCollection;
 import java.security.Permissions;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -47,8 +47,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.jboss.modules._private.ModulesPrivateAccess;
-import org.jboss.modules.filter.ClassFilter;
-import org.jboss.modules.filter.ClassFilters;
 import org.jboss.modules.filter.PathFilter;
 import org.jboss.modules.filter.PathFilters;
 import org.jboss.modules.log.ModuleLogger;
@@ -77,8 +75,6 @@ public final class Module {
     static {
         log = NoopModuleLogger.getInstance();
         BOOT_MODULE_LOADER = new AtomicReference<ModuleLoader>();
-        EMPTY_CLASS_FILTERS = new FastCopyHashSet<ClassFilter>(0);
-        EMPTY_PATH_FILTERS = new FastCopyHashSet<PathFilter>(0);
         GET_DEPENDENCIES = new RuntimePermission("getDependencies");
         GET_CLASS_LOADER = new RuntimePermission("getClassLoader");
         GET_BOOT_MODULE_LOADER = new RuntimePermission("getBootModuleLoader");
@@ -161,9 +157,6 @@ public final class Module {
      */
     static volatile ModuleLogger log;
 
-    private static final FastCopyHashSet<ClassFilter> EMPTY_CLASS_FILTERS;
-    private static final FastCopyHashSet<PathFilter> EMPTY_PATH_FILTERS;
-
     // immutable properties
 
     /**
@@ -200,15 +193,11 @@ public final class Module {
     private final Version version;
 
     // mutable properties
-    /**
-     * Module aliases
-     */
-    volatile Set<String> aliases = new HashSet<>();
 
     /**
      * The linkage state.
      */
-    private volatile Linkage linkage = Linkage.NONE;
+    private volatile LazyPaths lazyPaths;
 
     // private constants
 
@@ -240,12 +229,13 @@ public final class Module {
         final ModuleClassLoader.Configuration configuration = new ModuleClassLoader.Configuration(this, spec.getAssertionSetting(), spec.getResourceLoaders(), spec.getClassFileTransformer());
         final ModuleClassLoaderFactory factory = spec.getModuleClassLoaderFactory();
         final Map<String, String> properties = spec.getProperties();
-        this.properties = properties.isEmpty() ? Collections.<String, String>emptyMap() : new LinkedHashMap<String, String>(properties);
+        this.properties = properties.isEmpty() ? Collections.emptyMap() : new LinkedHashMap<String, String>(properties);
         this.version = spec.getVersion();
         ModuleClassLoader moduleClassLoader = null;
         if (factory != null) moduleClassLoader = factory.create(configuration);
         if (moduleClassLoader == null) moduleClassLoader = new ModuleClassLoader(configuration);
         this.moduleClassLoader = moduleClassLoader;
+        lazyPaths = new LazyPaths(DependencySpec.NO_DEPENDENCIES, Dependency.NO_DEPENDENCIES, moduleLoader);
     }
 
     private static PermissionCollection noPermissions() {
@@ -269,11 +259,11 @@ public final class Module {
     }
 
     Dependency[] getDependenciesInternal() {
-        return linkage.getDependencies();
+        return lazyPaths.getDependencies();
     }
 
     DependencySpec[] getDependencySpecsInternal() {
-        return linkage.getDependencySpecs();
+        return lazyPaths.getDependencySpecs();
     }
 
     ModuleClassLoader getClassLoaderPrivate() {
@@ -480,7 +470,8 @@ public final class Module {
      * @return the paths that are exported by this module
      */
     public Set<String> getExportedPaths() {
-        return Collections.unmodifiableSet(getPathsUnchecked().keySet());
+        // TODO
+        return Collections.emptySet();
     }
 
     /**
@@ -723,8 +714,7 @@ public final class Module {
             }
         }
         final String path = pathOfClass(className);
-        final Map<String, List<LocalLoader>> paths = getPathsUnchecked();
-        final List<LocalLoader> loaders = paths.get(path);
+        final LocalLoader[] loaders = getLoaders(path);
         if (loaders != null) {
             Class<?> clazz;
             for (LocalLoader loader : loaders) {
@@ -757,8 +747,7 @@ public final class Module {
         log.trace("Attempting to find resource %s in %s", canonPath, this);
         final String path = pathOf(canonPath);
         final URLConnectionResource jaxpResource = ModuleClassLoader.jaxpImplResources.get(canonPath);
-        final Map<String, List<LocalLoader>> paths = getPathsUnchecked();
-        final List<LocalLoader> loaders = paths.get(path);
+        final LocalLoader[] loaders = getLoaders(path);
         if (loaders != null) {
             for (LocalLoader loader : loaders) {
                 final Iterator<Resource> iterator = loader.loadResourceLocal(canonPath).iterator();
@@ -802,8 +791,7 @@ public final class Module {
         log.trace("Attempting to find resource %s in %s", canonPath, this);
         final String path = pathOf(canonPath);
         final URLConnectionResource jaxpResource = ModuleClassLoader.jaxpImplResources.get(canonPath);
-        final Map<String, List<LocalLoader>> paths = getPathsUnchecked();
-        final List<LocalLoader> loaders = paths.get(path);
+        final LocalLoader[] loaders = getLoaders(path);
         if (loaders != null) {
             for (LocalLoader loader : loaders) {
                 final List<Resource> resourceList = loader.loadResourceLocal(canonPath);
@@ -852,8 +840,7 @@ public final class Module {
         log.trace("Attempting to find all resources %s in %s", canonPath, this);
         final String path = pathOf(canonPath);
         final URLConnectionResource jaxpResource = ModuleClassLoader.jaxpImplResources.get(canonPath);
-        final Map<String, List<LocalLoader>> paths = getPathsUnchecked();
-        final List<LocalLoader> loaders = paths.get(path);
+        final LocalLoader[] loaders = getLoaders(path);
 
         final List<URL> list = new ArrayList<URL>();
         if (loaders != null) {
@@ -904,6 +891,31 @@ public final class Module {
         return getResources(name);
     }
 
+    private void getMaximalPaths(Set<String> set, Set<Module> visited) throws ModuleLoadException {
+        if (visited.add(this)) for (Dependency dependency : getDependenciesInternal()) {
+            if (dependency instanceof ModuleDependency) {
+                final ModuleDependency moduleDependency = (ModuleDependency) dependency;
+                final ModuleLoader moduleLoader = moduleDependency.getModuleLoader();
+                final String name = moduleDependency.getName();
+                try {
+                    moduleLoader.loadModule(name).getMaximalPaths(set, visited);
+                } catch (ModuleLoadException e) {
+                    if (! moduleDependency.isOptional()) {
+                        throw e;
+                    }
+                }
+            } else if (dependency instanceof LocalDependency) {
+                set.addAll(((LocalDependency) dependency).getPaths());
+            } else if (dependency instanceof ModuleClassLoaderDependency) {
+                set.addAll(((ModuleClassLoaderDependency) dependency).getPaths());
+            }
+        }
+    }
+
+    private LocalLoader[] getLoaders(String path) {
+        return lazyPaths.getLoaders(path).getItems();
+    }
+
     /**
      * Enumerate all the imported resources in this module, subject to a path filter.  The filter applies to
      * the containing path of each resource.
@@ -913,8 +925,10 @@ public final class Module {
      * @throws ModuleLoadException if linking a dependency module fails for some reason
      */
     public Iterator<Resource> iterateResources(final PathFilter filter) throws ModuleLoadException {
-        final Map<String, List<LocalLoader>> paths = getPaths();
-        final Iterator<Map.Entry<String, List<LocalLoader>>> iterator = paths.entrySet().iterator();
+        // first build the maximal possible path set
+        final Set<String> pathSet = new HashSet<>(128);
+        getMaximalPaths(pathSet, new HashSet<>(32));
+        final Iterator<String> pathIterator = pathSet.iterator();
         return new Iterator<Resource>() {
 
             private String path;
@@ -943,13 +957,12 @@ public final class Module {
                         }
                         loaderIterator = null;
                     }
-                    if (! iterator.hasNext()) {
+                    if (! pathIterator.hasNext()) {
                         return false;
                     }
-                    final Map.Entry<String, List<LocalLoader>> entry = iterator.next();
-                    path = entry.getKey();
+                    path = pathIterator.next();
                     if (filter.accept(path)) {
-                        loaderIterator = entry.getValue().iterator();
+                        loaderIterator = Arrays.asList(getLoaders(path)).iterator();
                     }
                 }
                 return true;
@@ -998,7 +1011,8 @@ public final class Module {
      * @throws ModuleLoadException if the module was previously unlinked, and there was an exception while linking
      */
     public Set<String> getImportedPaths() throws ModuleLoadException {
-        return Collections.unmodifiableSet(getPaths().keySet());
+        // todo
+        return Collections.emptySet();
     }
 
     /**
@@ -1208,469 +1222,32 @@ public final class Module {
 
     // Linking and resolution
 
-    static final class Visited {
-        private final Module module;
-        private final FastCopyHashSet<PathFilter> filters;
-        private final FastCopyHashSet<ClassFilter> classFilters;
-        private final FastCopyHashSet<PathFilter> resourceFilters;
-        private final int hashCode;
-
-        Visited(final Module module, final FastCopyHashSet<PathFilter> filters, final FastCopyHashSet<ClassFilter> classFilters, final FastCopyHashSet<PathFilter> resourceFilters) {
-            this.module = module;
-            this.filters = filters;
-            this.classFilters = classFilters;
-            this.resourceFilters = resourceFilters;
-            hashCode = ((resourceFilters.hashCode() * 13 + classFilters.hashCode()) * 13 + filters.hashCode()) * 13 + module.hashCode();
-        }
-
-        public int hashCode() {
-            return hashCode;
-        }
-
-        public boolean equals(Object other) {
-            return other instanceof Visited && equals((Visited)other);
-        }
-
-        public boolean equals(Visited other) {
-            return this == other || other != null && module == other.module && filters.equals(other.filters) && classFilters.equals(other.classFilters) && resourceFilters.equals(other.resourceFilters);
-        }
+    LazyPaths getLazyPaths() {
+        return lazyPaths;
     }
 
-    private long addPaths(Dependency[] dependencies, Map<String, List<LocalLoader>> map, FastCopyHashSet<PathFilter> filterStack, FastCopyHashSet<ClassFilter> classFilterStack, final FastCopyHashSet<PathFilter> resourceFilterStack, Set<Visited> visited) throws ModuleLoadException {
-        long subtract = 0L;
-        moduleLoader.incScanCount();
-        for (Dependency dependency : dependencies) {
+    void relink() {
+        lazyPaths = new LazyPaths(lazyPaths.getDependencySpecs(), lazyPaths.getDependencies(), moduleLoader);
+    }
+
+    void relinkDependencies() throws ModuleLoadException {
+        Set<Module> set = null;
+        for (Dependency dependency : getDependenciesInternal()) {
             if (dependency instanceof ModuleDependency) {
-                final ModuleDependency moduleDependency = (ModuleDependency) dependency;
-                final ModuleLoader moduleLoader = moduleDependency.getModuleLoader();
-                final String name = moduleDependency.getName();
-                final Module module;
-
-                try {
-                    long pauseStart = Metrics.getCurrentCPUTime();
-                    try {
-                        module = moduleLoader.preloadModule(name);
-                    } finally {
-                        subtract += Metrics.getCurrentCPUTime() - pauseStart;
-                    }
-                } catch (ModuleLoadException ex) {
-                    if (moduleDependency.isOptional()) {
-                        continue;
-                    } else {
-                        log.trace("Module %s, dependency %s preload failed: %s", getIdentifier(), moduleDependency.getName(), ex);
-                        throw ex;
-                    }
+                if (set == null) {
+                    set = new HashSet<>();
+                    set.add(this);
                 }
-                if (module == null) {
-                    if (!moduleDependency.isOptional()) {
-                        throw new ModuleNotFoundException(name);
-                    }
-                    continue;
-                }
-
-                final PathFilter importFilter = dependency.getImportFilter();
-                final FastCopyHashSet<PathFilter> nestedFilters;
-                final FastCopyHashSet<ClassFilter> nestedClassFilters;
-                final FastCopyHashSet<PathFilter> nestedResourceFilters;
-                if (filterStack.contains(importFilter)) {
-                    nestedFilters = filterStack;
-                } else {
-                    nestedFilters = filterStack.clone();
-                    nestedFilters.add(importFilter);
-                }
-                final ClassFilter classImportFilter = dependency.getClassImportFilter();
-                if (classImportFilter == ClassFilters.acceptAll() || classFilterStack.contains(classImportFilter)) {
-                    nestedClassFilters = classFilterStack;
-                } else {
-                    nestedClassFilters = classFilterStack.clone();
-                    if (classImportFilter != ClassFilters.acceptAll()) nestedClassFilters.add(classImportFilter);
-                }
-                final PathFilter resourceImportFilter = dependency.getResourceImportFilter();
-                if (resourceImportFilter == PathFilters.acceptAll() || resourceFilterStack.contains(resourceImportFilter)) {
-                    nestedResourceFilters = resourceFilterStack;
-                } else {
-                    nestedResourceFilters = resourceFilterStack.clone();
-                    if (resourceImportFilter != PathFilters.acceptAll()) nestedResourceFilters.add(resourceImportFilter);
-                }
-                subtract += module.addExportedPaths(module.getDependenciesInternal(), map, nestedFilters, nestedClassFilters, nestedResourceFilters, visited);
-            } else if (dependency instanceof ModuleClassLoaderDependency) {
-                final ModuleClassLoaderDependency classLoaderDependency = (ModuleClassLoaderDependency) dependency;
-                LocalLoader localLoader = classLoaderDependency.getLocalLoader();
-                for (Object filter : classFilterStack.getRawArray()) {
-                    if (filter != null && filter != ClassFilters.acceptAll()) {
-                        localLoader = createClassFilteredLocalLoader((ClassFilter) filter, localLoader);
-                    }
-                }
-                for (Object filter : resourceFilterStack.getRawArray()) {
-                    if (filter != null && filter != PathFilters.acceptAll()) {
-                        localLoader = createPathFilteredLocalLoader((PathFilter) filter, localLoader);
-                    }
-                }
-                ClassFilter classFilter = classLoaderDependency.getClassImportFilter();
-                if (classFilter != ClassFilters.acceptAll()) {
-                    localLoader = createClassFilteredLocalLoader(classFilter, localLoader);
-                }
-                PathFilter resourceFilter = classLoaderDependency.getResourceImportFilter();
-                if (resourceFilter != PathFilters.acceptAll()) {
-                    localLoader = createPathFilteredLocalLoader(resourceFilter, localLoader);
-                }
-                final PathFilter importFilter = classLoaderDependency.getImportFilter();
-                final Set<String> paths = classLoaderDependency.getPaths();
-                for (String path : paths) {
-                    if (importFilter.accept(path)) {
-                        List<LocalLoader> list = map.get(path);
-                        if (list == null) {
-                            map.put(path, list = new ArrayList<LocalLoader>());
-                            list.add(localLoader);
-                        } else if (! list.contains(localLoader)) {
-                            list.add(localLoader);
-                        }
-                    }
-                }
-            } else if (dependency instanceof LocalDependency) {
-                final LocalDependency localDependency = (LocalDependency) dependency;
-                LocalLoader localLoader = localDependency.getLocalLoader();
-                for (Object filter : classFilterStack.getRawArray()) {
-                    if (filter != null && filter != ClassFilters.acceptAll()) {
-                        localLoader = createClassFilteredLocalLoader((ClassFilter) filter, localLoader);
-                    }
-                }
-                for (Object filter : resourceFilterStack.getRawArray()) {
-                    if (filter != null && filter != PathFilters.acceptAll()) {
-                        localLoader = createPathFilteredLocalLoader((PathFilter) filter, localLoader);
-                    }
-                }
-                final ClassFilter classFilter = localDependency.getClassImportFilter();
-                if (classFilter != ClassFilters.acceptAll()) {
-                    localLoader = createClassFilteredLocalLoader(classFilter, localLoader);
-                }
-                final PathFilter resourceFilter = localDependency.getResourceImportFilter();
-                if (resourceFilter != PathFilters.acceptAll()) {
-                    localLoader = createPathFilteredLocalLoader(resourceFilter, localLoader);
-                }
-                final PathFilter importFilter = localDependency.getImportFilter();
-                final Set<String> paths = localDependency.getPaths();
-                for (String path : paths) {
-                    if (importFilter.accept(path)) {
-                        List<LocalLoader> list = map.get(path);
-                        if (list == null) {
-                            map.put(path, list = new ArrayList<LocalLoader>());
-                            list.add(localLoader);
-                        } else if (! list.contains(localLoader)) {
-                            list.add(localLoader);
-                        }
-                    }
-                }
-            }
-            // else unknown dep type so just skip
-        }
-        return subtract;
-    }
-
-    private LocalLoader createPathFilteredLocalLoader(PathFilter filter, LocalLoader localLoader) {
-        if (localLoader instanceof IterableLocalLoader)
-            return LocalLoaders.createIterablePathFilteredLocalLoader(filter, (IterableLocalLoader) localLoader);
-        else
-            return LocalLoaders.createPathFilteredLocalLoader(filter, localLoader);
-    }
-
-    private LocalLoader createClassFilteredLocalLoader(ClassFilter filter, LocalLoader localLoader) {
-        if (localLoader instanceof IterableLocalLoader)
-            return LocalLoaders.createIterableClassFilteredLocalLoader(filter, (IterableLocalLoader) localLoader);
-        else
-            return LocalLoaders.createClassFilteredLocalLoader(filter, localLoader);
-    }
-
-    private long addExportedPaths(Dependency[] dependencies, Map<String, List<LocalLoader>> map, FastCopyHashSet<PathFilter> filterStack, FastCopyHashSet<ClassFilter> classFilterStack, final FastCopyHashSet<PathFilter> resourceFilterStack, Set<Visited> visited) throws ModuleLoadException {
-        if (!visited.add(new Visited(this, filterStack, classFilterStack, resourceFilterStack))) {
-            return 0L;
-        }
-        long subtract = 0L;
-        moduleLoader.incScanCount();
-        for (Dependency dependency : dependencies) {
-            final PathFilter exportFilter = dependency.getExportFilter();
-            // skip non-exported dependencies altogether
-            if (exportFilter != PathFilters.rejectAll()) {
-                if (dependency instanceof ModuleDependency) {
-                    final ModuleDependency moduleDependency = (ModuleDependency) dependency;
-                    final ModuleLoader moduleLoader = moduleDependency.getModuleLoader();
-                    final String name  = moduleDependency.getName();
-                    final Module module;
-
-                    try {
-                        long pauseStart = Metrics.getCurrentCPUTime();
-                        try {
-                            module = moduleLoader.preloadModule(name);
-                        } finally {
-                            subtract += Metrics.getCurrentCPUTime() - pauseStart;
-                        }
-                    } catch (ModuleLoadException ex) {
-                        if (moduleDependency.isOptional()) {
-                            continue;
-                        } else {
-                            log.trace("Module %s, dependency %s preload failed: %s", getIdentifier(), moduleDependency.getName(), ex);
-                            throw ex;
-                        }
-                    }
-                    if (module == null) {
-                        if (!moduleDependency.isOptional()) {
-                            throw new ModuleNotFoundException(name);
-                        }
-                        continue;
-                    }
-
-                    final PathFilter importFilter = dependency.getImportFilter();
-                    final FastCopyHashSet<PathFilter> nestedFilters;
-                    final FastCopyHashSet<ClassFilter> nestedClassFilters;
-                    final FastCopyHashSet<PathFilter> nestedResourceFilters;
-                    if (filterStack.contains(importFilter) && filterStack.contains(exportFilter)) {
-                        nestedFilters = filterStack;
-                    } else {
-                        nestedFilters = filterStack.clone();
-                        nestedFilters.add(importFilter);
-                        nestedFilters.add(exportFilter);
-                    }
-                    final ClassFilter classImportFilter = dependency.getClassImportFilter();
-                    final ClassFilter classExportFilter = dependency.getClassExportFilter();
-                    if ((classImportFilter == ClassFilters.acceptAll() || classFilterStack.contains(classImportFilter)) && (classExportFilter == ClassFilters.acceptAll() || classFilterStack.contains(classExportFilter))) {
-                        nestedClassFilters = classFilterStack;
-                    } else {
-                        nestedClassFilters = classFilterStack.clone();
-                        if (classImportFilter != ClassFilters.acceptAll()) nestedClassFilters.add(classImportFilter);
-                        if (classExportFilter != ClassFilters.acceptAll()) nestedClassFilters.add(classExportFilter);
-                    }
-                    final PathFilter resourceImportFilter = dependency.getResourceImportFilter();
-                    final PathFilter resourceExportFilter = dependency.getResourceExportFilter();
-                    if ((resourceImportFilter == PathFilters.acceptAll() || resourceFilterStack.contains(resourceImportFilter)) && (resourceExportFilter == PathFilters.acceptAll() || resourceFilterStack.contains(resourceExportFilter))) {
-                        nestedResourceFilters = resourceFilterStack;
-                    } else {
-                        nestedResourceFilters = resourceFilterStack.clone();
-                        if (resourceImportFilter != PathFilters.acceptAll()) nestedResourceFilters.add(resourceImportFilter);
-                        if (resourceExportFilter != PathFilters.acceptAll()) nestedResourceFilters.add(resourceExportFilter);
-                    }
-                    subtract += module.addExportedPaths(module.getDependenciesInternal(), map, nestedFilters, nestedClassFilters, nestedResourceFilters, visited);
-                } else if (dependency instanceof ModuleClassLoaderDependency) {
-                    final ModuleClassLoaderDependency classLoaderDependency = (ModuleClassLoaderDependency) dependency;
-                    LocalLoader localLoader = classLoaderDependency.getLocalLoader();
-                    for (Object filter : classFilterStack.getRawArray()) {
-                        if (filter != null && filter != ClassFilters.acceptAll()) {
-                            localLoader = createClassFilteredLocalLoader((ClassFilter) filter, localLoader);
-                        }
-                    }
-                    for (Object filter : resourceFilterStack.getRawArray()) {
-                        if (filter != null && filter != PathFilters.acceptAll()) {
-                            localLoader = createPathFilteredLocalLoader((PathFilter) filter, localLoader);
-                        }
-                    }
-                    ClassFilter classImportFilter = classLoaderDependency.getClassImportFilter();
-                    if (classImportFilter != ClassFilters.acceptAll()) {
-                        localLoader = createClassFilteredLocalLoader(classImportFilter, localLoader);
-                    }
-                    ClassFilter classExportFilter = classLoaderDependency.getClassExportFilter();
-                    if (classExportFilter != ClassFilters.acceptAll()) {
-                        localLoader = createClassFilteredLocalLoader(classExportFilter, localLoader);
-                    }
-                    PathFilter resourceImportFilter = classLoaderDependency.getResourceImportFilter();
-                    if (resourceImportFilter != PathFilters.acceptAll()) {
-                        localLoader = createPathFilteredLocalLoader(resourceImportFilter, localLoader);
-                    }
-                    PathFilter resourceExportFilter = classLoaderDependency.getResourceExportFilter();
-                    if (resourceExportFilter != PathFilters.acceptAll()) {
-                        localLoader = createPathFilteredLocalLoader(resourceExportFilter, localLoader);
-                    }
-                    final PathFilter importFilter = classLoaderDependency.getImportFilter();
-                    final Set<String> paths = classLoaderDependency.getPaths();
-                    for (String path : paths) {
-                        boolean accept = ! "_private".equals(path);
-                        if (accept) for (Object filter : filterStack.getRawArray()) {
-                            if (filter != null && ! ((PathFilter)filter).accept(path)) {
-                                accept = false; break;
-                            }
-                        }
-                        if (accept && importFilter.accept(path) && exportFilter.accept(path)) {
-                            List<LocalLoader> list = map.get(path);
-                            if (list == null) {
-                                map.put(path, list = new ArrayList<LocalLoader>(1));
-                                list.add(localLoader);
-                            } else if (! list.contains(localLoader)) {
-                                list.add(localLoader);
-                            }
-                        }
-                    }
-                } else if (dependency instanceof LocalDependency) {
-                    final LocalDependency localDependency = (LocalDependency) dependency;
-                    LocalLoader localLoader = localDependency.getLocalLoader();
-                    for (Object filter : classFilterStack.getRawArray()) {
-                        if (filter != null && filter != ClassFilters.acceptAll()) {
-                            localLoader = createClassFilteredLocalLoader((ClassFilter) filter, localLoader);
-                        }
-                    }
-                    for (Object filter : resourceFilterStack.getRawArray()) {
-                        if (filter != null && filter != PathFilters.acceptAll()) {
-                            localLoader = createPathFilteredLocalLoader((PathFilter) filter, localLoader);
-                        }
-                    }
-                    ClassFilter classFilter = localDependency.getClassExportFilter();
-                    if (classFilter != ClassFilters.acceptAll()) {
-                        localLoader = createClassFilteredLocalLoader(classFilter, localLoader);
-                    }
-                    classFilter = localDependency.getClassImportFilter();
-                    if (classFilter != ClassFilters.acceptAll()) {
-                        localLoader = createClassFilteredLocalLoader(classFilter, localLoader);
-                    }
-                    PathFilter resourceFilter = localDependency.getResourceExportFilter();
-                    if (resourceFilter != PathFilters.acceptAll()) {
-                        localLoader = createPathFilteredLocalLoader(resourceFilter, localLoader);
-                    }
-                    resourceFilter = localDependency.getResourceImportFilter();
-                    if (resourceFilter != PathFilters.acceptAll()) {
-                        localLoader = createPathFilteredLocalLoader(resourceFilter, localLoader);
-                    }
-                    final Set<String> paths = localDependency.getPaths();
-                    for (String path : paths) {
-                        boolean accept = true;
-                        for (Object filter : filterStack.getRawArray()) {
-                            if (filter != null && ! ((PathFilter)filter).accept(path)) {
-                                accept = false; break;
-                            }
-                        }
-                        if (accept && localDependency.getImportFilter().accept(path) && localDependency.getExportFilter().accept(path)) {
-                            List<LocalLoader> list = map.get(path);
-                            if (list == null) {
-                                map.put(path, list = new ArrayList<LocalLoader>(1));
-                                list.add(localLoader);
-                            } else if (! list.contains(localLoader)) {
-                                list.add(localLoader);
-                            }
-                        }
-                    }
-                }
-                // else unknown dep type so just skip
+                ((ModuleDependency)dependency).load(set);
             }
         }
-        return subtract;
-    }
-
-    Map<String, List<LocalLoader>> getPaths() throws ModuleLoadException {
-        Linkage oldLinkage = this.linkage;
-        Linkage linkage;
-        Linkage.State state = oldLinkage.getState();
-        if (state == Linkage.State.LINKED) {
-            return oldLinkage.getPaths();
-        }
-        // slow path loop
-        boolean intr = false;
-        try {
-            for (;;) {
-                synchronized (this) {
-                    oldLinkage = this.linkage;
-                    state = oldLinkage.getState();
-                    while (state == Linkage.State.LINKING || state == Linkage.State.NEW) try {
-                        wait();
-                        oldLinkage = this.linkage;
-                        state = oldLinkage.getState();
-                    } catch (InterruptedException e) {
-                        intr = true;
-                    }
-                    if (state == Linkage.State.LINKED) {
-                        return oldLinkage.getPaths();
-                    }
-                    this.linkage = linkage = new Linkage(oldLinkage.getDependencySpecs(), oldLinkage.getDependencies(), Linkage.State.LINKING);
-                    // fall out and link
-                }
-                boolean ok = false;
-                try {
-                    link(linkage);
-                    ok = true;
-                } finally {
-                    if (! ok) {
-                        // restore original (lack of) linkage
-                        synchronized (this) {
-                            if (this.linkage == linkage) {
-                                this.linkage = oldLinkage;
-                                notifyAll();
-                            }
-                        }
-                    }
-                }
-            }
-        } finally {
-            if (intr) {
-                Thread.currentThread().interrupt();
-            }
-        }
-    }
-
-    Map<String, List<LocalLoader>> getPathsUnchecked() {
-        try {
-            return getPaths();
-        } catch (ModuleLoadException e) {
-            throw e.toError();
-        }
-    }
-
-    void link(final Linkage linkage) throws ModuleLoadException {
-        final HashMap<String, List<LocalLoader>> importsMap = new HashMap<String, List<LocalLoader>>();
-        final Dependency[] dependencies = linkage.getDependencies();
-        final long start = Metrics.getCurrentCPUTime();
-        long subtractTime = 0L;
-        try {
-            final Set<Visited> visited = new FastCopyHashSet<Visited>(16);
-            final FastCopyHashSet<PathFilter> filterStack = new FastCopyHashSet<PathFilter>(8);
-            final FastCopyHashSet<ClassFilter> classFilterStack = EMPTY_CLASS_FILTERS;
-            final FastCopyHashSet<PathFilter> resourceFilterStack = EMPTY_PATH_FILTERS;
-            subtractTime += addPaths(dependencies, importsMap, filterStack, classFilterStack, resourceFilterStack, visited);
-            synchronized (this) {
-                if (this.linkage == linkage) {
-                    this.linkage = new Linkage(linkage.getDependencySpecs(), linkage.getDependencies(), Linkage.State.LINKED, importsMap);
-                    notifyAll();
-                }
-                // else all our efforts were just wasted since someone changed the deps in the meantime
-            }
-        } finally {
-            moduleLoader.addLinkTime(Metrics.getCurrentCPUTime() - start - subtractTime);
-        }
-    }
-
-    void relinkIfNecessary() throws ModuleLoadException {
-        Linkage oldLinkage = this.linkage;
-        Linkage linkage;
-        if (oldLinkage.getState() != Linkage.State.UNLINKED) {
-            return;
-        }
-        synchronized (this) {
-            oldLinkage = this.linkage;
-            if (oldLinkage.getState() != Linkage.State.UNLINKED) {
-                return;
-            }
-            this.linkage = linkage = new Linkage(oldLinkage.getDependencySpecs(), oldLinkage.getDependencies(), Linkage.State.LINKING);
-        }
-        boolean ok = false;
-        try {
-            link(linkage);
-            ok = true;
-        } finally {
-            if (! ok) {
-                // restore original (lack of) linkage
-                synchronized (this) {
-                    if (this.linkage == linkage) {
-                        this.linkage = oldLinkage;
-                        notifyAll();
-                    }
-                }
-            }
-        }
-    }
-
-    void relink() throws ModuleLoadException {
-        link(linkage);
     }
 
     void setDependencies(final List<DependencySpec> dependencySpecs) {
         if (dependencySpecs == null) {
             throw new IllegalArgumentException("dependencySpecs is null");
         }
-        final DependencySpec[] specs = dependencySpecs.toArray(new DependencySpec[dependencySpecs.size()]);
+        final DependencySpec[] specs = dependencySpecs.toArray(DependencySpec.NO_DEPENDENCIES);
         for (DependencySpec spec : specs) {
             if (spec == null) {
                 throw new IllegalArgumentException("dependencySpecs contains a null dependency specification");
@@ -1681,17 +1258,16 @@ public final class Module {
 
     void setDependencies(final DependencySpec[] dependencySpecs) {
         synchronized (this) {
-            linkage = new Linkage(dependencySpecs, calculateDependencies(dependencySpecs), Linkage.State.UNLINKED, null);
+            lazyPaths = new LazyPaths(dependencySpecs, calculateDependencies(dependencySpecs), moduleLoader);
             notifyAll();
         }
     }
 
-    private Dependency[] calculateDependencies(final DependencySpec[] dependencySpecs) {
+    Dependency[] calculateDependencies(final DependencySpec[] dependencySpecs) {
         final Dependency[] dependencies = new Dependency[dependencySpecs.length];
         int i = 0;
         for (DependencySpec spec : dependencySpecs) {
-            final Dependency dependency = spec.getDependency(this);
-            dependencies[i++] = dependency;
+            dependencies[i++] = spec.getDependency(this);
         }
         return dependencies;
     }
@@ -1701,7 +1277,7 @@ public final class Module {
     }
 
     Package getPackage(final String name) {
-        List<LocalLoader> loaders = getPathsUnchecked().get(name.replace('.', '/'));
+        LocalLoader[] loaders = getLoaders(name.replace('.', '/'));
         if (loaders != null) for (LocalLoader localLoader : loaders) {
             Package pkg = localLoader.loadPackageLocal(name);
             if (pkg != null) return pkg;
@@ -1711,10 +1287,10 @@ public final class Module {
 
     Package[] getPackages() {
         final ArrayList<Package> packages = new ArrayList<Package>();
-        final Map<String, List<LocalLoader>> allPaths = getPathsUnchecked();
-        next: for (String path : allPaths.keySet()) {
+        final Set<String> pathSet = lazyPaths.getCurrentPathSet();
+        next: for (String path : pathSet) {
             String packageName = path.replace('/', '.');
-            for (LocalLoader loader : allPaths.get(path)) {
+            for (LocalLoader loader : lazyPaths.getLoaders(path).getItems()) {
                 Package pkg = loader.loadPackageLocal(packageName);
                 if (pkg != null) {
                     packages.add(pkg);
