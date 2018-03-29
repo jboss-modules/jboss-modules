@@ -301,7 +301,9 @@ public final class Module {
      * @param rootPath the module root to search
      * @param resourcePath the path of the resource
      * @return the resource
+     * @deprecated Resource root names are deprecated.
      */
+    @Deprecated
     public Resource getExportedResource(final String rootPath, final String resourcePath) {
         return moduleClassLoader.loadResourceLocal(rootPath, resourcePath);
     }

@@ -112,7 +112,7 @@ public class ResourceRootPathsTest extends AbstractModuleTestCase {
                     Assert.assertEquals(repoRoot, absoluteJar.getParentFile());
                     continue;
                 }
-            } else if (resourceLoader instanceof FileResourceLoader) {
+            } else if (resourceLoader instanceof PathResourceLoader) {
 
                 // validate dir with relative path
                 if(resourceLoader.getRootName().equals("relativedir")) {

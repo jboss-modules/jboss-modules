@@ -119,8 +119,7 @@ public final class JarModuleFinder implements ModuleFinder {
 
                     if (entry.endsWith("/")) {
                         // directory reference
-                        FileResourceLoader resourceLoader = new FileResourceLoader(entry, root, context);
-                        builder.addResourceRoot(ResourceLoaderSpec.createResourceLoaderSpec(resourceLoader));
+                        builder.addResourceRoot(ResourceLoaderSpec.createResourceLoaderSpec(new PathResourceLoader(entry, root.toPath(), context)));
                     } else {
                         // assume a JAR
                         JarFile childJarFile;

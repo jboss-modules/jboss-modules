@@ -370,6 +370,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
      * @param name the resource name
      * @return the resource, or {@code null} if it was not found
      */
+    @Deprecated
     Resource loadResourceLocal(final String root, final String name) {
 
         final Map<String, List<ResourceLoader>> paths = this.paths.get().getAllPaths();

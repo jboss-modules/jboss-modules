@@ -37,6 +37,7 @@ final class FilteredResourceLoader implements ResourceLoader {
         this.loader = loader;
     }
 
+    @Deprecated
     public String getRootName() {
         return loader.getRootName();
     }

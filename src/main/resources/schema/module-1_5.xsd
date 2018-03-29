@@ -415,7 +415,7 @@
         <xsd:attribute name="name" type="xsd:string" use="optional">
             <annotation xmlns="http://www.w3.org/2001/XMLSchema">
                 <documentation>
-                    The name of this resource root (optional). If not specified, defaults to the value of the path
+                    DEPRECATED. The name of this resource root (optional). If not specified, defaults to the value of the path
                     attribute.
                 </documentation>
             </annotation>

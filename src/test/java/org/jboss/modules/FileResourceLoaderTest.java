@@ -37,7 +37,7 @@ public class FileResourceLoaderTest extends AbstractResourceLoaderTestCase {
         resourceRoot = getResource("test/fileresourceloader");
         // Copy the classfile over
         copyResource("org/jboss/modules/test/TestClass.class", "test/fileresourceloader", "org/jboss/modules/test");
-        return new FileResourceLoader("test-root", resourceRoot, AccessController.getContext());
+        return new PathResourceLoader("test-root", resourceRoot.toPath(), AccessController.getContext());
     }
 
     @Override
