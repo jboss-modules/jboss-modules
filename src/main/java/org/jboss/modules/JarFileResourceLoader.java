@@ -22,7 +22,6 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -309,19 +308,6 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
         String relativePath = this.relativePath;
         // First check for an external index
         final JarFile jarFile = this.jarFile;
-        final String jarFileName = jarFile.getName();
-        final long jarModified = fileOfJar.lastModified();
-        final File indexFile = new File(jarFileName + ".index");
-        if (ResourceLoaders.USE_INDEXES) {
-            if (indexFile.exists()) {
-                final long indexModified = indexFile.lastModified();
-                if (indexModified != 0L && jarModified != 0L && indexModified >= jarModified) try {
-                    return readIndex(new FileInputStream(indexFile), index, relativePath);
-                } catch (IOException e) {
-                    index.clear();
-                }
-            }
-        }
         // Next check for an internal index
         JarEntry listEntry = jarFile.getJarEntry(INDEX_FILE);
         if (listEntry != null) {
@@ -333,10 +319,6 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
         }
         // Next just read the JAR
         extractJarPaths(jarFile, relativePath, index);
-
-        if (ResourceLoaders.WRITE_INDEXES && relativePath == null) {
-            writeExternalIndex(indexFile, index);
-        }
         return index;
     }
 
