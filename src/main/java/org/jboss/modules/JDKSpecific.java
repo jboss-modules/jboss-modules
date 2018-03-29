@@ -30,6 +30,7 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.Set;
 import java.util.jar.JarFile;
 
@@ -91,10 +92,6 @@ final class JDKSpecific {
     }
 
     // === the actual JDK-specific API ===
-
-    static JarFile getJarFile(final String name, final boolean verify) throws IOException {
-        return new JarFile(name, verify);
-    }
 
     static JarFile getJarFile(final File name, final boolean verify) throws IOException {
         return new JarFile(name, verify);
@@ -181,6 +178,11 @@ final class JDKSpecific {
     static Class<?> getSystemClass(final ConcurrentClassLoader caller, final String className) throws ClassNotFoundException {
         final ClassLoader platformClassLoader = JDKSpecific.getPlatformClassLoader();
         return platformClassLoader != null ? platformClassLoader.loadClass(className) : caller.findSystemClassInternal(className);
+    }
+
+    static void addInternalPackages(final List<String> list) {
+        list.add("sun.reflect.");
+        list.add("jdk.internal.reflect.");
     }
 
     // === nested util stuff, non-API ===

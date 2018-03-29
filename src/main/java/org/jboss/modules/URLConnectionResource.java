@@ -30,7 +30,11 @@ final class URLConnectionResource implements Resource {
     private final URLConnection connection;
 
     URLConnectionResource(final URL url) throws IOException {
-        this.connection = url.openConnection();
+        this(url.openConnection());
+    }
+
+    URLConnectionResource(final URLConnection connection) {
+        this.connection = connection;
     }
 
     public String getName() {

@@ -1,0 +1,10 @@
+javafx/beans
+javafx/beans/binding
+javafx/beans/property
+javafx/beans/property/adapter
+javafx/beans/value
+javafx/collections
+javafx/collections/transformation
+javafx/event
+javafx/util
+javafx/util/converter

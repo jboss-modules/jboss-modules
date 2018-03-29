@@ -202,8 +202,7 @@ public abstract class ConcurrentClassLoader extends NamedClassLoader {
      */
     protected final Class<?> defineOrLoadClass(final String className, final byte[] bytes, int off, int len, ProtectionDomain protectionDomain) {
         try {
-            final Class<?> definedClass = defineClass(className, bytes, off, len, protectionDomain);
-            return definedClass;
+            return defineClass(className, bytes, off, len, protectionDomain);
         } catch (LinkageError e) {
             final Class<?> loadedClass = findLoadedClass(className);
             if (loadedClass != null) {
@@ -230,9 +229,9 @@ public abstract class ConcurrentClassLoader extends NamedClassLoader {
      * @param className the class name
      * @return the result of {@code findClass(className, false, false)}
      */
-    protected final Class<?> findClass(final String moduleName, final String name) {
+    protected final Class<?> findClass(final String moduleName, final String className) {
         try {
-            return findClass(name);
+            return findClass(className);
         } catch (ClassNotFoundException e) {
             return null;
         }
@@ -355,8 +354,7 @@ public abstract class ConcurrentClassLoader extends NamedClassLoader {
     }
 
     /**
-     * Returns an input stream for reading the specified resource.  If the resource starts with {@code "java/"}, then
-     * this method delegates to the parent class loader.  Otherwise, this method delegates to {@link #findResourceAsStream(String, boolean)}.
+     * Returns an input stream for reading the specified resource.  This method delegates to {@link #findResourceAsStream(String, boolean)}.
      *
      * @param name the resource name
      * @return the resource stream, or {@code null} if the resource is not found

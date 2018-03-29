@@ -1,0 +1,6 @@
+javax/xml/crypto
+javax/xml/crypto/dom
+javax/xml/crypto/dsig
+javax/xml/crypto/dsig/dom
+javax/xml/crypto/dsig/keyinfo
+javax/xml/crypto/dsig/spec

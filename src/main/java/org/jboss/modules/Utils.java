@@ -41,6 +41,8 @@ final class Utils {
         // forbidden instantiation
     }
 
+    static final ModuleLoader JDK_MODULE_LOADER = new ModuleLoader(JDKModuleFinder.getInstance());
+
     static void copy(final InputStream in, final OutputStream out) throws IOException {
         byte[] buf = new byte[16384];
         int len;

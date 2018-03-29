@@ -21,6 +21,7 @@ package org.jboss.modules.log;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import java.net.URL;
 import org.jboss.modules.Main;
 import org.jboss.modules.Module;
 import org.jboss.modules.ModuleLoader;
@@ -64,16 +65,25 @@ public final class JDKModuleLogger implements ModuleLogger {
     private final Logger logger;
     @SuppressWarnings({ "NonConstantLogger" })
     private final Logger defineLogger;
+    @SuppressWarnings({ "NonConstantLogger" })
+    private final Logger jaxpLogger;
 
     /**
      * Construct a new instance.
      *
      * @param logger the main logger to write to
      * @param defineLogger the main logger to write class-define-related trace messages to
+     * @deprecated Use {@link #JDKModuleLogger(String)} instead.
      */
+    @Deprecated
     public JDKModuleLogger(final Logger logger, final Logger defineLogger) {
+        this(logger, defineLogger, logger);
+    }
+
+    private JDKModuleLogger(final Logger logger, final Logger defineLogger, final Logger jaxpLogger) {
         this.logger = logger;
         this.defineLogger = defineLogger;
+        this.jaxpLogger = jaxpLogger;
     }
 
     /**
@@ -82,7 +92,7 @@ public final class JDKModuleLogger implements ModuleLogger {
      * @param category the name of the logger category to write to
      */
     public JDKModuleLogger(final String category) {
-        this(Logger.getLogger(category), Logger.getLogger(category + ".define"));
+        this(Logger.getLogger(category), Logger.getLogger(category + ".define"), Logger.getLogger(category + ".jaxp"));
     }
 
     /**
@@ -199,6 +209,20 @@ public final class JDKModuleLogger implements ModuleLogger {
     public void providerUnloadable(String name, ClassLoader loader) {
         if (defineLogger.isLoggable(TRACE)) {
             doLog(TRACE, String.format("Could not load provider %s in %s", name, loader));
+        }
+    }
+
+    @Override
+    public void jaxpClassLoaded(final Class<?> jaxpClass, final Module module) {
+        if (jaxpLogger.isLoggable(WARN)) {
+            doLog(TRACE, String.format("Loading JAXP %s from %s", jaxpClass, module));
+        }
+    }
+
+    @Override
+    public void jaxpResourceLoaded(final URL resourceURL, final Module module) {
+        if (jaxpLogger.isLoggable(WARN)) {
+            doLog(TRACE, String.format("JAXP Resource %s loaded from module %s", resourceURL, module));
         }
     }
 }

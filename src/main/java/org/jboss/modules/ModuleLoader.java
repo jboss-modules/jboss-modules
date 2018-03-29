@@ -384,7 +384,7 @@ public class ModuleLoader {
     }
 
     /**
-     * Preload a module based on an identifier.  By default, no delegation is done and this method simply invokes
+     * Preload a module based on an identifier.  By default, delegation is only done for system and this method otherwise simply invokes
      * {@link #loadModuleLocal(String)}.  A delegating module loader may delegate to the appropriate module
      * loader based on loader-specific criteria (via the {@link #preloadModule(String, ModuleLoader)} method).
      *
@@ -879,8 +879,9 @@ public class ModuleLoader {
         if (Metrics.ENABLED) classCount.getAndIncrement();
     }
 
-    private static final class FutureModule {
-        private static final Object NOT_FOUND = new Object();
+    static final Object NOT_FOUND = new Object();
+
+    final class FutureModule {
 
         final String name;
         volatile Object module;
@@ -902,7 +903,7 @@ public class ModuleLoader {
                         }
                     }
                 }
-                if (module == NOT_FOUND) throw new ModuleNotFoundException(name);
+                if (module == NOT_FOUND) return null;
                 return (Module) module;
             } finally {
                 if (intr) Thread.currentThread().interrupt();

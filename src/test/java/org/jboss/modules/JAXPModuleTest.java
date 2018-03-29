@@ -105,7 +105,6 @@ import __redirected.__XMLEventFactory;
 import __redirected.__XMLInputFactory;
 import __redirected.__XMLOutputFactory;
 
-import org.jboss.modules.filter.PathFilter;
 import org.jboss.modules.filter.PathFilters;
 import org.jboss.modules.test.JAXPCaller;
 import org.jboss.modules.util.TestModuleLoader;
@@ -141,14 +140,10 @@ public class JAXPModuleTest extends AbstractModuleTestCase {
     private static final ModuleIdentifier FAKE_JAXP = ModuleIdentifier.fromString("fake-jaxp");
 
     private TestModuleLoader moduleLoader;
-    private PathFilter jdkApiFilter;
 
 
     @Before
     public void setupModuleLoader() throws Exception {
-        jdkApiFilter = PathFilters.any(PathFilters.match("javax/**"),
-                       PathFilters.match("org/w3c/**"),
-                       PathFilters.match("org/xml/**"));
         moduleLoader = new TestModuleLoader();
 
         ModuleSpec.Builder moduleWithContentBuilder = ModuleSpec.build(ModuleIdentifier.fromString("test-jaxp"));
@@ -186,7 +181,7 @@ public class JAXPModuleTest extends AbstractModuleTestCase {
                         .addResources(getResource("test/modulecontentloader/jaxp"))
                         .create()
         ));
-        moduleWithContentBuilder.addDependency(DependencySpec.createSystemDependencySpec(jdkApiFilter, PathFilters.rejectAll(), JDKPaths.JDK));
+        moduleWithContentBuilder.addDependency(DependencySpec.createModuleDependencySpec("java.xml"));
         moduleWithContentBuilder.addDependency(DependencySpec.createLocalDependencySpec());
         moduleLoader.addModuleSpec(moduleWithContentBuilder.create());
 
@@ -196,7 +191,7 @@ public class JAXPModuleTest extends AbstractModuleTestCase {
                 .addClass(JAXPCaller.class)
                 .create()
         ));
-        moduleWithContentBuilder.addDependency(DependencySpec.createSystemDependencySpec(jdkApiFilter, PathFilters.rejectAll(), JDKPaths.JDK));
+        moduleWithContentBuilder.addDependency(DependencySpec.createModuleDependencySpec("java.xml"));
         moduleWithContentBuilder.addDependency(new ModuleDependencySpecBuilder()
             .setImportFilter(PathFilters.acceptAll())
             .setModuleLoader(moduleLoader)

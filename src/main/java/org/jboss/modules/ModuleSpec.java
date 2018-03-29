@@ -60,10 +60,14 @@ public abstract class ModuleSpec {
      * @return the builder
      */
     public static Builder build(final String name) {
+        return build(name, true);
+    }
+
+    static Builder build(final String name, final boolean addBaseDep) {
         if (name == null) {
             throw new IllegalArgumentException("name is null");
         }
-        return new Builder() {
+        final Builder builder = new Builder() {
             private String mainClass;
             private AssertionSetting assertionSetting = AssertionSetting.INHERIT;
             private final List<ResourceLoaderSpec> resourceLoaders = new ArrayList<ResourceLoaderSpec>(0);
@@ -157,6 +161,8 @@ public abstract class ModuleSpec {
                 return name;
             }
         };
+        if (addBaseDep) builder.addDependency(ModuleDependencySpec.JAVA_BASE);
+        return builder;
     }
 
     /**
