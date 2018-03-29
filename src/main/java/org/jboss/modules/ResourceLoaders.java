@@ -21,6 +21,9 @@ package org.jboss.modules;
 import java.io.File;
 import java.nio.file.Path;
 import java.security.AccessController;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.jar.JarFile;
 import org.jboss.modules.filter.PathFilter;
 
@@ -197,5 +200,23 @@ public final class ResourceLoaders {
      */
     public static IterableResourceLoader createPathResourceLoader(final Path path) {
         return new PathResourceLoader("unnamed", path, AccessController.getContext());
+    }
+
+    /**
+     * Create a service resource loader.  This is a resource loader which answers service load requests with a preset
+     * implementation name.
+     *
+     * @param serviceMap a map of service types to a list of implementation names (must not be {@code null})
+     * @return the resource loader (not {@code null})
+     */
+    public static ResourceLoader createServiceResourceLoader(final Map<String, List<String>> serviceMap) {
+        final Map<String, URLConnectionResource> map = new HashMap<>();
+        for (Map.Entry<String, List<String>> entry : serviceMap.entrySet()) {
+            final String serviceName = entry.getKey();
+            final List<String> implNames = entry.getValue();
+            final URLConnectionResource resource = ServiceResourceLoader.createResource(implNames);
+            map.put(serviceName, resource);
+        }
+        return new ServiceResourceLoader(map);
     }
 }

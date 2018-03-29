@@ -36,6 +36,7 @@ import org.jboss.modules.filter.PathFilters;
  */
 public abstract class DependencySpec {
 
+    static final DependencySpec[] NO_DEPENDENCIES = new DependencySpec[0];
     final PathFilter importFilter;
     final PathFilter exportFilter;
     final PathFilter resourceImportFilter;
