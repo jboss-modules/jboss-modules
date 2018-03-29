@@ -35,6 +35,7 @@ final class FilteredIterableResourceLoader implements IterableResourceLoader {
         this.loader = loader;
     }
 
+    @Deprecated
     public String getRootName() {
         return loader.getRootName();
     }

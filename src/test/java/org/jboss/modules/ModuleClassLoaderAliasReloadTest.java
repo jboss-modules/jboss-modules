@@ -34,12 +34,6 @@ public class ModuleClassLoaderAliasReloadTest extends AbstractModuleTestCase {
         }
 
         @Override
-        public String getRootName() {
-            if (closed) throw new IllegalStateException();
-            return delegate.getRootName();
-        }
-
-        @Override
         public ClassSpec getClassSpec(String fileName) throws IOException {
             if (closed) throw new IllegalStateException();
             return delegate.getClassSpec(fileName);

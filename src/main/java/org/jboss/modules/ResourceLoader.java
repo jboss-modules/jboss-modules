@@ -35,7 +35,10 @@ public interface ResourceLoader extends AutoCloseable {
      *
      * @return the name of the root
      */
-    String getRootName();
+    @Deprecated
+    default String getRootName() {
+        return "ignored";
+    }
 
     /**
      * Get the class specification for the given class name.  If no matching class is found, {@code null} is returned.

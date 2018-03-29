@@ -97,7 +97,7 @@ public final class ModuleXmlParser {
      * accept the default.
      */
     public interface ResourceRootFactory {
-        ResourceLoader createResourceLoader(final String rootPath, final String loaderPath, final String loaderName) throws IOException;
+        ResourceLoader createResourceLoader(final String rootPath, final String loaderPath, @Deprecated final String loaderName) throws IOException;
 
         /**
          * Get the default resource root factory.
@@ -1049,12 +1049,13 @@ public final class ModuleXmlParser {
         String path = null;
         final Set<String> required = new HashSet<>(LIST_A_PATH);
         final int count = reader.getAttributeCount();
+        final boolean is1_8 = atLeast1_8(reader);
         for (int i = 0; i < count; i ++) {
             validateAttributeNamespace(reader, i);
             final String attribute = reader.getAttributeName(i);
             required.remove(attribute);
             switch (attribute) {
-                case A_NAME: name = reader.getAttributeValue(i); break;
+                case A_NAME: if (!is1_8) name = reader.getAttributeValue(i); else throw unknownAttribute(reader, i); break;
                 case A_PATH: path = reader.getAttributeValue(i); break;
                 default: throw unknownAttribute(reader, i);
             }
@@ -1062,7 +1063,7 @@ public final class ModuleXmlParser {
         if (! required.isEmpty()) {
             throw missingAttributes(reader, required);
         }
-        if (name == null) name = path;
+        if (name == null) name = is1_8 ? "unnamed" : path;
 
         final MultiplePathFilterBuilder filterBuilder = PathFilters.multiplePathFilterBuilder(true);
         final SystemPropertyConditionBuilder conditionBuilder = new SystemPropertyConditionBuilder();
@@ -1511,7 +1512,7 @@ public final class ModuleXmlParser {
                 file = new File(rootPathName, loaderFileName);
             }
             if (file.isDirectory()) {
-                return ResourceLoaders.createFileResourceLoader(loaderName, file);
+                return ResourceLoaders.createPathResourceLoader(loaderName, file.toPath());
             } else {
                 final JarFile jarFile = JDKSpecific.getJarFile(file, true);
                 return ResourceLoaders.createJarResourceLoader(loaderName, jarFile);

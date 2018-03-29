@@ -136,7 +136,7 @@ public class FileSystemClassPathModuleFinder implements ModuleFinder {
                 } catch (IOException e) {
                     throw new ModuleLoadException("Failed to load MANIFEST from " + path, e);
                 }
-                resourceLoader = new FileResourceLoader(fileName, path.toFile(), context);
+                resourceLoader = new PathResourceLoader(fileName, path, context);
                 fatModuleLoader = new DelegatingModuleLoader(baseModuleLoader, new LocalModuleFinder(new File[]{ path.resolve(MODULES_DIR).toFile() }));
             } else {
                 // assume some kind of JAR file

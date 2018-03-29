@@ -50,11 +50,14 @@ public final class ResourceLoaders {
      * @param name the name of the resource root
      * @param root the root file of the resource loader
      * @return the resource loader
+     * @deprecated Use {@link #createPathResourceLoader(Path)} instead.
      */
+    @Deprecated
     public static IterableResourceLoader createFileResourceLoader(final String name, final File root) {
-        return new FileResourceLoader(name, root, AccessController.getContext());
+        return createPathResourceLoader(name, root.toPath());
     }
 
+    @Deprecated
     public static ResourceLoader createFileResourceLoader$$bridge(final String name, final File root) {
         return createFileResourceLoader(name, root);
     }
@@ -68,6 +71,7 @@ public final class ResourceLoaders {
      * @return the resource loader
      * @deprecated Use {@link #createFileResourceLoader(String, File)} instead.
      */
+    @Deprecated
     public static IterableResourceLoader createIterableFileResourceLoader(final String name, final File root) {
         return createFileResourceLoader(name, root);
     }
@@ -79,11 +83,25 @@ public final class ResourceLoaders {
      * @param name the name of the resource root
      * @param jarFile the backing JAR file
      * @return the resource loader
+     * @deprecated Use {@link #createJarResourceLoader(JarFile)} instead.
      */
+    @Deprecated
     public static IterableResourceLoader createJarResourceLoader(final String name, final JarFile jarFile) {
         return new JarFileResourceLoader(name, jarFile);
     }
 
+    /**
+     * Create a JAR-backed resource loader.  JAR resource loaders do not have native library support.
+     * Created classes have a code source with a {@code jar:} URL; nested JARs are not supported.
+     *
+     * @param jarFile the backing JAR file
+     * @return the resource loader
+     */
+    public static IterableResourceLoader createJarResourceLoader(final JarFile jarFile) {
+        return new JarFileResourceLoader("unnamed", jarFile);
+    }
+
+    @Deprecated
     public static ResourceLoader createJarResourceLoader$$bridge(final String name, final JarFile jarFile) {
         return createJarResourceLoader(name, jarFile);
     }
@@ -96,9 +114,22 @@ public final class ResourceLoaders {
      * @param name the name of the resource root
      * @param jarFile the backing JAR file
      * @return the resource loader
+     * @deprecated Use {@link #createJarResourceLoader(JarFile, String)} instead.
      */
     public static IterableResourceLoader createJarResourceLoader(final String name, final JarFile jarFile, final String relativePath) {
         return new JarFileResourceLoader(name, jarFile, relativePath);
+    }
+
+    /**
+     * Create a JAR-backed resource loader.  JAR resource loaders do not have native library support.
+     * Created classes have a code source with a {@code jar:} URL; nested JARs are not supported.  The given
+     * relative path within the JAR is used as the root of the loader.
+     *
+     * @param jarFile the backing JAR file
+     * @return the resource loader
+     */
+    public static IterableResourceLoader createJarResourceLoader(final JarFile jarFile, final String relativePath) {
+        return new JarFileResourceLoader("unnamed", jarFile, relativePath);
     }
 
     /**
@@ -108,7 +139,7 @@ public final class ResourceLoaders {
      * @param name the name of the resource root
      * @param jarFile the backing JAR file
      * @return the resource loader
-     * @deprecated Use {@link #createJarResourceLoader(String, JarFile)} instead.
+     * @deprecated Use {@link #createJarResourceLoader(JarFile)} instead.
      */
     @Deprecated
     public static IterableResourceLoader createIterableJarResourceLoader(final String name, final JarFile jarFile) {
@@ -158,8 +189,20 @@ public final class ResourceLoaders {
      * @param name the name of the resource root
      * @param path the root path of the resource loader
      * @return the resource loader
+     * @deprecated Use {@link #createPathResourceLoader(Path)} instead.
      */
+    @Deprecated
     public static IterableResourceLoader createPathResourceLoader(final String name, final Path path) {
         return new PathResourceLoader(name, path, AccessController.getContext());
+    }
+
+    /**
+     * Create a NIO2 Path-backed iterable resource loader.
+     *
+     * @param path the root path of the resource loader
+     * @return the resource loader
+     */
+    public static IterableResourceLoader createPathResourceLoader(final Path path) {
+        return new PathResourceLoader("unnamed", path, AccessController.getContext());
     }
 }
