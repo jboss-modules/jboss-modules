@@ -102,11 +102,7 @@ public final class JDKModuleLogger implements ModuleLogger {
         this("org.jboss.modules");
     }
 
-    private void doLog(final Level level, final String str) {
-        doLog(level, str, null);
-    }
-
-    private void doLog(final Level level, final String str, final Throwable t) {
+    private void doLog(final Logger logger, final Level level, final String str, final Throwable t) {
         try {
             final ModuleLogRecord rec = new ModuleLogRecord(level, str);
             rec.setLoggerName(logger.getName());
@@ -118,111 +114,111 @@ public final class JDKModuleLogger implements ModuleLogger {
 
     /** {@inheritDoc} */
     public void trace(final String message) {
-        doLog(TRACE, message, null);
+        doLog(logger, TRACE, message, null);
     }
 
     /** {@inheritDoc} */
     public void trace(final String format, final Object arg1) {
         if (logger.isLoggable(TRACE)) {
-            doLog(TRACE, String.format(format, arg1), null);
+            doLog(logger, TRACE, String.format(format, arg1), null);
         }
     }
 
     /** {@inheritDoc} */
     public void trace(final String format, final Object arg1, final Object arg2) {
         if (logger.isLoggable(TRACE)) {
-            doLog(TRACE, String.format(format, arg1, arg2));
+            doLog(logger, TRACE, String.format(format, arg1, arg2), null);
         }
     }
 
     /** {@inheritDoc} */
     public void trace(final String format, final Object arg1, final Object arg2, final Object arg3) {
         if (logger.isLoggable(TRACE)) {
-            doLog(TRACE, String.format(format, arg1, arg2, arg3));
+            doLog(logger, TRACE, String.format(format, arg1, arg2, arg3), null);
         }
     }
 
     /** {@inheritDoc} */
     public void trace(final String format, final Object... args) {
         if (logger.isLoggable(TRACE)) {
-            doLog(TRACE, String.format(format, (Object[]) args));
+            doLog(logger, TRACE, String.format(format, (Object[]) args), null);
         }
     }
 
     /** {@inheritDoc} */
     public void trace(final Throwable t, final String message) {
-        doLog(TRACE, message, t);
+        doLog(logger, TRACE, message, t);
     }
 
     /** {@inheritDoc} */
     public void trace(final Throwable t, final String format, final Object arg1) {
         if (logger.isLoggable(TRACE)) {
-            doLog(TRACE, String.format(format, arg1), t);
+            doLog(logger, TRACE, String.format(format, arg1), t);
         }
     }
 
     /** {@inheritDoc} */
     public void trace(final Throwable t, final String format, final Object arg1, final Object arg2) {
         if (logger.isLoggable(TRACE)) {
-            doLog(TRACE, String.format(format, arg1, arg2), t);
+            doLog(logger, TRACE, String.format(format, arg1, arg2), t);
         }
     }
 
     /** {@inheritDoc} */
     public void trace(final Throwable t, final String format, final Object arg1, final Object arg2, final Object arg3) {
         if (logger.isLoggable(TRACE)) {
-            doLog(TRACE, String.format(format, arg1, arg2, arg3), t);
+            doLog(logger, TRACE, String.format(format, arg1, arg2, arg3), t);
         }
     }
 
     /** {@inheritDoc} */
     public void trace(final Throwable t, final String format, final Object... args) {
         if (logger.isLoggable(TRACE)) {
-            doLog(TRACE, String.format(format, (Object[]) args), t);
+            doLog(logger, TRACE, String.format(format, (Object[]) args), t);
         }
     }
 
     /** {@inheritDoc} */
     public void greeting() {
-        doLog(Level.INFO, String.format("JBoss Modules version %s", Main.getVersionString()));
+        doLog(logger, Level.INFO, String.format("JBoss Modules version %s", Main.getVersionString()), null);
     }
 
     /** {@inheritDoc} */
     public void moduleDefined(final String name, final ModuleLoader moduleLoader) {
         if (logger.isLoggable(DEBUG)) {
-            doLog(DEBUG, String.format("Module %s defined by %s", name, moduleLoader));
+            doLog(logger, DEBUG, String.format("Module %s defined by %s", name, moduleLoader), null);
         }
     }
 
     public void classDefineFailed(final Throwable throwable, final String className, final Module module) {
         if (defineLogger.isLoggable(WARN)) {
-            doLog(WARN, String.format("Failed to define class %s in %s", className, module), throwable);
+            doLog(defineLogger, WARN, String.format("Failed to define class %s in %s", className, module), throwable);
         }
     }
 
     public void classDefined(final String name, final Module module) {
         if (defineLogger.isLoggable(TRACE)) {
-            doLog(TRACE, String.format("Defined class %s in %s", name, module));
+            doLog(defineLogger, TRACE, String.format("Defined class %s in %s", name, module), null);
         }
     }
 
     public void providerUnloadable(String name, ClassLoader loader) {
         if (defineLogger.isLoggable(TRACE)) {
-            doLog(TRACE, String.format("Could not load provider %s in %s", name, loader));
+            doLog(defineLogger, TRACE, String.format("Could not load provider %s in %s", name, loader), null);
         }
     }
 
     @Override
     public void jaxpClassLoaded(final Class<?> jaxpClass, final Module module) {
-        if (jaxpLogger.isLoggable(WARN)) {
-            doLog(TRACE, String.format("Loading JAXP %s from %s", jaxpClass, module));
+        if (jaxpLogger.isLoggable(TRACE)) {
+            doLog(jaxpLogger, TRACE, String.format("Loading JAXP %s from %s", jaxpClass, module), null);
         }
     }
 
     @Override
     public void jaxpResourceLoaded(final URL resourceURL, final Module module) {
-        if (jaxpLogger.isLoggable(WARN)) {
-            doLog(TRACE, String.format("JAXP Resource %s loaded from module %s", resourceURL, module));
+        if (jaxpLogger.isLoggable(TRACE)) {
+            doLog(jaxpLogger, TRACE, String.format("JAXP Resource %s loaded from module %s", resourceURL, module), null);
         }
     }
 }
