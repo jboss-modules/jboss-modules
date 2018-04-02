@@ -875,11 +875,11 @@ public final class ModuleXmlParser {
 
     private static void parseResources(final MavenResolver mavenResolver, final ResourceRootFactory factory, final String rootPath, final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
         assertNoAttributes(reader);
+        final List<Version> detectedVersions = new ArrayList<>();
         // xsd:choice
         int eventType;
         for (;;) {
             eventType = reader.nextTag();
-            List<Version> detectedVersions = new ArrayList<>();
             switch (eventType) {
                 case END_TAG: {
                     final Version specifiedVersion = specBuilder.getVersion();
