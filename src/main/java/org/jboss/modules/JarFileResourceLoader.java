@@ -34,6 +34,7 @@ import java.net.URL;
 import java.net.URLStreamHandler;
 import java.security.CodeSigner;
 import java.security.CodeSource;
+import java.security.PrivilegedActionException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -50,6 +51,8 @@ import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+
+import static java.security.AccessController.doPrivileged;
 
 /**
  *
@@ -235,7 +238,13 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
             } catch (URISyntaxException x) {
                 throw new IllegalStateException(x);
             }
-            return new JarEntryResource(jarFile, entry.getName(), relativePath, new URL(null, getJarURI(uri, entry.getName()).toString(), (URLStreamHandler) null));
+            final URL url = new URL(null, getJarURI(uri, entry.getName()).toString(), (URLStreamHandler) null);
+            try {
+                doPrivileged(new GetURLConnectionAction(url));
+            } catch (PrivilegedActionException e) {
+                // ignored; the user might not even ask for the URL
+            }
+            return new JarEntryResource(jarFile, entry.getName(), relativePath, url);
         } catch (MalformedURLException e) {
             // must be invalid...?  (todo: check this out)
             return null;

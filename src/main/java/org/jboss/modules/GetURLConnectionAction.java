@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2014 Red Hat, Inc., and individual contributors
+ * Copyright 2018 Red Hat, Inc., and individual contributors
  * as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,32 +19,22 @@
 package org.jboss.modules;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
+import java.net.URLConnection;
+import java.security.PrivilegedExceptionAction;
 
 /**
- * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-final class URLResource implements Resource {
+final class GetURLConnectionAction implements PrivilegedExceptionAction<URLConnection> {
     private final URL url;
 
-    URLResource(final URL url) {
+    GetURLConnectionAction(final URL url) {
         this.url = url;
     }
 
-    public String getName() {
-        return url.getPath();
-    }
-
-    public URL getURL() {
-        return url;
-    }
-
-    public InputStream openStream() throws IOException {
-        return url.openStream();
-    }
-
-    public long getSize() {
-        return 0L;
+    public URLConnection run() throws IOException {
+        final URLConnection c = url.openConnection();
+        c.connect();
+        return c;
     }
 }

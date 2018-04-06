@@ -25,9 +25,11 @@ import static java.security.AccessController.doPrivileged;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.UndeclaredThrowableException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
@@ -36,6 +38,7 @@ import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.security.PrivilegedActionException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -132,7 +135,22 @@ final class JDKSpecific {
                 }
                 final List<Resource> list = new ArrayList<Resource>();
                 while (urls.hasMoreElements()) {
-                    list.add(new URLResource(urls.nextElement()));
+                    final URL url = urls.nextElement();
+                    URLConnection connection = null;
+                    try {
+                        connection = doPrivileged(new GetURLConnectionAction(url));
+                    } catch (PrivilegedActionException e) {
+                        try {
+                            throw e.getException();
+                        } catch (IOException e2) {
+                            // omit from list
+                        } catch (RuntimeException re) {
+                            throw re;
+                        } catch (Exception e2) {
+                            throw new UndeclaredThrowableException(e2);
+                        }
+                    }
+                    list.add(new URLConnectionResource(connection));
                 }
                 return list;
             }
@@ -231,4 +249,5 @@ final class JDKSpecific {
             return CONTINUE;
         }
     }
+
 }

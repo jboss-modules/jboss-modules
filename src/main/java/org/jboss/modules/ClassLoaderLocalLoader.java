@@ -19,11 +19,18 @@
 package org.jboss.modules;
 
 import java.io.IOException;
+import java.lang.reflect.UndeclaredThrowableException;
 import java.net.URL;
+import java.net.URLConnection;
+import java.security.AccessControlContext;
+import java.security.PrivilegedActionException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
+
+import static java.security.AccessController.doPrivileged;
+import static java.security.AccessController.getContext;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -33,6 +40,7 @@ final class ClassLoaderLocalLoader implements LocalLoader {
     static final LocalLoader SYSTEM = JDKSpecific.getSystemLocalLoader();
 
     private final ClassLoader classLoader;
+    private final AccessControlContext context;
 
     /**
      * Construct a new instance.
@@ -41,6 +49,7 @@ final class ClassLoaderLocalLoader implements LocalLoader {
      */
     ClassLoaderLocalLoader(final ClassLoader classLoader) {
         this.classLoader = classLoader;
+        context = getContext();
     }
 
     // Public members
@@ -78,7 +87,22 @@ final class ClassLoaderLocalLoader implements LocalLoader {
         }
         final List<Resource> list = new ArrayList<Resource>();
         while (urls.hasMoreElements()) {
-            list.add(new URLResource(urls.nextElement()));
+            final URL url = urls.nextElement();
+            URLConnection connection = null;
+            try {
+                connection = doPrivileged(new GetURLConnectionAction(url), context);
+            } catch (PrivilegedActionException e) {
+                try {
+                    throw e.getException();
+                } catch (IOException e2) {
+                    // omit from list
+                } catch (RuntimeException re) {
+                    throw re;
+                } catch (Exception e2) {
+                    throw new UndeclaredThrowableException(e2);
+                }
+            }
+            list.add(new URLConnectionResource(connection));
         }
         return list;
     }

@@ -50,7 +50,11 @@ class PathResource implements Resource {
 
     @Override
     public URL getURL() {
-        return doPrivilegedIfNeeded(context, () -> path.toUri().toURL());
+        return doPrivilegedIfNeeded(context, () -> {
+            final URL url = path.toUri().toURL();
+            url.openConnection().connect();
+            return url;
+        });
     }
 
     @Override
