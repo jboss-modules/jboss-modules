@@ -450,6 +450,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </li>
 <li><a href="#slots">2.6. Module version slots</a></li>
 <li><a href="#class-loading-order">2.7. Class loading order</a></li>
+<li><a href="#predefined-modules">2.8. Predefined modules</a></li>
 </ul>
 </li>
 <li><a href="#defining">3. Using JBoss Modules to run an application</a>
@@ -472,6 +473,11 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </ul>
 </li>
 <li><a href="#permissions-element">4.1.3. The <code>permissions</code> element</a></li>
+<li><a href="#provides-element">4.1.4. The <code>provides</code> element</a>
+<ul class="sectlevel4">
+<li><a href="#provides-service-element">4.1.4.1. The <code>service</code> element</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li><a href="#alias-element">4.2. The root <code>module-alias</code> element</a></li>
@@ -526,6 +532,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <ul class="sectlevel3">
 <li><a href="#boot-module-loader">8.2.1. The boot module loader</a></li>
 <li><a href="#context-class-loader">8.2.2. The context class loader</a></li>
+<li><a href="#system-module-loader">8.2.3. The system module loader</a></li>
 </ul>
 </li>
 <li><a href="#custom-module-loaders">8.3. Implementing your own module loaders and finders</a>
@@ -1013,6 +1020,303 @@ basis, by examining dependency package names, and pruning that set of package na
 packages that are to be defined by the module&#8217;s own resources.</p>
 </div>
 </div>
+<div class="sect2">
+<h3 id="predefined-modules">2.8. Predefined modules</h3>
+<div class="paragraph">
+<p>As of JBoss Modules version 1.8, a set of modules are predefined and available to users
+automatically when the default module loader is used.  The set of modules available
+depends on the version of JDK that is being run.</p>
+</div>
+<div class="paragraph">
+<p>Under all JDKs, the special module <code>org.jboss.modules</code> is available which includes all of
+the JBoss Modules API.</p>
+</div>
+<div class="paragraph">
+<p>When running under Java 9 and later, the set of platform modules and JPMS module
+path modules are available to use as dependencies.</p>
+</div>
+<div class="paragraph">
+<p>When running under Java 8, the basic set of platform modules is emulated, including
+the following names:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 1. Included module names under Java 8</caption>
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 80%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Name</th>
+<th class="tableblock halign-left valign-top">Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>java.base</code></p></td>
+<td class="tableblock halign-left valign-top"><div><div class="paragraph">
+<p>This dependency is always included in the provided module loaders.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>java.compiler</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>java.datatransfer</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>java.desktop</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>java.instrument</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>java.jnlp</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>java.logging</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>java.management</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>java.management.rmi</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>java.naming</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>java.prefs</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>java.rmi</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>java.scripting</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>java.se</code></p></td>
+<td class="tableblock halign-left valign-top"><div><div class="paragraph">
+<p>This module alias aggregates the following set of base modules:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 100%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>java.compiler</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>java.datatransfer</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>java.desktop</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>java.instrument</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>java.logging</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>java.management</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>java.management.rmi</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>java.naming</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>java.prefs</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>java.rmi</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>java.scripting</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>java.security.jgss</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>java.security.sasl</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>java.sql</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>java.sql.rowset</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>java.xml</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>java.xml.crypto</code></p></td>
+</tr>
+</tbody>
+</table></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>java.security.jgss</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>java.security.sasl</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>java.smartcardio</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>java.sql</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>java.sql.rowset</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>java.xml</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>java.xml.crypto</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>javafx.base</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>javafx.controls</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>javafx.fxml</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>javafx.graphics</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>javafx.media</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>javafx.swing</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>javafx.web</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>jdk.accessibility</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>jdk.attach</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>jdk.compiler</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>jdk.httpserver</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>jdk.jartool</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>jdk.javadoc</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>jdk.jconsole</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>jdk.jdi</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>jdk.jfr</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>jdk.jsobject</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>jdk.management</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>jdk.management.cmm</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>jdk.management.jfr</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>jdk.management.resource</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>jdk.net</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>jdk.plugin.dom</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>jdk.scripting.nashorn</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>jdk.sctp</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>jdk.security.auth</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>jdk.security.jgss</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>jdk.unsupported</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>jdk.xml.dom</code></p></td>
+<td class="tableblock halign-left valign-top"><div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -1125,7 +1429,7 @@ Server:</p>
 follows:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 1. Allowed namespaces for <code>module.xml</code> files</caption>
+<caption class="title">Table 2. Allowed namespaces for <code>module.xml</code> files</caption>
 <colgroup>
 <col style="width: 75%;">
 <col style="width: 25%;">
@@ -1161,6 +1465,14 @@ follows:</p>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>urn:jboss:module:1.6</code></p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">1.6+</p></td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>urn:jboss:module:1.7</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.7+</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>urn:jboss:module:1.8</code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.8+</p></td>
+</tr>
 </tbody>
 </table>
 <div class="paragraph">
@@ -1180,7 +1492,7 @@ module is being specified. There are two types: a regular <em>module</em> and a
 following attributes:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 2. Attributes of the <code>module</code> element</caption>
+<caption class="title">Table 3. Attributes of the <code>module</code> element</caption>
 <colgroup>
 <col style="width: 12.5%;">
 <col style="width: 12.5%;">
@@ -1225,7 +1537,7 @@ following attributes:</p>
 <p>The <code>module</code> element may contain any of the following elements:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 3. Child elements of the <code>module</code> element</caption>
+<caption class="title">Table 4. Child elements of the <code>module</code> element</caption>
 <colgroup>
 <col style="width: 12.5%;">
 <col style="width: 12.5%;">
@@ -1285,6 +1597,13 @@ following attributes:</p>
 <td class="tableblock halign-center valign-top"><p class="tableblock">1.2+</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">The permissions that are to be granted to this module when a <em>security manager</em> is present.</p></td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="#provides-element">provides</a></code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">0</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.8+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Explicitly declared services which are provided by this module.</p></td>
+</tr>
 </tbody>
 </table>
 <div class="sect3">
@@ -1299,7 +1618,7 @@ named module&#8217;s <code>main-class</code> will be loaded and executed.</p>
 <p>The <code>main-class</code> element supports the following attributes:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 4. Attributes of the <code>main-class</code> element</caption>
+<caption class="title">Table 5. Attributes of the <code>main-class</code> element</caption>
 <colgroup>
 <col style="width: 12.5%;">
 <col style="width: 12.5%;">
@@ -1369,7 +1688,7 @@ from JAR files.</p>
 <p>The <code>resources</code> element may contain any of the following elements:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 5. Child elements of the <code>resources</code> element</caption>
+<caption class="title">Table 6. Child elements of the <code>resources</code> element</caption>
 <colgroup>
 <col style="width: 12.5%;">
 <col style="width: 12.5%;">
@@ -1411,7 +1730,7 @@ zero or more <code>resource-root</code> and/or <code>artifact</code> elements. T
 supports the following attributes:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 6. Attributes of the <code>resources</code> element</caption>
+<caption class="title">Table 7. Attributes of the <code>resources</code> element</caption>
 <colgroup>
 <col style="width: 12.5%;">
 <col style="width: 12.5%;">
@@ -1451,7 +1770,7 @@ resource root&#8217;s path.</p></td>
 <p>In addition, the <code>resource-root</code> element may contain a nested element:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 7. Child elements of the <code>resource-root</code> element</caption>
+<caption class="title">Table 8. Child elements of the <code>resource-root</code> element</caption>
 <colgroup>
 <col style="width: 12.5%;">
 <col style="width: 12.5%;">
@@ -1493,7 +1812,7 @@ and can be used in place of <code>resource-root</code>.  The <code>artifact</cod
 contain the following attributes:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 8. Attributes of the <code>artifact</code> element</caption>
+<caption class="title">Table 9. Attributes of the <code>artifact</code> element</caption>
 <colgroup>
 <col style="width: 12.5%;">
 <col style="width: 12.5%;">
@@ -1524,7 +1843,7 @@ contain the following attributes:</p>
 <p>In addition, since JBoss Modules 1.5, the <code>artifact</code> element may contain a nested element:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 9. Child elements of the <code>artifact</code> element</caption>
+<caption class="title">Table 10. Child elements of the <code>artifact</code> element</caption>
 <colgroup>
 <col style="width: 12.5%;">
 <col style="width: 12.5%;">
@@ -1566,7 +1885,7 @@ properties you use the <code>properties</code> element which can contain zero or
 more <code>property</code> elements, each supporting the following attributes:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 10. Attributes of the <code>property</code> child element</caption>
+<caption class="title">Table 11. Attributes of the <code>property</code> child element</caption>
 <colgroup>
 <col style="width: 12.5%;">
 <col style="width: 12.5%;">
@@ -1609,11 +1928,18 @@ more <code>property</code> elements, each supporting the following attributes:</
 <code>dependencies</code> element.</p>
 </div>
 <div class="paragraph">
+<p>In schema versions 1.0 through 1.7, an implicit, invisible parent-first
+dependency is present which includes all JDK classes in the <code>java</code> package
+and all of its subpackages.  In schema version 1.8, only the <code>java.base</code>
+platform module is included by default; all other dependencies must be established
+explicitly.</p>
+</div>
+<div class="paragraph">
 <p>The <code>dependencies</code> element does not support any attributes. It
 contains zero or more nested elements as follows:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 11. Child elements of the <code>dependencies</code> element</caption>
+<caption class="title">Table 12. Child elements of the <code>dependencies</code> element</caption>
 <colgroup>
 <col style="width: 12.5%;">
 <col style="width: 12.5%;">
@@ -1642,9 +1968,9 @@ contains zero or more nested elements as follows:</p>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>system</code></p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">0</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">unbounded</p></td>
-<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0-1.7</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">A specification for expressing a dependency upon the system or
-application class path.</p></td>
+application class path.  Not available as of 1.8.</p></td>
 </tr>
 </tbody>
 </table>
@@ -1654,7 +1980,7 @@ application class path.</p></td>
 <p>The <code>module</code> element supports the following attributes:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 12. Attributes of the <code>module</code> dependency element</caption>
+<caption class="title">Table 13. Attributes of the <code>module</code> dependency element</caption>
 <colgroup>
 <col style="width: 12.5%;">
 <col style="width: 12.5%;">
@@ -1719,7 +2045,7 @@ defaults to <code>none</code>.</p></td>
 elements:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 13. Child elements of the <code>module</code> dependency element</caption>
+<caption class="title">Table 14. Child elements of the <code>module</code> dependency element</caption>
 <colgroup>
 <col style="width: 12.5%;">
 <col style="width: 12.5%;">
@@ -1777,11 +2103,16 @@ this module.</p></td>
 <div class="paragraph">
 <p>The <code>system</code> element expresses a dependency which is satisfied by
 accessing paths and packages from the class loader which loaded JBoss
-Modules (this is usually the system&#8217;s application class loader). The
+Modules (this is usually the system&#8217;s application class loader).  This
+dependency type is only available on schema versions 1.0 through
+1.7; as of 1.8, only module dependencies may be specified.</p>
+</div>
+<div class="paragraph">
+<p>The
 element supports the following attributes:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 14. Attributes of the <code>system</code> dependency element</caption>
+<caption class="title">Table 15. Attributes of the <code>system</code> dependency element</caption>
 <colgroup>
 <col style="width: 12.5%;">
 <col style="width: 12.5%;">
@@ -1803,7 +2134,7 @@ element supports the following attributes:</p>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>export</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">optional</p></td>
-<td class="tableblock halign-center valign-top"><p class="tableblock">1.0+</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.0-1.7</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Specify whether this dependency is re-exported by default; if not
 specified, defaults to <code>false</code>.</p></td>
 </tr>
@@ -1813,7 +2144,7 @@ specified, defaults to <code>false</code>.</p></td>
 <p>It also contains nested elements as follows:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 15. Child elements of the <code>system</code> dependency element</caption>
+<caption class="title">Table 16. Child elements of the <code>system</code> dependency element</caption>
 <colgroup>
 <col style="width: 12.5%;">
 <col style="width: 12.5%;">
@@ -1860,7 +2191,7 @@ or unspecified).</p></td>
 <p>The <code>permissions</code> element contains the following child elements:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 16. Child elements of the <code>permissions</code> element</caption>
+<caption class="title">Table 17. Child elements of the <code>permissions</code> element</caption>
 <colgroup>
 <col style="width: 12.5%;">
 <col style="width: 12.5%;">
@@ -1891,7 +2222,7 @@ or unspecified).</p></td>
 <p>The nested <code>permission</code> element supports the following attributes:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 17. Attributes of the <code>permission</code> element</caption>
+<caption class="title">Table 18. Attributes of the <code>permission</code> element</caption>
 <colgroup>
 <col style="width: 12.5%;">
 <col style="width: 12.5%;">
@@ -1945,6 +2276,149 @@ See <a href="#security-manager">JBoss Modules and the Java security manager</a> 
 </table>
 </div>
 </div>
+<div class="sect3">
+<h4 id="provides-element">4.1.4. The <code>provides</code> element</h4>
+<div class="paragraph">
+<p>The <code>provides</code> element allows a module to declare that certain services are implemented
+by classes within the module.  This mechanism can be used in place of the usual
+<code>META-INF/services/interfaceName</code> approach of declaring services which are visible
+to <code>java.util.ServiceLoader</code> or other compatible mechanisms.</p>
+</div>
+<div class="paragraph">
+<p>The <code>provides</code> element contains the following child element:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 19. Child elements of the <code>provides</code> element</caption>
+<colgroup>
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Element</th>
+<th class="tableblock halign-center valign-top">Minimum</th>
+<th class="tableblock halign-center valign-top">Maximum</th>
+<th class="tableblock halign-center valign-top">Version(s)</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="#provides-service-element">service</a></code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">0</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">unbounded</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.8+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The service to provide.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="sect4">
+<h5 id="provides-service-element">4.1.4.1. The <code>service</code> element</h5>
+<div class="paragraph">
+<p>The <code>service</code> element within a <code>provides</code> element specifies a service which is provided
+by the module.  The service is represented by a class or interface name.</p>
+</div>
+<div class="paragraph">
+<p>The <code>service</code> element supports the following attribute:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 20. Attributes of the <code>service</code> element</caption>
+<colgroup>
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Attribute</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-center valign-top">Use</th>
+<th class="tableblock halign-center valign-top">Version(s)</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>name</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">required</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.8+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The qualified name of the service class or interface.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>The <code>service</code> element contains the following child element:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 21. Child elements of the <code>service</code> element</caption>
+<colgroup>
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Element</th>
+<th class="tableblock halign-center valign-top">Minimum</th>
+<th class="tableblock halign-center valign-top">Maximum</th>
+<th class="tableblock halign-center valign-top">Version(s)</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="#provides-service-with-class-element">with-class</a></code></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">0</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">unbounded</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.8+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The class(es) which provide the service.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="sect5">
+<h6 id="provides-service-with-class-element">The <code>with-class</code> element</h6>
+<div class="paragraph">
+<p>The <code>with-class</code> child element supports the following attribute:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 22. Attributes of the <code>with-class</code> element</caption>
+<colgroup>
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Attribute</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-center valign-top">Use</th>
+<th class="tableblock halign-center valign-top">Version(s)</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>name</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">required</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">1.8+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The qualified name of the service implementation class.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
 </div>
 <div class="sect2">
 <h3 id="alias-element">4.2. The root <code>module-alias</code> element</h3>
@@ -1954,7 +2428,7 @@ for a second module. The root element is called <code>module-alias</code> and
 supports the following attributes:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 18. Attributes of the <code>module-alias</code> element</caption>
+<caption class="title">Table 23. Attributes of the <code>module-alias</code> element</caption>
 <colgroup>
 <col style="width: 22.2222%;">
 <col style="width: 11.1111%;">
@@ -2016,7 +2490,7 @@ module descriptors in the  <code>urn:jboss:module:1.6</code> namespace or later.
 of the filter element varies by context, but they always support the same content.</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 19. Child elements of a filter element</caption>
+<caption class="title">Table 24. Child elements of a filter element</caption>
 <colgroup>
 <col style="width: 12.5%;">
 <col style="width: 12.5%;">
@@ -2073,7 +2547,7 @@ of names separated by a literal forward slash <code>/</code>.  A path specificat
 to take the place of part of the path, and is comprised of a sequence of <code>path</code> elements.</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 20. Attributes of a path specification</caption>
+<caption class="title">Table 25. Attributes of a path specification</caption>
 <colgroup>
 <col style="width: 12.5%;">
 <col style="width: 12.5%;">
@@ -2104,7 +2578,7 @@ to take the place of part of the path, and is comprised of a sequence of <code>p
 <p>The following wildcards are supported:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 21. Supported wildcard expressions of a path specification</caption>
+<caption class="title">Table 26. Supported wildcard expressions of a path specification</caption>
 <colgroup>
 <col style="width: 12.5%;">
 <col style="width: 12.5%;">
@@ -2148,7 +2622,7 @@ checked one pattern at a time.</p>
 <p>The path set is comprised of a sequence of <code>path</code> elements.</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 22. Path set child elements</caption>
+<caption class="title">Table 27. Path set child elements</caption>
 <colgroup>
 <col style="width: 12.5%;">
 <col style="width: 12.5%;">
@@ -2176,7 +2650,7 @@ checked one pattern at a time.</p>
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 23. Attributes of the path set <code>path</code> element</caption>
+<caption class="title">Table 28. Attributes of the path set <code>path</code> element</caption>
 <colgroup>
 <col style="width: 12.5%;">
 <col style="width: 12.5%;">
@@ -2395,7 +2869,7 @@ module is stored within its <code class="filename">META-INF/MANIFEST.MF</code> f
 in the main section of the manifest:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 24. Main manifest attributes</caption>
+<caption class="title">Table 29. Main manifest attributes</caption>
 <colgroup>
 <col style="width: 20%;">
 <col style="width: 10%;">
@@ -2489,7 +2963,7 @@ modifier        = "optional" / "export" / "services"</code></pre>
 <p>The following modifiers are supported:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 25. <code>Dependency</code> manifest attribute modifiers</caption>
+<caption class="title">Table 30. <code>Dependency</code> manifest attribute modifiers</caption>
 <colgroup>
 <col style="width: 12.5%;">
 <col style="width: 12.5%;">
@@ -2675,7 +3149,7 @@ all modes, the structure of the command line is like this:</p>
 <p>The syntax of the <code>program spec</code> is as follows:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 26. Supported execution modes</caption>
+<caption class="title">Table 31. Supported execution modes</caption>
 <colgroup>
 <col style="width: 14.2857%;">
 <col style="width: 14.2857%;">
@@ -2750,7 +3224,7 @@ module for the entire class path.  Since 1.7, each item is now a separate module
 <p>The supported options are as follows:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 27. Supported command line options</caption>
+<caption class="title">Table 32. Supported command line options</caption>
 <colgroup>
 <col style="width: 16.6666%;">
 <col style="width: 16.6666%;">
@@ -3196,6 +3670,14 @@ It can be determined by calling the static <code>Module.getBootModuleLoader()</c
 <p>The thread context class loader (also known as the <em>TCCL</em>) is used to identify the class loader
 of the application being run.  When JBoss Modules starts up, the TCCL is initialized to the module
 containing the main class.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="system-module-loader">8.2.3. The system module loader</h4>
+<div class="paragraph">
+<p>As of JBoss Modules 1.8, there is a <em>system module loader</em> which can be used to load JDK modules as
+well as the special <code>org.jboss.modules</code> module.  It can be acquired by calling the
+<code>Module.getSystemModuleLoader()</code> method.</p>
 </div>
 </div>
 </div>
@@ -3964,7 +4446,7 @@ that class, and it is also used for the URI value returned by <code>getLocation(
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2017-12-03 13:21:36 CST
+Last updated 2018-04-18 12:38:34 CDT
 </div>
 </div>
 <link rel="stylesheet" href="highlight/styles/github.min.css">
