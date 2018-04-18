@@ -176,6 +176,23 @@ public final class JDKModuleFinder implements IterableModuleFinder {
                 connection.connect();
                 return Collections.singletonList(new URLConnectionResource(connection));
             } catch (IOException e) {
+                // connect failed; try the class loader
+                final int idx = name.lastIndexOf('/');
+                if (idx != -1) {
+                    final String nameDots = name.substring(0, idx).replace('/', '.');
+                    if (packages.contains(nameDots)) {
+                        final URL resource = classLoader.getResource(name);
+                        if (resource != null) {
+                            try {
+                                final URLConnection connection = resource.openConnection();
+                                connection.connect();
+                                return Collections.singletonList(new URLConnectionResource(connection));
+                            } catch (IOException e2) {
+                                return Collections.emptyList();
+                            }
+                        }
+                    }
+                }
                 return Collections.emptyList();
             }
         }
