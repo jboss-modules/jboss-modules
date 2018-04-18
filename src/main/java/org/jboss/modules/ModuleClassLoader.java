@@ -449,6 +449,42 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         }
     }
 
+    Class<?> defineClassInternal(final String className, ByteBuffer byteBuffer, final ProtectionDomain protectionDomain) {
+        if (transformer != null) {
+            int pos = byteBuffer.position();
+            int lim = byteBuffer.limit();
+            ByteBuffer transformed;
+            try {
+                transformed = transformer.transform(this, className.replace('.', '/'), protectionDomain, byteBuffer);
+            } catch (Exception e) {
+                ClassFormatError error = new ClassFormatError(e.getMessage());
+                error.initCause(e);
+                throw error;
+            }
+            if (transformed != null) {
+                byteBuffer = transformed;
+            } else {
+                byteBuffer.position(0);
+                byteBuffer.limit(lim);
+                byteBuffer.position(pos);
+            }
+        }
+        final long start = Metrics.getCurrentCPUTime();
+        final Class<?> defined = defineClass(className, byteBuffer, protectionDomain);
+        module.getModuleLoader().addClassLoadTime(Metrics.getCurrentCPUTime() - start);
+        return defined;
+    }
+
+    Class<?> defineClassInternal(final String className, byte[] bytes, int off, int len, final ProtectionDomain protectionDomain) {
+        if (transformer != null) {
+            return defineClassInternal(className, ByteBuffer.wrap(bytes, off, len), protectionDomain);
+        }
+        final long start = Metrics.getCurrentCPUTime();
+        final Class<?> defined = defineClass(className, bytes, off, len, protectionDomain);
+        module.getModuleLoader().addClassLoadTime(Metrics.getCurrentCPUTime() - start);
+        return defined;
+    }
+
     /**
      * Define a class from a class name and class spec.  Also defines any enclosing {@link Package} instances,
      * and performs any sealed-package checks.
