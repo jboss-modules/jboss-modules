@@ -1,13 +1,11 @@
+[id='top']
+= JBoss Modules: version 1.x
 :sectnumlevels: 4
 :sectnums:
 :imagesdir: img
 :toclevels: 4
 :source-highlighter: highlightjs
 :highlightjsdir: highlight
-
-[id='top']
-= JBoss Modules: version 1.x
-
 :toc: left
 
 [id='introduction']
@@ -320,6 +318,153 @@ that this sometimes does not happen.  A container can however implement this tec
 basis, by examining dependency package names, and pruning that set of package names from the set of
 packages that are to be defined by the module's own resources.
 
+[id='predefined-modules']
+=== Predefined modules
+
+As of JBoss Modules version 1.8, a set of modules are predefined and available to users
+automatically when the default module loader is used.  The set of modules available
+depends on the version of JDK that is being run.
+
+Under all JDKs, the special module `org.jboss.modules` is available which includes all of
+the JBoss Modules API.
+
+When running under Java 9 and later, the set of platform modules and JPMS module
+path modules are available to use as dependencies.
+
+When running under Java 8, the basic set of platform modules is emulated, including
+the following names:
+
+.Included module names under Java 8
+[cols="m,4a",options="header"]
+|===
+
+|Name
+|Notes
+
+|java.base
+|This dependency is always included in the provided module loaders.
+|java.compiler
+|
+|java.datatransfer
+|
+|java.desktop
+|
+|java.instrument
+|
+|java.jnlp
+|
+|java.logging
+|
+|java.management
+|
+|java.management.rmi
+|
+|java.naming
+|
+|java.prefs
+|
+|java.rmi
+|
+|java.scripting
+|
+|java.se
+|This module alias aggregates the following set of base modules:
+
+[cols="m"]
+!===
+! java.compiler
+! java.datatransfer
+! java.desktop
+! java.instrument
+! java.logging
+! java.management
+! java.management.rmi
+! java.naming
+! java.prefs
+! java.rmi
+! java.scripting
+! java.security.jgss
+! java.security.sasl
+! java.sql
+! java.sql.rowset
+! java.xml
+! java.xml.crypto
+!===
+
+|java.security.jgss
+|
+|java.security.sasl
+|
+|java.smartcardio
+|
+|java.sql
+|
+|java.sql.rowset
+|
+|java.xml
+|
+|java.xml.crypto
+|
+|javafx.base
+|
+|javafx.controls
+|
+|javafx.fxml
+|
+|javafx.graphics
+|
+|javafx.media
+|
+|javafx.swing
+|
+|javafx.web
+|
+|jdk.accessibility
+|
+|jdk.attach
+|
+|jdk.compiler
+|
+|jdk.httpserver
+|
+|jdk.jartool
+|
+|jdk.javadoc
+|
+|jdk.jconsole
+|
+|jdk.jdi
+|
+|jdk.jfr
+|
+|jdk.jsobject
+|
+|jdk.management
+|
+|jdk.management.cmm
+|
+|jdk.management.jfr
+|
+|jdk.management.resource
+|
+|jdk.net
+|
+|jdk.plugin.dom
+|
+|jdk.scripting.nashorn
+|
+|jdk.sctp
+|
+|jdk.security.auth
+|
+|jdk.security.jgss
+|
+|jdk.unsupported
+|
+|jdk.xml.dom
+|
+|===
+
 [id='defining']
 == Using JBoss Modules to run an application
 
@@ -440,6 +585,12 @@ follows:
 |urn:jboss:module:1.6
 |1.6+
 
+|urn:jboss:module:1.7
+|1.7+
+
+|urn:jboss:module:1.8
+|1.8+
+
 |===
 
 Note that every version of JBoss Modules supports the full descriptor formats of all previous
@@ -532,6 +683,12 @@ The `module` element may contain any of the following elements:
 |1
 |1.2+
 |The permissions that are to be granted to this module when a _security manager_ is present.
+
+|<<provides-element,provides>>
+|0
+|1
+|1.8+
+|Explicitly declared services which are provided by this module.
 
 |===
 
@@ -759,6 +916,12 @@ more `property` elements, each supporting the following attributes:
 A module may express one or more dependencies on other module(s) via the
 `dependencies` element.
 
+In schema versions 1.0 through 1.7, an implicit, invisible parent-first
+dependency is present which includes all JDK classes in the `java` package
+and all of its subpackages.  In schema version 1.8, only the `java.base`
+platform module is included by default; all other dependencies must be established
+explicitly.
+
 The `dependencies` element does not support any attributes. It
 contains zero or more nested elements as follows:
 
@@ -780,9 +943,9 @@ contains zero or more nested elements as follows:
 |system
 |0
 |unbounded
-|1.0+
+|1.0-1.7
 |A specification for expressing a dependency upon the system or
-application class path.
+application class path.  Not available as of 1.8.
 
 |===
 
@@ -886,7 +1049,11 @@ See the section on filter definition for more information about filters.
 
 The `system` element expresses a dependency which is satisfied by
 accessing paths and packages from the class loader which loaded JBoss
-Modules (this is usually the system's application class loader). The
+Modules (this is usually the system's application class loader).  This
+dependency type is only available on schema versions 1.0 through
+1.7; as of 1.8, only module dependencies may be specified.
+
+The
 element supports the following attributes:
 
 .Attributes of the `system` dependency element
@@ -902,7 +1069,7 @@ element supports the following attributes:
 |export
 |boolean
 |optional
-|1.0+
+|1.0-1.7
 |Specify whether this dependency is re-exported by default; if not
 specified, defaults to `false`.
 |===
@@ -990,6 +1157,99 @@ The nested `permission` element supports the following attributes:
 |===
 
 WARNING: See <<security-manager>> for important information on using the security manager.
+
+[id='provides-element']
+==== The `provides` element
+
+The `provides` element allows a module to declare that certain services are implemented
+by classes within the module.  This mechanism can be used in place of the usual
+`META-INF/services/interfaceName` approach of declaring services which are visible
+to `java.util.ServiceLoader` or other compatible mechanisms.
+
+The `provides` element contains the following child element:
+
+.Child elements of the `provides` element
+[cols="m,^,^,^,4",options="header"]
+|===
+|Element
+|Minimum
+|Maximum
+|Version(s)
+|Description
+
+|<<provides-service-element,service>>
+|0
+|unbounded
+|1.8+
+|The service to provide.
+
+|===
+
+[id='provides-service-element']
+===== The `service` element
+
+The `service` element within a `provides` element specifies a service which is provided
+by the module.  The service is represented by a class or interface name.
+
+The `service` element supports the following attribute:
+
+.Attributes of the `service` element
+[cols="m,1,^,^,4",options="header"]
+|===
+
+|Attribute
+|Type
+|Use
+|Version(s)
+|Description
+
+|name
+|string
+|required
+|1.8+
+|The qualified name of the service class or interface.
+|===
+
+The `service` element contains the following child element:
+
+.Child elements of the `service` element
+[cols="m,^,^,^,4",options="header"]
+|===
+|Element
+|Minimum
+|Maximum
+|Version(s)
+|Description
+
+|<<provides-service-with-class-element,with-class>>
+|0
+|unbounded
+|1.8+
+|The class(es) which provide the service.
+
+|===
+
+[id='provides-service-with-class-element']
+====== The `with-class` element
+
+The `with-class` child element supports the following attribute:
+
+.Attributes of the `with-class` element
+[cols="m,1,^,^,4",options="header"]
+|===
+
+|Attribute
+|Type
+|Use
+|Version(s)
+|Description
+
+|name
+|string
+|required
+|1.8+
+|The qualified name of the service implementation class.
+|===
 
 [id='alias-element']
 === The root `module-alias` element
@@ -1860,6 +2120,13 @@ It can be determined by calling the static `Module.getBootModuleLoader()` method
 The thread context class loader (also known as the _TCCL_) is used to identify the class loader
 of the application being run.  When JBoss Modules starts up, the TCCL is initialized to the module
 containing the main class.
+
+[id='system-module-loader']
+==== The system module loader
+
+As of JBoss Modules 1.8, there is a _system module loader_ which can be used to load JDK modules as
+well as the special `org.jboss.modules` module.  It can be acquired by calling the
+`Module.getSystemModuleLoader()` method.
 
 [id='custom-module-loaders']
 === Implementing your own module loaders and finders
