@@ -41,35 +41,41 @@ import org.jboss.modules.filter.PathFilters;
 public final class JDKModuleFinder implements IterableModuleFinder {
 
     private final ConcurrentHashMap<String, FutureSpec> modules = new ConcurrentHashMap<>();
-    private final List<DependencySpec> javaSeDeps;
     private final List<String> moduleNames;
+
+    static final class SEDeps {
+        static final List<DependencySpec> javaSeDeps;
+
+        static {
+            List<DependencySpec> deps = new ArrayList<>();
+            for (String dep : Arrays.asList(
+                "java.compiler",
+                "java.datatransfer",
+                "java.desktop",
+                "java.instrument",
+                "java.logging",
+                "java.management",
+                "java.management.rmi",
+                "java.naming",
+                "java.prefs",
+                "java.rmi",
+                "java.scripting",
+                "java.security.jgss",
+                "java.security.sasl",
+                "java.sql",
+                "java.sql.rowset",
+                "java.xml",
+                "java.xml.crypto"
+            )) {
+                deps.add(new ModuleDependencySpecBuilder().setName(dep).setExport(true).build());
+            }
+            javaSeDeps = deps;
+        }
+    }
 
     private static final JDKModuleFinder INSTANCE = new JDKModuleFinder();
 
     private JDKModuleFinder() {
-        List<DependencySpec> deps = new ArrayList<>();
-        for (String dep : Arrays.asList(
-            "java.compiler",
-            "java.datatransfer",
-            "java.desktop",
-            "java.instrument",
-            "java.logging",
-            "java.management",
-            "java.management.rmi",
-            "java.naming",
-            "java.prefs",
-            "java.rmi",
-            "java.scripting",
-            "java.security.jgss",
-            "java.security.sasl",
-            "java.sql",
-            "java.sql.rowset",
-            "java.xml",
-            "java.xml.crypto"
-        )) {
-            deps.add(new ModuleDependencySpecBuilder().setName(dep).setExport(true).build());
-        }
-        javaSeDeps = deps;
         moduleNames = Collections.unmodifiableList(Arrays.asList(
             "java.sql",
             "java.base",
@@ -143,7 +149,7 @@ public final class JDKModuleFinder implements IterableModuleFinder {
                 switch (name) {
                     case "java.se": {
                         final ModuleSpec.Builder builder = ModuleSpec.build("java.se", false);
-                        for (DependencySpec dep : javaSeDeps) {
+                        for (DependencySpec dep : SEDeps.javaSeDeps) {
                             builder.addDependency(dep);
                         }
                         futureSpec.setModuleSpec(builder.create());
