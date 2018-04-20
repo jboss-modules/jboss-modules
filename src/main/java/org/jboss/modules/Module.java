@@ -90,6 +90,7 @@ public final class Module {
         list.add("java.");
         list.add("sun.reflect.");
         list.add("jdk.internal.reflect.");
+        list.add("com.sun.crypto.provider.");
         list.add("__redirected.");
         if (pkgsString != null) {
             int i;
