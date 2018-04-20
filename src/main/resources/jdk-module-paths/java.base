@@ -52,3 +52,4 @@ javax/security/cert
 # These are Java 8 only, but required for correct operation
 sun/reflect
 jdk/internal/reflect
+com/sun/crypto/provider
