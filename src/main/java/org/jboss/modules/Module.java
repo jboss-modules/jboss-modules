@@ -86,6 +86,7 @@ public final class Module {
         final List<String> list = new ArrayList<String>();
         list.add("java.");
         list.add("sun.reflect.");
+        list.add("com.sun.crypto.provider.");
         if (pkgsString != null) {
             int i;
             int nc = -1;
