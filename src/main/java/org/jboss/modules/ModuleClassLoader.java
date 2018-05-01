@@ -106,7 +106,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
             final String clazzName = clazz.getName();
             classesByName.put(clazzName, clazz);
             try {
-                resources.put("META-INF/services/" + entry.getKey(), new URLConnectionResource(new URL("data:text/plain;charset=utf-8," + clazzName)));
+                resources.put("META-INF/services/" + entry.getKey(), new URLConnectionResource(new URL(null, "data:text/plain;charset=utf-8," + clazzName, DataURLStreamHandler.getInstance())));
             } catch (IOException e) {
                 throw new IllegalStateException(e);
             }
