@@ -262,7 +262,10 @@ public class ModuleLoader {
         return version == null ? module.getName() : module.getName() + "@" + version;
     }
 
-    static void installMBeanServer() {
+    /**
+     * Installs this ModuleLoader as a JMX Managed bean.
+     */
+    public static void installMBeanServer() {
         REG_REF.installReal();
     }
 
