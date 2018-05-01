@@ -442,6 +442,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
                     final String oldMsg = e.getMessage();
                     final String newMsg = "Failed to link " + name.replace('.', '/') + " (" + module + ")";
                     ne = e.getClass().getConstructor(String.class).newInstance(oldMsg == null || oldMsg.isEmpty() ? newMsg : newMsg + ": " + oldMsg);
+                    ne.setStackTrace(e.getStackTrace());
                 } catch (InstantiationException | NoSuchMethodException | InvocationTargetException | IllegalAccessException ignored) {
                     // just throw the original
                     throw e;
