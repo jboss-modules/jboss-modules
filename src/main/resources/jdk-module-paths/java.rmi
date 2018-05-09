@@ -4,3 +4,11 @@ java/rmi/dgc
 java/rmi/registry
 java/rmi/server
 javax/rmi/ssl
+# Non-exported
+com/sun/rmi/rmid
+sun/rmi/log
+sun/rmi/registry
+sun/rmi/runtime
+sun/rmi/server
+sun/rmi/transport
+sun/rmi/transport/tcp

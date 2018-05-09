@@ -1,1 +1,5 @@
 com/sun/nio/sctp
+# Non-exported
+sun/nio
+sun/nio/ch
+sun/nio/ch/sctp

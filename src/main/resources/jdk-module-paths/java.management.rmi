@@ -1,1 +1,4 @@
 javax/management/remote/rmi
+# Non-exported
+com/sun/jmx/remote/internal
+com/sun/jmx/remote/protocol/rmi
