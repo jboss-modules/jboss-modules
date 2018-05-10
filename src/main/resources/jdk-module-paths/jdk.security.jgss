@@ -1,3 +1,5 @@
 com/sun/security/jgss
 com/ibm/security/jgss
 com/ibm/security/krb5
+com/sun/security/sasl
+com/sun/security/sasl/gsskerb

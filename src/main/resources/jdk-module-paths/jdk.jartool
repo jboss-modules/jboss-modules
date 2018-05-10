@@ -1,2 +1,6 @@
 com/sun/jarsigner
 jdk/security/jarsigner
+# Non-exported
+sun/security/tools
+sun/tools/jar
+sun/tools/jar/resources

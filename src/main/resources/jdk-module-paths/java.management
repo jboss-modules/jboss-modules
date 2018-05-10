@@ -7,3 +7,13 @@ javax/management/openmbean
 javax/management/relation
 javax/management/remote
 javax/management/timer
+# Non-exported
+com/sun/jmx/defaults
+com/sun/jmx/interceptor
+com/sun/jmx/mbeanserver
+com/sun/jmx/remote/internal
+com/sun/jmx/remote/security
+com/sun/jmx/remote/util
+sun/management
+sun/management/counter
+sun/management/counter/perf
