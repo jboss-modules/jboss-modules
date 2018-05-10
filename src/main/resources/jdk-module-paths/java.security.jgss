@@ -1,2 +1,20 @@
 javax/security/auth/kerberos
 org/ietf/jgss
+# Non-exported
+sun/net
+sun/net/www
+sun/net/www/protocol/http
+sun/net/www/protocol/http/spnego
+sun/security/jgss
+sun/security/jgss/krb5
+sun/security/jgss/spi
+sun/security/jgss/spnego
+sun/security/jgss/wrapper
+sun/security/krb5
+sun/security/krb5/internal
+sun/security/krb5/internal/ccache
+sun/security/krb5/internal/crypto
+sun/security/krb5/internal/crypto/dk
+sun/security/krb5/internal/ktab
+sun/security/krb5/internal/rcache
+sun/security/krb5/internal/util
