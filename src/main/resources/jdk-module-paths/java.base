@@ -50,6 +50,7 @@ javax/security/auth/spi
 javax/security/auth/x500
 javax/security/cert
 # Non-exported
+com/sun/crypto/provider
 com/sun/java/util/jar/pack
 com/sun/net/ssl
 com/sun/net/ssl/internal/ssl
@@ -64,6 +65,7 @@ jdk/internal/org/objectweb/asm/tree/analysis
 jdk/internal/org/objectweb/asm/util
 jdk/internal/org/xml/sax
 jdk/internal/org/xml/sax/helpers
+jdk/internal/reflect
 jdk/internal/util
 jdk/internal/util/xml
 jdk/internal/util/xml/impl
