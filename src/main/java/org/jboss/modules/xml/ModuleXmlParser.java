@@ -50,7 +50,6 @@ import org.jboss.modules.ModuleDependencySpecBuilder;
 import org.jboss.modules.Version;
 import org.jboss.modules.VersionDetection;
 import org.jboss.modules.maven.ArtifactCoordinates;
-import org.jboss.modules.maven.MavenArtifactUtil;
 import org.jboss.modules.ModuleIdentifier;
 import org.jboss.modules.ModuleLoadException;
 import org.jboss.modules.ModuleLoader;
@@ -908,7 +907,7 @@ public final class ModuleXmlParser {
                             break;
                         }
                         case E_ARTIFACT: {
-                            final Version version = parseArtifact(mavenResolver, reader, specBuilder);
+                            final Version version = parseArtifact(factory, mavenResolver, reader, specBuilder);
                             if (version != null) detectedVersions.add(version);
                             break;
                         }
@@ -988,7 +987,7 @@ public final class ModuleXmlParser {
         }
     }
 
-    private static Version parseArtifact(final MavenResolver mavenResolver, final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
+    private static Version parseArtifact(final ResourceRootFactory factory, final MavenResolver mavenResolver, final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
         String name = null;
         final Set<String> required = new HashSet<>(LIST_A_NAME);
         final int count = reader.getAttributeCount();
@@ -1019,7 +1018,8 @@ public final class ModuleXmlParser {
                         final ArtifactCoordinates coordinates;
                         try {
                             coordinates = ArtifactCoordinates.fromString(name);
-                            resourceLoader = MavenArtifactUtil.createMavenArtifactLoader(mavenResolver, coordinates, name);
+                            final File file = mavenResolver.resolveJarArtifact(coordinates);
+                            resourceLoader = factory.createResourceLoader("", file.getPath(), name);
                         } catch (IOException | IllegalArgumentException e) {
                             throw new XmlPullParserException(String.format("Failed to add artifact '%s'", name), reader, e);
                         }
