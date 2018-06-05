@@ -508,7 +508,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
                     if (transformed != null) {
                         byteBuffer = transformed;
                         bytes = null;
-                    } else {
+                    } else if (byteBuffer != null) {
                         byteBuffer.position(0);
                         byteBuffer.limit(lim);
                         byteBuffer.position(pos);
