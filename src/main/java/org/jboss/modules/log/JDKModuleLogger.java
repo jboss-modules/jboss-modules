@@ -203,8 +203,8 @@ public final class JDKModuleLogger implements ModuleLogger {
     }
 
     public void providerUnloadable(String name, ClassLoader loader) {
-        if (defineLogger.isLoggable(TRACE)) {
-            doLog(defineLogger, TRACE, String.format("Could not load provider %s in %s", name, loader), null);
+        if (defineLogger.isLoggable(DEBUG)) {
+            doLog(defineLogger, DEBUG, String.format("Could not load provider %s in %s", name, loader), null);
         }
     }
 
