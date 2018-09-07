@@ -1019,6 +1019,9 @@ public final class ModuleXmlParser {
                         try {
                             coordinates = ArtifactCoordinates.fromString(name);
                             final File file = mavenResolver.resolveJarArtifact(coordinates);
+                            if (file == null) {
+                                throw new XmlPullParserException(String.format("Failed to resolve artifact '%s'", coordinates), reader, null);
+                            }
                             resourceLoader = factory.createResourceLoader("", file.getPath(), name);
                         } catch (IOException | IllegalArgumentException e) {
                             throw new XmlPullParserException(String.format("Failed to add artifact '%s'", name), reader, e);
