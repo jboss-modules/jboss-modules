@@ -108,6 +108,13 @@ public final class ModuleXmlParser {
         }
     }
 
+    /**
+     * XML parsing callback for property elements.
+     */
+    private interface PropertiesCallback {
+        void parsedProperty(String name, String value);
+    }
+
     private ModuleXmlParser() {
     }
 
@@ -120,6 +127,7 @@ public final class ModuleXmlParser {
     private static final String MODULE_1_6 = "urn:jboss:module:1.6";
     private static final String MODULE_1_7 = "urn:jboss:module:1.7";
     private static final String MODULE_1_8 = "urn:jboss:module:1.8";
+    private static final String MODULE_1_9 = "urn:jboss:module:1.9";
 
     private static final String E_MODULE = "module";
     private static final String E_ARTIFACT = "artifact";
@@ -174,6 +182,24 @@ public final class ModuleXmlParser {
     private static final List<String> LIST_A_NAME_A_SLOT = Arrays.asList(A_NAME, A_SLOT);
     private static final List<String> LIST_A_NAME_A_TARGET_NAME = Arrays.asList(A_NAME, A_TARGET_NAME);
     private static final List<String> LIST_A_PERMISSION_A_NAME = Arrays.asList(A_PERMISSION, A_NAME);
+
+    private static PropertiesCallback NOOP_PROPS_CALLBACK;
+
+    /**
+     * Returns a no-op implementation of properties callback currently used for
+     * parsing properties attached to module dependencies that aren't used at
+     * runtime in jboss-modules but are important in other projects where
+     * module dependencies are analyzed.
+     *
+     * @return  a no-op implementation of properties callback
+     */
+    private static PropertiesCallback getNoopPropsCallback() {
+        return NOOP_PROPS_CALLBACK == null ? NOOP_PROPS_CALLBACK = new PropertiesCallback() {
+            @Override
+            public void parsedProperty(String name, String value) {
+            }
+        } : NOOP_PROPS_CALLBACK;
+    }
 
     /**
      * Parse a {@code module.xml} file.
@@ -394,6 +420,7 @@ public final class ModuleXmlParser {
             case MODULE_1_6:
             case MODULE_1_7:
             case MODULE_1_8:
+            case MODULE_1_9:
                 break;
             default: throw unexpectedContent(reader);
         }
@@ -408,7 +435,11 @@ public final class ModuleXmlParser {
     }
 
     private static boolean atLeast1_8(final XmlPullParser reader) {
-        return MODULE_1_8.equals(reader.getNamespace());
+        return MODULE_1_8.equals(reader.getNamespace()) || atLeast1_9(reader);
+    }
+
+    private static boolean atLeast1_9(final XmlPullParser reader) {
+        return MODULE_1_9.equals(reader.getNamespace());
     }
 
     private static void assertNoAttributes(final XmlPullParser reader) throws XmlPullParserException {
@@ -677,7 +708,15 @@ public final class ModuleXmlParser {
                         case E_DEPENDENCIES: parseDependencies(reader, dependencies); break;
                         case E_MAIN_CLASS:   parseMainClass(reader, specBuilder); break;
                         case E_RESOURCES:    parseResources(mavenResolver, factory, rootPath, reader, specBuilder); break;
-                        case E_PROPERTIES:   parseProperties(reader, specBuilder); break;
+                        case E_PROPERTIES:   parseProperties(reader, new PropertiesCallback() {
+                            @Override
+                            public void parsedProperty(String name, String value) {
+                                specBuilder.addProperty(name, value);
+                                if ("jboss.assertions".equals(name)) try {
+                                    specBuilder.setAssertionSetting(AssertionSetting.valueOf(value.toUpperCase(Locale.US)));
+                                } catch (IllegalArgumentException ignored) {}
+                            }
+                        }); break;
                         case E_PERMISSIONS:  parsePermissions(reader, moduleLoader, realModuleName, specBuilder); gotPerms = true; break;
                         case E_PROVIDES:     if (is1_8) parseProvidesType(reader, specBuilder); else throw unexpectedContent(reader); break;
                         default: throw unexpectedContent(reader);
@@ -794,6 +833,7 @@ public final class ModuleXmlParser {
                     switch (reader.getName()) {
                         case E_EXPORTS: parseFilterList(reader, exportBuilder); break;
                         case E_IMPORTS: parseFilterList(reader, importBuilder); break;
+                        case E_PROPERTIES: if (atLeast1_9(reader)) { parseProperties(reader, getNoopPropsCallback()); break; }
                         default: throw unexpectedContent(reader);
                     }
                     break;
@@ -1278,7 +1318,7 @@ public final class ModuleXmlParser {
         parseNoContent(reader);
     }
 
-    private static void parseProperties(final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
+    private static void parseProperties(final XmlPullParser reader, final PropertiesCallback propsCallback) throws XmlPullParserException, IOException {
         assertNoAttributes(reader);
         // xsd:choice
         int eventType;
@@ -1292,7 +1332,7 @@ public final class ModuleXmlParser {
                     validateNamespace(reader);
                     switch (reader.getName()) {
                         case E_PROPERTY: {
-                            parseProperty(reader, specBuilder);
+                            parseProperty(reader, propsCallback);
                             break;
                         }
                         default: throw unexpectedContent(reader);
@@ -1306,7 +1346,7 @@ public final class ModuleXmlParser {
         }
     }
 
-    private static void parseProperty(final XmlPullParser reader, final ModuleSpec.Builder specBuilder) throws XmlPullParserException, IOException {
+    private static void parseProperty(final XmlPullParser reader, final PropertiesCallback propsCallback) throws XmlPullParserException, IOException {
         String name = null;
         String value = null;
         final Set<String> required = new HashSet<>(LIST_A_NAME);
@@ -1324,10 +1364,7 @@ public final class ModuleXmlParser {
         if (! required.isEmpty()) {
             throw missingAttributes(reader, required);
         }
-        specBuilder.addProperty(name, value == null ? "true" : value);
-        if ("jboss.assertions".equals(name)) try {
-            specBuilder.setAssertionSetting(AssertionSetting.valueOf(value.toUpperCase(Locale.US)));
-        } catch (IllegalArgumentException ignored) {}
+        propsCallback.parsedProperty(name, value == null ? "true" : value);
 
         // consume remainder of element
         parseNoContent(reader);
