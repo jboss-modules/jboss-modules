@@ -71,6 +71,8 @@ public class ModuleLoadException extends Exception {
      * @return the unchecked error
      */
     public ModuleLoadError toError() {
-        return new ModuleLoadError(getMessage(), getCause());
+        final ModuleLoadError error = new ModuleLoadError(getMessage(), getCause());
+        error.setStackTrace(getStackTrace());
+        return error;
     }
 }
