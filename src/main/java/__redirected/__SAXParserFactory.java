@@ -18,8 +18,7 @@
 
 package __redirected;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
+import java.util.function.Supplier;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -39,36 +38,8 @@ import org.xml.sax.SAXNotSupportedException;
  * @author Jason T. Greene
  */
 public final class __SAXParserFactory extends SAXParserFactory {
-    private static final Constructor<? extends SAXParserFactory> PLATFORM_FACTORY;
-    private static volatile Constructor<? extends SAXParserFactory> DEFAULT_FACTORY;
-
-    static {
-        Thread thread = Thread.currentThread();
-        ClassLoader old = thread.getContextClassLoader();
-
-        // Unfortunately we can not use null because of a stupid bug in the jdk JAXP factory finder.
-        // Lack of tccl causes the provider file discovery to fallback to the jaxp loader (bootclasspath)
-        // which is correct. However, after parsing it, it then disables the fallback for the loading of the class.
-        // Thus, the class can not be found.
-        //
-        // Work around the problem by using the System CL, although in the future we may want to just "inherit"
-        // the environment's TCCL
-        thread.setContextClassLoader(ClassLoader.getSystemClassLoader());
-        try {
-            if (System.getProperty(SAXParserFactory.class.getName(), "").equals(__SAXParserFactory.class.getName())) {
-                System.clearProperty(SAXParserFactory.class.getName());
-            }
-            SAXParserFactory factory = SAXParserFactory.newInstance();
-            try {
-               DEFAULT_FACTORY = PLATFORM_FACTORY = factory.getClass().getConstructor();
-            } catch (NoSuchMethodException e) {
-                throw __RedirectedUtils.wrapped(new NoSuchMethodError(e.getMessage()), e);
-            }
-            System.setProperty(SAXParserFactory.class.getName(), __SAXParserFactory.class.getName());
-        } finally {
-            thread.setContextClassLoader(old);
-        }
-    }
+    private static final Supplier<SAXParserFactory> PLATFORM_FACTORY = JDKSpecific.getPlatformSaxParserFactorySupplier();
+    private static volatile Supplier<SAXParserFactory> DEFAULT_FACTORY = PLATFORM_FACTORY;
 
     @Deprecated
     public static void changeDefaultFactory(ModuleIdentifier id, ModuleLoader loader) {
@@ -76,13 +47,9 @@ public final class __SAXParserFactory extends SAXParserFactory {
     }
 
     public static void changeDefaultFactory(String id, ModuleLoader loader) {
-        Class<? extends SAXParserFactory> clazz = __RedirectedUtils.loadProvider(id, SAXParserFactory.class, loader);
-        if (clazz != null) {
-            try {
-                DEFAULT_FACTORY = clazz.getConstructor();
-            } catch (NoSuchMethodException e) {
-                throw __RedirectedUtils.wrapped(new NoSuchMethodError(e.getMessage()), e);
-            }
+        final Supplier<SAXParserFactory> supplier = __RedirectedUtils.loadProvider(id, SAXParserFactory.class, loader);
+        if (supplier != null) {
+            DEFAULT_FACTORY = supplier;
         }
     }
 
@@ -93,31 +60,14 @@ public final class __SAXParserFactory extends SAXParserFactory {
     /**
      * Init method.
      */
+    @Deprecated
     public static void init() {}
 
     /**
      * Construct a new instance.
      */
     public __SAXParserFactory() {
-        Constructor<? extends SAXParserFactory> factory = DEFAULT_FACTORY;
-        ClassLoader loader = Thread.currentThread().getContextClassLoader();
-        try {
-            if (loader != null) {
-                Class<? extends SAXParserFactory> provider = __RedirectedUtils.loadProvider(SAXParserFactory.class, loader);
-                if (provider != null)
-                    factory = provider.getConstructor();
-            }
-
-            actual = factory.newInstance();
-        } catch (InstantiationException e) {
-            throw __RedirectedUtils.wrapped(new InstantiationError(e.getMessage()), e);
-        } catch (IllegalAccessException e) {
-            throw __RedirectedUtils.wrapped(new IllegalAccessError(e.getMessage()), e);
-        } catch (InvocationTargetException e) {
-            throw __RedirectedUtils.rethrowCause(e);
-        } catch (NoSuchMethodException e) {
-            throw __RedirectedUtils.wrapped(new NoSuchMethodError(e.getMessage()), e);
-        }
+        actual = DEFAULT_FACTORY.get();
     }
 
     private final SAXParserFactory actual;

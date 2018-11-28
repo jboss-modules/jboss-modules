@@ -20,8 +20,7 @@ package __redirected;
 
 import java.io.InputStream;
 import java.io.Reader;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
+import java.util.function.Supplier;
 
 import javax.xml.stream.EventFilter;
 import javax.xml.stream.StreamFilter;
@@ -44,36 +43,8 @@ import org.jboss.modules.ModuleLoader;
  * @author Jason T. Greene
  */
 public final class __XMLInputFactory extends XMLInputFactory {
-    private static final Constructor<? extends XMLInputFactory> PLATFORM_FACTORY;
-    private static volatile Constructor<? extends XMLInputFactory> DEFAULT_FACTORY;
-
-    static {
-        Thread thread = Thread.currentThread();
-        ClassLoader old = thread.getContextClassLoader();
-
-        // Unfortunately we can not use null because of a stupid bug in the jdk JAXP factory finder.
-        // Lack of tccl causes the provider file discovery to fallback to the jaxp loader (bootclasspath)
-        // which is correct. However, after parsing it, it then disables the fallback for the loading of the class.
-        // Thus, the class can not be found.
-        //
-        // Work around the problem by using the System CL, although in the future we may want to just "inherit"
-        // the environment's TCCL
-        thread.setContextClassLoader(ClassLoader.getSystemClassLoader());
-        try {
-            if (System.getProperty(XMLInputFactory.class.getName(), "").equals(__XMLInputFactory .class.getName())) {
-                System.clearProperty(XMLInputFactory.class.getName());
-            }
-            XMLInputFactory factory = XMLInputFactory.newInstance();
-            try {
-                DEFAULT_FACTORY = PLATFORM_FACTORY = factory.getClass().getConstructor();
-            } catch (NoSuchMethodException e) {
-                throw __RedirectedUtils.wrapped(new NoSuchMethodError(e.getMessage()), e);
-            }
-            System.setProperty(XMLInputFactory.class.getName(), __XMLInputFactory.class.getName());
-        } finally {
-            thread.setContextClassLoader(old);
-        }
-    }
+    private static final Supplier<XMLInputFactory> PLATFORM_FACTORY = JDKSpecific.getPlatformXmlInputFactorySupplier();
+    private static volatile Supplier<XMLInputFactory> DEFAULT_FACTORY = PLATFORM_FACTORY;
 
     @Deprecated
     public static void changeDefaultFactory(ModuleIdentifier id, ModuleLoader loader) {
@@ -81,19 +52,16 @@ public final class __XMLInputFactory extends XMLInputFactory {
     }
 
     public static void changeDefaultFactory(String id, ModuleLoader loader) {
-        Class<? extends XMLInputFactory> clazz = __RedirectedUtils.loadProvider(id, XMLInputFactory.class, loader);
-        if (clazz != null) {
-            try {
-                DEFAULT_FACTORY = clazz.getConstructor();
-            } catch (NoSuchMethodException e) {
-                throw __RedirectedUtils.wrapped(new NoSuchMethodError(e.getMessage()), e);
-            }
+        final Supplier<XMLInputFactory> supplier = __RedirectedUtils.loadProvider(id, XMLInputFactory.class, loader);
+        if (supplier != null) {
+            DEFAULT_FACTORY = supplier;
         }
     }
 
     /**
      * Init method.
      */
+    @Deprecated
     public static void init() {}
 
     public static void restorePlatformFactory() {
@@ -104,25 +72,7 @@ public final class __XMLInputFactory extends XMLInputFactory {
      * Construct a new instance.
      */
     public __XMLInputFactory() {
-        Constructor<? extends XMLInputFactory> factory = DEFAULT_FACTORY;
-        ClassLoader loader = Thread.currentThread().getContextClassLoader();
-        try {
-            if (loader != null) {
-                Class<? extends XMLInputFactory> provider = __RedirectedUtils.loadProvider(XMLInputFactory.class, loader);
-                if (provider != null)
-                    factory = provider.getConstructor();
-            }
-
-            actual = factory.newInstance();
-        } catch (InstantiationException e) {
-            throw __RedirectedUtils.wrapped(new InstantiationError(e.getMessage()), e);
-        } catch (IllegalAccessException e) {
-            throw __RedirectedUtils.wrapped(new IllegalAccessError(e.getMessage()), e);
-        } catch (InvocationTargetException e) {
-            throw __RedirectedUtils.rethrowCause(e);
-        } catch (NoSuchMethodException e) {
-            throw __RedirectedUtils.wrapped(new NoSuchMethodError(e.getMessage()), e);
-        }
+        actual = DEFAULT_FACTORY.get();
     }
 
     private final XMLInputFactory actual;

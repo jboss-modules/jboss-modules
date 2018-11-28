@@ -18,8 +18,7 @@
 
 package __redirected;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
+import java.util.function.Supplier;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -36,40 +35,13 @@ import org.jboss.modules.ModuleLoader;
  * @author Jason T. Greene
  */
 public final class __DocumentBuilderFactory extends DocumentBuilderFactory {
-    private static final Constructor<? extends DocumentBuilderFactory> PLATFORM_FACTORY;
-    private static volatile Constructor<? extends DocumentBuilderFactory> DEFAULT_FACTORY;
-
-    static {
-        Thread thread = Thread.currentThread();
-        ClassLoader old = thread.getContextClassLoader();
-
-        // Unfortunately we can not use null because of a stupid bug in the jdk JAXP factory finder.
-        // Lack of tccl causes the provider file discovery to fallback to the jaxp loader (bootclasspath)
-        // which is correct. However, after parsing it, it then disables the fallback for the loading of the class.
-        // Thus, the class can not be found.
-        //
-        // Work around the problem by using the System CL, although in the future we may want to just "inherit"
-        // the environment's TCCL
-        thread.setContextClassLoader(ClassLoader.getSystemClassLoader());
-        try {
-            if (System.getProperty(DocumentBuilderFactory.class.getName(), "").equals(__DocumentBuilderFactory.class.getName())) {
-                System.clearProperty(DocumentBuilderFactory.class.getName());
-            }
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            try {
-                DEFAULT_FACTORY = PLATFORM_FACTORY = factory.getClass().getConstructor();
-            } catch (NoSuchMethodException e) {
-                throw __RedirectedUtils.wrapped(new NoSuchMethodError(e.getMessage()), e);
-            }
-            System.setProperty(DocumentBuilderFactory.class.getName(), __DocumentBuilderFactory.class.getName());
-        } finally {
-            thread.setContextClassLoader(old);
-        }
-    }
+    private static final Supplier<DocumentBuilderFactory> PLATFORM_FACTORY = JDKSpecific.getPlatformDocumentBuilderFactorySupplier();
+    private static volatile Supplier<DocumentBuilderFactory> DEFAULT_FACTORY = PLATFORM_FACTORY;
 
     /**
      * Init method.
      */
+    @Deprecated
     public static void init() {}
 
     @Deprecated
@@ -78,13 +50,9 @@ public final class __DocumentBuilderFactory extends DocumentBuilderFactory {
     }
 
     public static void changeDefaultFactory(String id, ModuleLoader loader) {
-        Class<? extends DocumentBuilderFactory> clazz = __RedirectedUtils.loadProvider(id, DocumentBuilderFactory.class, loader);
-        if (clazz != null) {
-            try {
-                DEFAULT_FACTORY = clazz.getConstructor();
-            } catch (NoSuchMethodException e) {
-                throw __RedirectedUtils.wrapped(new NoSuchMethodError(e.getMessage()), e);
-            }
+        final Supplier<DocumentBuilderFactory> supplier = __RedirectedUtils.loadProvider(id, DocumentBuilderFactory.class, loader);
+        if (supplier != null) {
+            DEFAULT_FACTORY = supplier;
         }
     }
 
@@ -96,25 +64,7 @@ public final class __DocumentBuilderFactory extends DocumentBuilderFactory {
      * Construct a new instance.
      */
     public __DocumentBuilderFactory() {
-        Constructor<? extends DocumentBuilderFactory> factory = DEFAULT_FACTORY;
-        ClassLoader loader = Thread.currentThread().getContextClassLoader();
-        try {
-            if (loader != null) {
-                Class<? extends DocumentBuilderFactory> provider = __RedirectedUtils.loadProvider(DocumentBuilderFactory.class, loader);
-                if (provider != null)
-                    factory = provider.getConstructor();
-            }
-
-            actual = factory.newInstance();
-        } catch (InstantiationException e) {
-            throw __RedirectedUtils.wrapped(new InstantiationError(e.getMessage()), e);
-        } catch (IllegalAccessException e) {
-            throw __RedirectedUtils.wrapped(new IllegalAccessError(e.getMessage()), e);
-        } catch (InvocationTargetException e) {
-            throw __RedirectedUtils.rethrowCause(e);
-        } catch (NoSuchMethodException e) {
-            throw __RedirectedUtils.wrapped(new NoSuchMethodError(e.getMessage()), e);
-        }
+        actual = DEFAULT_FACTORY.get();
     }
 
     private final DocumentBuilderFactory actual;

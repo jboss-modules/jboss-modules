@@ -28,6 +28,7 @@ import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 
 import org.jboss.modules.Module;
 import org.jboss.modules.ModuleClassLoader;
@@ -77,16 +78,16 @@ public final class __RedirectedUtils {
         return e;
     }
 
-    static <T> Class<? extends T> loadProvider(String id, Class<T> intf, ModuleLoader moduleLoader) {
+    static <T> Supplier<T> loadProvider(String id, Class<T> intf, ModuleLoader moduleLoader) {
         return loadProvider(id, intf, moduleLoader, null);
     }
 
-    static <T> Class<? extends T> loadProvider(String id, Class<T> intf, ModuleLoader moduleLoader, String name) {
+    static <T> Supplier<T> loadProvider(String id, Class<T> intf, ModuleLoader moduleLoader, String name) {
         Module module;
         try {
             module = moduleLoader.loadModule(id);
         } catch (ModuleLoadException e) {
-            getModuleLogger().providerUnloadable(id.toString(), null);
+            getModuleLogger().providerUnloadable(id, null);
             return null;
         }
 
@@ -94,11 +95,11 @@ public final class __RedirectedUtils {
         return loadProvider(intf, classLoader, name);
     }
 
-    static <T> Class<? extends T> loadProvider(Class<T> intf, ClassLoader classLoader) {
+    static <T> Supplier<T> loadProvider(Class<T> intf, ClassLoader classLoader) {
         return loadProvider(intf, classLoader, null);
     }
 
-    static <T> Class<? extends T> loadProvider(Class<T> intf, ClassLoader classLoader, String name) {
+    static <T> Supplier<T> loadProvider(Class<T> intf, ClassLoader classLoader, String name) {
         List<String> names = findProviderClassNames(intf, classLoader, name);
 
         if (names.isEmpty()) {
@@ -108,18 +109,18 @@ public final class __RedirectedUtils {
 
         String clazzName = names.get(0);
         try {
-            return classLoader.loadClass(clazzName).asSubclass(intf);
+            return new ConstructorSupplier<>(classLoader.loadClass(clazzName).asSubclass(intf).getConstructor());
         } catch (Exception ignore) {
             getModuleLogger().providerUnloadable(clazzName, classLoader);
             return null;
         }
     }
 
-    static <T> List<Class<? extends T>> loadProviders(Class<T> intf, ClassLoader classLoader) {
+    static <T> List<Supplier<T>> loadProviders(Class<T> intf, ClassLoader classLoader) {
         return loadProviders(intf, classLoader, null);
     }
 
-    static <T> List<Class<? extends T>> loadProviders(Class<T> intf, ClassLoader classLoader, String name) {
+    static <T> List<Supplier<T>> loadProviders(Class<T> intf, ClassLoader classLoader, String name) {
         List<String> names = findProviderClassNames(intf, classLoader, name);
 
         if (names.size() < 1) {
@@ -127,17 +128,17 @@ public final class __RedirectedUtils {
             return Collections.emptyList();
         }
 
-        List<Class<? extends T>> classes = new ArrayList<Class<? extends T>>();
+        List<Supplier<T>> suppliers = new ArrayList<>();
 
         for (String className : names) {
             try {
-                classes.add(classLoader.loadClass(className).asSubclass(intf));
+                suppliers.add(new ConstructorSupplier<>(classLoader.loadClass(className).asSubclass(intf).getConstructor()));
             } catch (Exception ignore) {
                 getModuleLogger().providerUnloadable(className, classLoader);
             }
         }
 
-        return classes;
+        return suppliers;
     }
 
     static <T> List<String> findProviderClassNames(Class<T> intf, ClassLoader loader, String name) {
@@ -161,6 +162,8 @@ public final class __RedirectedUtils {
                 }
                 line = line.trim();
                 if (line.length() == 0)
+                    continue;
+                if (line.startsWith("__redirected"))
                     continue;
 
                 list.add(line);

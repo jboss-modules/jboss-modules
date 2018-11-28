@@ -18,9 +18,8 @@
 
 package __redirected;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Iterator;
+import java.util.function.Supplier;
 
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.namespace.QName;
@@ -50,36 +49,8 @@ import org.jboss.modules.ModuleLoader;
  */
 @SuppressWarnings("unchecked")
 public final class __XMLEventFactory extends XMLEventFactory {
-    private static final Constructor<? extends XMLEventFactory> PLATFORM_FACTORY;
-    private static volatile Constructor<? extends XMLEventFactory> DEFAULT_FACTORY;
-
-    static {
-        Thread thread = Thread.currentThread();
-        ClassLoader old = thread.getContextClassLoader();
-
-        // Unfortunately we can not use null because of a stupid bug in the jdk JAXP factory finder.
-        // Lack of tccl causes the provider file discovery to fallback to the jaxp loader (bootclasspath)
-        // which is correct. However, after parsing it, it then disables the fallback for the loading of the class.
-        // Thus, the class can not be found.
-        //
-        // Work around the problem by using the System CL, although in the future we may want to just "inherit"
-        // the environment's TCCL
-        thread.setContextClassLoader(ClassLoader.getSystemClassLoader());
-        try {
-            if (System.getProperty(XMLEventFactory.class.getName(), "").equals(__XMLEventFactory.class.getName())) {
-                System.clearProperty(XMLEventFactory.class.getName());
-            }
-            XMLEventFactory factory = XMLEventFactory.newInstance();
-            try {
-                DEFAULT_FACTORY = PLATFORM_FACTORY = factory.getClass().getConstructor();
-            } catch (NoSuchMethodException e) {
-                throw __RedirectedUtils.wrapped(new NoSuchMethodError(e.getMessage()), e);
-            }
-            System.setProperty(XMLEventFactory.class.getName(), __XMLEventFactory.class.getName());
-        } finally {
-            thread.setContextClassLoader(old);
-        }
-    }
+    private static final Supplier<XMLEventFactory> PLATFORM_FACTORY = JDKSpecific.getPlatformXmlEventFactorySupplier();
+    private static volatile Supplier<XMLEventFactory> DEFAULT_FACTORY = PLATFORM_FACTORY;
 
     @Deprecated
     public static void changeDefaultFactory(ModuleIdentifier id, ModuleLoader loader) {
@@ -87,13 +58,9 @@ public final class __XMLEventFactory extends XMLEventFactory {
     }
 
     public static void changeDefaultFactory(String id, ModuleLoader loader) {
-        Class<? extends XMLEventFactory> clazz = __RedirectedUtils.loadProvider(id, XMLEventFactory.class, loader);
-        if (clazz != null) {
-            try {
-                DEFAULT_FACTORY = clazz.getConstructor();
-            } catch (NoSuchMethodException e) {
-                throw __RedirectedUtils.wrapped(new NoSuchMethodError(e.getMessage()), e);
-            }
+        final Supplier<XMLEventFactory> supplier = __RedirectedUtils.loadProvider(id, XMLEventFactory.class, loader);
+        if (supplier != null) {
+            DEFAULT_FACTORY = supplier;
         }
     }
 
@@ -104,31 +71,14 @@ public final class __XMLEventFactory extends XMLEventFactory {
     /**
      * Init method.
      */
+    @Deprecated
     public static void init() {}
 
     /**
      * Construct a new instance.
      */
     public __XMLEventFactory() {
-        Constructor<? extends XMLEventFactory> factory = DEFAULT_FACTORY;
-        ClassLoader loader = Thread.currentThread().getContextClassLoader();
-        try {
-            if (loader != null) {
-                Class<? extends XMLEventFactory> provider = __RedirectedUtils.loadProvider(XMLEventFactory.class, loader);
-                if (provider != null)
-                    factory = provider.getConstructor();
-            }
-
-            actual = factory.newInstance();
-        } catch (InstantiationException e) {
-            throw __RedirectedUtils.wrapped(new InstantiationError(e.getMessage()), e);
-        } catch (IllegalAccessException e) {
-            throw __RedirectedUtils.wrapped(new IllegalAccessError(e.getMessage()), e);
-        } catch (InvocationTargetException e) {
-            throw __RedirectedUtils.rethrowCause(e);
-        } catch (NoSuchMethodException e) {
-            throw __RedirectedUtils.wrapped(new NoSuchMethodError(e.getMessage()), e);
-        }
+        actual = DEFAULT_FACTORY.get();
     }
 
     private final XMLEventFactory actual;

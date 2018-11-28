@@ -19,12 +19,9 @@
 package __redirected;
 
 import java.io.File;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
-import java.util.List;
+import java.util.function.Supplier;
 
-import javax.xml.XMLConstants;
 import javax.xml.transform.Source;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
@@ -43,36 +40,8 @@ import org.xml.sax.SAXNotSupportedException;
  * @author Jason T. Greene
  */
 public final class __SchemaFactory extends SchemaFactory {
-    private static final Constructor<? extends SchemaFactory> PLATFORM_FACTORY;
-    private static volatile Constructor<? extends SchemaFactory> DEFAULT_FACTORY;
-
-    static {
-        Thread thread = Thread.currentThread();
-        ClassLoader old = thread.getContextClassLoader();
-
-        // Unfortunately we can not use null because of a stupid bug in the jdk JAXP factory finder.
-        // Lack of tccl causes the provider file discovery to fallback to the jaxp loader (bootclasspath)
-        // which is correct. However, after parsing it, it then disables the fallback for the loading of the class.
-        // Thus, the class can not be found.
-        //
-        // Work around the problem by using the System CL, although in the future we may want to just "inherit"
-        // the environment's TCCL
-        thread.setContextClassLoader(ClassLoader.getSystemClassLoader());
-        try {
-            if (System.getProperty(SchemaFactory.class.getName(), "").equals(__SchemaFactory.class.getName())) {
-                System.clearProperty(SchemaFactory.class.getName());
-            }
-            SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-            try {
-                DEFAULT_FACTORY = PLATFORM_FACTORY = factory.getClass().getConstructor();
-            } catch (NoSuchMethodException e) {
-                throw __RedirectedUtils.wrapped(new NoSuchMethodError(e.getMessage()), e);
-            }
-            System.setProperty(SchemaFactory.class.getName() + ":" + XMLConstants.W3C_XML_SCHEMA_NS_URI, __SchemaFactory.class.getName());
-        } finally {
-            thread.setContextClassLoader(old);
-        }
-    }
+    private static final Supplier<SchemaFactory> PLATFORM_FACTORY = JDKSpecific.getPlatformSchemaFactorySupplier();
+    private static volatile Supplier<SchemaFactory> DEFAULT_FACTORY = PLATFORM_FACTORY;
 
     @Deprecated
     public static void changeDefaultFactory(ModuleIdentifier id, ModuleLoader loader) {
@@ -80,13 +49,9 @@ public final class __SchemaFactory extends SchemaFactory {
     }
 
     public static void changeDefaultFactory(String id, ModuleLoader loader) {
-        Class<? extends SchemaFactory> clazz = __RedirectedUtils.loadProvider(id, SchemaFactory.class, loader);
-        if (clazz != null) {
-            try {
-                DEFAULT_FACTORY = clazz.getConstructor();
-            } catch (NoSuchMethodException e) {
-                throw __RedirectedUtils.wrapped(new NoSuchMethodError(e.getMessage()), e);
-            }
+        final Supplier<SchemaFactory> supplier = __RedirectedUtils.loadProvider(id, SchemaFactory.class, loader);
+        if (supplier != null) {
+            DEFAULT_FACTORY = supplier;
         }
     }
 
@@ -97,36 +62,14 @@ public final class __SchemaFactory extends SchemaFactory {
     /**
      * Init method.
      */
+    @Deprecated
     public static void init() {}
 
     /**
      * Construct a new instance.
      */
     public __SchemaFactory() {
-        Constructor<? extends SchemaFactory> factory = DEFAULT_FACTORY;
-        ClassLoader loader = Thread.currentThread().getContextClassLoader();
-        SchemaFactory foundInstance = null;
-        try {
-            if (loader != null) {
-                List<Class<? extends SchemaFactory>> providers = __RedirectedUtils.loadProviders(SchemaFactory.class, loader);
-                for (Class<? extends SchemaFactory> provider : providers) {
-                    SchemaFactory instance = provider.newInstance();
-                    if (instance.isSchemaLanguageSupported(XMLConstants.W3C_XML_SCHEMA_NS_URI)) {
-                        foundInstance = instance;
-                        break;
-                    }
-                }
-            }
-
-            actual = foundInstance != null ? foundInstance : factory.newInstance();
-
-        } catch (InstantiationException e) {
-            throw __RedirectedUtils.wrapped(new InstantiationError(e.getMessage()), e);
-        } catch (IllegalAccessException e) {
-            throw __RedirectedUtils.wrapped(new IllegalAccessError(e.getMessage()), e);
-        } catch (InvocationTargetException e) {
-            throw __RedirectedUtils.rethrowCause(e);
-        }
+        actual = DEFAULT_FACTORY.get();
     }
 
 

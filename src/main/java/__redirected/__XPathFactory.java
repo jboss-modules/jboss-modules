@@ -26,9 +26,7 @@ import javax.xml.xpath.XPathFactory;
 import javax.xml.xpath.XPathFactoryConfigurationException;
 import javax.xml.xpath.XPathFunctionResolver;
 import javax.xml.xpath.XPathVariableResolver;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * A redirected XPathFactory
@@ -36,49 +34,17 @@ import java.util.List;
  * @author Jason T. Greene
  */
 public final class __XPathFactory extends XPathFactory {
-    private static final Constructor<? extends XPathFactory> PLATFORM_FACTORY;
-    private static volatile Constructor<? extends XPathFactory> DEFAULT_FACTORY;
-
-    static {
-        Thread thread = Thread.currentThread();
-        ClassLoader old = thread.getContextClassLoader();
-
-        // Unfortunately we can not use null because of a stupid bug in the jdk JAXP factory finder.
-        // Lack of tccl causes the provider file discovery to fallback to the jaxp loader (bootclasspath)
-        // which is correct. However, after parsing it, it then disables the fallback for the loading of the class.
-        // Thus, the class can not be found.
-        //
-        // Work around the problem by using the System CL, although in the future we may want to just "inherit"
-        // the environment's TCCL
-        thread.setContextClassLoader(ClassLoader.getSystemClassLoader());
-        try {
-            if (System.getProperty(XPathFactory.class.getName(), "").equals(__XPathFactory.class.getName())) {
-                System.clearProperty(XPathFactory.class.getName());
-            }
-            XPathFactory factory = XPathFactory.newInstance();
-            try {
-                DEFAULT_FACTORY = PLATFORM_FACTORY = factory.getClass().getConstructor();
-            } catch (NoSuchMethodException e) {
-                throw __RedirectedUtils.wrapped(new NoSuchMethodError(e.getMessage()), e);
-            }
-            System.setProperty(XPathFactory.class.getName() + ":" + XPathFactory.DEFAULT_OBJECT_MODEL_URI, __XPathFactory.class.getName());
-        } finally {
-            thread.setContextClassLoader(old);
-        }
-    }
+    private static final Supplier<XPathFactory> PLATFORM_FACTORY = JDKSpecific.getPlatformXPathFactorySupplier();
+    private static volatile Supplier<XPathFactory> DEFAULT_FACTORY = PLATFORM_FACTORY;
 
     public static void changeDefaultFactory(ModuleIdentifier id, ModuleLoader loader) {
         changeDefaultFactory(id.toString(), loader);
     }
 
     public static void changeDefaultFactory(String id, ModuleLoader loader) {
-        Class<? extends XPathFactory> clazz = __RedirectedUtils.loadProvider(id, XPathFactory.class, loader);
-        if (clazz != null) {
-            try {
-                DEFAULT_FACTORY = clazz.getConstructor();
-            } catch (NoSuchMethodException e) {
-                throw __RedirectedUtils.wrapped(new NoSuchMethodError(e.getMessage()), e);
-            }
+        final Supplier<XPathFactory> supplier = __RedirectedUtils.loadProvider(id, XPathFactory.class, loader);
+        if (supplier != null) {
+            DEFAULT_FACTORY = supplier;
         }
     }
 
@@ -89,36 +55,14 @@ public final class __XPathFactory extends XPathFactory {
     /**
      * Init method.
      */
+    @Deprecated
     public static void init() {}
 
     /**
      * Construct a new instance.
      */
     public __XPathFactory() {
-        Constructor<? extends XPathFactory> factory = DEFAULT_FACTORY;
-        ClassLoader loader = Thread.currentThread().getContextClassLoader();
-        XPathFactory foundInstance = null;
-        try {
-            if (loader != null) {
-                List<Class<? extends XPathFactory>> providers = __RedirectedUtils.loadProviders(XPathFactory.class, loader);
-                for (Class<? extends XPathFactory> provider : providers) {
-                    XPathFactory instance = provider.newInstance();
-                    if (instance.isObjectModelSupported(XPathFactory.DEFAULT_OBJECT_MODEL_URI)) {
-                        foundInstance = instance;
-                        break;
-                    }
-                }
-            }
-
-            actual = foundInstance != null ? foundInstance : factory.newInstance();
-
-        } catch (InstantiationException e) {
-            throw __RedirectedUtils.wrapped(new InstantiationError(e.getMessage()), e);
-        } catch (IllegalAccessException e) {
-            throw __RedirectedUtils.wrapped(new IllegalAccessError(e.getMessage()), e);
-        } catch (InvocationTargetException e) {
-            throw __RedirectedUtils.rethrowCause(e);
-        }
+        actual = DEFAULT_FACTORY.get();
     }
 
     private final XPathFactory actual;
