@@ -364,7 +364,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
     }
 
     /**
-     * Load a local resource from a specific root from this module class loader.
+     * Load a local exported resource from a specific root from this module class loader.
      *
      * @param root the root name
      * @param name the resource name
@@ -384,12 +384,11 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
                 }
             }
         }
-        // no loaders for this path if it's not in the JAXP map
-        return jaxpImplResources.get(name);
+        return null;
     }
 
     /**
-     * Load a local resource from this class loader.
+     * Load a local exported resource from this class loader.
      *
      * @param name the resource name
      * @return the list of resources
@@ -408,10 +407,6 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
                     list.add(resource);
                 }
             }
-        }
-        final URLConnectionResource resource = jaxpImplResources.get(name);
-        if (resource != null) {
-            list.add(resource);
         }
         return list.isEmpty() ? Collections.emptyList() : list;
     }
