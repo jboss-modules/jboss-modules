@@ -50,6 +50,15 @@ public final class JDKModuleFinder implements IterableModuleFinder {
     }
 
     public ModuleSpec findModule(final String name, final ModuleLoader delegateLoader) {
+        if ("java.se".equals(name)) {
+            // provide our own "java.se" aggregator module, as the one in JDK isn't accessible by default
+            final ModuleSpec.Builder builder = ModuleSpec.build(name, false);
+            for (DependencySpec dep : JavaSeDeps.list) {
+                builder.addDependency(dep);
+            }
+            return builder.create();
+        }
+
         final Set<String> packages;
         final Module module;
         if ("org.jboss.modules".equals(name)) {
