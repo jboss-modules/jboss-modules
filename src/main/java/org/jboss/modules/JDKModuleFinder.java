@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -42,36 +41,6 @@ public final class JDKModuleFinder implements IterableModuleFinder {
 
     private final ConcurrentHashMap<String, FutureSpec> modules = new ConcurrentHashMap<>();
     private final List<String> moduleNames;
-
-    static final class SEDeps {
-        static final List<DependencySpec> javaSeDeps;
-
-        static {
-            List<DependencySpec> deps = new ArrayList<>();
-            for (String dep : Arrays.asList(
-                "java.compiler",
-                "java.datatransfer",
-                "java.desktop",
-                "java.instrument",
-                "java.logging",
-                "java.management",
-                "java.management.rmi",
-                "java.naming",
-                "java.prefs",
-                "java.rmi",
-                "java.scripting",
-                "java.security.jgss",
-                "java.security.sasl",
-                "java.sql",
-                "java.sql.rowset",
-                "java.xml",
-                "java.xml.crypto"
-            )) {
-                deps.add(new ModuleDependencySpecBuilder().setName(dep).setExport(true).build());
-            }
-            javaSeDeps = deps;
-        }
-    }
 
     private static final JDKModuleFinder INSTANCE = new JDKModuleFinder();
 
@@ -148,8 +117,8 @@ public final class JDKModuleFinder implements IterableModuleFinder {
             } else {
                 switch (name) {
                     case "java.se": {
-                        final ModuleSpec.Builder builder = ModuleSpec.build("java.se", false);
-                        for (DependencySpec dep : SEDeps.javaSeDeps) {
+                        final ModuleSpec.Builder builder = ModuleSpec.build(name, false);
+                        for (DependencySpec dep : JavaSeDeps.list) {
                             builder.addDependency(dep);
                         }
                         futureSpec.setModuleSpec(builder.create());
