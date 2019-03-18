@@ -194,7 +194,7 @@ public final class MavenArtifactUtil {
     /**
      * A utility method to create a Maven artifact resource loader for the given artifact coordinates.
      *
-     * @param name the resource root name to use (must not be {@code null})
+     * @param rootName the resource root name to use (must not be {@code null})
      * @param coordinates the artifact coordinates to use (must not be {@code null})
      * @param mavenResolver the Maven resolver to use (must not be {@code null})
      * @return the resource loader
