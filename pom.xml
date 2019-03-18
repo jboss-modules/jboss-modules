@@ -29,7 +29,7 @@
     <parent>
         <groupId>org.jboss</groupId>
         <artifactId>jboss-parent</artifactId>
-        <version>31</version>
+        <version>32</version>
     </parent>
 
     <licenses>
@@ -233,8 +233,13 @@
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>${version.javadoc.plugin}</version>
                 <configuration>
+                    <detectJavaApiLink>false</detectJavaApiLink>
                     <excludePackageNames>__redirected</excludePackageNames>
                     <excludePackageNames>org.jboss.modules._private</excludePackageNames>
+                    <sourcepath>${project.basedir}/src/main/java9;${project.basedir}/src/main/java</sourcepath>
+                    <sourceFileExcludes>
+                        <exclude>org/jboss/modules/JDKSpecific.java</exclude>
+                    </sourceFileExcludes>
                 </configuration>
             </plugin>
 
