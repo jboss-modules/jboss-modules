@@ -160,4 +160,13 @@ public interface ModuleLoaderMXBean {
      * @return the paths map information
      */
     SortedMap<String, List<String>> getModulePathsInfo(String name, boolean exports);
+
+    /**
+     * Get the code source location of a class within a module.
+     *
+     * @param moduleName the module name
+     * @param className the class name
+     * @return the location, or {@code null} if the class isn't found or the location cannot be determined
+     */
+    String getClassLocation(String moduleName, String className);
 }
