@@ -20,6 +20,7 @@ package org.jboss.modules;
 
 import java.net.URL;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 
 /**
@@ -30,5 +31,27 @@ public class JDKModuleLoaderTest extends AbstractModuleTestCase {
         final Module module = Module.getSystemModuleLoader().loadModule("org.jboss.modules");
         final URL resource = module.getClassLoader().getResource("org/jboss/modules/Main.class");
         Assert.assertNotNull("Main.class", resource);
+    }
+
+    /**
+     * Tests that loading of "java.se" module works and classes that are present
+     * in modules "required" by this "java.se" module can be loaded too
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testJavaSeModuleLoad() throws Exception {
+        final Module module = Module.getBootModuleLoader().loadModule("java.se");
+        Assert.assertNotNull("java.se module not found", module);
+        final String resultSetClassName = "java.sql.ResultSet";
+        final Class<?> klass = module.getClassLoader().loadClass(resultSetClassName);
+        Assert.assertNotNull(resultSetClassName + " class couldn't be loaded from java.se module", klass);
+
+        // test a class that was introduced in Java 11
+        Assume.assumeTrue("Java 11 is required to test loading of classes " +
+                "in java.net.http module", Integer.parseInt(System.getProperty("java.specification.version")) >= 11);
+        final String httpClientClassName = "java.net.http.HttpClient";
+        final Class<?> httpClientClass = module.getClassLoader().loadClass(httpClientClassName);
+        Assert.assertNotNull(httpClientClassName + " class couldn't be loaded from java.se module", httpClientClass);
     }
 }
