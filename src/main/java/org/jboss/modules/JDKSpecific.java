@@ -185,6 +185,14 @@ final class JDKSpecific {
         list.add("jdk.internal.reflect.");
     }
 
+    static String getJdkModuleNameOf(final Class<?> clazz) {
+        return null;
+    }
+
+    static String getJdkModuleVersionOf(final Class<?> clazz) {
+        return null;
+    }
+
     // === nested util stuff, non-API ===
 
     static final class Hack extends SecurityManager {

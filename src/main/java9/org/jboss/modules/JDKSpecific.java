@@ -25,6 +25,7 @@ import static java.security.AccessController.doPrivileged;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.module.ModuleDescriptor;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -186,6 +187,17 @@ final class JDKSpecific {
 
     static void addInternalPackages(final List<String> list) {
         // none in Java 9+
+    }
+
+    static String getJdkModuleNameOf(final Class<?> clazz) {
+        final java.lang.Module module = clazz.getModule();
+        return module.isNamed() ? module.getName() : null;
+    }
+
+    static String getJdkModuleVersionOf(final Class<?> clazz) {
+        final java.lang.Module module = clazz.getModule();
+        final ModuleDescriptor.Version version = module.isNamed() ? module.getDescriptor().version().orElse(null) : null;
+        return version == null ? null : version.toString();
     }
 
     // === nested util stuff, non-API ===

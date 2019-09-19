@@ -66,4 +66,17 @@ final class SecurityActions {
             return currentThread().getContextClassLoader();
         }
     }
+
+    static ClassLoader getClassLoaderOf(Class<?> clazz) {
+        final SecurityManager sm = getSecurityManager();
+        if (sm != null) {
+            return doPrivileged(new PrivilegedAction<ClassLoader>() {
+                public ClassLoader run() {
+                    return clazz.getClassLoader();
+                }
+            });
+        } else {
+            return clazz.getClassLoader();
+        }
+    }
 }

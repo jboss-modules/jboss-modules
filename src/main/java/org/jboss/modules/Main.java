@@ -27,7 +27,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.lang.management.ManagementFactory;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -39,6 +42,7 @@ import java.security.ProtectionDomain;
 import java.security.Provider;
 import java.security.Security;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -520,11 +524,16 @@ public final class Main {
         final String logManagerName = getServiceName(bootClassLoader, "java.util.logging.LogManager");
         if (logManagerName != null) {
             System.setProperty("java.util.logging.manager", logManagerName);
+            // Special handling is required for cases when a log manager is on the boot class path
+            configureLogManagerModuleResolver(logManagerName);
             if (LogManager.getLogManager().getClass() == LogManager.class) {
                 System.err.println("WARNING: Failed to load the specified log manager class " + logManagerName);
             } else {
                 Module.setModuleLogger(new JDKModuleLogger());
             }
+        } else {
+            // Special handling is required for cases when a log manager is on the boot class path
+            configureLogManagerModuleResolver(System.getProperty("java.util.logging.manager"));
         }
 
         final String mbeanServerBuilderName = getServiceName(bootClassLoader, "javax.management.MBeanServerBuilder");
@@ -654,6 +663,82 @@ public final class Main {
      */
     public static String getVersionString() {
         return VERSION_STRING;
+    }
+
+    @SuppressWarnings("Convert2Lambda")
+    private static void configureLogManagerModuleResolver(final String logManagerName) {
+        if (logManagerName != null) {
+            // Not assuming the package allows any log manager to include a ModuleResolverFactory and ModuleResolver
+            // within the same package and allow for use with any log manager that attempts to implement a single method
+            // interface with a ClassLoader return method.
+            final String packageName = parsePackageName(logManagerName);
+            try {
+                // Get the log managers class loader
+                ClassLoader cl = Class.forName(logManagerName, false, Main.class.getClassLoader()).getClassLoader();
+                // If the log managers ModuleResolver and ModuleResolverFactory are found we need a custom
+                // ModuleResolver. When the log manager is on the boot class path we need to load modules from the log
+                // manager module.
+                final Class<?> mff = Class.forName(packageName + ".ModuleResolverFactory", true, cl);
+                final Class<?> mf = Class.forName(packageName + ".ModuleResolver", true, cl);
+                final InvocationHandler handler = new InvocationHandler() {
+                    @Override
+                    public Object invoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
+                        // This shouldn't happen, but we'll guard against it to be safe
+                        final Object arg;
+                        if (args == null || args.length < 1 || (arg = args[0]) == null) {
+                            throw new IllegalArgumentException("Invalid arguments; [" + Arrays.toString(args) + "] for method " + method);
+                        }
+                        if ("getModuleNameOf".equals(method.getName())) {
+                            if (arg instanceof Class) {
+                                final Class<?> clazz = (Class<?>) arg;
+                                final ClassLoader classLoader = SecurityActions.getClassLoaderOf(clazz);
+                                if (classLoader instanceof ModuleClassLoader) {
+                                    return ((ModuleClassLoader) classLoader).getModule().getName();
+                                } else {
+                                    return JDKSpecific.getJdkModuleNameOf(clazz);
+                                }
+                            }
+                        } else if ("getModuleVersionOf".equals(method.getName())) {
+                            if (arg instanceof Class) {
+                                final Class<?> clazz = (Class<?>) arg;
+                                final ClassLoader classLoader = SecurityActions.getClassLoaderOf(clazz);
+                                if (classLoader instanceof ModuleClassLoader) {
+                                    return ((ModuleClassLoader) classLoader).getModule().getVersion().toString();
+                                } else {
+                                    return JDKSpecific.getJdkModuleVersionOf(clazz);
+                                }
+                            }
+                        } else if ("getModuleClassLoader".equals(method.getName())) {
+                            // The log manager is already a module, use the log managers module loader to load the module
+                            // from the argument
+                            if (cl instanceof ModuleClassLoader) {
+                                return ((ModuleClassLoader) cl).getModule().getModuleLoader().loadModule(String.valueOf(arg)).getClassLoader();
+                            }
+                            // The type was not loaded from a module, use the boot module loader
+                            return Module.getBootModuleLoader().loadModule(String.valueOf(arg)).getClassLoader();
+                        }
+                        throw new UnsupportedOperationException(String.format("Method %s is not implemented by this proxy with arguments %s",
+                                method, Arrays.toString(args)));
+                    }
+                };
+                final Method setModuleResolver = mff.getMethod("setModuleResolver", mf);
+                setModuleResolver.invoke(null, Proxy.newProxyInstance(cl, new Class[] {mf}, handler));
+            } catch (Throwable e) {
+                // In most cases nothing will be logged as a module logger is not likely setup, but in cases where it is
+                // we may as well log something.
+                Module.getModuleLogger().trace(e, "Failed to find class %1$s.ModuleResolverFactory or %1$s.ModuleResolver.", packageName);
+            }
+        }
+    }
+
+    private static String parsePackageName(final String className) {
+        if (className != null) {
+            final int idx = className.lastIndexOf('.');
+            if (idx > 0) {
+                return className.substring(0, idx);
+            }
+        }
+        return "";
     }
 
     static final class AddProviderAction implements PrivilegedAction<Void> {
