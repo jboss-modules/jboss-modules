@@ -143,7 +143,28 @@
                 <version>3.7.0-jboss-1</version>
                 <executions>
                     <execution>
+                        <!-- default compile always wants to run first, so defeat it -->
                         <id>default-compile</id>
+                        <phase>none</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>compile-stubs</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <release>8</release>
+                            <buildDirectory>${project.build.directory}</buildDirectory>
+                            <compileSourceRoots>${project.basedir}/src/main/stubs</compileSourceRoots>
+                            <outputDirectory>${project.build.directory}/stub-classes</outputDirectory>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>main-compile</id>
                         <phase>compile</phase>
                         <goals>
                             <goal>compile</goal>
@@ -154,6 +175,7 @@
                             <compileSourceRoots>${project.compileSourceRoots}</compileSourceRoots>
                             <outputDirectory>${project.build.outputDirectory}</outputDirectory>
                             <additionalClasspathElements>
+                                <additionalClasspathElement>${project.build.directory}/stub-classes</additionalClasspathElement>
                                 <additionalClasspathElement>${project.build.directory}/jdk-misc.jar</additionalClasspathElement>
                             </additionalClasspathElements>
                         </configuration>
@@ -170,6 +192,7 @@
                             <compileSourceRoots>${project.basedir}/src/main/java9</compileSourceRoots>
                             <outputDirectory>${project.build.directory}/classes/META-INF/versions/9</outputDirectory>
                             <additionalClasspathElements>
+                                <additionalClasspathElement>${project.build.directory}/stub-classes</additionalClasspathElement>
                                 <additionalClasspathElement>${project.build.outputDirectory}</additionalClasspathElement>
                             </additionalClasspathElements>
                         </configuration>

@@ -432,6 +432,16 @@ public final class Main {
             return;
         }
 
+        // inject the module resolver into bootstrap class path items
+        final Iterator<ModuleResolverConsumer> mrcIter = ServiceLoader.load(ModuleResolverConsumer.class, null).iterator();
+        for (;;) try {
+            if (!mrcIter.hasNext()) {
+                break;
+            }
+            mrcIter.next().setResolver(ModuleResolverImpl.instance);
+        } catch (ServiceConfigurationError ignored) {
+        }
+
         final Module module;
         try {
             module = loader.loadModule(moduleName);
