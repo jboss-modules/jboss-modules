@@ -36,4 +36,5 @@ module org.jboss.modules {
   uses java.lang.SecurityManager;
   uses java.security.Provider;
   uses org.jboss.modules.PreMain;
+  uses System.LoggerFinder;
 }
