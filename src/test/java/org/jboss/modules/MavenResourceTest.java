@@ -56,7 +56,7 @@ public class MavenResourceTest {
     @Test
     public void testWithPassedRepository() throws Exception {
         System.setProperty("maven.repo.local", tmpdir.newFolder("repository").getAbsolutePath());
-        System.setProperty("remote.maven.repo", "http://repository.jboss.org/nexus/content/groups/public/,https://maven-central.storage.googleapis.com/");
+        System.setProperty("remote.maven.repo", "https://repository.jboss.org/nexus/content/groups/public/,https://maven-central.storage.googleapis.com/");
         try {
             Module module = moduleLoader.loadModule(MODULE_ID);
             URL url = module.getResource("org/jboss/resteasy/plugins/providers/jackson/ResteasyJacksonProvider.class");

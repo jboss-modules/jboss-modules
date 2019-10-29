@@ -21,6 +21,7 @@ package org.jboss.modules;
 import java.lang.instrument.ClassFileTransformer;
 import java.security.AllPermission;
 import java.security.PermissionCollection;
+import java.security.Permissions;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -79,7 +80,7 @@ public abstract class ModuleSpec {
             private LocalLoader fallbackLoader;
             private ModuleClassLoaderFactory moduleClassLoaderFactory;
             private ClassTransformer classFileTransformer;
-            private PermissionCollection permissionCollection;
+            private PermissionCollection permissionCollection = getAllPermission();
             private Version version;
 
             @Override
@@ -183,6 +184,12 @@ public abstract class ModuleSpec {
             @Override
             public String getName() {
                 return name;
+            }
+
+            private Permissions getAllPermission() {
+                final Permissions permissions = new Permissions();
+                permissions.add(new AllPermission());
+                return permissions;
             }
         };
         if (addBaseDep) builder.addDependency(ModuleDependencySpec.JAVA_BASE);
