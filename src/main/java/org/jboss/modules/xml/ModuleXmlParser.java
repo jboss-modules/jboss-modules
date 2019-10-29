@@ -27,8 +27,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.security.AllPermission;
-import java.security.Permissions;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -623,16 +621,6 @@ public final class ModuleXmlParser {
         }
     }
 
-    private static final AllPermission ALL_PERMISSION = new AllPermission();
-
-    static final Permissions DEFAULT_PERMISSION_COLLECTION = getAllPermission();
-
-    private static Permissions getAllPermission() {
-        final Permissions permissions = new Permissions();
-        permissions.add(ALL_PERMISSION);
-        return permissions;
-    }
-
     private static ModuleSpec.Builder parseModuleContents(final MavenResolver mavenResolver, final XmlPullParser reader, final ResourceRootFactory factory, final ModuleLoader moduleLoader, final String moduleName, final String rootPath) throws XmlPullParserException, IOException {
         final int count = reader.getAttributeCount();
         String name = null;
@@ -693,7 +681,6 @@ public final class ModuleXmlParser {
                     for (DependencySpec dependency : dependencies) {
                         specBuilder.addDependency(dependency);
                     }
-                    if (! gotPerms) specBuilder.setPermissionCollection(DEFAULT_PERMISSION_COLLECTION);
                     return specBuilder;
                 }
                 case START_TAG: {
