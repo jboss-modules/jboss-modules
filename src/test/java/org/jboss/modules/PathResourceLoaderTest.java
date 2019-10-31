@@ -77,7 +77,7 @@ public class PathResourceLoaderTest extends AbstractResourceLoaderTestCase {
                 outputFile.getParentFile().mkdirs();
                 JarResourceLoaderTest.buildJar(super.getResourceRoot(test).toFile(), outputFile);
 
-                FileSystem fileSystem = FileSystems.newFileSystem(outputFile.toPath(), null);
+                FileSystem fileSystem = FileSystems.newFileSystem(outputFile.toPath(), (ClassLoader) null);
                 return fileSystem.getRootDirectories().iterator().next();
             }
         };
