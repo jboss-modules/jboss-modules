@@ -19,6 +19,9 @@
 package org.jboss.modules;
 
 import java.net.URL;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
@@ -48,8 +51,11 @@ public class JDKModuleLoaderTest extends AbstractModuleTestCase {
         Assert.assertNotNull(resultSetClassName + " class couldn't be loaded from java.se module", klass);
 
         // test a class that was introduced in Java 11
+        String specString = System.getProperty("java.specification.version");
+        Pattern pat = Pattern.compile("(?:1\\.)?(\\d+)");
+        Matcher matcher = pat.matcher(specString);
         Assume.assumeTrue("Java 11 is required to test loading of classes " +
-                "in java.net.http module", Integer.parseInt(System.getProperty("java.specification.version")) >= 11);
+                "in java.net.http module", matcher.matches() && Integer.parseInt(matcher.group(1)) >= 11);
         final String httpClientClassName = "java.net.http.HttpClient";
         final Class<?> httpClientClass = module.getClassLoader().loadClass(httpClientClassName);
         Assert.assertNotNull(httpClientClassName + " class couldn't be loaded from java.se module", httpClientClass);
