@@ -26,8 +26,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.lang.instrument.Instrumentation;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -47,6 +49,8 @@ import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
 import java.util.logging.LogManager;
 
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
 import java.util.prefs.Preferences;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -74,6 +78,8 @@ public final class Main {
 
     private static final String[] NO_STRINGS = new String[0];
 
+    static volatile Instrumentation instrumentation;
+
     private Main() {
     }
 
@@ -100,6 +106,8 @@ public final class Main {
         System.out.println("    -debuglog     Enable debug mode output to System.out during bootstrap before any logging manager is installed");
         System.out.println("    -jar          Specify that the final argument is the name of a");
         System.out.println("                  JAR file to run as a module; not compatible with -class");
+        System.out.println("    -javaagent:agent.jar");
+        System.out.println("                  Add a Java agent that can load modules");
         System.out.println("    -jaxpmodule <module-spec>");
         System.out.println("                  The default JAXP implementation to use of the JDK");
         System.out.println("    -secmgr       Run with a security manager installed; not compatible with -secmgrmodule");
@@ -137,6 +145,7 @@ public final class Main {
         boolean addIndex = false;
         boolean modifyInPlace = false;
         boolean debuglog = false;
+        final List<String> agentJars = new ArrayList<>();
         final List<String> addedProviders = new ArrayList<>();
         for (int i = 0; i < argsLen; i++) {
             final String arg = args[i];
@@ -271,7 +280,9 @@ public final class Main {
                         }
                         secMgrModule = args[++ i];
                     } else if ("-add-provider".equals(arg)) {
-                        addedProviders.add(args[++ i]);
+                        addedProviders.add(args[++i]);
+                    } else if (arg.startsWith("-javaagent:")) {
+                        agentJars.add(arg.substring(11));
                     } else {
                         System.err.printf("Invalid option '%s'\n", arg);
                         usage();
@@ -422,6 +433,73 @@ public final class Main {
             }
         }
         Module.initBootModuleLoader(environmentLoader);
+
+        if (! agentJars.isEmpty()) {
+            final Instrumentation instrumentation = Main.instrumentation;
+            if (instrumentation == null) {
+                // we have to self-attach (todo later)
+                System.err.println("Not started in agent mode (self-attach not supported yet)");
+                usage();
+                System.exit(1);
+            }
+            final ModuleLoader agentLoader = new ModuleLoader(new FileSystemClassPathModuleFinder(loader));
+            for (String agentJar : agentJars) {
+                final Module module;
+                try {
+                    module = agentLoader.loadModule(new File(agentJar).getAbsolutePath());
+                } catch (ModuleLoadException ex) {
+                    System.err.printf("Cannot load agent JAR %s: %s", agentJar, ex);
+                    System.exit(1);
+                    throw new IllegalStateException();
+                }
+                final ModuleClassLoader classLoader = module.getClassLoaderPrivate();
+                final InputStream is = classLoader.getResourceAsStream("META-INF/MANIFEST.MF");
+                final Manifest manifest;
+                if (is == null) {
+                    System.err.printf("Agent JAR %s has no manifest", agentJar);
+                    System.exit(1);
+                    throw new IllegalStateException();
+                }
+                try {
+                    manifest = new Manifest();
+                    manifest.read(is);
+                    is.close();
+                } catch (IOException e) {
+                    try {
+                        is.close();
+                    } catch (IOException e2) {
+                        e2.addSuppressed(e);
+                        throw e2;
+                    }
+                    throw e;
+                }
+                final Attributes attributes = manifest.getMainAttributes();
+                final String preMainClassName = attributes.getValue("Premain-Class");
+                if (preMainClassName != null) {
+                    final Class<?> preMainClass = Class.forName(preMainClassName, true, classLoader);
+                    final Method premain;
+                    try {
+                        premain = preMainClass.getDeclaredMethod("premain", String.class, Instrumentation.class);
+                    } catch (Exception e) {
+                        System.out.printf("Failed to find premain method: %s", e);
+                        System.exit(1);
+                        throw new IllegalStateException();
+                    }
+                    try {
+                        premain.invoke(null, "" /*todo*/, instrumentation);
+                    } catch (InvocationTargetException e) {
+                        System.out.printf("Execution of premain method failed: %s", e.getCause());
+                        System.exit(1);
+                        throw new IllegalStateException();
+                    }
+                } else {
+                    System.out.printf("Agent JAR %s has no premain method", agentJar);
+                    System.exit(1);
+                    throw new IllegalStateException();
+                }
+            }
+        }
+
         if (jaxpModuleName != null) {
             __JAXPRedirected.changeAll(jaxpModuleName, Module.getBootModuleLoader());
         } else {
