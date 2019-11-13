@@ -434,72 +434,6 @@ public final class Main {
         }
         Module.initBootModuleLoader(environmentLoader);
 
-        if (! agentJars.isEmpty()) {
-            final Instrumentation instrumentation = Main.instrumentation;
-            if (instrumentation == null) {
-                // we have to self-attach (todo later)
-                System.err.println("Not started in agent mode (self-attach not supported yet)");
-                usage();
-                System.exit(1);
-            }
-            final ModuleLoader agentLoader = new ModuleLoader(new FileSystemClassPathModuleFinder(loader));
-            for (String agentJar : agentJars) {
-                final Module module;
-                try {
-                    module = agentLoader.loadModule(new File(agentJar).getAbsolutePath());
-                } catch (ModuleLoadException ex) {
-                    System.err.printf("Cannot load agent JAR %s: %s", agentJar, ex);
-                    System.exit(1);
-                    throw new IllegalStateException();
-                }
-                final ModuleClassLoader classLoader = module.getClassLoaderPrivate();
-                final InputStream is = classLoader.getResourceAsStream("META-INF/MANIFEST.MF");
-                final Manifest manifest;
-                if (is == null) {
-                    System.err.printf("Agent JAR %s has no manifest", agentJar);
-                    System.exit(1);
-                    throw new IllegalStateException();
-                }
-                try {
-                    manifest = new Manifest();
-                    manifest.read(is);
-                    is.close();
-                } catch (IOException e) {
-                    try {
-                        is.close();
-                    } catch (IOException e2) {
-                        e2.addSuppressed(e);
-                        throw e2;
-                    }
-                    throw e;
-                }
-                final Attributes attributes = manifest.getMainAttributes();
-                final String preMainClassName = attributes.getValue("Premain-Class");
-                if (preMainClassName != null) {
-                    final Class<?> preMainClass = Class.forName(preMainClassName, true, classLoader);
-                    final Method premain;
-                    try {
-                        premain = preMainClass.getDeclaredMethod("premain", String.class, Instrumentation.class);
-                    } catch (Exception e) {
-                        System.out.printf("Failed to find premain method: %s", e);
-                        System.exit(1);
-                        throw new IllegalStateException();
-                    }
-                    try {
-                        premain.invoke(null, "" /*todo*/, instrumentation);
-                    } catch (InvocationTargetException e) {
-                        System.out.printf("Execution of premain method failed: %s", e.getCause());
-                        System.exit(1);
-                        throw new IllegalStateException();
-                    }
-                } else {
-                    System.out.printf("Agent JAR %s has no premain method", agentJar);
-                    System.exit(1);
-                    throw new IllegalStateException();
-                }
-            }
-        }
-
         if (jaxpModuleName != null) {
             __JAXPRedirected.changeAll(jaxpModuleName, Module.getBootModuleLoader());
         } else {
@@ -602,6 +536,72 @@ public final class Main {
                 System.err.println("WARNING: Failed to load the specified log manager class " + logManagerName);
             } else {
                 Module.setModuleLogger(new JDKModuleLogger());
+            }
+        }
+
+        if (! agentJars.isEmpty()) {
+            final Instrumentation instrumentation = Main.instrumentation;
+            if (instrumentation == null) {
+                // we have to self-attach (todo later)
+                System.err.println("Not started in agent mode (self-attach not supported yet)");
+                usage();
+                System.exit(1);
+            }
+            final ModuleLoader agentLoader = new ModuleLoader(new FileSystemClassPathModuleFinder(loader));
+            for (String agentJar : agentJars) {
+                final Module agentModule;
+                try {
+                    agentModule = agentLoader.loadModule(new File(agentJar).getAbsolutePath());
+                } catch (ModuleLoadException ex) {
+                    System.err.printf("Cannot load agent JAR %s: %s", agentJar, ex);
+                    System.exit(1);
+                    throw new IllegalStateException();
+                }
+                final ModuleClassLoader classLoader = agentModule.getClassLoaderPrivate();
+                final InputStream is = classLoader.getResourceAsStream("META-INF/MANIFEST.MF");
+                final Manifest manifest;
+                if (is == null) {
+                    System.err.printf("Agent JAR %s has no manifest", agentJar);
+                    System.exit(1);
+                    throw new IllegalStateException();
+                }
+                try {
+                    manifest = new Manifest();
+                    manifest.read(is);
+                    is.close();
+                } catch (IOException e) {
+                    try {
+                        is.close();
+                    } catch (IOException e2) {
+                        e2.addSuppressed(e);
+                        throw e2;
+                    }
+                    throw e;
+                }
+                final Attributes attributes = manifest.getMainAttributes();
+                final String preMainClassName = attributes.getValue("Premain-Class");
+                if (preMainClassName != null) {
+                    final Class<?> preMainClass = Class.forName(preMainClassName, true, classLoader);
+                    final Method premain;
+                    try {
+                        premain = preMainClass.getDeclaredMethod("premain", String.class, Instrumentation.class);
+                    } catch (Exception e) {
+                        System.out.printf("Failed to find premain method: %s", e);
+                        System.exit(1);
+                        throw new IllegalStateException();
+                    }
+                    try {
+                        premain.invoke(null, "" /*todo*/, instrumentation);
+                    } catch (InvocationTargetException e) {
+                        System.out.printf("Execution of premain method failed: %s", e.getCause());
+                        System.exit(1);
+                        throw new IllegalStateException();
+                    }
+                } else {
+                    System.out.printf("Agent JAR %s has no premain method", agentJar);
+                    System.exit(1);
+                    throw new IllegalStateException();
+                }
             }
         }
 
