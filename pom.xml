@@ -222,6 +222,10 @@
                             <Multi-Release>true</Multi-Release>
                             <Jar-Version>${project.version}</Jar-Version>
                             <Jar-Name>${project.artifactId}</Jar-Name>
+                            <Agent-Class>org.jboss.modules.ModularAgent</Agent-Class>
+                            <Premain-Class>org.jboss.modules.ModularAgent</Premain-Class>
+                            <Can-Redefine-Classes>true</Can-Redefine-Classes>
+                            <Can-Retransform-Classes>true</Can-Retransform-Classes>
                         </manifestEntries>
                     </archive>
                 </configuration>
