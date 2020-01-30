@@ -24,6 +24,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.FileSystems;
+import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
@@ -168,7 +169,7 @@ class PathResourceLoader extends AbstractResourceLoader implements IterableResou
             } catch (InvalidPathException ignored) {
                 return Collections.emptyIterator();
             }
-            return Files.walk(path, recursive ? Integer.MAX_VALUE : 1)
+            return Files.walk(path, recursive ? Integer.MAX_VALUE : 1, FileVisitOption.FOLLOW_LINKS)
                     .filter(it -> !Files.isDirectory(it))
                     .<Resource>map(resourcePath -> new PathResource(resourcePath, PathUtils.toGenericSeparators(root.relativize(resourcePath).toString()), context))
                     .iterator();
@@ -180,7 +181,7 @@ class PathResourceLoader extends AbstractResourceLoader implements IterableResou
     @Override
     public Collection<String> getPaths() {
         try {
-            return doPrivilegedIfNeeded(context, IOException.class, () -> Files.walk(root)
+            return doPrivilegedIfNeeded(context, IOException.class, () -> Files.walk(root, FileVisitOption.FOLLOW_LINKS)
                     .filter(Files::isDirectory)
                     .map(dir -> {
                         final String result = root.relativize(dir).toString();
