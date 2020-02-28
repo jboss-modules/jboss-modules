@@ -82,7 +82,6 @@ public final class Main {
         System.out.println("       java [-jvmoptions...] -jar " + getJarName() + ".jar [-options...] -jar <jar-name> [args...]");
         System.out.println("       java [-jvmoptions...] -jar " + getJarName() + ".jar [-options...] -cp <class-path> <class-name> [args...]");
         System.out.println("       java [-jvmoptions...] -jar " + getJarName() + ".jar [-options...] -class <class-name> [args...]");
-        System.out.println("       java [-jvmoptions...] -jar " + getJarName() + ".jar -addindex [-modify] <jar-name> ");
         System.out.println("where <module-spec> is a valid module specification string");
         System.out.println("and options include:");
         System.out.println("    -help         Display this message");
@@ -107,9 +106,6 @@ public final class Main {
         System.out.println("                  Run with a security manager module; not compatible with -secmgr");
         System.out.println("    -add-provider <module-name>[/<class-name>]");
         System.out.println("                  Add a security provider of the given module and class (can be given more than once)");
-        System.out.println("    -addindex     Specify that the final argument is a");
-        System.out.println("                  jar to create an index for");
-        System.out.println("    -modify       Modify the indexes jar in-place");
         System.out.println("    -version      Print version and exit\n");
     }
 
@@ -134,8 +130,6 @@ public final class Main {
         String jaxpModuleName = null;
         boolean defaultSecMgr = false;
         String secMgrModule = null;
-        boolean addIndex = false;
-        boolean modifyInPlace = false;
         boolean debuglog = false;
         final List<String> addedProviders = new ArrayList<>();
         for (int i = 0; i < argsLen; i++) {
@@ -149,10 +143,6 @@ public final class Main {
                     } else if ("-help".equals(arg)) {
                         usage();
                         return;
-                    } else if ("-addindex".equals(arg)) {
-                        addIndex = true;
-                    } else if ("-modify".equals(arg)) {
-                        modifyInPlace = true;
                     } else if ("-modulepath".equals(arg) || "-mp".equals(arg)) {
                         if (modulePath != null) {
                             System.err.println("Module path may only be specified once");
@@ -247,9 +237,6 @@ public final class Main {
                             System.exit(1);
                         }
                         classDefined = true;
-                    } else if ("-logmodule".equals(arg)) {
-                        System.err.println("WARNING: -logmodule is deprecated. Please use the system property 'java.util.logging.manager' or the 'java.util.logging.LogManager' service loader.");
-                        i++;
                     } else if ("-secmgr".equals(arg)) {
                         if (defaultSecMgr) {
                             System.err.println("-secmgr may only be specified once");
@@ -290,72 +277,6 @@ public final class Main {
                 usage();
                 System.exit(1);
             }
-        }
-
-        if (modifyInPlace && ! addIndex) {
-            System.err.println("-modify requires -addindex");
-            usage();
-            System.exit(1);
-        }
-
-        if (addIndex) {
-            System.err.println("WARNING: -addindex is deprecated and may be removed in a future release");
-            if (nameArgument == null) {
-                System.err.println("-addindex requires a target JAR name");
-                usage();
-                System.exit(1);
-            }
-            if (modulePath != null) {
-                System.err.println("-mp may not be used with -addindex");
-                usage();
-                System.exit(1);
-            }
-            if (jaxpModuleName != null) {
-                System.err.println("-jaxpModuleName may not be used with -addindex");
-                usage();
-                System.exit(1);
-            }
-            if (classpathDefined) {
-                System.err.println("-cp or -classpath may not be used with -addindex");
-                usage();
-                System.exit(1);
-            }
-            if (classDefined) {
-                System.err.println("-class may not be used with -addindex");
-                usage();
-                System.exit(1);
-            }
-            if (jar) {
-                System.err.println("-jar may not be used with -addindex");
-                usage();
-                System.exit(1);
-            }
-            if (deps != null) {
-                System.err.println("-deps may not be used with -addindex");
-                usage();
-                System.exit(1);
-            }
-            if (defaultSecMgr) {
-                System.err.println("-secmgr may not be used with -addindex");
-                usage();
-                System.exit(1);
-            }
-            if (secMgrModule != null) {
-                System.err.println("-secmgrmodule may not be used with -addindex");
-                usage();
-                System.exit(1);
-            }
-            if (! addedProviders.isEmpty()) {
-                System.err.println("-add-provider may not be used with -addindex");
-            }
-            if (depTree) {
-                System.err.println("-deptree may not be used with -addindex");
-                usage();
-                System.exit(1);
-            }
-
-            JarFileResourceLoader.addInternalIndex(new File(nameArgument), modifyInPlace);
-            return;
         }
 
         if (deps != null && ! classDefined && ! classpathDefined) {
