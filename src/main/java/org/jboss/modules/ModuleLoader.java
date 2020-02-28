@@ -341,7 +341,7 @@ public class ModuleLoader {
                         }
                         final ModuleFinder finder = finders[idx++];
                         if (finder instanceof IterableModuleFinder) {
-                            nested = ((IterableModuleFinder) finder).iterateModules(baseName, recursive);
+                            nested = ((IterableModuleFinder) finder).iterateModules(baseName, recursive, ModuleLoader.this);
                         }
                     }
 
