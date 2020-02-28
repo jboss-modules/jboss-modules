@@ -183,6 +183,7 @@ public final class Main {
                     } else if ("-debuglog".equals(arg)) {
                         debuglog = true;
                     } else if ("-jaxpmodule".equals(arg)) {
+                        System.err.println("WARNING: -jaxpmodule is deprecated and may be removed in a future release");
                         jaxpModuleName = args[++i];
                     } else if ("-jar".equals(arg)) {
                         if (jar) {
