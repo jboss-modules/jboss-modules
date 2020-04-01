@@ -470,7 +470,22 @@ public final class Main {
                 System.exit(1);
             }
             final ModuleLoader agentLoader = new ModuleLoader(new FileSystemClassPathModuleFinder(loader));
-            for (String agentJar : agentJars) {
+            for (String agentJarArg : agentJars) {
+                final String agentJar;
+                final String agentArgs;
+                final int i = agentJarArg.indexOf('=');
+                if (i > 0) {
+                    agentJar = agentJarArg.substring(0, i);
+                    if (agentJarArg.length() > (i + 1)) {
+                        agentArgs = agentJarArg.substring(i + 1);
+                    } else {
+                        agentArgs = "";
+                    }
+                } else {
+                    agentJar = agentJarArg;
+                    agentArgs = "";
+                }
+
                 final Module agentModule;
                 try {
                     agentModule = agentLoader.loadModule(new File(agentJar).getAbsolutePath());
@@ -500,20 +515,29 @@ public final class Main {
                     }
                     throw e;
                 }
+                // Note that this does not implement agent invocation as defined on
+                // https://docs.oracle.com/javase/8/docs/api/java/lang/instrument/package-summary.html. This is also not
+                // done on the system class path which means some agents that rely on that may not work well here.
                 final Attributes attributes = manifest.getMainAttributes();
                 final String preMainClassName = attributes.getValue("Premain-Class");
                 if (preMainClassName != null) {
                     final Class<?> preMainClass = Class.forName(preMainClassName, true, classLoader);
-                    final Method premain;
+                    Object[] premainArgs;
+                    Method premain;
                     try {
                         premain = preMainClass.getDeclaredMethod("premain", String.class, Instrumentation.class);
+                        premainArgs = new Object[] {agentArgs, instrumentation};
+                    } catch (NoSuchMethodException ignore) {
+                        // If the method is not found we should check for the string only method
+                        premain = preMainClass.getDeclaredMethod("premain", String.class);
+                        premainArgs = new Object[] {agentArgs};
                     } catch (Exception e) {
                         System.out.printf("Failed to find premain method: %s", e);
                         System.exit(1);
                         throw new IllegalStateException();
                     }
                     try {
-                        premain.invoke(null, "" /*todo*/, instrumentation);
+                        premain.invoke(null, premainArgs);
                     } catch (InvocationTargetException e) {
                         System.out.printf("Execution of premain method failed: %s", e.getCause());
                         System.exit(1);
