@@ -1,0 +1,53 @@
+# This workflow will build a Java project with Maven
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
+
+name: JBoss Modules CI
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+  build-test-matrix:
+    name: JDK${{ matrix.jdk }}-${{ matrix.impl}}-${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        jdk: [11]
+        impl: [hotspot, openj9]
+    steps:
+    - uses: actions/checkout@v2
+    # test runs use -Djava8.home=... as well, so we need both JDKs
+    - name: Set up JDK 8
+      uses: AdoptOpenJDK/install-jdk@v1
+      with:
+        version: 8
+        impl: ${{ matrix.impl }}
+        targets: 'JAVA_HOME_8'
+    - name: Set up JDK 9
+      uses: AdoptOpenJDK/install-jdk@v1
+      with:
+        version: 9
+        impl: ${{ matrix.impl }}
+        targets: 'JAVA_HOME_9'
+    - name: Set up JDK 10
+      uses: AdoptOpenJDK/install-jdk@v1
+      with:
+        version: 10
+        impl: ${{ matrix.impl }}
+        targets: 'JAVA_HOME_10'
+    - name: Set up JDK ${{ matrix.jdk }}
+      uses: AdoptOpenJDK/install-jdk@v1
+      with:
+        version: ${{ matrix.jdk }}
+        impl: ${{ matrix.impl }}
+    - name: Run Build & Test
+    # -D needs to be escaped in powershell, use --define= instead
+      run: mvn -U -B -fae clean install --define=java8.home=${{ env.JAVA_HOME_8 }} --define=java9.home=${{ env.JAVA_HOME_9 }} --define=java10.home=${{ env.JAVA_HOME_10 }}
+    - uses: actions/upload-artifact@v2
+      if: failure()
+      with:
+        name: surefire-reports-JDK${{ matrix.jdk }}-${{ matrix.impl}}-${{ matrix.os }}
+        path: '**/surefire-reports/*.txt'
