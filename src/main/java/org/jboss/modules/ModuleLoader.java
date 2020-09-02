@@ -265,7 +265,11 @@ public class ModuleLoader {
         return version == null ? module.getName() : module.getName() + "@" + version;
     }
 
-    static void installMBeanServer() {
+    /**
+     * Install JBoss Modules MBeans. WARNING: This method is not intended to be
+     * called by application code.
+     */
+    public static void installMBeanServer() {
         REG_REF.installReal();
     }
 
