@@ -45,6 +45,7 @@ import java.util.NoSuchElementException;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
 
 import org.jboss.modules._private.ModulesPrivateAccess;
 import org.jboss.modules.filter.ClassFilter;
@@ -545,6 +546,27 @@ public final class Module {
      */
     public static ModuleLoader getSystemModuleLoader() {
         return Utils.JDK_MODULE_LOADER;
+    }
+
+    /**
+     * Returns an iterable of available and filtered providers of given type.
+     *
+     * @param type service provider type
+     * @param filter to specify which providers to load
+     * @param loader to be used for providers lookup
+     * @return An iterable of available and filtered providers of given type
+     */
+    public static <T> Iterable<T> findServices(final Class<T> type, final Predicate<Class<?>> filter, final ClassLoader loader) {
+        if (type == null) {
+            throw new IllegalArgumentException("type is null");
+        }
+        if (filter == null) {
+            throw new IllegalArgumentException("filter is null");
+        }
+        if (loader == null) {
+            throw new IllegalArgumentException("loader is null");
+        }
+        return JDKSpecific.findServices(type, filter, loader);
     }
 
     static void initBootModuleLoader(ModuleLoader loader) {
