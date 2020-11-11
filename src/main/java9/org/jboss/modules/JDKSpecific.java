@@ -46,13 +46,9 @@ import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.ServiceLoader;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.function.Predicate;
-import java.util.jar.JarFile;
 import java.util.stream.Stream;
+import java.util.jar.JarFile;
 
 /**
  * JDK-specific classes which are replaced for different JDK major versions.  This one is for Java 9 only.
@@ -190,37 +186,6 @@ final class JDKSpecific {
 
     static void addInternalPackages(final List<String> list) {
         // none in Java 9+
-    }
-
-    static <T> Iterable<T> findServices(final Class<T> serviceType, final Predicate<Class<?>> filter, final ClassLoader classLoader) {
-       final Iterator<ServiceLoader.Provider<T>> delegate = ServiceLoader.load(serviceType, classLoader).stream().iterator();
-       return new Iterable<T>() {
-            public Iterator<T> iterator() {
-                return new Iterator<T>() {
-                    T next = null;
-
-                    public boolean hasNext() {
-                        ServiceLoader.Provider<T> next;
-                        while (this.next == null) {
-                            if (!delegate.hasNext()) return false;
-                            next = delegate.next();
-                            if (filter.test(next.type())) {
-                                this.next = next.get();
-                                return true;
-                            }
-                        }
-                        return true;
-                    }
-
-                    public T next() {
-                        if (!hasNext()) throw new NoSuchElementException();
-                        T next = this.next;
-                        this.next = null;
-                        return next;
-                    }
-                };
-            }
-        };
     }
 
     // === nested util stuff, non-API ===
