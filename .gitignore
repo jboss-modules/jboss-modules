@@ -1,8 +1,9 @@
 # Ignore .svn metadata files
 .svn
  
-#Ignore Maven generated target folders
+# Ignore Maven metadata files
 target
+pom.xml.versionsBackup
 
 # Ignore eclipse files
 .project
