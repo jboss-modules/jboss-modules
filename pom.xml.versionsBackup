@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ JBoss, Home of Professional Open Source.
+  ~ Copyright 2015 Red Hat, Inc., and individual contributors
+  ~ as indicated by the @author tags.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.jboss.modules</groupId>
+    <artifactId>jboss-modules</artifactId>
+    <version>1.11.0.Final-SNAPSHOT</version>
+    <name>JBoss Modules</name>
+
+    <parent>
+        <groupId>org.jboss</groupId>
+        <artifactId>jboss-parent</artifactId>
+        <version>36</version>
+    </parent>
+
+    <licenses>
+        <license>
+            <name>Apache License 2.0</name>
+            <url>http://repository.jboss.org/licenses/apache-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+        <license>
+            <name>Indiana University Extreme! Lab Software License 1.1.1</name>
+            <url>http://www.bearcave.com/software/java/xml/xmlpull_license.html</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <properties>
+        <skip.compile>false</skip.compile>
+        <version.org.wildfly.checkstyle-config>1.0.5.Final</version.org.wildfly.checkstyle-config>
+        <version.bridger>1.4.Final</version.bridger>
+
+        <jdk.min.version>9</jdk.min.version>
+    </properties>
+
+    <profiles>
+        <profile>
+            <id>java8-test-profile</id>
+            <activation>
+                <property>
+                    <name>java8.home</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>java8-test</id>
+                                <phase>test</phase>
+                                <goals>
+                                    <goal>test</goal>
+                                </goals>
+                                <configuration>
+                                    <jvm>${java8.home}/bin/java</jvm>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/java</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>**/*.properties</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+            </resource>
+            <resource>
+                <directory>target/generated-resources</directory>
+                <filtering>false</filtering>
+            </resource>
+        </resources>
+
+        <pluginManagement>
+            <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>${version.checkstyle.plugin}</version>
+                <configuration>
+                    <configLocation>wildfly-checkstyle/checkstyle.xml</configLocation>
+                    <consoleOutput>true</consoleOutput>
+                    <failsOnError>true</failsOnError>
+                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                    <useFile/>
+                    <excludes>**/MXParser.java</excludes>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.wildfly.checkstyle</groupId>
+                        <artifactId>wildfly-checkstyle-config</artifactId>
+                        <version>${version.org.wildfly.checkstyle-config}</version>
+                    </dependency>
+                </dependencies>
+                <executions>
+                    <execution>
+                        <id>check-style</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>checkstyle</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            </plugins>
+        </pluginManagement>
+
+        <plugins>
+            <!-- Compiler -->
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.7.0-jboss-1</version>
+                <executions>
+                    <execution>
+                        <id>default-compile</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <release>8</release>
+                            <buildDirectory>${project.build.directory}</buildDirectory>
+                            <compileSourceRoots>${project.compileSourceRoots}</compileSourceRoots>
+                            <outputDirectory>${project.build.outputDirectory}</outputDirectory>
+                            <additionalClasspathElements>
+                                <additionalClasspathElement>${project.build.directory}/jdk-misc.jar</additionalClasspathElement>
+                            </additionalClasspathElements>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>compile-java9</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <release>9</release>
+                            <buildDirectory>${project.build.directory}</buildDirectory>
+                            <compileSourceRoots>${project.basedir}/src/main/java9</compileSourceRoots>
+                            <outputDirectory>${project.build.directory}/classes/META-INF/versions/9</outputDirectory>
+                            <additionalClasspathElements>
+                                <additionalClasspathElement>${project.build.outputDirectory}</additionalClasspathElement>
+                            </additionalClasspathElements>
+                        </configuration>
+                    </execution>
+                </executions>
+                <configuration>
+                    <showDeprecation>true</showDeprecation>
+                    <showWarnings>true</showWarnings>
+                    <skipMain>${skip.compile}</skipMain>
+                    <skip>${skip.compile}</skip>
+                </configuration>
+            </plugin>
+
+            <!-- Surefire -->
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <redirectTestOutputToFile>true</redirectTestOutputToFile>
+                    <trimStackTrace>false</trimStackTrace>
+                     <!-- Modules ignores Class-Path -->
+                    <useManifestOnlyJar>false</useManifestOnlyJar>
+                    <printSummary>true</printSummary>
+                    <includes>
+                        <include>**/*Test.java</include>
+                    </includes>
+                    <forkMode>always</forkMode>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>default-test</id>
+                        <configuration>
+                            <classesDirectory>${project.build.directory}/classes/META-INF/versions/9</classesDirectory>
+                            <additionalClasspathElements>
+                                <additionalClasspathElement>${project.build.directory}/classes</additionalClasspathElement>
+                            </additionalClasspathElements>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- JAR -->
+            <plugin>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>org.jboss.modules.Main</mainClass>
+                        </manifest>
+                        <manifestEntries>
+                            <Multi-Release>true</Multi-Release>
+                            <Jar-Version>${project.version}</Jar-Version>
+                            <Jar-Name>${project.artifactId}</Jar-Name>
+                            <Agent-Class>org.jboss.modules.ModularAgent</Agent-Class>
+                            <Premain-Class>org.jboss.modules.ModularAgent</Premain-Class>
+                            <Can-Redefine-Classes>true</Can-Redefine-Classes>
+                            <Can-Retransform-Classes>true</Can-Retransform-Classes>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
+
+            <!-- Javadoc -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>${version.javadoc.plugin}</version>
+                <configuration>
+                    <detectJavaApiLink>false</detectJavaApiLink>
+                    <excludePackageNames>__redirected</excludePackageNames>
+                    <excludePackageNames>org.jboss.modules._private</excludePackageNames>
+                    <sourcepath>${project.basedir}/src/main/java9;${project.basedir}/src/main/java</sourcepath>
+                    <sourceFileExcludes>
+                        <exclude>org/jboss/modules/JDKSpecific.java</exclude>
+                    </sourceFileExcludes>
+                </configuration>
+            </plugin>
+
+            <!-- Bridger -->
+            <plugin>
+                <groupId>org.jboss.bridger</groupId>
+                <artifactId>bridger</artifactId>
+                <version>${version.bridger}</version>
+                <executions>
+                     <!-- run after "compile", runs bridger on main classes -->
+                     <execution>
+                         <id>weave</id>
+                         <phase>process-classes</phase>
+                         <goals>
+                             <goal>transform</goal>
+                         </goals>
+                     </execution>
+                </executions>
+            </plugin>
+
+            <!-- Dependency -->
+            <plugin>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>fetch-misc</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>get</goal>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifact>org.jboss:jdk-misc:2.Final</artifact>
+                            <outputDirectory>${project.build.directory}</outputDirectory>
+                            <stripVersion>true</stripVersion>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+    <dependencies>
+        <dependency>
+            <groupId>org.jboss.shrinkwrap</groupId>
+            <artifactId>shrinkwrap-impl-base</artifactId>
+            <version>1.2.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.13.1</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>
