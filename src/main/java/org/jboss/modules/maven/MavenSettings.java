@@ -156,7 +156,8 @@ final class MavenSettings {
                     switch (reader.getName()) {
                         case "localRepository": {
                             String localRepository = reader.nextText();
-                            if (localRepository != null && !localRepository.trim().isEmpty()) {
+                            boolean localRepositoryNotDefinedViaProperty = mavenSettings.getLocalRepository() == null;
+                            if (localRepositoryNotDefinedViaProperty && localRepository != null && !localRepository.trim().isEmpty()) {
                                 mavenSettings.setLocalRepository(Paths.get(interpolateVariables(localRepository)));
                             }
                             break;

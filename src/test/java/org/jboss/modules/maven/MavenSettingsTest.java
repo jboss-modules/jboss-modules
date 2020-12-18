@@ -1,5 +1,6 @@
 package org.jboss.modules.maven;
 
+import java.io.File;
 import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
@@ -8,6 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
+import org.jboss.modules.Module;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -26,6 +28,37 @@ public class MavenSettingsTest {
 
     @Rule
     public TemporaryFolder tmpdir = new TemporaryFolder();
+
+    @Test
+    public void testLocalRepositoryOverriddenViaSystemProperty() throws Exception {
+        URL settingsXmlUrl = MavenSettingsTest.class.getResource("settings-with-local-repo-defined.xml");
+        System.setProperty("jboss.modules.settings.xml.url", settingsXmlUrl.toExternalForm());
+        String temporaryLocalRepository = tmpdir.newFolder("repository").getAbsolutePath();
+        System.setProperty("maven.repo.local", temporaryLocalRepository);
+
+        try {
+            clearCachedSettings();
+            MavenSettings settings = MavenSettings.getSettings();
+            Assert.assertEquals(temporaryLocalRepository, settings.getLocalRepository().toString());
+        } finally {
+            System.clearProperty("maven.repo.local");
+            System.clearProperty("jboss.modules.settings.xml.url");
+        }
+    }
+
+    @Test
+    public void testLocalRepositoryNotOverriddenViaSystemProperty() throws Exception {
+        URL settingsXmlUrl = MavenSettingsTest.class.getResource("settings-with-local-repo-defined.xml");
+        System.setProperty("jboss.modules.settings.xml.url", settingsXmlUrl.toExternalForm());
+
+        try {
+            clearCachedSettings();
+            MavenSettings settings = MavenSettings.getSettings();
+            Assert.assertEquals("/user/defined/path/in/settings/xml".replace('/', File.separatorChar), settings.getLocalRepository().toString());
+        } finally {
+            System.clearProperty("jboss.modules.settings.xml.url");
+        }
+    }
 
     @Test
     public void testWithPassedRepository() throws Exception {
