@@ -670,7 +670,6 @@ public final class ModuleXmlParser {
         }
         Set<String> visited = new HashSet<>();
         int eventType;
-        boolean gotPerms = false;
         for (;;) {
             eventType = reader.nextTag();
             switch (eventType) {
@@ -704,7 +703,7 @@ public final class ModuleXmlParser {
                                 } catch (IllegalArgumentException ignored) {}
                             }
                         }); break;
-                        case E_PERMISSIONS:  parsePermissions(reader, moduleLoader, realModuleName, specBuilder); gotPerms = true; break;
+                        case E_PERMISSIONS:  parsePermissions(reader, moduleLoader, realModuleName, specBuilder); break;
                         case E_PROVIDES:     if (is1_8) parseProvidesType(reader, specBuilder); else throw unexpectedContent(reader); break;
                         default: throw unexpectedContent(reader);
                     }
