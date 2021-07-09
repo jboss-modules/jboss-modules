@@ -238,7 +238,6 @@
                 <version>${version.javadoc.plugin}</version>
                 <configuration>
                     <detectJavaApiLink>false</detectJavaApiLink>
-                    <excludePackageNames>__redirected</excludePackageNames>
                     <excludePackageNames>org.jboss.modules._private</excludePackageNames>
                     <sourcepath>${project.basedir}/src/main/java9;${project.basedir}/src/main/java</sourcepath>
                     <sourceFileExcludes>

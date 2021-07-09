@@ -18,8 +18,6 @@
 
 package org.jboss.modules;
 
-import __redirected.__JAXPRedirected;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -65,6 +63,7 @@ import static org.jboss.modules.SecurityActions.setContextClassLoader;
  * The main entry point of JBoss Modules when run as a JAR on the command line.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  * @author Jason T. Greene
  * @apiviz.exclude
  */
@@ -107,8 +106,6 @@ public final class Main {
         System.out.println("                  JAR file to run as a module; not compatible with -class");
         System.out.println("    -javaagent:agent.jar");
         System.out.println("                  Add a Java agent that can load modules");
-        System.out.println("    -jaxpmodule <module-spec>");
-        System.out.println("                  The default JAXP implementation to use of the JDK");
         System.out.println("    -secmgr       Run with a security manager installed; not compatible with -secmgrmodule");
         System.out.println("    -secmgrmodule <module-spec>");
         System.out.println("                  Run with a security manager module; not compatible with -secmgr");
@@ -135,7 +132,6 @@ public final class Main {
         boolean classDefined = false;
         boolean depTree = false;
         String nameArgument = null;
-        String jaxpModuleName = null;
         boolean defaultSecMgr = false;
         String secMgrModule = null;
         boolean debuglog = false;
@@ -182,9 +178,6 @@ public final class Main {
                         depTree = true;
                     } else if ("-debuglog".equals(arg)) {
                         debuglog = true;
-                    } else if ("-jaxpmodule".equals(arg)) {
-                        System.err.println("WARNING: -jaxpmodule is deprecated and may be removed in a future release");
-                        jaxpModuleName = args[++i];
                     } else if ("-jar".equals(arg)) {
                         if (jar) {
                             System.err.println("-jar flag may only be specified once");
@@ -355,12 +348,6 @@ public final class Main {
             }
         }
         Module.initBootModuleLoader(environmentLoader);
-
-        if (jaxpModuleName != null) {
-            __JAXPRedirected.changeAll(jaxpModuleName, Module.getBootModuleLoader());
-        } else {
-            __JAXPRedirected.changeAll(moduleName, Module.getBootModuleLoader());
-        }
 
         if (moduleName == null) {
             return;

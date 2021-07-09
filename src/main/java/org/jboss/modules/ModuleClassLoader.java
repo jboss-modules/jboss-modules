@@ -26,16 +26,6 @@ import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-import __redirected.__DatatypeFactory;
-import __redirected.__DocumentBuilderFactory;
-import __redirected.__SAXParserFactory;
-import __redirected.__SchemaFactory;
-import __redirected.__TransformerFactory;
-import __redirected.__XMLEventFactory;
-import __redirected.__XMLInputFactory;
-import __redirected.__XMLOutputFactory;
-import __redirected.__XMLReaderFactory;
-import __redirected.__XPathFactory;
 import org.jboss.modules.filter.PathFilter;
 import org.jboss.modules.filter.PathFilters;
 import org.jboss.modules.log.ModuleLogger;
@@ -54,30 +44,18 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
-import javax.xml.datatype.DatatypeFactory;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.SAXParserFactory;
-import javax.xml.stream.XMLEventFactory;
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLOutputFactory;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.validation.SchemaFactory;
-import javax.xml.xpath.XPathFactory;
-
 /**
  * A module classloader.  Instances of this class implement the complete view of classes and resources available in a
  * module.  Contrast with {@link Module}, which has API methods to access the exported view of classes and resources.
  *
  * @author <a href="mailto:jbailey@redhat.com">John Bailey</a>
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  * @author thomas.diesler@jboss.com
  *
  * @apiviz.landmark
  */
 public class ModuleClassLoader extends ConcurrentClassLoader {
-
-    private static final Map<String, Class<?>> jaxpClassesByName;
-    static final Map<String, URLConnectionResource> jaxpImplResources;
 
     static {
         boolean parallelOk = true;
@@ -88,31 +66,6 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         if (! parallelOk) {
             throw new Error("Failed to register " + ModuleClassLoader.class.getName() + " as parallel-capable");
         }
-        Map<String, Class<?>> jaxpMap = new HashMap<>();
-        jaxpMap.put(DatatypeFactory.class.getName(), __DatatypeFactory.class);
-        jaxpMap.put(DocumentBuilderFactory.class.getName(), __DocumentBuilderFactory.class);
-        jaxpMap.put(SAXParserFactory.class.getName(), __SAXParserFactory.class);
-        jaxpMap.put(SchemaFactory.class.getName(), __SchemaFactory.class);
-        jaxpMap.put(TransformerFactory.class.getName(), __TransformerFactory.class);
-        jaxpMap.put(XMLEventFactory.class.getName(), __XMLEventFactory.class);
-        jaxpMap.put(XMLInputFactory.class.getName(), __XMLInputFactory.class);
-        jaxpMap.put(XMLOutputFactory.class.getName(), __XMLOutputFactory.class);
-        jaxpMap.put(__XMLReaderFactory.SAX_DRIVER, __XMLReaderFactory.class);
-        jaxpMap.put(XPathFactory.class.getName(), __XPathFactory.class);
-        Map<String, Class<?>> classesByName = new HashMap<>();
-        Map<String, URLConnectionResource> resources = new HashMap<>();
-        for (Map.Entry<String, Class<?>> entry : jaxpMap.entrySet()) {
-            final Class<?> clazz = entry.getValue();
-            final String clazzName = clazz.getName();
-            classesByName.put(clazzName, clazz);
-            try {
-                resources.put("META-INF/services/" + entry.getKey(), new URLConnectionResource(new URL(null, "data:text/plain;charset=utf-8," + clazzName, DataURLStreamHandler.getInstance())));
-            } catch (IOException e) {
-                throw new IllegalStateException(e);
-            }
-        }
-        jaxpClassesByName = classesByName;
-        jaxpImplResources = resources;
     }
 
     private final Module module;
@@ -233,14 +186,6 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
             return loadedClass;
         }
         final ModuleLogger log = Module.log;
-        loadedClass = jaxpClassesByName.get(className);
-        if (loadedClass != null) {
-            log.jaxpClassLoaded(loadedClass, module);
-            if (resolve) {
-                resolveClass(loadedClass);
-            }
-            return loadedClass;
-        }
         final Module module = this.module;
         log.trace("Finding class %s from %s", className, module);
 
@@ -295,14 +240,6 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         Class<?> loadedClass = findLoadedClass(className);
         if (loadedClass != null) {
             log.trace("Found previously loaded %s from %s", loadedClass, module);
-            if (resolve) {
-                resolveClass(loadedClass);
-            }
-            return loadedClass;
-        }
-        loadedClass = jaxpClassesByName.get(className);
-        if (loadedClass != null) {
-            log.jaxpClassLoaded(loadedClass, module);
             if (resolve) {
                 resolveClass(loadedClass);
             }
@@ -372,19 +309,13 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
      */
     @Deprecated
     Resource loadResourceLocal(final String root, final String name) {
-
         final Map<String, List<ResourceLoader>> paths = this.paths.get().getAllPaths();
-
         final String path = Module.pathOf(name);
-        final URLConnectionResource jaxpResource = jaxpImplResources.get(name);
-
         final List<ResourceLoader> loaders = paths.get(path);
         if (loaders != null) {
             for (ResourceLoader loader : loaders) {
                 if (root.equals(loader.getRootName())) {
-                    final Resource resource = loader.getResource(name);
-                    if (jaxpResource != null) Module.log.jaxpResourceLoaded(resource.getURL(), module);
-                    return resource;
+                    return loader.getResource(name);
                 }
             }
         }
@@ -399,17 +330,13 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
      */
     public List<Resource> loadResourceLocal(final String name) {
         final Map<String, List<ResourceLoader>> paths = this.paths.get().getAllPaths();
-
         final String path = Module.pathOf(name);
-        final URLConnectionResource jaxpResource = jaxpImplResources.get(name);
-
         final List<ResourceLoader> loaders = paths.get(path);
         final List<Resource> list = new ArrayList<Resource>(loaders == null ? 1 : loaders.size());
         if (loaders != null) {
             for (ResourceLoader loader : loaders) {
                 final Resource resource = loader.getResource(name);
                 if (resource != null) {
-                    if (jaxpResource != null) Module.log.jaxpResourceLoaded(resource.getURL(), module);
                     list.add(resource);
                 }
             }

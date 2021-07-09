@@ -21,7 +21,6 @@ package org.jboss.modules.log;
 import java.io.OutputStream;
 import java.io.PrintStream;
 
-import java.net.URL;
 import org.jboss.modules.Module;
 import org.jboss.modules.ModuleLoader;
 
@@ -153,16 +152,5 @@ public final class StreamModuleLogger implements ModuleLogger {
     }
 
     public void classDefined(final String name, final Module module) {
-    }
-
-    public void providerUnloadable(String name, ClassLoader loader) {
-    }
-
-    @Override
-    public void jaxpClassLoaded(final Class<?> jaxpClass, final Module module) {
-    }
-
-    @Override
-    public void jaxpResourceLoaded(final URL resourceURL, final Module module) {
     }
 }
