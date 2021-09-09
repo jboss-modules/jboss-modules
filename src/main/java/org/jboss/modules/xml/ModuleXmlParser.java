@@ -584,7 +584,7 @@ public final class ModuleXmlParser {
         String name = null;
         String slot = null;
         boolean noSlots = atLeast1_6(reader);
-        final Set<String> required = new HashSet<>(LIST_A_NAME_A_SLOT);
+        final Set<String> required = noSlots ? new HashSet<>(LIST_A_NAME) : new HashSet<>(LIST_A_NAME_A_SLOT);
         for (int i = 0; i < count; i ++) {
             validateAttributeNamespace(reader, i);
             final String attribute = reader.getAttributeName(i);
@@ -598,13 +598,15 @@ public final class ModuleXmlParser {
         if (! required.isEmpty()) {
             throw missingAttributes(reader, required);
         }
-        if (noSlots) {
-            if (! name.equals(moduleName)) {
-                throw invalidModuleName(reader, moduleName);
-            }
-        } else {
-            if (! ModuleIdentifier.fromString(moduleName).equals(ModuleIdentifier.create(name, slot))) {
-                throw invalidModuleName(reader, moduleName);
+        if (moduleName != null) {
+            if (noSlots) {
+                if (!name.equals(moduleName)) {
+                    throw invalidModuleName(reader, moduleName);
+                }
+            } else {
+                if (!ModuleIdentifier.fromString(moduleName).equals(ModuleIdentifier.create(name, slot))) {
+                    throw invalidModuleName(reader, moduleName);
+                }
             }
         }
         int eventType;
