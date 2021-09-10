@@ -297,11 +297,13 @@ public final class LocalModuleFinder implements IterableModuleFinder, AutoClosea
                         }
                         try (InputStream stream = Files.newInputStream(nextPath)) {
                             final ModuleSpec moduleSpec = ModuleXmlParser.parseModuleXml(ModuleXmlParser.ResourceRootFactory.getDefault(), nextPath.getParent().toString(), stream, nextPath.toString(), delegateLoader, (String)null);
-                            this.next = moduleSpec.getName();
-                            if (found.add(this.next)) {
-                                return true;
+                            if (moduleSpec != null) {
+                                this.next = moduleSpec.getName();
+                                if (found.add(this.next)) {
+                                    return true;
+                                }
+                                this.next = null;
                             }
-                            this.next = null;
                         } catch (IOException | ModuleLoadException e) {
                             // ignore
                         }
