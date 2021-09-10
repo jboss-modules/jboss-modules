@@ -1,19 +1,8 @@
-# Ignore .svn metadata files
-.svn
- 
+# Ignore all dot files
+.*
+!.gitignore
+
 # Ignore Maven metadata files
 target
 pom.xml.versionsBackup
 
-# Ignore eclipse files
-.project
-.classpath
-.settings
-
-# Ignore IDEA files
-*.iml
-*.ipr
-*.iws
-/.idea
-
-.checkstyle
