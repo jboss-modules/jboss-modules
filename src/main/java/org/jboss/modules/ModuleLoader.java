@@ -104,7 +104,6 @@ public class ModuleLoader {
 
     private final boolean overridesFindModuleByIdentifier;
     private final boolean overridesPreloadModuleByIdentifier;
-    private final ListCache listCacheRoot = new ListCache();
 
     ModuleLoader(boolean canRedefine, boolean skipRegister) {
         this(canRedefine, skipRegister, NO_FINDERS);
@@ -294,7 +293,7 @@ public class ModuleLoader {
         if (module == null) {
             throw new ModuleNotFoundException(name);
         }
-        module.relinkDependencies();
+        module.relinkIfNecessary();
         return module;
     }
 
@@ -479,86 +478,62 @@ public class ModuleLoader {
      */
     protected final Module loadModuleLocal(String name) throws ModuleLoadException {
         FutureModule futureModule = moduleMap.get(name);
-        if (futureModule == null) {
-            futureModule = new FutureModule(name);
-            FutureModule appearing = moduleMap.putIfAbsent(name, futureModule);
-            if (appearing != null) futureModule = appearing;
+        if (futureModule != null) {
+            return futureModule.getModule();
         }
-        final ModuleLogger log = Module.log;
-        for (;;) {
-            switch (futureModule.getState()) {
-                case FutureModule.ST_INITIAL: {
-                    if (futureModule.casState(FutureModule.ST_INITIAL, null, FutureModule.ST_SPEC_LOADING)) {
-                        try {
-                            final ModuleSpec moduleSpec = findModule(name);
-                            if (moduleSpec == null) {
-                                log.trace("Module %s not found from %s", name, this);
-                                // we could go back to INITIAL here but we don't want to fill the map with failed attempts
-                                futureModule.changeState(FutureModule.ST_SPEC_LOADING, FutureModule.ST_MODULE_GONE);
-                                moduleMap.remove(name, futureModule);
-                                return null;
-                            }
-                            if (! moduleSpec.getName().equals(name)) {
-                                throw new ModuleLoadException("Module loader found a module with the wrong name");
-                            }
-                            futureModule.setObject(moduleSpec);
-                        } catch (Throwable t) {
-                            futureModule.changeState(FutureModule.ST_SPEC_LOADING, FutureModule.ST_MODULE_GONE);
-                            moduleMap.remove(name, futureModule);
-                            throw t;
-                        }
-                        futureModule.changeState(FutureModule.ST_SPEC_LOADING, FutureModule.ST_SPEC_LOADED);
+
+        FutureModule newFuture = new FutureModule(name);
+        futureModule = moduleMap.putIfAbsent(name, newFuture);
+        if (futureModule != null) {
+            return futureModule.getModule();
+        }
+
+        boolean ok = false;
+        try {
+            final ModuleLogger log = Module.log;
+            log.trace("Locally loading module %s from %s", name, this);
+            final long startTime = Metrics.getCurrentCPUTime();
+            final ModuleSpec moduleSpec = findModule(name);
+            loadTime.addAndGet(Metrics.getCurrentCPUTime() - startTime);
+            if (moduleSpec == null) {
+                log.trace("Module %s not found from %s", name, this);
+                return null;
+            }
+            if (! moduleSpec.getName().equals(name)) {
+                throw new ModuleLoadException("Module loader found a module with the wrong name");
+            }
+            final Module module;
+            if (moduleSpec instanceof AliasModuleSpec) {
+                final AliasModuleSpec aliasModuleSpec = (AliasModuleSpec) moduleSpec;
+                Module aliasedModule;
+                while (true) {
+                    aliasedModule = loadModuleLocal(aliasModuleSpec.getAliasName());
+                    if (aliasedModule == null) {
+                        throw new ModuleLoadException("Alias module " + name + " is referencing not existing module");
                     }
-                    break;
-                }
-                case FutureModule.ST_SPEC_LOADING: {
-                    futureModule.awaitExit(FutureModule.ST_SPEC_LOADING);
-                    break;
-                }
-                case FutureModule.ST_SPEC_LOADED: {
-                    final Object obj = futureModule.getObject();
-                    if (obj instanceof AliasModuleSpec) {
-                        final Module aliasedModule = preloadModule(((AliasModuleSpec) obj).getAliasName(), this);
-                        if (aliasedModule == null) {
-                            throw new ModuleLoadException("Alias module " + name + " is referencing not existing module");
-                        }
-                        return aliasedModule;
-                    } else if (obj instanceof ConcreteModuleSpec) {
-                        final ConcreteModuleSpec spec = (ConcreteModuleSpec) obj;
-                        if (futureModule.casState(FutureModule.ST_SPEC_LOADED, spec, FutureModule.ST_MODULE_LOADING)) {
-                            // proceed with load
-                            Module module;
-                            try {
-                                module = defineModule(spec, null);
-                            } catch (Throwable t) {
-                                futureModule.changeState(FutureModule.ST_MODULE_LOADING, FutureModule.ST_SPEC_LOADED);
-                                throw t;
-                            }
-                            futureModule.setObject(module);
-                            futureModule.changeState(FutureModule.ST_MODULE_LOADING, FutureModule.ST_MODULE_LOADED);
-                            log.trace("Loaded module %s from %s", name, this);
+                    final Set<String> aliases = aliasedModule.aliases;
+                    if (aliases == null) continue; // race condition detected, retry
+                    synchronized (aliases) {
+                        if (aliases == aliasedModule.aliases) {
+                            // no race-condition with removal, go ahead
+                            aliases.add(moduleSpec.getName());
+                            newFuture.setModule(module = aliasedModule);
+                            log.trace("Added module %s as alias of %s from %s", moduleSpec.getName(), aliasModuleSpec.getAliasName(), this);
+                            ok = true;
+                            break;
                         }
                     }
-                    break;
                 }
-                case FutureModule.ST_MODULE_LOADING: {
-                    futureModule.awaitExit(FutureModule.ST_MODULE_LOADING);
-                    break;
-                }
-                case FutureModule.ST_MODULE_LOADED: {
-                    final Object obj = futureModule.getObject();
-                    if (obj instanceof Module) {
-                        return (Module) obj;
-                    }
-                    break;
-                }
-                case FutureModule.ST_MODULE_GONE: {
-                    log.trace("Module %s not found from %s", name, this);
-                    return null;
-                }
-                default: {
-                    throw new IllegalStateException();
-                }
+            } else {
+                module = defineModule((ConcreteModuleSpec) moduleSpec, newFuture);
+                log.trace("Loaded module %s from %s", name, this);
+                ok = true;
+            }
+            return module;
+        } finally {
+            if (! ok) {
+                newFuture.setModule(null);
+                moduleMap.remove(name, newFuture);
             }
         }
     }
@@ -588,12 +563,9 @@ public class ModuleLoader {
     protected final Module findLoadedModuleLocal(String name) {
         FutureModule futureModule = moduleMap.get(name);
         if (futureModule != null) {
-            final Object obj = futureModule.getObject();
-            if (obj instanceof Module) {
-                return (Module) obj;
-            } else if (obj instanceof AliasModuleSpec) {
-                return findLoadedModuleLocal(((AliasModuleSpec) obj).getAliasName());
-            } else {
+            try {
+                return futureModule.getModule();
+            } catch (ModuleNotFoundException e) {
                 return null;
             }
         } else {
@@ -654,25 +626,22 @@ public class ModuleLoader {
             throw new SecurityException("Attempted to unload " + module + " from a different module loader");
         }
         final FutureModule futureModule = moduleMap.get(moduleId);
-        switch (futureModule.getState()) {
-            case FutureModule.ST_MODULE_LOADED: {
-                if (futureModule.casState(FutureModule.ST_MODULE_LOADED, module, FutureModule.ST_MODULE_GONE)) {
-                    moduleMap.remove(moduleId, futureModule);
-                    return true;
-                }
-                break;
-            }
-            case FutureModule.ST_SPEC_LOADED: {
-                final Object obj = futureModule.getObject();
-                if (obj instanceof AliasModuleSpec) {
-                    final String aliasName = ((AliasModuleSpec) obj).getAliasName();
-                    if (findLoadedModuleLocal(aliasName) == module && futureModule.casState(FutureModule.ST_SPEC_LOADED, obj, FutureModule.ST_MODULE_GONE)) {
-                        moduleMap.remove(moduleId, futureModule);
-                        return true;
+        if (futureModule != null && futureModule.module == module) {
+            final Set<String> aliases = module.aliases;
+            if (aliases != null) {
+                synchronized (aliases) {
+                    if (aliases.remove(moduleId)) {
+                        // unregistered alias from aliased module
+                    } else {
+                        // cleaning aliased module and all its aliases
+                        module.aliases = null;
+                        for (String alias : aliases) {
+                            moduleMap.remove(alias);
+                        }
                     }
                 }
-                break;
             }
+            return moduleMap.remove(moduleId, futureModule);
         }
         return false;
     }
@@ -754,23 +723,28 @@ public class ModuleLoader {
                     final ModuleLogger log = Module.log;
                     final String name = moduleSpec.getName();
 
-                    final Module module;
-                    try {
-                        module = new Module(moduleSpec, ModuleLoader.this);
-                        module.getClassLoaderPrivate().recalculate();
-                        module.setDependencies(moduleSpec.getDependenciesInternal());
-                    } catch (Throwable t) {
-                        log.trace(t, "Failed to load module %s", name);
-                        throw t;
-                    }
+                    final Module module = new Module(moduleSpec, ModuleLoader.this);
+                    module.getClassLoaderPrivate().recalculate();
+                    module.setDependencies(moduleSpec.getDependenciesInternal());
                     log.moduleDefined(name, ModuleLoader.this);
-                    return module;
+                    try {
+                        futureModule.setModule(module);
+                        return module;
+                    } catch (RuntimeException e) {
+                        log.trace(e, "Failed to load module %s", name);
+                        throw e;
+                    } catch (Error e) {
+                        log.trace(e, "Failed to load module %s", name);
+                        throw e;
+                    }
                 }
             });
         } catch (PrivilegedActionException pe) {
             try {
                 throw pe.getException();
-            } catch (RuntimeException | ModuleLoadException e) {
+            } catch (RuntimeException e) {
+                throw e;
+            } catch (ModuleLoadException e) {
                 throw e;
             } catch (Exception e) {
                 throw new UndeclaredThrowableException(e);
@@ -820,7 +794,7 @@ public class ModuleLoader {
             throw new SecurityException("Module is not defined by this module loader");
         }
 
-        module.getClassLoaderPrivate().setResourceLoaders(loaders.toArray(ResourceLoaderSpec.NO_RESOURCE_LOADERS));
+        module.getClassLoaderPrivate().setResourceLoaders(loaders.toArray(new ResourceLoaderSpec[loaders.size()]));
     }
 
     /**
@@ -844,7 +818,6 @@ public class ModuleLoader {
         }
 
         module.relink();
-        module.relinkDependencies();
     }
 
     /**
@@ -870,7 +843,7 @@ public class ModuleLoader {
         }
 
         module.setDependencies(dependencies);
-        module.relinkDependencies();
+        module.relinkIfNecessary();
     }
 
     /**
@@ -906,63 +879,23 @@ public class ModuleLoader {
         if (Metrics.ENABLED) classCount.getAndIncrement();
     }
 
-    ListCache getListCacheRoot() {
-        return listCacheRoot;
-    }
+    static final Object NOT_FOUND = new Object();
 
-
-    static final class FutureModule {
-        private static final int ST_INITIAL = 0;
-        private static final int ST_SPEC_LOADING = 1;
-        private static final int ST_SPEC_LOADED = 2;
-        private static final int ST_MODULE_LOADING = 3;
-        private static final int ST_MODULE_LOADED = 4;
-        private static final int ST_MODULE_GONE = 5;
+    final class FutureModule {
 
         final String name;
-        volatile Object obj;
-        volatile int state = ST_INITIAL;
+        volatile Object module;
 
         FutureModule(final String name) {
             this.name = name;
         }
 
-        int getState() {
-            return state;
-        }
-
-        boolean casState(int expect, Object expectObj, int update) {
-            if (state != expect) return false;
-            synchronized (this) {
-                if (state != expect) return false;
-                if (obj != expectObj) return false;
-                this.state = update;
-                notifyAll();
-                return true;
-            }
-        }
-
-        void changeState(int expect, int update) {
-            synchronized (this) {
-                assert this.state == expect;
-                this.state = update;
-                notifyAll();
-            }
-        }
-
-        void awaitExit(int exitState) {
-            int state = this.state;
-            if (state != exitState) {
-                return;
-            }
-            boolean intr = Thread.interrupted();
+        Module getModule() throws ModuleNotFoundException {
+            boolean intr = false;
             try {
-                synchronized (this) {
-                    for (;;) {
-                        state = this.state;
-                        if (state != exitState) {
-                            return;
-                        }
+                Object module = this.module;
+                if (module == null) synchronized (this) {
+                    while ((module = this.module) == null) {
                         try {
                             wait();
                         } catch (InterruptedException e) {
@@ -970,21 +903,18 @@ public class ModuleLoader {
                         }
                     }
                 }
+                if (module == NOT_FOUND) return null;
+                return (Module) module;
             } finally {
                 if (intr) Thread.currentThread().interrupt();
             }
         }
 
-        void setObject(Object obj) {
-            this.obj = obj;
-        }
-
-        Object getObject() {
-            return obj;
-        }
-
-        String getModuleName() {
-            return name;
+        void setModule(Module m) {
+            synchronized (this) {
+                module = m == null ? NOT_FOUND : m;
+                notifyAll();
+            }
         }
     }
 
@@ -1188,24 +1118,29 @@ public class ModuleLoader {
             final List<ResourceLoaderInfo> resourceLoaders = doGetResourceLoaders(module);
             final LocalLoader fallbackLoader = module.getFallbackLoader();
             final String fallbackLoaderString = fallbackLoader == null ? null : fallbackLoader.toString();
-            return new ModuleInfo(module.getName(), module.getModuleLoader().mxBean, dependencies, resourceLoaders, module.getMainClass(), module.getClassLoaderPrivate().toString(), fallbackLoaderString);
+            return new ModuleInfo(module.getIdentifier().toString(), module.getModuleLoader().mxBean, dependencies, resourceLoaders, module.getMainClass(), module.getClassLoaderPrivate().toString(), fallbackLoaderString);
         }
 
         public SortedMap<String, List<String>> getModulePathsInfo(final String name, final boolean exports) {
             ModuleLoader loader = getModuleLoader();
             final Module module = loadModule(name, loader);
-            final LazyPaths lazyPaths = module.getLazyPaths();
+            final Map<String, List<LocalLoader>> paths;
+            try {
+                paths = module.getPathsUnchecked();
+            } catch (ModuleLoadError e) {
+                throw new IllegalArgumentException("Error loading module " + name + ": " + e.toString());
+            }
             final TreeMap<String, List<String>> result = new TreeMap<String, List<String>>();
-            for (String path : lazyPaths.getCurrentPathSet()) {
-                final ListCache loaders = lazyPaths.getLoaders(path);
-                final LocalLoader[] items = loaders.getItems();
-                if (items.length == 0) {
-                    result.put(path, Collections.emptyList());
-                } else if (items.length == 1) {
-                    result.put(path, Collections.singletonList(items[0].toString()));
+            for (Map.Entry<String, List<LocalLoader>> entry : paths.entrySet()) {
+                final String path = entry.getKey();
+                final List<LocalLoader> loaders = entry.getValue();
+                if (loaders.isEmpty()) {
+                    result.put(path, Collections.<String>emptyList());
+                } else if (loaders.size() == 1) {
+                    result.put(path, Collections.<String>singletonList(loaders.get(0).toString()));
                 } else {
                     final ArrayList<String> list = new ArrayList<String>();
-                    for (LocalLoader localLoader : items) {
+                    for (LocalLoader localLoader : loaders) {
                         list.add(localLoader.toString());
                     }
                     result.put(path, list);

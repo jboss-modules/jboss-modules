@@ -119,12 +119,11 @@ public class ModuleClassLoaderAliasTest extends AbstractModuleTestCase {
         /* Assert that the whole dependency graph is there */
         assertNotNull("dependent-module-alias should be present in the moduleLoader after dependent-module-alias has been loaded", moduleLoader.findLoadedModuleLocal("test.alias-resources.dependent-module-alias"));
         assertNotNull("dependent-module should be present in the moduleLoader after dependent-module-alias has been loaded", moduleLoader.findLoadedModuleLocal("test.alias-resources.dependent-module"));
+        assertNotNull("dependency-module should be present in the moduleLoader after dependent-module-alias has been loaded", moduleLoader.findLoadedModuleLocal("test.alias-resources.dependency-module"));
 
 
         ModuleClassLoader dependentAliasClassLoader = dependentAliasModule.getClassLoader();
         assertResourceString(dependentAliasClassLoader.getResource("/dependency-resource.txt"), "Dependency resource");
-
-        assertNotNull("dependency-module should be present in the moduleLoader after dependent-module-alias has been loaded", moduleLoader.findLoadedModuleLocal("test.alias-resources.dependency-module"));
 
         moduleLoader.unloadModuleLocal("test.alias-resources.dependent-module-alias", dependentAliasModule);
 

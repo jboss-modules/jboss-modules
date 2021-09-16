@@ -18,7 +18,6 @@
 
 package org.jboss.modules;
 
-import java.util.Set;
 import org.jboss.modules.filter.ClassFilter;
 import org.jboss.modules.filter.PathFilter;
 
@@ -58,19 +57,5 @@ final class ModuleDependency extends Dependency {
 
     public String toString() {
         return (optional ? "optional " : "" ) + "dependency on " + name + " (" + moduleLoader + ")";
-    }
-
-    void load(Set<Module> visited) throws ModuleLoadException {
-        if (! optional) {
-            final Module module = moduleLoader.preloadModule(name);
-            if (visited.add(module)) {
-                final Dependency[] dependencies = module.getDependenciesInternal();
-                for (Dependency dependency : dependencies) {
-                    if (dependency instanceof ModuleDependency) {
-                        ((ModuleDependency) dependency).load(visited);
-                    }
-                }
-            }
-        }
     }
 }
