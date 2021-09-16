@@ -6,3 +6,9 @@
 target
 pom.xml.versionsBackup
 
+# Ignore IDEA files
+*.iml
+*.ipr
+*.iws
+/.idea
+
