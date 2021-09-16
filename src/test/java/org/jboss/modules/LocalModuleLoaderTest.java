@@ -22,7 +22,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
+import java.util.Iterator;
 
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
@@ -73,5 +75,26 @@ public class LocalModuleLoaderTest extends AbstractModuleTestCase {
         assertNotNull(moduleLoader.loadModule(ModuleIdentifier.fromString("test.circular-deps-B")));
         assertNotNull(moduleLoader.loadModule(ModuleIdentifier.fromString("test.circular-deps-C")));
         assertNotNull(moduleLoader.loadModule(ModuleIdentifier.fromString("test.circular-deps-D")));
+    }
+
+    @Test
+    public void testAbsentModule() throws Exception {
+        try {
+            moduleLoader.loadModule("test.absent");
+            fail("Should have thrown a ModuleNotFoundException");
+        } catch(ModuleNotFoundException expected) {}
+    }
+
+    @Test
+    public void testIterateModules() throws Exception {
+        Iterator<String> names = moduleLoader.iterateModules((String) null, true);
+        while (names.hasNext()) {
+            String name = names.next();
+            assertNotEquals("test.absent", name);
+            if (!name.equals("test.bad-deps")) {
+                Module module = moduleLoader.loadModule(name);
+                assertNotNull(module);
+            }
+        }
     }
 }

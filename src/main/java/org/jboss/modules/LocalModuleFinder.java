@@ -264,7 +264,7 @@ public final class LocalModuleFinder implements IterableModuleFinder, AutoClosea
         }
     };
 
-    public Iterator<String> iterateModules(final String baseName, final boolean recursive) {
+    public Iterator<String> iterateModules(final String baseName, final boolean recursive, final ModuleLoader delegateLoader) {
         return new Iterator<String>() {
             private final Iterator<File> rootIter = Arrays.asList(repoRoots).iterator();
             private final Set<String> found = new HashSet<>();
@@ -296,12 +296,14 @@ public final class LocalModuleFinder implements IterableModuleFinder, AutoClosea
                             continue;
                         }
                         try (InputStream stream = Files.newInputStream(nextPath)) {
-                            final ModuleSpec moduleSpec = ModuleXmlParser.parseModuleXml(ModuleXmlParser.ResourceRootFactory.getDefault(), nextPath.getParent().toString(), stream, nextPath.toString(), null, (String)null);
-                            this.next = moduleSpec.getName();
-                            if (found.add(this.next)) {
-                                return true;
+                            final ModuleSpec moduleSpec = ModuleXmlParser.parseModuleXml(ModuleXmlParser.ResourceRootFactory.getDefault(), nextPath.getParent().toString(), stream, nextPath.toString(), delegateLoader, (String)null);
+                            if (moduleSpec != null) {
+                                this.next = moduleSpec.getName();
+                                if (found.add(this.next)) {
+                                    return true;
+                                }
+                                this.next = null;
                             }
-                            this.next = null;
                         } catch (IOException | ModuleLoadException e) {
                             // ignore
                         }

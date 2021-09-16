@@ -25,9 +25,12 @@ import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.UndeclaredThrowableException;
+import java.net.URL;
+import java.security.CodeSource;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -262,7 +265,11 @@ public class ModuleLoader {
         return version == null ? module.getName() : module.getName() + "@" + version;
     }
 
-    static void installMBeanServer() {
+    /**
+     * Install JBoss Modules MBeans. WARNING: This method is not intended to be
+     * called by application code.
+     */
+    public static void installMBeanServer() {
         REG_REF.installReal();
     }
 
@@ -338,7 +345,7 @@ public class ModuleLoader {
                         }
                         final ModuleFinder finder = finders[idx++];
                         if (finder instanceof IterableModuleFinder) {
-                            nested = ((IterableModuleFinder) finder).iterateModules(baseName, recursive);
+                            nested = ((IterableModuleFinder) finder).iterateModules(baseName, recursive, ModuleLoader.this);
                         }
                     }
 
@@ -1147,6 +1154,30 @@ public class ModuleLoader {
                 }
             }
             return result;
+        }
+
+        public String getClassLocation(final String moduleName, final String className) {
+            final ModuleLoader loader = getModuleLoader();
+            final Module module = loadModule(moduleName, loader);
+            final Class<?> clazz;
+            try {
+                clazz = Class.forName(className, false, module.getClassLoaderPrivate());
+            } catch (ClassNotFoundException e) {
+                return null;
+            }
+            final ProtectionDomain pd = clazz.getProtectionDomain();
+            if (pd == null) {
+                return null;
+            }
+            final CodeSource cs = pd.getCodeSource();
+            if (cs == null) {
+                return null;
+            }
+            final URL url = cs.getLocation();
+            if (url == null) {
+                return null;
+            }
+            return url.toString();
         }
 
         private Module loadModule(final String name, final ModuleLoader loader) {

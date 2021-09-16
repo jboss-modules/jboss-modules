@@ -22,8 +22,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.UndeclaredThrowableException;
+import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -157,9 +157,20 @@ public final class MavenArtifactUtil {
         if (dest.exists()){
             return;
         }
-        final URL url = new URL(src);
-        final URLConnection connection = MavenSettings.getSettings().openConnection(url);
+        URL url = new URL(src);
+        HttpURLConnection connection = (HttpURLConnection)MavenSettings.getSettings().openConnection(url);
         boolean message = Boolean.getBoolean("maven.download.message");
+
+        int statusCode = connection.getResponseCode();
+        if (statusCode == HttpURLConnection.HTTP_NOT_FOUND) {
+            return;
+        }
+        if (statusCode == HttpURLConnection.HTTP_MOVED_TEMP
+                || statusCode == HttpURLConnection.HTTP_MOVED_PERM) {
+            src = connection.getHeaderField("Location");
+            url = new URL(src);
+            connection = (HttpURLConnection) url.openConnection();
+        }
 
         try (InputStream bis = connection.getInputStream()){
             dest.getParentFile().mkdirs();
@@ -194,7 +205,7 @@ public final class MavenArtifactUtil {
     /**
      * A utility method to create a Maven artifact resource loader for the given artifact coordinates.
      *
-     * @param name the resource root name to use (must not be {@code null})
+     * @param rootName the resource root name to use (must not be {@code null})
      * @param coordinates the artifact coordinates to use (must not be {@code null})
      * @param mavenResolver the Maven resolver to use (must not be {@code null})
      * @return the resource loader

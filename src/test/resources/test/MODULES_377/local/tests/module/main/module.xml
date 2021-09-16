@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<module xmlns="urn:jboss:module:1.6" name="local.tests.module">
+    <dependencies>
+        <module name="org.jboss.modules"/>
+    </dependencies>
+
+    <permissions>
+        <grant permission="java.util.PropertyPermission" name=">org.mycompany.*" actions="read"></grant>
+    </permissions>
+</module>

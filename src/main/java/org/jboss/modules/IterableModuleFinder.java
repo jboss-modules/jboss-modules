@@ -35,7 +35,7 @@ public interface IterableModuleFinder extends ModuleFinder {
      * @param recursive {@code true} to find recursively nested modules, {@code false} to only find immediately nested
      * modules
      * @return an iterator for the modules in this module finder
-     * @deprecated Use {@link #iterateModules(String, boolean)} instead.
+     * @deprecated Use {@link #iterateModules(String, boolean, ModuleLoader)} instead.
      */
     default Iterator<ModuleIdentifier> iterateModules(ModuleIdentifier baseIdentifier, boolean recursive) {
         return Collections.emptyIterator();
@@ -49,8 +49,13 @@ public interface IterableModuleFinder extends ModuleFinder {
      * @param recursive {@code true} to find recursively nested modules, {@code false} to only find immediately nested
      * modules; ignored if this module finder does not have a concept of nested modules
      * @return an iterator for the modules in this module finder
+     * @deprecated Use {@link #iterateModules(String, boolean, ModuleLoader)} instead.
      */
     default Iterator<String> iterateModules(String baseName, boolean recursive) {
+        return iterateModules(baseName, recursive, null);
+    }
+
+    default Iterator<String> iterateModules(String baseName, boolean recursive, final ModuleLoader delegateLoader) {
         return IteratorUtils.transformingIterator(iterateModules(baseName == null ? null : ModuleIdentifier.fromString(baseName), recursive), ModuleIdentifier::toString);
     }
 }

@@ -23,13 +23,13 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.jboss.modules</groupId>
     <artifactId>jboss-modules</artifactId>
-    <version>2-SNAPSHOT</version>
+    <version>2.0.0.Final-SNAPSHOT</version>
     <name>JBoss Modules</name>
 
     <parent>
         <groupId>org.jboss</groupId>
         <artifactId>jboss-parent</artifactId>
-        <version>24</version>
+        <version>36</version>
     </parent>
 
     <licenses>
@@ -222,6 +222,10 @@
                             <Multi-Release>true</Multi-Release>
                             <Jar-Version>${project.version}</Jar-Version>
                             <Jar-Name>${project.artifactId}</Jar-Name>
+                            <Agent-Class>org.jboss.modules.ModularAgent</Agent-Class>
+                            <Premain-Class>org.jboss.modules.ModularAgent</Premain-Class>
+                            <Can-Redefine-Classes>true</Can-Redefine-Classes>
+                            <Can-Retransform-Classes>true</Can-Retransform-Classes>
                         </manifestEntries>
                     </archive>
                 </configuration>
@@ -233,8 +237,13 @@
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>${version.javadoc.plugin}</version>
                 <configuration>
+                    <detectJavaApiLink>false</detectJavaApiLink>
                     <excludePackageNames>__redirected</excludePackageNames>
                     <excludePackageNames>org.jboss.modules._private</excludePackageNames>
+                    <sourcepath>${project.basedir}/src/main/java9;${project.basedir}/src/main/java</sourcepath>
+                    <sourceFileExcludes>
+                        <exclude>org/jboss/modules/JDKSpecific.java</exclude>
+                    </sourceFileExcludes>
                 </configuration>
             </plugin>
 
@@ -286,7 +295,7 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.11</version>
+            <version>4.13.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

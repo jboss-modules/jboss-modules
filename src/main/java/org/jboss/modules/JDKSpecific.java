@@ -30,8 +30,12 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.jar.JarFile;
 
 import sun.reflect.Reflection;
@@ -183,6 +187,37 @@ final class JDKSpecific {
     static void addInternalPackages(final List<String> list) {
         list.add("sun.reflect.");
         list.add("jdk.internal.reflect.");
+    }
+
+    static <T> Iterable<T> findServices(final Class<T> serviceType, final Predicate<Class<?>> filter, final ClassLoader classLoader) {
+        final Iterator<T> delegate = ServiceLoader.load(serviceType, classLoader).iterator();
+        return new Iterable<T>() {
+            public Iterator<T> iterator() {
+                return new Iterator<T>() {
+                    T next = null;
+
+                    public boolean hasNext() {
+                        T next;
+                        while (this.next == null) {
+                            if (!delegate.hasNext()) return false;
+                            next = delegate.next();
+                            if (filter.test(next.getClass())) {
+                                this.next = next;
+                                return true;
+                            }
+                        }
+                        return true;
+                    }
+
+                    public T next() {
+                        if (!hasNext()) throw new NoSuchElementException();
+                        T next = this.next;
+                        this.next = null;
+                        return next;
+                    }
+                };
+            }
+        };
     }
 
     // === nested util stuff, non-API ===

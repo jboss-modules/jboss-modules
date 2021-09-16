@@ -176,33 +176,6 @@ final class JDKSpecific {
         }
     }
 
-    static void installDefaultXMLReader() {
-        try {
-            Field clsFromJar = XMLReaderFactory.class.getDeclaredField("_clsFromJar");
-            clsFromJar.setAccessible(true);
-            clsFromJar.set(XMLReaderFactory.class, __XMLReaderFactory.class.getName());
-            Field jarread = XMLReaderFactory.class.getDeclaredField("_jarread");
-            jarread.setAccessible(true);
-            jarread.setBoolean(XMLReaderFactory.class, true);
-            final Thread thread = Thread.currentThread();
-            final ClassLoader oldCl = thread.getContextClassLoader();
-            try {
-                thread.setContextClassLoader(__XMLReaderFactory.class.getClassLoader());
-                try {
-                    XMLReaderFactory.createXMLReader();
-                } catch (SAXException e) {
-                    throw __RedirectedUtils.wrapped(new RuntimeException(e.getMessage()), e);
-                }
-            } finally {
-                thread.setContextClassLoader(oldCl);
-            }
-        } catch (NoSuchFieldException e) {
-            //no-op, original SAX XMLReaderFactory hasn't helper fields _clsFromJar and _jarread
-        } catch (IllegalAccessException e) {
-            throw __RedirectedUtils.wrapped(new RuntimeException(e.getMessage()), e);
-        }
-    }
-
     @SuppressWarnings("unchecked")
     private static <T> Supplier<T> getConstructorSupplier(final T factory) {
         try {

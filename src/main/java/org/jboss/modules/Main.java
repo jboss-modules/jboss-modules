@@ -26,8 +26,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.lang.instrument.Instrumentation;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -47,6 +49,8 @@ import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
 import java.util.logging.LogManager;
 
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
 import java.util.prefs.Preferences;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -74,6 +78,8 @@ public final class Main {
 
     private static final String[] NO_STRINGS = new String[0];
 
+    static volatile Instrumentation instrumentation;
+
     private Main() {
     }
 
@@ -82,7 +88,6 @@ public final class Main {
         System.out.println("       java [-jvmoptions...] -jar " + getJarName() + ".jar [-options...] -jar <jar-name> [args...]");
         System.out.println("       java [-jvmoptions...] -jar " + getJarName() + ".jar [-options...] -cp <class-path> <class-name> [args...]");
         System.out.println("       java [-jvmoptions...] -jar " + getJarName() + ".jar [-options...] -class <class-name> [args...]");
-        System.out.println("       java [-jvmoptions...] -jar " + getJarName() + ".jar -addindex [-modify] <jar-name> ");
         System.out.println("where <module-spec> is a valid module specification string");
         System.out.println("and options include:");
         System.out.println("    -help         Display this message");
@@ -100,6 +105,8 @@ public final class Main {
         System.out.println("    -debuglog     Enable debug mode output to System.out during bootstrap before any logging manager is installed");
         System.out.println("    -jar          Specify that the final argument is the name of a");
         System.out.println("                  JAR file to run as a module; not compatible with -class");
+        System.out.println("    -javaagent:agent.jar");
+        System.out.println("                  Add a Java agent that can load modules");
         System.out.println("    -jaxpmodule <module-spec>");
         System.out.println("                  The default JAXP implementation to use of the JDK");
         System.out.println("    -secmgr       Run with a security manager installed; not compatible with -secmgrmodule");
@@ -107,9 +114,6 @@ public final class Main {
         System.out.println("                  Run with a security manager module; not compatible with -secmgr");
         System.out.println("    -add-provider <module-name>[/<class-name>]");
         System.out.println("                  Add a security provider of the given module and class (can be given more than once)");
-        System.out.println("    -addindex     Specify that the final argument is a");
-        System.out.println("                  jar to create an index for");
-        System.out.println("    -modify       Modify the indexes jar in-place");
         System.out.println("    -version      Print version and exit\n");
     }
 
@@ -134,9 +138,8 @@ public final class Main {
         String jaxpModuleName = null;
         boolean defaultSecMgr = false;
         String secMgrModule = null;
-        boolean addIndex = false;
-        boolean modifyInPlace = false;
         boolean debuglog = false;
+        final List<String> agentJars = new ArrayList<>();
         final List<String> addedProviders = new ArrayList<>();
         for (int i = 0; i < argsLen; i++) {
             final String arg = args[i];
@@ -149,10 +152,6 @@ public final class Main {
                     } else if ("-help".equals(arg)) {
                         usage();
                         return;
-                    } else if ("-addindex".equals(arg)) {
-                        addIndex = true;
-                    } else if ("-modify".equals(arg)) {
-                        modifyInPlace = true;
                     } else if ("-modulepath".equals(arg) || "-mp".equals(arg)) {
                         if (modulePath != null) {
                             System.err.println("Module path may only be specified once");
@@ -184,6 +183,7 @@ public final class Main {
                     } else if ("-debuglog".equals(arg)) {
                         debuglog = true;
                     } else if ("-jaxpmodule".equals(arg)) {
+                        System.err.println("WARNING: -jaxpmodule is deprecated and may be removed in a future release");
                         jaxpModuleName = args[++i];
                     } else if ("-jar".equals(arg)) {
                         if (jar) {
@@ -247,9 +247,6 @@ public final class Main {
                             System.exit(1);
                         }
                         classDefined = true;
-                    } else if ("-logmodule".equals(arg)) {
-                        System.err.println("WARNING: -logmodule is deprecated. Please use the system property 'java.util.logging.manager' or the 'java.util.logging.LogManager' service loader.");
-                        i++;
                     } else if ("-secmgr".equals(arg)) {
                         if (defaultSecMgr) {
                             System.err.println("-secmgr may only be specified once");
@@ -271,7 +268,9 @@ public final class Main {
                         }
                         secMgrModule = args[++ i];
                     } else if ("-add-provider".equals(arg)) {
-                        addedProviders.add(args[++ i]);
+                        addedProviders.add(args[++i]);
+                    } else if (arg.startsWith("-javaagent:")) {
+                        agentJars.add(arg.substring(11));
                     } else {
                         System.err.printf("Invalid option '%s'\n", arg);
                         usage();
@@ -290,72 +289,6 @@ public final class Main {
                 usage();
                 System.exit(1);
             }
-        }
-
-        if (modifyInPlace && ! addIndex) {
-            System.err.println("-modify requires -addindex");
-            usage();
-            System.exit(1);
-        }
-
-        if (addIndex) {
-            System.err.println("WARNING: -addindex is deprecated and may be removed in a future release");
-            if (nameArgument == null) {
-                System.err.println("-addindex requires a target JAR name");
-                usage();
-                System.exit(1);
-            }
-            if (modulePath != null) {
-                System.err.println("-mp may not be used with -addindex");
-                usage();
-                System.exit(1);
-            }
-            if (jaxpModuleName != null) {
-                System.err.println("-jaxpModuleName may not be used with -addindex");
-                usage();
-                System.exit(1);
-            }
-            if (classpathDefined) {
-                System.err.println("-cp or -classpath may not be used with -addindex");
-                usage();
-                System.exit(1);
-            }
-            if (classDefined) {
-                System.err.println("-class may not be used with -addindex");
-                usage();
-                System.exit(1);
-            }
-            if (jar) {
-                System.err.println("-jar may not be used with -addindex");
-                usage();
-                System.exit(1);
-            }
-            if (deps != null) {
-                System.err.println("-deps may not be used with -addindex");
-                usage();
-                System.exit(1);
-            }
-            if (defaultSecMgr) {
-                System.err.println("-secmgr may not be used with -addindex");
-                usage();
-                System.exit(1);
-            }
-            if (secMgrModule != null) {
-                System.err.println("-secmgrmodule may not be used with -addindex");
-                usage();
-                System.exit(1);
-            }
-            if (! addedProviders.isEmpty()) {
-                System.err.println("-add-provider may not be used with -addindex");
-            }
-            if (depTree) {
-                System.err.println("-deptree may not be used with -addindex");
-                usage();
-                System.exit(1);
-            }
-
-            JarFileResourceLoader.addInternalIndex(new File(nameArgument), modifyInPlace);
-            return;
         }
 
         if (deps != null && ! classDefined && ! classpathDefined) {
@@ -422,6 +355,7 @@ public final class Main {
             }
         }
         Module.initBootModuleLoader(environmentLoader);
+
         if (jaxpModuleName != null) {
             __JAXPRedirected.changeAll(jaxpModuleName, Module.getBootModuleLoader());
         } else {
@@ -524,6 +458,96 @@ public final class Main {
                 System.err.println("WARNING: Failed to load the specified log manager class " + logManagerName);
             } else {
                 Module.setModuleLogger(new JDKModuleLogger());
+            }
+        }
+
+        if (! agentJars.isEmpty()) {
+            final Instrumentation instrumentation = Main.instrumentation;
+            if (instrumentation == null) {
+                // we have to self-attach (todo later)
+                System.err.println("Not started in agent mode (self-attach not supported yet)");
+                usage();
+                System.exit(1);
+            }
+            final ModuleLoader agentLoader = new ModuleLoader(new FileSystemClassPathModuleFinder(loader));
+            for (String agentJarArg : agentJars) {
+                final String agentJar;
+                final String agentArgs;
+                final int i = agentJarArg.indexOf('=');
+                if (i > 0) {
+                    agentJar = agentJarArg.substring(0, i);
+                    if (agentJarArg.length() > (i + 1)) {
+                        agentArgs = agentJarArg.substring(i + 1);
+                    } else {
+                        agentArgs = "";
+                    }
+                } else {
+                    agentJar = agentJarArg;
+                    agentArgs = "";
+                }
+
+                final Module agentModule;
+                try {
+                    agentModule = agentLoader.loadModule(new File(agentJar).getAbsolutePath());
+                } catch (ModuleLoadException ex) {
+                    System.err.printf("Cannot load agent JAR %s: %s", agentJar, ex);
+                    System.exit(1);
+                    throw new IllegalStateException();
+                }
+                final ModuleClassLoader classLoader = agentModule.getClassLoaderPrivate();
+                final InputStream is = classLoader.getResourceAsStream("META-INF/MANIFEST.MF");
+                final Manifest manifest;
+                if (is == null) {
+                    System.err.printf("Agent JAR %s has no manifest", agentJar);
+                    System.exit(1);
+                    throw new IllegalStateException();
+                }
+                try {
+                    manifest = new Manifest();
+                    manifest.read(is);
+                    is.close();
+                } catch (IOException e) {
+                    try {
+                        is.close();
+                    } catch (IOException e2) {
+                        e2.addSuppressed(e);
+                        throw e2;
+                    }
+                    throw e;
+                }
+                // Note that this does not implement agent invocation as defined on
+                // https://docs.oracle.com/javase/8/docs/api/java/lang/instrument/package-summary.html. This is also not
+                // done on the system class path which means some agents that rely on that may not work well here.
+                final Attributes attributes = manifest.getMainAttributes();
+                final String preMainClassName = attributes.getValue("Premain-Class");
+                if (preMainClassName != null) {
+                    final Class<?> preMainClass = Class.forName(preMainClassName, true, classLoader);
+                    Object[] premainArgs;
+                    Method premain;
+                    try {
+                        premain = preMainClass.getDeclaredMethod("premain", String.class, Instrumentation.class);
+                        premainArgs = new Object[] {agentArgs, instrumentation};
+                    } catch (NoSuchMethodException ignore) {
+                        // If the method is not found we should check for the string only method
+                        premain = preMainClass.getDeclaredMethod("premain", String.class);
+                        premainArgs = new Object[] {agentArgs};
+                    } catch (Exception e) {
+                        System.out.printf("Failed to find premain method: %s", e);
+                        System.exit(1);
+                        throw new IllegalStateException();
+                    }
+                    try {
+                        premain.invoke(null, premainArgs);
+                    } catch (InvocationTargetException e) {
+                        System.out.printf("Execution of premain method failed: %s", e.getCause());
+                        System.exit(1);
+                        throw new IllegalStateException();
+                    }
+                } else {
+                    System.out.printf("Agent JAR %s has no premain method", agentJar);
+                    System.exit(1);
+                    throw new IllegalStateException();
+                }
             }
         }
 
