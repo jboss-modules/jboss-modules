@@ -265,7 +265,7 @@ public final class Main {
                     } else if (arg.startsWith("-javaagent:")) {
                         agentJars.add(arg.substring(11));
                     } else {
-                        System.err.printf("Invalid option '%s'\n", arg);
+                        System.err.printf("Invalid option '%s'%n", arg);
                         usage();
                         System.exit(1);
                     }
@@ -278,7 +278,7 @@ public final class Main {
                     break;
                 }
             } catch (IndexOutOfBoundsException e) {
-                System.err.printf("Argument expected for option %s\n", arg);
+                System.err.printf("Argument expected for option '%s'%n", arg);
                 usage();
                 System.exit(1);
             }
