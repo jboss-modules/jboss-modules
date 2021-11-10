@@ -1,7 +1,5 @@
 package org.jboss.modules.xml;
 
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.List;
 

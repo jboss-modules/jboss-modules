@@ -1105,25 +1105,5 @@ public interface XmlPullParser {
      * </pre>
      */
     int nextTag() throws XmlPullParserException, IOException;
-
-//    /**
-//     * Skip sub tree on which the parser is currently positioned on.
-//     * <br>NOTE: parser must be on START_TAG and when function returns
-//     * parser will be positioned on matching END_TAG
-//     *
-//     * This method is typically optimized by parser but the its logic should follow this:
-//     * <code>
-//     * require(XmlPullParser.START_TAG, null, null);
-//     * int level = 1;
-//     * while(level > 0) {
-//     *   int eventType = next();
-//     *   if(eventType == XmlPullParser.END_TAG) {
-//     *     --level;
-//     *   } else if(eventType == XmlPullParser.START_TAG) {
-//     *     ++level;
-//     *   }
-//     * }
-//     * </code>
-//     */
-//    public void skipSubTree() throws XmlPullParserException, IOException;
 }
+

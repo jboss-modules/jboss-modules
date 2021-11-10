@@ -268,7 +268,6 @@ public final class LocalModuleFinder implements IterableModuleFinder, AutoClosea
         return new Iterator<String>() {
             private final Iterator<File> rootIter = Arrays.asList(repoRoots).iterator();
             private final Set<String> found = new HashSet<>();
-            private Path rootPath;
             private Iterator<Path> pathIter;
             private String next;
 
@@ -279,7 +278,6 @@ public final class LocalModuleFinder implements IterableModuleFinder, AutoClosea
                             return false;
                         }
                         Path path = rootIter.next().toPath();
-                        rootPath = path;
                         if (baseName != null && ! baseName.isEmpty()) {
                             path = path.resolve(PathUtils.basicModuleNameToPath(baseName));
                         }

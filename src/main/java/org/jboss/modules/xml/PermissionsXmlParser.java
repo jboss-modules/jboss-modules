@@ -81,7 +81,6 @@ public final class PermissionsXmlParser {
                             throw ModuleXmlParser.unexpectedContent(reader);
                         }
                     }
-                    //break;
                 }
                 case END_TAG: {
                     return new FactoryPermissionCollection();

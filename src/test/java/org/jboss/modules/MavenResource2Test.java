@@ -37,9 +37,6 @@ public class MavenResource2Test {
 
     protected static final ModuleIdentifier MODULE_ID2 = ModuleIdentifier.fromString("test.maven:non-main");
 
-    @Rule
-    public TemporaryFolder tmpdir = new TemporaryFolder();
-
     private ModuleLoader moduleLoader;
 
     @Before
