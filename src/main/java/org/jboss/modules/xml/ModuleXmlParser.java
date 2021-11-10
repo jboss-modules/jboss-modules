@@ -629,7 +629,7 @@ public final class ModuleXmlParser {
         String slot = null;
         boolean is1_6 = atLeast1_6(reader);
         Version version = null;
-        final Set<String> required = is1_6 ? new HashSet<>(LIST_A_NAME) : new HashSet<>(LIST_A_NAME);
+        final Set<String> required = new HashSet<>(LIST_A_NAME);
         for (int i = 0; i < count; i ++) {
             validateAttributeNamespace(reader, i);
             final String attribute = reader.getAttributeName(i);
