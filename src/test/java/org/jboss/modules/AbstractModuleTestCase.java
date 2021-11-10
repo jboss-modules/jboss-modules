@@ -35,7 +35,7 @@ import java.io.OutputStream;
  *
  * @author John Bailey
  */
-public class AbstractModuleTestCase {
+public abstract class AbstractModuleTestCase {
 
     @BeforeClass
     public static void initUrlHandler() {
