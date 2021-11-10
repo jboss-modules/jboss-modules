@@ -454,7 +454,11 @@ public final class Module {
      * @throws ModuleLoadException if the named module failed to load
      */
     public static <S> ServiceLoader<S> loadServiceFromCallerModuleLoader(String name, Class<S> serviceType) throws ModuleLoadException {
-        return getCallerModuleLoader().loadModule(name).loadService(serviceType);
+        ModuleLoader ml = getCallerModuleLoader();
+        if (ml != null) {
+            return ml.loadModule(name).loadService(serviceType);
+        }
+        throw new ModuleLoadException(name);
     }
 
     /**
@@ -594,7 +598,11 @@ public final class Module {
      * @return the module loader, or {@code null} if none is set
      */
     public static ModuleLoader getContextModuleLoader() {
-        return Module.forClassLoader(Thread.currentThread().getContextClassLoader(), true).getModuleLoader();
+        Module module = Module.forClassLoader(Thread.currentThread().getContextClassLoader(), true);
+        if (module != null) {
+            return module.getModuleLoader();
+        }
+        return null;
     }
 
     /**
@@ -622,7 +630,11 @@ public final class Module {
      * @throws ModuleLoadException if the module could not be loaded
      */
     public static Module getModuleFromCallerModuleLoader(final String name) throws ModuleLoadException {
-        return getCallerModuleLoader().loadModule(name);
+        ModuleLoader ml = getCallerModuleLoader();
+        if (ml != null) {
+            return ml.loadModule(name);
+        }
+        throw new ModuleLoadException(name);
     }
 
     /**
