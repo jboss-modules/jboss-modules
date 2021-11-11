@@ -29,7 +29,6 @@ public class XmlPullParserException extends Exception {
         }
     }
 
-    //    public void setDetail(Throwable cause) { this.detail = cause; }
     public int getLineNumber() {
         return row;
     }
