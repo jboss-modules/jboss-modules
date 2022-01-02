@@ -21,6 +21,8 @@ com/sun/org/apache/xml/internal/security/keys/keyresolver
 com/sun/org/apache/xml/internal/security/keys/keyresolver/implementations
 com/sun/org/apache/xml/internal/security/keys/storage
 com/sun/org/apache/xml/internal/security/keys/storage/implementations
+com/sun/org/apache/xml/internal/security/parser
+com/sun/org/apache/xml/internal/security/resource
 com/sun/org/apache/xml/internal/security/signature
 com/sun/org/apache/xml/internal/security/signature/reference
 com/sun/org/apache/xml/internal/security/transforms
@@ -29,5 +31,6 @@ com/sun/org/apache/xml/internal/security/transforms/params
 com/sun/org/apache/xml/internal/security/utils
 com/sun/org/apache/xml/internal/security/utils/resolver
 com/sun/org/apache/xml/internal/security/utils/resolver/implementations
+com/sun/org/slf4j/internal
 org/jcp/xml/dsig/internal
 org/jcp/xml/dsig/internal/dom

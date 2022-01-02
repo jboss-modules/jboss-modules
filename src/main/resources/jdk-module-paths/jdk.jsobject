@@ -1,1 +1,3 @@
 netscape/javascript
+# Non-exported
+jdk/internal/netscape/javascript/spi

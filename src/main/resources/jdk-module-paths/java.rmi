@@ -8,7 +8,9 @@ javax/rmi/ssl
 com/sun/rmi/rmid
 sun/rmi/log
 sun/rmi/registry
+sun/rmi/registry/resources
 sun/rmi/runtime
 sun/rmi/server
+sun/rmi/server/resources
 sun/rmi/transport
 sun/rmi/transport/tcp

@@ -2,6 +2,7 @@ javax/naming
 javax/naming/directory
 javax/naming/event
 javax/naming/ldap
+javax/naming/ldap/spi
 javax/naming/spi
 com/sun/jndi/ldap
 com/sun/jndi/ldap/ext
