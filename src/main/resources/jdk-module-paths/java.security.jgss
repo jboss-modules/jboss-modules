@@ -1,8 +1,6 @@
 javax/security/auth/kerberos
 org/ietf/jgss
 # Non-exported
-sun/net/www
-sun/net/www/protocol/http
 sun/net/www/protocol/http/spnego
 sun/security/jgss
 sun/security/jgss/krb5
