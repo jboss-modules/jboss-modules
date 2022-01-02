@@ -4,16 +4,6 @@ javax/naming/event
 javax/naming/ldap
 javax/naming/ldap/spi
 javax/naming/spi
-com/sun/jndi/ldap
-com/sun/jndi/ldap/ext
-com/sun/jndi/ldap/pool
-com/sun/jndi/ldap/sasl
-com/sun/jndi/toolkit/url
-com/sun/jndi/toolkit/ctx
-com/sun/jndi/toolkit/dir
-com/sun/jndi/url/ldap
-com/sun/jndi/url/ldaps
-com/sun/naming/internal
 # Non-exported
 com/sun/jndi/ldap
 com/sun/jndi/ldap/ext
