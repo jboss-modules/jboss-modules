@@ -1,7 +1,6 @@
 javax/security/auth/kerberos
 org/ietf/jgss
 # Non-exported
-sun/net
 sun/net/www
 sun/net/www/protocol/http
 sun/net/www/protocol/http/spnego
