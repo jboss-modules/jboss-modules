@@ -1,1 +1,3 @@
 javax/script
+# Non-exported
+com/sun/tools/script/shell

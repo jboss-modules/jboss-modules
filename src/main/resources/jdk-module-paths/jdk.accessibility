@@ -1,1 +1,4 @@
 com/sun/java/accessibility/util
+# Non-exported
+com/sun/java/accessibility/internal
+com/sun/java/accessibility/util/internal

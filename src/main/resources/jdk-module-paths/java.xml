@@ -23,7 +23,7 @@ org/w3c/dom/views
 org/xml/sax
 org/xml/sax/ext
 org/xml/sax/helpers
-# Non-exported Oracle JDK
+# Non-exported
 com/sun/java_cup/internal/runtime
 com/sun/org/apache/bcel/internal
 com/sun/org/apache/bcel/internal/classfile
@@ -35,6 +35,7 @@ com/sun/org/apache/xalan/internal/lib
 com/sun/org/apache/xalan/internal/res
 com/sun/org/apache/xalan/internal/templates
 com/sun/org/apache/xalan/internal/utils
+com/sun/org/apache/xalan/internal/xslt
 com/sun/org/apache/xalan/internal/xsltc
 com/sun/org/apache/xalan/internal/xsltc/compiler
 com/sun/org/apache/xalan/internal/xsltc/compiler/util
