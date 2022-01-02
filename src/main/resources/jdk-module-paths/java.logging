@@ -1,7 +1,5 @@
 java/util/logging
 # Non-exported
 sun/net/www/protocol/http/logging
-sun/util
-sun/util/logging
 sun/util/logging/internal
 sun/util/logging/resources
