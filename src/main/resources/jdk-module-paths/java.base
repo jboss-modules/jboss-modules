@@ -137,7 +137,6 @@ sun/nio
 sun/nio/ch
 sun/nio/cs
 sun/nio/fs
-sun/reflect
 sun/reflect/annotation
 sun/reflect/generics/factory
 sun/reflect/generics/parser
