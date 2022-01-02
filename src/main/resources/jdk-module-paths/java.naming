@@ -25,6 +25,4 @@ com/sun/jndi/toolkit/url
 com/sun/jndi/url/ldap
 com/sun/jndi/url/ldaps
 com/sun/naming/internal
-sun/security/provider
-sun/security/provider/certpath
 sun/security/provider/certpath/ldap
