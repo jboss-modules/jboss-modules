@@ -26,6 +26,7 @@ final class JavaSeDeps {
                 "java.security.sasl",
                 "java.sql",
                 "java.sql.rowset",
+                "java.transaction.xa",
                 "java.xml",
                 "java.xml.crypto"
         )) {

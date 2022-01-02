@@ -65,6 +65,7 @@ public final class JDKModuleFinder implements IterableModuleFinder {
             "java.security.sasl",
             "java.smartcardio",
             "java.sql.rowset",
+            "java.transaction.xa",
             "java.xml",
             "java.xml.crypto",
             "javafx.base",
