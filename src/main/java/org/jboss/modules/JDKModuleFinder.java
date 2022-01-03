@@ -91,6 +91,7 @@ public final class JDKModuleFinder implements IterableModuleFinder {
             "jdk.management.cmm",
             "jdk.management.jfr",
             "jdk.management.resource",
+            "jdk.naming.ldap",
             "jdk.net",
             "jdk.plugin.dom",
             "jdk.scripting.nashorn",
