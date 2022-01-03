@@ -78,6 +78,7 @@ public final class JDKModuleFinder implements IterableModuleFinder {
             "jdk.accessibility",
             "jdk.attach",
             "jdk.compiler",
+            "jdk.dynalink",
             "jdk.httpserver",
             "jdk.jartool",
             "jdk.javadoc",
