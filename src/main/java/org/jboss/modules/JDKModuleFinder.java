@@ -85,6 +85,7 @@ public final class JDKModuleFinder implements IterableModuleFinder {
             "jdk.jconsole",
             "jdk.jdi",
             "jdk.jfr",
+            "jdk.jshell",
             "jdk.jsobject",
             "jdk.management",
             "jdk.management.cmm",

@@ -1,0 +1,10 @@
+jdk/jshell
+jdk/jshell/execution
+jdk/jshell/spi
+jdk/jshell/tool
+# Non-exported
+jdk/internal/jshell/debug
+jdk/internal/jshell/tool
+jdk/internal/jshell/tool/resources
+jdk/jshell/resources
+jdk/jshell/tool/resources
