@@ -18,6 +18,7 @@ final class JavaSeDeps {
                 "java.management",
                 "java.management.rmi",
                 "java.naming",
+                "java.net.http",
                 "java.prefs",
                 "java.rmi",
                 "java.scripting",

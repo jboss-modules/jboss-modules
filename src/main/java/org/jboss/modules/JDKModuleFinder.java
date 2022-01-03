@@ -57,6 +57,7 @@ public final class JDKModuleFinder implements IterableModuleFinder {
             "java.management",
             "java.management.rmi",
             "java.naming",
+            "java.net.http",
             "java.prefs",
             "java.rmi",
             "java.scripting",
