@@ -93,6 +93,7 @@ public final class JDKModuleFinder implements IterableModuleFinder {
             "jdk.management.resource",
             "jdk.naming.ldap",
             "jdk.net",
+            "jdk.nio.mapmode",
             "jdk.plugin.dom",
             "jdk.scripting.nashorn",
             "jdk.sctp",
