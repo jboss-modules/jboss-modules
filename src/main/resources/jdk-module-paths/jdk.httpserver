@@ -1,5 +1,6 @@
 com/sun/net/httpserver
 com/sun/net/httpserver/spi
 # Non-exported
-sun/net
 sun/net/httpserver
+sun/net/httpserver/simpleserver
+sun/net/httpserver/simpleserver/resources

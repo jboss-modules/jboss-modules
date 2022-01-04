@@ -3,3 +3,8 @@ com/sun/jdi/connect
 com/sun/jdi/connect/spi
 com/sun/jdi/event
 com/sun/jdi/request
+# Non-exported
+com/sun/tools/example/debug/expr
+com/sun/tools/example/debug/tty
+com/sun/tools/jdi
+com/sun/tools/jdi/resources

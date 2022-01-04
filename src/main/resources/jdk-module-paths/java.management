@@ -17,3 +17,4 @@ com/sun/jmx/remote/util
 sun/management
 sun/management/counter
 sun/management/counter/perf
+sun/management/spi

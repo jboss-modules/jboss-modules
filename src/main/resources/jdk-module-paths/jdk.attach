@@ -1,2 +1,4 @@
 com/sun/tools/attach
 com/sun/tools/attach/spi
+# Non-exported
+sun/tools/attach

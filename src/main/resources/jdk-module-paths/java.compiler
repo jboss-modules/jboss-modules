@@ -4,3 +4,5 @@ javax/lang/model/element
 javax/lang/model/type
 javax/lang/model/util
 javax/tools
+# Non-exported
+javax/tools/snippet-files
