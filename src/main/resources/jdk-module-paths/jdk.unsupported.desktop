@@ -1,0 +1,3 @@
+jdk/swing/interop
+# Non-exported
+jdk/swing/interop/internal
