@@ -46,6 +46,7 @@ public class PermissionsTest extends AbstractModuleTestCase {
     @Before
     public void setupModuleLoader() throws Exception {
         System.setProperty("jboss.home.dir", JBOSS_HOME_DIR_VALUE);
+        System.setProperty("foo.bar", "substituted_value");
         final File repoRoot = getResource("test/repo");
         moduleLoader = new LocalModuleLoader(new File[] {repoRoot});
     }
@@ -53,6 +54,7 @@ public class PermissionsTest extends AbstractModuleTestCase {
     @Test
     public void testExpansion() throws Exception {
         Module module = moduleLoader.loadModule(MODULE_WITH_INVALID_EXPANSION);
+        assertTrue(module.getExportedResource("active.txt").toString().contains("substituted_value"));
         Enumeration<Permission> permissions = module.getPermissionCollection().elements();
         assertTrue(permissions.hasMoreElements());
         Permission firstPermission = permissions.nextElement();
