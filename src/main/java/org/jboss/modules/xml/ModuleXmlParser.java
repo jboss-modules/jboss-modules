@@ -1095,7 +1095,7 @@ public final class ModuleXmlParser {
             required.remove(attribute);
             switch (attribute) {
                 case A_NAME: if (!is1_8) name = reader.getAttributeValue(i); else throw unknownAttribute(reader, i); break;
-                case A_PATH: path = reader.getAttributeValue(i); break;
+                case A_PATH: path = processVariablesInPath(reader.getAttributeValue(i)); break;
                 default: throw unknownAttribute(reader, i);
             }
         }
@@ -1147,6 +1147,20 @@ public final class ModuleXmlParser {
                 }
             }
         }
+    }
+    
+    private static String processVariablesInPath(String attributeValue) {
+        if (attributeValue != null && attributeValue.startsWith("${")) {
+            int endBracketIndex = attributeValue.indexOf("}");
+            String systemProperty = attributeValue.substring(2, endBracketIndex);
+            String systemPropertyValue = System.getProperty(systemProperty);
+            if(systemPropertyValue == null) {
+                systemPropertyValue = System.getenv(systemProperty);
+            }
+            String subStringToReplace = attributeValue.substring(0, endBracketIndex + 1);
+            return attributeValue.replace(subStringToReplace, systemPropertyValue);
+        }
+        return attributeValue;
     }
 
     private static void parseConditions(XmlPullParser reader, SystemPropertyConditionBuilder conditionBuilder) throws XmlPullParserException, IOException {
