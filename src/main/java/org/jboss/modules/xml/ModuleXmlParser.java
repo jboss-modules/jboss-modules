@@ -1095,7 +1095,7 @@ public final class ModuleXmlParser {
             required.remove(attribute);
             switch (attribute) {
                 case A_NAME: if (!is1_8) name = reader.getAttributeValue(i); else throw unknownAttribute(reader, i); break;
-                case A_PATH: path = reader.getAttributeValue(i); break;
+                case A_PATH: path = PolicyExpander.expand(reader.getAttributeValue(i)); break;
                 default: throw unknownAttribute(reader, i);
             }
         }

@@ -28,8 +28,7 @@ import java.security.PrivilegedAction;
  *
  * @author <a href="mailto:jshepherd@redhat.com">Jason Shepherd</a>
  */
-
-class PolicyExpander {
+final class PolicyExpander {
 
     private static final int INITIAL = 0;
     private static final int GOT_DOLLAR = 1;
@@ -38,7 +37,11 @@ class PolicyExpander {
     private static final int GOT_FILE_SEPERATOR = 4;
     public static final String ENV_START = "env.";
 
-    public static String expand(String input){
+    private PolicyExpander() {
+        // forbidden instantiation
+    }
+
+    static String expand(final String input) {
         StringBuilder valueToReturn = new StringBuilder();
         int state = INITIAL;
         int propStart = -1;
@@ -126,14 +129,23 @@ class PolicyExpander {
     private static void expandValue(String input, StringBuilder valueToReturn, int valueStart, int offset){
         final String value = input.substring(valueStart, offset);
         if(value.startsWith(ENV_START)){
+            // 'env.' prefix is optional - and supported due to backward compatibility
             String var = getEnvironmentVariable(value.substring(ENV_START.length()));
             if(var != null)
                 valueToReturn.append(var);
             return;
         }
+        // System properties first
         String prop = getSystemProperty(value);
-        if(prop != null)
+        if(prop != null) {
             valueToReturn.append(prop);
+            return;
+        }
+        // Environment variables second (some users may prefer to not specify 'env.' prefix)
+        prop = getEnvironmentVariable(value);
+        if(prop != null) {
+            valueToReturn.append(prop);
+        }
     }
 
     private static String getEnvironmentVariable(String key) {
