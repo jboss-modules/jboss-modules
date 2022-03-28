@@ -302,16 +302,6 @@ public final class Main {
             System.exit(1);
         }
 
-        if (depTree) {
-            DependencyTreeViewer.print(new PrintWriter(System.out), nameArgument, LocalModuleFinder.getRepoRoots(true));
-            System.exit(0);
-        }
-
-        if(debuglog) {
-            // Install the StreamModuleLogger on System.out to capture bootstrap messages
-            Module.setModuleLogger(new StreamModuleLogger(System.out));
-        }
-
         final ModuleLoader loader;
         final ModuleLoader environmentLoader;
         environmentLoader = DefaultBootModuleLoaderHolder.INSTANCE;
@@ -348,6 +338,16 @@ public final class Main {
             }
         }
         Module.initBootModuleLoader(environmentLoader);
+
+        if (depTree) {
+            DependencyTreeViewer.print(new PrintWriter(System.out), nameArgument, LocalModuleFinder.getRepoRoots(true));
+            System.exit(0);
+        }
+
+        if(debuglog) {
+            // Install the StreamModuleLogger on System.out to capture bootstrap messages
+            Module.setModuleLogger(new StreamModuleLogger(System.out));
+        }
 
         if (moduleName == null) {
             return;
