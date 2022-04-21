@@ -87,7 +87,6 @@ import static org.jboss.modules.xml.XmlPullParser.TEXT;
 public final class ModuleXmlParser {
 
     static final ModuleDependencySpec DEP_JAVA_SE = new ModuleDependencySpecBuilder().setName("java.se").build();
-    static final ModuleDependencySpec DEP_JDK_UNSUPPORTED = new ModuleDependencySpecBuilder().setName("jdk.unsupported").setOptional(true).build();
 
     /**
      * A factory for resource roots, based on a root path, loader path, and loader name.  Normally it is sufficient to
@@ -668,7 +667,6 @@ public final class ModuleXmlParser {
         if (! is1_8) {
             // add default system dependencies
             specBuilder.addDependency(DEP_JAVA_SE);
-            specBuilder.addDependency(DEP_JDK_UNSUPPORTED);
         }
         Set<String> visited = new HashSet<>();
         int eventType;
