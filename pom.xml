@@ -48,7 +48,9 @@
     <properties>
         <skip.compile>false</skip.compile>
         <version.org.wildfly.checkstyle-config>1.0.5.Final</version.org.wildfly.checkstyle-config>
-        <version.bridger>1.4.Final</version.bridger>
+        <version.bridger>1.6.Final</version.bridger>
+        <version.module-info.plugin>1.2</version.module-info.plugin>
+        <version.surefire.plugin>3.0.0-M6</version.surefire.plugin>
 
         <jdk.min.version>9</jdk.min.version>
     </properties>
@@ -283,6 +285,23 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <!-- Module info -->
+            <plugin>
+                <groupId>io.github.dmlloyd.module-info</groupId>
+                <artifactId>module-info</artifactId>
+                <version>${version.module-info.plugin}</version>
+                <executions>
+                    <execution>
+                        <id>module-info</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
         </plugins>
     </build>
     <dependencies>

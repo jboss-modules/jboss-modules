@@ -1,0 +1,7 @@
+name: org.jboss.modules
+
+# additional services
+uses:
+  - java.util.logging.LogManager
+  - java.util.prefs.PreferencesFactory
+  - javax.management.MBeanServerBuilder
