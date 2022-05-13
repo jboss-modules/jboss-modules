@@ -333,7 +333,7 @@ path modules are available to use as dependencies. JBoss Modules does not suppor
 _internal_, _Corba_ and _Java EE_ JPMS modules.
 
 .Supported JPMS modules on given modular JDK
-[cols="1,1,1,1,1,1,1,1,1,1",options="header"]
+[cols="1,1,1,1,1,1,1,1,1,1,1",options="header"]
 |===
 
 |Java Platform System Module Name
@@ -346,8 +346,10 @@ _internal_, _Corba_ and _Java EE_ JPMS modules.
 |JDK 15
 |JDK 16
 |JDK 17 LTS
+|JDK 18
 
 |java.base
+|yes
 |yes
 |yes
 |yes
@@ -368,8 +370,10 @@ _internal_, _Corba_ and _Java EE_ JPMS modules.
 |yes
 |yes
 |yes
+|yes
 
 |java.datatransfer
+|yes
 |yes
 |yes
 |yes
@@ -390,8 +394,10 @@ _internal_, _Corba_ and _Java EE_ JPMS modules.
 |yes
 |yes
 |yes
+|yes
 
 |java.instrument
+|yes
 |yes
 |yes
 |yes
@@ -412,8 +418,10 @@ _internal_, _Corba_ and _Java EE_ JPMS modules.
 |yes
 |yes
 |yes
+|yes
 
 |java.management
+|yes
 |yes
 |yes
 |yes
@@ -434,8 +442,10 @@ _internal_, _Corba_ and _Java EE_ JPMS modules.
 |yes
 |yes
 |yes
+|yes
 
 |java.naming
+|yes
 |yes
 |yes
 |yes
@@ -456,8 +466,10 @@ _internal_, _Corba_ and _Java EE_ JPMS modules.
 |yes
 |yes
 |yes
+|yes
 
 |java.prefs
+|yes
 |yes
 |yes
 |yes
@@ -478,8 +490,10 @@ _internal_, _Corba_ and _Java EE_ JPMS modules.
 |yes
 |yes
 |yes
+|yes
 
 |java.scripting
+|yes
 |yes
 |yes
 |yes
@@ -500,8 +514,10 @@ _internal_, _Corba_ and _Java EE_ JPMS modules.
 |yes
 |yes
 |yes
+|yes
 
 |java.security.jgss
+|yes
 |yes
 |yes
 |yes
@@ -522,8 +538,10 @@ _internal_, _Corba_ and _Java EE_ JPMS modules.
 |yes
 |yes
 |yes
+|yes
 
 |java.smartcardio
+|yes
 |yes
 |yes
 |yes
@@ -544,8 +562,10 @@ _internal_, _Corba_ and _Java EE_ JPMS modules.
 |yes
 |yes
 |yes
+|yes
 
 |java.sql.rowset
+|yes
 |yes
 |yes
 |yes
@@ -566,8 +586,10 @@ _internal_, _Corba_ and _Java EE_ JPMS modules.
 |yes
 |yes
 |yes
+|yes
 
 |java.xml
+|yes
 |yes
 |yes
 |yes
@@ -588,8 +610,10 @@ _internal_, _Corba_ and _Java EE_ JPMS modules.
 |yes
 |yes
 |yes
+|yes
 
 |jdk.accessibility
+|yes
 |yes
 |yes
 |yes
@@ -610,8 +634,10 @@ _internal_, _Corba_ and _Java EE_ JPMS modules.
 |yes
 |yes
 |yes
+|yes
 
 |jdk.compiler
+|yes
 |yes
 |yes
 |yes
@@ -632,8 +658,10 @@ _internal_, _Corba_ and _Java EE_ JPMS modules.
 |yes
 |yes
 |yes
+|yes
 
 |jdk.httpserver
+|yes
 |yes
 |yes
 |yes
@@ -654,8 +682,10 @@ _internal_, _Corba_ and _Java EE_ JPMS modules.
 |yes
 |yes
 |yes
+|yes
 
 |jdk.javadoc
+|yes
 |yes
 |yes
 |yes
@@ -676,8 +706,10 @@ _internal_, _Corba_ and _Java EE_ JPMS modules.
 |yes
 |yes
 |yes
+|yes
 
 |jdk.jdi
+|yes
 |yes
 |yes
 |yes
@@ -698,8 +730,10 @@ _internal_, _Corba_ and _Java EE_ JPMS modules.
 |yes
 |yes
 |yes
+|yes
 
 |jdk.jshell
+|yes
 |yes
 |yes
 |yes
@@ -720,8 +754,10 @@ _internal_, _Corba_ and _Java EE_ JPMS modules.
 |yes
 |yes
 |yes
+|yes
 
 |jdk.management
+|yes
 |yes
 |yes
 |yes
@@ -742,6 +778,7 @@ _internal_, _Corba_ and _Java EE_ JPMS modules.
 |yes
 |yes
 |yes
+|yes
 
 |jdk.naming.ldap
 |#N/A#
@@ -753,9 +790,11 @@ _internal_, _Corba_ and _Java EE_ JPMS modules.
 |#N/A#
 |#N/A#
 |#N/A#
+|#N/A#
 
 |jdk.net
 |#N/A#
+|yes
 |yes
 |yes
 |yes
@@ -775,6 +814,7 @@ _internal_, _Corba_ and _Java EE_ JPMS modules.
 |yes
 |yes
 |yes
+|yes
 
 |jdk.scripting.nashorn
 |yes
@@ -786,8 +826,10 @@ _internal_, _Corba_ and _Java EE_ JPMS modules.
 |#N/A#
 |#N/A#
 |#N/A#
+|#N/A#
 
 |jdk.sctp
+|yes
 |yes
 |yes
 |yes
@@ -808,8 +850,10 @@ _internal_, _Corba_ and _Java EE_ JPMS modules.
 |yes
 |yes
 |yes
+|yes
 
 |jdk.security.jgss
+|yes
 |yes
 |yes
 |yes
@@ -830,6 +874,7 @@ _internal_, _Corba_ and _Java EE_ JPMS modules.
 |yes
 |yes
 |yes
+|yes
 
 |jdk.unsupported.desktop
 |#N/A#
@@ -841,8 +886,10 @@ _internal_, _Corba_ and _Java EE_ JPMS modules.
 |yes
 |yes
 |yes
+|yes
 
 |jdk.xml.dom
+|yes
 |yes
 |yes
 |yes
