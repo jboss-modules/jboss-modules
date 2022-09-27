@@ -1,2 +1,0 @@
-java/sql
-javax/sql

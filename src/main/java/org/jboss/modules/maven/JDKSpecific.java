@@ -23,14 +23,14 @@ import java.io.IOException;
 import java.util.jar.JarFile;
 
 /**
- * JDK-specific classes which are replaced for different JDK major versions.  This one is for Java 8 only.
+ * JDK-specific classes which are replaced for different JDK major versions.  This one is for Java 9 only.
  *
  * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
  */
 final class JDKSpecific {
 
     static JarFile getJarFile(final File name, final boolean verify) throws IOException {
-        return new JarFile(name, verify);
+        return new JarFile(name, verify, JarFile.OPEN_READ, JarFile.runtimeVersion());
     }
 
 }

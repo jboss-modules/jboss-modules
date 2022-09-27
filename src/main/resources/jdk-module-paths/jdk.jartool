@@ -1,6 +1,0 @@
-com/sun/jarsigner
-jdk/security/jarsigner
-# Non-exported
-sun/security/tools/jarsigner
-sun/tools/jar
-sun/tools/jar/resources

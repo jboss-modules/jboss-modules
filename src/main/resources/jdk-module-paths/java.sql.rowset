@@ -1,7 +1,0 @@
-javax/sql/rowset
-javax/sql/rowset/serial
-javax/sql/rowset/spi
-# Non-exported
-com/sun/rowset
-com/sun/rowset/internal
-com/sun/rowset/providers

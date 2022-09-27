@@ -1,7 +1,0 @@
-jdk/dynalink
-jdk/dynalink/beans
-jdk/dynalink/linker
-jdk/dynalink/linker/support
-jdk/dynalink/support
-# Non-exported
-jdk/dynalink/internal
