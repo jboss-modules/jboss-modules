@@ -1,7 +1,0 @@
-java/net/http
-# Non-exported
-jdk/internal/net/http
-jdk/internal/net/http/common
-jdk/internal/net/http/frame
-jdk/internal/net/http/hpack
-jdk/internal/net/http/websocket

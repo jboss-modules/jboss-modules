@@ -1,6 +1,0 @@
-com/sun/security/jgss
-com/ibm/security/jgss
-com/ibm/security/krb5
-com/sun/security/sasl
-# Non-exported
-com/sun/security/sasl/gsskerb

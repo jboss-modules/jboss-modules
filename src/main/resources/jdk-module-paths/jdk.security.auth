@@ -1,8 +1,0 @@
-com/sun/security/auth
-com/sun/security/auth/callback
-com/sun/security/auth/login
-com/sun/security/auth/module
-com/ibm/security/auth
-com/ibm/security/auth/callback
-com/ibm/security/auth/login
-com/ibm/security/auth/module

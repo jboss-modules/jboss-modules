@@ -1,6 +1,0 @@
-javax/security/sasl
-# Non-exported
-com/sun/security/sasl
-com/sun/security/sasl/digest
-com/sun/security/sasl/ntlm
-com/sun/security/sasl/util

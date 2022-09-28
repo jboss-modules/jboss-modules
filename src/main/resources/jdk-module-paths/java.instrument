@@ -1,4 +1,0 @@
-java/lang/instrument
-# Non-exported
-jdk/internal/instrumentation
-sun/instrument

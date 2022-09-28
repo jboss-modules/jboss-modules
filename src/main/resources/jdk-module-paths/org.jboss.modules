@@ -1,8 +1,0 @@
-org/jboss/modules
-org/jboss/modules/filter
-org/jboss/modules/log
-org/jboss/modules/management
-org/jboss/modules/maven
-org/jboss/modules/ref
-org/jboss/modules/security
-org/jboss/modules/xml
