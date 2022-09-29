@@ -29,7 +29,7 @@
     <parent>
         <groupId>org.jboss</groupId>
         <artifactId>jboss-parent</artifactId>
-        <version>36</version>
+        <version>39</version>
     </parent>
 
     <licenses>
@@ -46,10 +46,12 @@
     </licenses>
 
     <properties>
-        <skip.compile>false</skip.compile>
+        <version.javadoc.plugin>3.4.1</version.javadoc.plugin>
+        <version.junit>4.13.2</version.junit>
+        <version.org.jboss.shrinkwrap>1.2.6</version.org.jboss.shrinkwrap>
         <version.org.wildfly.checkstyle-config>1.0.5.Final</version.org.wildfly.checkstyle-config>
-        <version.bridger>1.6.Final</version.bridger>
-        <version.surefire.plugin>3.0.0-M6</version.surefire.plugin>
+        <version.org.jboss.bridger>1.6.Final</version.org.jboss.bridger>
+        <version.surefire.plugin>3.0.0-M7</version.surefire.plugin>
         <jdk.min.version>11</jdk.min.version>
     </properties>
 
@@ -109,8 +111,8 @@
         <plugins>
             <!-- Compiler -->
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.7.0-jboss-1</version>
                 <executions>
                     <execution>
                         <id>default-compile</id>
@@ -120,48 +122,31 @@
                         </goals>
                         <configuration>
                             <release>11</release>
-                            <buildDirectory>${project.build.directory}</buildDirectory>
-                            <compileSourceRoots>${project.compileSourceRoots}</compileSourceRoots>
-                            <outputDirectory>${project.build.outputDirectory}</outputDirectory>
                         </configuration>
                     </execution>
                 </executions>
-                <configuration>
-                    <showDeprecation>true</showDeprecation>
-                    <showWarnings>true</showWarnings>
-                    <skipMain>${skip.compile}</skipMain>
-                    <skip>${skip.compile}</skip>
-                </configuration>
             </plugin>
 
             <!-- Surefire -->
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <redirectTestOutputToFile>true</redirectTestOutputToFile>
-                    <trimStackTrace>false</trimStackTrace>
                      <!-- Modules ignores Class-Path -->
                     <useManifestOnlyJar>false</useManifestOnlyJar>
-                    <printSummary>true</printSummary>
                     <includes>
                         <include>**/*Test.java</include>
                     </includes>
-                    <forkMode>always</forkMode>
+                    <reuseForks>false</reuseForks>
                     <!-- org.jboss.modules.util package is defined in tests folder -->
                     <argLine>--add-exports=org.jboss.modules/org.jboss.modules.util=ALL-UNNAMED</argLine>
                 </configuration>
-                <executions>
-                    <execution>
-                        <id>default-test</id>
-                        <configuration>
-                            <classesDirectory>${project.build.directory}/classes</classesDirectory>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
 
             <!-- JAR -->
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <configuration>
                     <archive>
@@ -185,11 +170,9 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>${version.javadoc.plugin}</version>
                 <configuration>
                     <detectJavaApiLink>false</detectJavaApiLink>
                     <excludePackageNames>org.jboss.modules._private</excludePackageNames>
-                    <sourcepath>${project.basedir}/src/main/java</sourcepath>
                 </configuration>
             </plugin>
 
@@ -197,7 +180,7 @@
             <plugin>
                 <groupId>org.jboss.bridger</groupId>
                 <artifactId>bridger</artifactId>
-                <version>${version.bridger}</version>
+                <version>${version.org.jboss.bridger}</version>
                 <executions>
                      <!-- run after "compile", runs bridger on main classes -->
                      <execution>
@@ -216,13 +199,13 @@
         <dependency>
             <groupId>org.jboss.shrinkwrap</groupId>
             <artifactId>shrinkwrap-impl-base</artifactId>
-            <version>1.2.2</version>
+            <version>${version.org.jboss.shrinkwrap}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.13.1</version>
+            <version>${version.junit}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
