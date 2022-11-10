@@ -1,4 +1,4 @@
-## Jboss Modules Community Code of Conduct v1.0
+## JBoss Modules Community Code of Conduct v1.0
 
 ### Contributor Code of Conduct
 
@@ -32,7 +32,7 @@ This code of conduct applies both within project spaces and in public spaces
 when an individual is representing the project or its community.
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be reported by 
-contacting a mod_cluster project lead, Richard Opalka <ropalka@redhat.com>.
+contacting a JBoss Modules project lead, David Lloyd <dmlloyd@redhat.com>.
 
 
 This Code of Conduct is adapted from the [CNCF Code of Conduct](https://github.com/cncf/foundation/blob/master/code-of-conduct.md) which is 
