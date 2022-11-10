@@ -4,6 +4,17 @@ JBoss Modules is a standalone implementation of a modular (non-hierarchical) cla
 
 JBoss Modules is designed to work with any existing library or application without changes, and its simple naming and resolution strategy is what makes that possible. Unlike OSGi, JBoss Modules does not implement a container; rather, it is a thin bootstrap wrapper for executing an application in a modular environment. The moment your application takes control, the modular environment is ready to load and link modules as needed. Furthermore, modules are never loaded (not even for resolution purposes) until required by a dependency, meaning that the performance of a modular application depends only on the number of modules actually used (and when they are used), rather than the total number of modules in the system. And, they may be unloaded by the user at any time.
 
+## Building
+
+Prerequisites:
+
+* JDK 11 or newer - check `java -version`
+* Maven 3.6.0 or newer - check `mvn -v`
+
+To build with your own Maven installation:
+
+    mvn install
+
 ## Documentation
 
 All documentation lives at http://jboss-modules.github.io/jboss-modules/manual/
