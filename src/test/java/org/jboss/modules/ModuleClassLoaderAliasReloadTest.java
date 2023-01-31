@@ -130,8 +130,8 @@ public class ModuleClassLoaderAliasReloadTest extends AbstractModuleTestCase {
         // cleanup
         for (final ResourceLoader rl : classLoader1.getResourceLoaders()) { ((CloseAwareResourceLoader)rl).close(); }
         for (final ResourceLoader rl : classLoader2.getResourceLoaders()) { ((CloseAwareResourceLoader)rl).close(); }
-        moduleLoader.unloadModuleLocal(testModule1);
-        moduleLoader.unloadModuleLocal(testModule2);
+        moduleLoader.unloadModuleLocal(testModule1.getName(), testModule1);
+        moduleLoader.unloadModuleLocal(testModule2.getName(), testModule2);
 
         // SECOND PHASE
         configureModules();
@@ -155,8 +155,8 @@ public class ModuleClassLoaderAliasReloadTest extends AbstractModuleTestCase {
         // cleanup
         for (final ResourceLoader rl : classLoader1.getResourceLoaders()) { ((CloseAwareResourceLoader)rl).close(); }
         for (final ResourceLoader rl : classLoader2.getResourceLoaders()) { ((CloseAwareResourceLoader)rl).close(); }
-        moduleLoader.unloadModuleLocal(testModule1);
-        moduleLoader.unloadModuleLocal(testModule2);
+        moduleLoader.unloadModuleLocal(testModule1.getName(), testModule1);
+        moduleLoader.unloadModuleLocal(testModule2.getName(), testModule2);
     }
 
 
@@ -187,8 +187,8 @@ public class ModuleClassLoaderAliasReloadTest extends AbstractModuleTestCase {
         // cleanup
         for (final ResourceLoader rl : classLoader1.getResourceLoaders()) { ((CloseAwareResourceLoader)rl).close(); }
         for (final ResourceLoader rl : classLoader2.getResourceLoaders()) { ((CloseAwareResourceLoader)rl).close(); }
-        moduleLoader.unloadModuleLocal(testModule1);
-        moduleLoader.unloadModuleLocal(testModule2);
+        moduleLoader.unloadModuleLocal(testModule1.getName(), testModule1);
+        moduleLoader.unloadModuleLocal(testModule2.getName(), testModule2);
 
         // SECOND PHASE
         configureModules();
@@ -212,8 +212,8 @@ public class ModuleClassLoaderAliasReloadTest extends AbstractModuleTestCase {
         // cleanup
         for (final ResourceLoader rl : classLoader1.getResourceLoaders()) { ((CloseAwareResourceLoader)rl).close(); }
         for (final ResourceLoader rl : classLoader2.getResourceLoaders()) { ((CloseAwareResourceLoader)rl).close(); }
-        moduleLoader.unloadModuleLocal(testModule1);
-        moduleLoader.unloadModuleLocal(testModule2);
+        moduleLoader.unloadModuleLocal(testModule1.getName(), testModule1);
+        moduleLoader.unloadModuleLocal(testModule2.getName(), testModule2);
     }
 
 
