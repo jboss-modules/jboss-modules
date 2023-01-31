@@ -37,6 +37,7 @@ public interface IterableModuleFinder extends ModuleFinder {
      * @return an iterator for the modules in this module finder
      * @deprecated Use {@link #iterateModules(String, boolean, ModuleLoader)} instead.
      */
+    @Deprecated
     default Iterator<ModuleIdentifier> iterateModules(ModuleIdentifier baseIdentifier, boolean recursive) {
         return Collections.emptyIterator();
     }
@@ -51,6 +52,7 @@ public interface IterableModuleFinder extends ModuleFinder {
      * @return an iterator for the modules in this module finder
      * @deprecated Use {@link #iterateModules(String, boolean, ModuleLoader)} instead.
      */
+    @Deprecated
     default Iterator<String> iterateModules(String baseName, boolean recursive) {
         return iterateModules(baseName, recursive, null);
     }

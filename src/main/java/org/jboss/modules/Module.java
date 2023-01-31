@@ -721,6 +721,7 @@ public final class Module {
      * @throws ClassNotFoundException if the class could not be loaded
      * @deprecated Use {@link #loadClassFromCallerModuleLoader(String, String)} instead.
      */
+    @Deprecated
     public static Class<?> loadClassFromCallerModuleLoader(final ModuleIdentifier moduleIdentifier, final String className)
             throws ModuleLoadException, ClassNotFoundException {
         return loadClassFromCallerModuleLoader(moduleIdentifier.toString(), className);
