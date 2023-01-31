@@ -112,6 +112,7 @@ public final class ResourceLoaders {
      * @return the resource loader
      * @deprecated Use {@link #createJarResourceLoader(JarFile, String)} instead.
      */
+    @Deprecated
     public static IterableResourceLoader createJarResourceLoader(final String name, final JarFile jarFile, final String relativePath) {
         return new JarFileResourceLoader(name, jarFile, relativePath);
     }
@@ -175,6 +176,7 @@ public final class ResourceLoaders {
      * @return the filtered resource loader
      * @deprecated Use {@link #createFileResourceLoader(String, File)} instead.
      */
+    @Deprecated
     public static IterableResourceLoader createIterableFilteredResourceLoader(final PathFilter pathFilter, final IterableResourceLoader originalLoader) {
         return createFilteredResourceLoader(pathFilter, originalLoader);
     }
