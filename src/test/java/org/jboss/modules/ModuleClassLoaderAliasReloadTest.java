@@ -19,9 +19,9 @@ import org.junit.Test;
  */
 public class ModuleClassLoaderAliasReloadTest extends AbstractModuleTestCase {
 
-    private static final ModuleIdentifier MODULE_ONE_ID = ModuleIdentifier.fromString("test-module-1");
-    private static final ModuleIdentifier MODULE_TWO_ID = ModuleIdentifier.fromString("test-module-2");
-    private static final ModuleIdentifier MODULE_TWO_AL = ModuleIdentifier.fromString("test-module-2-alias");
+    private static final String MODULE_ONE_ID = "test-module-1";
+    private static final String MODULE_TWO_ID = "test-module-2";
+    private static final String MODULE_TWO_AL = "test-module-2-alias";
     private TestModuleLoader moduleLoader = new TestModuleLoader();
 
     private static final class CloseAwareResourceLoader implements ResourceLoader {

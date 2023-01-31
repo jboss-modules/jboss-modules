@@ -35,7 +35,7 @@ import java.net.URL;
  */
 public class MavenResource2Test {
 
-    protected static final ModuleIdentifier MODULE_ID2 = ModuleIdentifier.fromString("test.maven:non-main");
+    protected static final String MODULE_ID2 = "test.maven:non-main";
 
     private ModuleLoader moduleLoader;
 

@@ -28,7 +28,6 @@ import java.util.Enumeration;
 import org.jboss.modules.AbstractModuleTestCase;
 import org.jboss.modules.LocalModuleLoader;
 import org.jboss.modules.Module;
-import org.jboss.modules.ModuleIdentifier;
 import org.jboss.modules.ModuleLoader;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,7 +39,7 @@ import org.junit.Test;
  */
 public class PermissionsTest extends AbstractModuleTestCase {
     private static final String JBOSS_HOME_DIR_VALUE = "someDir/someOtherDir";
-    protected static final ModuleIdentifier MODULE_WITH_INVALID_EXPANSION = ModuleIdentifier.fromString("test.permissions");
+    protected static final String MODULE_WITH_INVALID_EXPANSION = "test.permissions";
     private ModuleLoader moduleLoader;
 
     @Before
