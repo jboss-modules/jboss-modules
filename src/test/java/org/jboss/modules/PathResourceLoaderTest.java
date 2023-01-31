@@ -56,7 +56,7 @@ public class PathResourceLoaderTest extends AbstractResourceLoaderTestCase {
     protected ResourceLoader createLoader(PathFilter exportFilter) throws Exception {
         resourceRoot = testMode.getResourceRoot(this);
 
-        return ResourceLoaders.createPathResourceLoader("test-root", resourceRoot);
+        return ResourceLoaders.createPathResourceLoader(resourceRoot);
     }
 
     @Override
