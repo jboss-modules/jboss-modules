@@ -244,6 +244,7 @@ public abstract class ModuleSpec {
      * @return the module identifier
      * @deprecated Use {@link #getName()} instead.
      */
+    @Deprecated
     public ModuleIdentifier getModuleIdentifier() {
         return ModuleIdentifier.fromString(name);
     }
