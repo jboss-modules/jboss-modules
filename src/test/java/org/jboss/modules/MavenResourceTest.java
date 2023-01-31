@@ -38,7 +38,7 @@ import org.junit.rules.TemporaryFolder;
  */
 public class MavenResourceTest {
 
-    protected static final ModuleIdentifier MODULE_ID = ModuleIdentifier.fromString("test.maven");
+    protected static final String MODULE_ID = "test.maven";
 
     @Rule
     public TemporaryFolder tmpdir = new TemporaryFolder();

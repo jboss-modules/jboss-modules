@@ -97,36 +97,31 @@ public class ResourceRootPathsTest extends AbstractModuleTestCase {
         for (ResourceLoaderSpec r : resourceLoaders) {
             ResourceLoader resourceLoader = r.getResourceLoader();
             if (resourceLoader instanceof JarFileResourceLoader) {
+                final File jar = getFileFromJarUri(resourceLoader.getLocation());
+
                 // validate jar with relative path
-                if(resourceLoader.getRootName().equals("relativejar")) {
+                if (testModuleRoot.equals(jar.getParentFile())) {
                     checkCount++;
-                    final File relativeJar = getFileFromJarUri(resourceLoader.getLocation());
-                    Assert.assertEquals(testModuleRoot, relativeJar.getParentFile());
                     continue;
                 }
 
                 // validate jar with absolute path
-                if(resourceLoader.getRootName().equals("absolutejar")) {
+                if (repoRoot.equals(jar.getParentFile())) {
                     checkCount++;
-                    final File absoluteJar = getFileFromJarUri(resourceLoader.getLocation());
-                    Assert.assertEquals(repoRoot, absoluteJar.getParentFile());
                     continue;
                 }
             } else if (resourceLoader instanceof PathResourceLoader) {
+                final File dir = new File(resourceLoader.getLocation());
 
                 // validate dir with relative path
-                if(resourceLoader.getRootName().equals("relativedir")) {
+                if (testModuleRoot.equals(dir.getParentFile())) {
                     checkCount++;
-                    final File relativeDir = new File(resourceLoader.getLocation());
-                    Assert.assertEquals(testModuleRoot, relativeDir.getParentFile());
                     continue;
                 }
 
                 // validate dir with absolute path
-                if(resourceLoader.getRootName().equals("absolutedir")) {
+                if (fileResourceRoot.getParentFile().equals(dir.getParentFile())) {
                     checkCount++;
-                    final File absoluteDir = new File(resourceLoader.getLocation());
-                    Assert.assertEquals(fileResourceRoot.getParentFile(), absoluteDir.getParentFile());
                     continue;
                 }
             }

@@ -19,9 +19,9 @@ import org.junit.Test;
  */
 public class ModuleClassLoaderAliasReloadTest extends AbstractModuleTestCase {
 
-    private static final ModuleIdentifier MODULE_ONE_ID = ModuleIdentifier.fromString("test-module-1");
-    private static final ModuleIdentifier MODULE_TWO_ID = ModuleIdentifier.fromString("test-module-2");
-    private static final ModuleIdentifier MODULE_TWO_AL = ModuleIdentifier.fromString("test-module-2-alias");
+    private static final String MODULE_ONE_ID = "test-module-1";
+    private static final String MODULE_TWO_ID = "test-module-2";
+    private static final String MODULE_TWO_AL = "test-module-2-alias";
     private TestModuleLoader moduleLoader = new TestModuleLoader();
 
     private static final class CloseAwareResourceLoader implements ResourceLoader {
@@ -130,8 +130,8 @@ public class ModuleClassLoaderAliasReloadTest extends AbstractModuleTestCase {
         // cleanup
         for (final ResourceLoader rl : classLoader1.getResourceLoaders()) { ((CloseAwareResourceLoader)rl).close(); }
         for (final ResourceLoader rl : classLoader2.getResourceLoaders()) { ((CloseAwareResourceLoader)rl).close(); }
-        moduleLoader.unloadModuleLocal(testModule1);
-        moduleLoader.unloadModuleLocal(testModule2);
+        moduleLoader.unloadModuleLocal(testModule1.getName(), testModule1);
+        moduleLoader.unloadModuleLocal(testModule2.getName(), testModule2);
 
         // SECOND PHASE
         configureModules();
@@ -155,8 +155,8 @@ public class ModuleClassLoaderAliasReloadTest extends AbstractModuleTestCase {
         // cleanup
         for (final ResourceLoader rl : classLoader1.getResourceLoaders()) { ((CloseAwareResourceLoader)rl).close(); }
         for (final ResourceLoader rl : classLoader2.getResourceLoaders()) { ((CloseAwareResourceLoader)rl).close(); }
-        moduleLoader.unloadModuleLocal(testModule1);
-        moduleLoader.unloadModuleLocal(testModule2);
+        moduleLoader.unloadModuleLocal(testModule1.getName(), testModule1);
+        moduleLoader.unloadModuleLocal(testModule2.getName(), testModule2);
     }
 
 
@@ -187,8 +187,8 @@ public class ModuleClassLoaderAliasReloadTest extends AbstractModuleTestCase {
         // cleanup
         for (final ResourceLoader rl : classLoader1.getResourceLoaders()) { ((CloseAwareResourceLoader)rl).close(); }
         for (final ResourceLoader rl : classLoader2.getResourceLoaders()) { ((CloseAwareResourceLoader)rl).close(); }
-        moduleLoader.unloadModuleLocal(testModule1);
-        moduleLoader.unloadModuleLocal(testModule2);
+        moduleLoader.unloadModuleLocal(testModule1.getName(), testModule1);
+        moduleLoader.unloadModuleLocal(testModule2.getName(), testModule2);
 
         // SECOND PHASE
         configureModules();
@@ -212,8 +212,8 @@ public class ModuleClassLoaderAliasReloadTest extends AbstractModuleTestCase {
         // cleanup
         for (final ResourceLoader rl : classLoader1.getResourceLoaders()) { ((CloseAwareResourceLoader)rl).close(); }
         for (final ResourceLoader rl : classLoader2.getResourceLoaders()) { ((CloseAwareResourceLoader)rl).close(); }
-        moduleLoader.unloadModuleLocal(testModule1);
-        moduleLoader.unloadModuleLocal(testModule2);
+        moduleLoader.unloadModuleLocal(testModule1.getName(), testModule1);
+        moduleLoader.unloadModuleLocal(testModule2.getName(), testModule2);
     }
 
 

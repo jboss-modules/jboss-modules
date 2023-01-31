@@ -42,7 +42,7 @@ public class ClassFilteringTest extends ModulesTestBase {
 
     @Test
     public void testClassFilter() throws Exception {
-        final ModuleIdentifier identifierA = ModuleIdentifier.create(getClass().getSimpleName());
+        final String identifierA = getClass().getSimpleName();
 
         ModuleSpec.Builder specBuilderA = ModuleSpec.build(identifierA);
 
@@ -79,7 +79,7 @@ public class ClassFilteringTest extends ModulesTestBase {
             .build());
         addModuleSpec(specBuilderA.create());
 
-        ModuleIdentifier identifierB = ModuleIdentifier.create("moduleB");
+        String identifierB = "moduleB";
         ModuleSpec.Builder specBuilderB = ModuleSpec.build(identifierB);
         specBuilderB.addDependency(new ModuleDependencySpecBuilder()
             .setName(identifierA.toString())

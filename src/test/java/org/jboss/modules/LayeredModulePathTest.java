@@ -44,7 +44,7 @@ public class LayeredModulePathTest extends AbstractModuleTestCase {
 
     private static final String PATH = "test/layeredmodulepath/";
 
-    private static final ModuleIdentifier SHARED = ModuleIdentifier.create("test.shared");
+    private static final String SHARED = "test.shared";
 
     private String originalModulePath;
 
@@ -580,9 +580,8 @@ public class LayeredModulePathTest extends AbstractModuleTestCase {
     }
 
     private void loadModule(ModuleLoader moduleLoader, String moduleName, boolean expectAvailable) {
-        ModuleIdentifier id = ModuleIdentifier.create("test." + moduleName);
         try {
-            Module module = moduleLoader.loadModule(id);
+            Module module = moduleLoader.loadModule("test." + moduleName);
             if (!expectAvailable) {
                 Assert.fail("test." + moduleName + " should not be loadable");
             }

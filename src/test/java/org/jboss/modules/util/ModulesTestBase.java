@@ -20,7 +20,6 @@ package org.jboss.modules.util;
 import org.jboss.modules.DependencySpec;
 import org.jboss.modules.Module;
 import org.jboss.modules.ModuleClassLoader;
-import org.jboss.modules.ModuleIdentifier;
 import org.jboss.modules.ModuleLoadException;
 import org.jboss.modules.ModuleLoader;
 import org.jboss.modules.ModuleSpec;
@@ -63,7 +62,7 @@ public abstract class ModulesTestBase {
         moduleLoader.addModuleSpec(moduleSpec);
     }
 
-    protected Module loadModule(ModuleIdentifier identifier) throws ModuleLoadException {
+    protected Module loadModule(String identifier) throws ModuleLoadException {
         return moduleLoader.loadModule(identifier);
     }
 
@@ -86,12 +85,12 @@ public abstract class ModulesTestBase {
         return className;
     }
 
-    protected void assertLoadClass(ModuleIdentifier identifier, String className) throws Exception {
+    protected void assertLoadClass(String identifier, String className) throws Exception {
         Class<?> clazz = loadClass(identifier, className);
         assertNotNull(clazz);
     }
 
-    protected void assertLoadClass(ModuleIdentifier identifier, String className, ModuleIdentifier exporterId) throws Exception {
+    protected void assertLoadClass(String identifier, String className, String exporterId) throws Exception {
         Class<?> clazz = loadClass(identifier, className);
         ClassLoader wasClassLoader = clazz.getClassLoader();
         if (exporterId == null && wasClassLoader == null) {
@@ -101,7 +100,7 @@ public abstract class ModulesTestBase {
         assertEquals(expClassLoader, wasClassLoader);
     }
 
-    protected void assertLoadClassFail(ModuleIdentifier identifier, String className) throws Exception {
+    protected void assertLoadClassFail(String identifier, String className) throws Exception {
         try {
             Class<?> clazz = loadClass(identifier, className);
             assertNotNull("ClassNotFoundException expected for [" + className + "], but was: " + clazz, clazz);
@@ -113,7 +112,7 @@ public abstract class ModulesTestBase {
         }
     }
 
-    protected Class<?> loadClass(ModuleIdentifier identifier, String className) throws Exception {
+    protected Class<?> loadClass(String identifier, String className) throws Exception {
         // ClassLoader#resolveClass() only links the class; it doesn't necessarily force it to be initialized.
         // To initialize the class you can do Class.forName(name, true, classLoader)
         ModuleClassLoader classLoader = loadModule(identifier).getClassLoader();
@@ -121,7 +120,7 @@ public abstract class ModulesTestBase {
         return clazz;
     }
 
-    protected URL getResource(ModuleIdentifier identifier, String resourcePath) throws Exception {
+    protected URL getResource(String identifier, String resourcePath) throws Exception {
         ModuleClassLoader classLoader = loadModule(identifier).getClassLoader();
         return classLoader.getResource(resourcePath);
     }

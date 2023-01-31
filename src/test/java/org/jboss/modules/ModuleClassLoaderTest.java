@@ -47,15 +47,15 @@ import static org.junit.Assert.fail;
  */
 public class ModuleClassLoaderTest extends AbstractModuleTestCase {
 
-    private static final ModuleIdentifier MODULE_WITH_CONTENT_ID = ModuleIdentifier.fromString("test-with-content");
-    private static final ModuleIdentifier MODULE_WITH_RESOURCE_ID = ModuleIdentifier.fromString("test-with-resource");
-    private static final ModuleIdentifier MODULE_TO_IMPORT_ID = ModuleIdentifier.fromString("test-to-import");
-    private static final ModuleIdentifier MODULE_WITH_EXPORT_ID = ModuleIdentifier.fromString("test-with-export");
-    private static final ModuleIdentifier MODULE_WITH_DOUBLE_EXPORT_ID = ModuleIdentifier.fromString("test-with-double-export");
-    private static final ModuleIdentifier MODULE_WITH_INVERTED_DOUBLE_EXPORT_ID = ModuleIdentifier.fromString("test-with-inverted-double-export");
-    private static final ModuleIdentifier MODULE_WITH_FILTERED_EXPORT_ID = ModuleIdentifier.fromString("test-with-filtered-export");
-    private static final ModuleIdentifier MODULE_WITH_FILTERED_IMPORT_ID = ModuleIdentifier.fromString("test-with-filtered-import");
-    private static final ModuleIdentifier MODULE_WITH_FILTERED_DOUBLE_EXPORT_ID = ModuleIdentifier.fromString("test-with-filtered-double-export");
+    private static final String MODULE_WITH_CONTENT_ID = "test-with-content";
+    private static final String MODULE_WITH_RESOURCE_ID = "test-with-resource";
+    private static final String MODULE_TO_IMPORT_ID = "test-to-import";
+    private static final String MODULE_WITH_EXPORT_ID = "test-with-export";
+    private static final String MODULE_WITH_DOUBLE_EXPORT_ID = "test-with-double-export";
+    private static final String MODULE_WITH_INVERTED_DOUBLE_EXPORT_ID = "test-with-inverted-double-export";
+    private static final String MODULE_WITH_FILTERED_EXPORT_ID = "test-with-filtered-export";
+    private static final String MODULE_WITH_FILTERED_IMPORT_ID = "test-with-filtered-import";
+    private static final String MODULE_WITH_FILTERED_DOUBLE_EXPORT_ID = "test-with-filtered-double-export";
 
     private TestModuleLoader moduleLoader;
 

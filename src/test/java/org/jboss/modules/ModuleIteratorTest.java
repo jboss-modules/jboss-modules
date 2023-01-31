@@ -40,8 +40,8 @@ import org.junit.Test;
  */
 public class ModuleIteratorTest extends AbstractModuleTestCase {
 
-    private static final ModuleIdentifier MODULE_A = ModuleIdentifier.fromString("a");
-    private static final ModuleIdentifier MODULE_B = ModuleIdentifier.fromString("b");
+    private static final String MODULE_A = "a";
+    private static final String MODULE_B = "b";
 
     @Test
     public void testMetaInfServicesIterator() throws Exception {
@@ -49,14 +49,14 @@ public class ModuleIteratorTest extends AbstractModuleTestCase {
 
         ModuleSpec.Builder builder = ModuleSpec.build(MODULE_A);
         builder.addDependency(new ModuleDependencySpecBuilder()
-            .setName(MODULE_B.toString())
+            .setName(MODULE_B)
             .build());
         PathFilter importFilter = PathFilters.getMetaInfServicesFilter();
         builder.addDependency(new ModuleDependencySpecBuilder()
             .setImportFilter(importFilter)
             .setExport(true)
             .setModuleLoader(moduleLoader)
-            .setName(MODULE_B.toString())
+            .setName(MODULE_B)
             .build());
         moduleLoader.addModuleSpec(builder.create());
 
@@ -76,11 +76,11 @@ public class ModuleIteratorTest extends AbstractModuleTestCase {
     @Test
     public void testIterateModules() throws Exception {
         IterableModuleFinder fakeFinder = new IterableModuleFinder() {
-            private ModuleIdentifier[] modules = { ModuleIdentifier.create("a"), ModuleIdentifier.create("b")};
+            private String[] modules = { "a", "b"};
 
             @Override
-            public Iterator<ModuleIdentifier> iterateModules(ModuleIdentifier baseIdentifier, boolean recursive) {
-                return new Iterator<ModuleIdentifier>() {
+            public Iterator<String> iterateModules(String baseIdentifier, boolean recursive, final ModuleLoader delegateLoader) {
+                return new Iterator<String>() {
                     private int pos = 0;
 
                     @Override
@@ -89,7 +89,7 @@ public class ModuleIteratorTest extends AbstractModuleTestCase {
                     }
 
                     @Override
-                    public ModuleIdentifier next() {
+                    public String next() {
                         return modules[pos++];
                     }
 
@@ -103,7 +103,7 @@ public class ModuleIteratorTest extends AbstractModuleTestCase {
             @Override
             public ModuleSpec findModule(String name, ModuleLoader delegateLoader)
                 throws ModuleLoadException {
-                for (ModuleIdentifier m : modules) {
+                for (String m : modules) {
                     if (m.equals(name)) {
                         return ModuleSpec.build(m).create();
                     }
@@ -114,7 +114,7 @@ public class ModuleIteratorTest extends AbstractModuleTestCase {
 
         ModuleLoader loader = new ModuleLoader(new ModuleFinder[]{fakeFinder});
 
-        Iterator<ModuleIdentifier> it = loader.iterateModules((ModuleIdentifier) null, true);
+        Iterator<String> it = loader.iterateModules((String) null, true);
         int count = 0;
         while (it.hasNext()) {
             it.next();

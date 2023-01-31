@@ -29,7 +29,7 @@ import static org.junit.Assert.fail;
  * @author <a href="mailto:cdewolf@redhat.com">Carlo de Wolf</a>
  */
 public class ErrorHandlingTest extends AbstractModuleTestCase {
-    private static final ModuleIdentifier MODULE_A = ModuleIdentifier.fromString("test-module-a");
+    private static final String MODULE_A = "test-module-a";
 
     private TestModuleLoader moduleLoader;
 

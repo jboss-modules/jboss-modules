@@ -43,10 +43,10 @@ import org.junit.Test;
  */
 public class ModuleExportTest extends AbstractModuleTestCase {
 
-    private static final ModuleIdentifier MODULE_A = ModuleIdentifier.fromString("a");
-    private static final ModuleIdentifier MODULE_B = ModuleIdentifier.fromString("b");
-    private static final ModuleIdentifier MODULE_C = ModuleIdentifier.fromString("c");
-    private static final ModuleIdentifier MODULE_D = ModuleIdentifier.fromString("d");
+    private static final String MODULE_A = "a";
+    private static final String MODULE_B = "b";
+    private static final String MODULE_C = "c";
+    private static final String MODULE_D = "d";
 
     @Test
     public void testExportDependencies() throws Exception {
@@ -76,7 +76,7 @@ public class ModuleExportTest extends AbstractModuleTestCase {
         moduleLoader.addModuleSpec(builder.create());
 
         Module module = moduleLoader.loadModule(MODULE_A);
-        final Set<ModuleIdentifier> dependencyExports = new HashSet<ModuleIdentifier>();
+        final Set<String> dependencyExports = new HashSet<>();
         getExportedModuleDeps(module, dependencyExports);
         assertEquals(2, dependencyExports.size());
         assertTrue(dependencyExports.contains(MODULE_B));
@@ -99,18 +99,18 @@ public class ModuleExportTest extends AbstractModuleTestCase {
         assertEquals(0, dependencyExports.size());
     }
 
-    private static void getExportedModuleDeps(final Module module, final Set<ModuleIdentifier> dependencyExports) throws ModuleLoadException {
+    private static void getExportedModuleDeps(final Module module, final Set<String> dependencyExports) throws ModuleLoadException {
         getExportedModuleDeps(module, new HashSet<Module>(Collections.singleton(module)), dependencyExports);
     }
 
-    private static void getExportedModuleDeps(final Module module, final Set<Module> visited, final Set<ModuleIdentifier> dependencyExports) throws ModuleLoadException {
+    private static void getExportedModuleDeps(final Module module, final Set<Module> visited, final Set<String> dependencyExports) throws ModuleLoadException {
         for (Dependency dependency : module.getDependenciesInternal()) {
             if (dependency instanceof ModuleDependency && dependency.getExportFilter() != PathFilters.rejectAll()) {
                 final ModuleDependency moduleDependency = (ModuleDependency) dependency;
                 final Module md = moduleDependency.getModuleLoader().loadModule(moduleDependency.getName());
                 if (md != null && moduleDependency.getExportFilter() != PathFilters.rejectAll()) {
                     if (visited.add(md)) {
-                        dependencyExports.add(md.getIdentifier());
+                        dependencyExports.add(md.getName());
                         getExportedModuleDeps(md, visited, dependencyExports);
                     }
                 }
