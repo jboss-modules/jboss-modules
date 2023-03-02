@@ -174,19 +174,13 @@ public final class PathUtils {
     }
 
     /**
-     * Canonicalize the given path.  Removes all {@code .} and {@code ..} segments from the path.
+     * Package private implementation for testing/benchmarking. Provides
+     * the same interface as canonicalize without any sort of filtering.
      *
      * @param path the relative or absolute possibly non-canonical path
      * @return the canonical path
      */
-    public static String canonicalize(String path) {
-        if (path.trim().isEmpty() || (!path.contains("..") && !path.contains("."))) {
-            return path;
-        }
-        if (path.contains(".") && !path.contains("/.") && !path.contains("./")) {
-            return path;
-        }
-
+    static String directCanonicalize(String path) {
         final int length = path.length();
         // 0 - start
         // 1 - got one .
@@ -207,9 +201,8 @@ public final class PathUtils {
             outer: switch (c) {
                 case '/': {
                     inner: switch (state) {
-                        case 0:
-                        case 1:
-                            state = 3; e = i; break outer;
+                        case 0: state = 3; e = i; break outer;
+                        case 1: state = 3; e = i; break outer;
                         case 2: state = 3; e = i; skip ++; break outer;
                         case 3: e = i; break outer;
                         default: throw new IllegalStateException();
@@ -218,11 +211,10 @@ public final class PathUtils {
                 }
                 case '.': {
                     inner: switch (state) {
-                        case 0:
-                        case 3:
-                            state = 1; break outer;
-                        case 1: state = 2; break outer;
-                        case 2: break inner; // emit!
+                        case 0: state = 3; e = i; break outer;
+                        case 1: state = 3; e = i; break outer;
+                        case 2: state = 3; e = i; skip ++; break outer;
+                        case 3: e = i; break outer;
                         default: throw new IllegalStateException();
                     }
                     // fall thru
@@ -230,9 +222,8 @@ public final class PathUtils {
                 default: {
                     if (File.separatorChar != '/' && c == File.separatorChar) {
                         switch (state) {
-                            case 0:
-                            case 1:
-                                state = 3; e = i; break outer;
+                            case 0: state = 1; break outer;
+                            case 1: state = 2; break outer;
                             case 2: state = 3; e = i; skip ++; break outer;
                             case 3: e = i; break outer;
                             default: throw new IllegalStateException();
@@ -272,6 +263,27 @@ public final class PathUtils {
             return path;
         }
         return new String(targetBuf, a + 1, length - a - 1);
+    }
+
+    /**
+     * Canonicalize the given path.  Removes all {@code .} and {@code ..} segments from the path.
+     *
+     * @param path the relative or absolute possibly non-canonical path
+     * @return the canonical path
+     */
+    public static String canonicalize(String path) {
+        if (path.trim().isEmpty() || !path.contains(".")) {
+            return path;
+        }
+
+        // represents a state transitions that will be found via the state machine
+        // but if these patterns aren't contained in the string they can't be found
+        // via the state machine. (we know it already contains at least "." at this point.)
+        if (!path.contains("/.") && !path.contains("./")) {
+            return path;
+        }
+
+        return directCanonicalize(path);
     }
 
     /**
