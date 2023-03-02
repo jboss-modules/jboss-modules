@@ -65,82 +65,82 @@ public class PathUtilsBenchmarkTest {
         new Runner(opt).run();
     }
 
-//    @Benchmark
-//    public void noChangeString(Blackhole bh) {
-//        bh.consume(PathUtils.canonicalize(NO_CHANGE_STRING));
-//    }
-//
-//    @Benchmark
-//    public void directNoChangeString(Blackhole bh) {
-//        bh.consume(PathUtils.directCanonicalize(NO_CHANGE_STRING));
-//    }
-//
-//    @Benchmark
-//    public void originalNoChangeString(Blackhole bh) {
-//        bh.consume(PathUtilsTest.originalCanonicalize(NO_CHANGE_STRING));
-//    }
-//
-//    @Benchmark
-//    public void changeString(Blackhole bh) {
-//        bh.consume(PathUtils.canonicalize(CHANGE_STRING));
-//    }
-//
-//    @Benchmark
-//    public void directChangeString(Blackhole bh) {
-//        bh.consume(PathUtils.directCanonicalize(CHANGE_STRING));
-//    }
-//
-//    @Benchmark
-//    public void originalChangeString(Blackhole bh) {
-//        bh.consume(PathUtilsTest.originalCanonicalize(CHANGE_STRING));
-//    }
-//
-//
-//    @Benchmark
-//    public void manyChangeString(Blackhole bh) {
-//        bh.consume(PathUtils.canonicalize(MANY_CHANGE_STRING));
-//    }
-//
-//    @Benchmark
-//    public void directManyChangeString(Blackhole bh) {
-//        bh.consume(PathUtils.directCanonicalize(MANY_CHANGE_STRING));
-//    }
-//
-//    @Benchmark
-//    public void originalManyChangeString(Blackhole bh) {
-//        bh.consume(PathUtilsTest.originalCanonicalize(MANY_CHANGE_STRING));
-//    }
-//
-//    @Benchmark
-//    public void withDotButFine(Blackhole bh) {
-//        bh.consume(PathUtils.canonicalize(WITH_DOT_BUT_FINE));
-//    }
-//
-//
-//    @Benchmark
-//    public void directWithDotButFine(Blackhole bh) {
-//        bh.consume(PathUtils.directCanonicalize(WITH_DOT_BUT_FINE));
-//    }
-//
-//    @Benchmark
-//    public void originalWithDotButFine(Blackhole bh) {
-//        bh.consume(PathUtilsTest.originalCanonicalize(WITH_DOT_BUT_FINE));
-//    }
-//
-//    @Benchmark
-//    public void longWorstCase(Blackhole bh) {
-//        bh.consume(PathUtils.canonicalize(LONG_STRING_WORST_CASE_CONTAINS));
-//    }
-//
-//    @Benchmark
-//    public void directLongWorstCase(Blackhole bh) {
-//        bh.consume(PathUtils.directCanonicalize(LONG_STRING_WORST_CASE_CONTAINS));
-//    }
-//
-//    @Benchmark
-//    public void originalLongWorstCase(Blackhole bh) {
-//        bh.consume(PathUtilsTest.originalCanonicalize(LONG_STRING_WORST_CASE_CONTAINS));
-//    }
+    @Benchmark
+    public void noChangeString(Blackhole bh) {
+        bh.consume(PathUtils.canonicalize(NO_CHANGE_STRING));
+    }
+
+    @Benchmark
+    public void directNoChangeString(Blackhole bh) {
+        bh.consume(PathUtils.directCanonicalize(NO_CHANGE_STRING));
+    }
+
+    @Benchmark
+    public void originalNoChangeString(Blackhole bh) {
+        bh.consume(PathUtilsTest.originalCanonicalize(NO_CHANGE_STRING));
+    }
+
+    @Benchmark
+    public void changeString(Blackhole bh) {
+        bh.consume(PathUtils.canonicalize(CHANGE_STRING));
+    }
+
+    @Benchmark
+    public void directChangeString(Blackhole bh) {
+        bh.consume(PathUtils.directCanonicalize(CHANGE_STRING));
+    }
+
+    @Benchmark
+    public void originalChangeString(Blackhole bh) {
+        bh.consume(PathUtilsTest.originalCanonicalize(CHANGE_STRING));
+    }
+
+
+    @Benchmark
+    public void manyChangeString(Blackhole bh) {
+        bh.consume(PathUtils.canonicalize(MANY_CHANGE_STRING));
+    }
+
+    @Benchmark
+    public void directManyChangeString(Blackhole bh) {
+        bh.consume(PathUtils.directCanonicalize(MANY_CHANGE_STRING));
+    }
+
+    @Benchmark
+    public void originalManyChangeString(Blackhole bh) {
+        bh.consume(PathUtilsTest.originalCanonicalize(MANY_CHANGE_STRING));
+    }
+
+    @Benchmark
+    public void withDotButFine(Blackhole bh) {
+        bh.consume(PathUtils.canonicalize(WITH_DOT_BUT_FINE));
+    }
+
+
+    @Benchmark
+    public void directWithDotButFine(Blackhole bh) {
+        bh.consume(PathUtils.directCanonicalize(WITH_DOT_BUT_FINE));
+    }
+
+    @Benchmark
+    public void originalWithDotButFine(Blackhole bh) {
+        bh.consume(PathUtilsTest.originalCanonicalize(WITH_DOT_BUT_FINE));
+    }
+
+    @Benchmark
+    public void longWorstCase(Blackhole bh) {
+        bh.consume(PathUtils.canonicalize(LONG_STRING_WORST_CASE_CONTAINS));
+    }
+
+    @Benchmark
+    public void directLongWorstCase(Blackhole bh) {
+        bh.consume(PathUtils.directCanonicalize(LONG_STRING_WORST_CASE_CONTAINS));
+    }
+
+    @Benchmark
+    public void originalLongWorstCase(Blackhole bh) {
+        bh.consume(PathUtilsTest.originalCanonicalize(LONG_STRING_WORST_CASE_CONTAINS));
+    }
 
     @Benchmark
     public void longNoChangeCase(Blackhole bh) {
