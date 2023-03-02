@@ -268,6 +268,11 @@ public final class PathUtils {
     }
 
 
+    private static boolean isSepChar(char ch) {
+        // on non-Windows, the JIT *should* eliminate the second check as redundant
+        return ch == '/' || ch == File.separatorChar;
+    }
+
     /**
      * Canonicalize the given path.  Removes all {@code .} and {@code ..} segments from the path.
      *
@@ -275,14 +280,29 @@ public final class PathUtils {
      * @return the canonical path
      */
     public static String canonicalize(String path) {
-        if (path.trim().isEmpty()) {
+        // is null check here even needed?
+        if (path == null || path.isEmpty()) {
             return path;
         }
 
-        // represents a state transitions that will be found via the state machine
-        // but if these patterns aren't contained in the string they can't be found
-        // via the state machine. (we know it already contains at least "." at this point.)
-        if (!path.contains("/.") && !path.contains("./")) {
+        boolean found = false;
+        int idx = path.indexOf('.'); // maybe reuse the result of the above comparison for efficiency
+        // shortcut if string is "." or ".."
+        if (idx == 0 && path.length() == 1 || path.length() == 2 && path.charAt(idx+1) == '.') {
+            return "";
+        }
+        if (idx == -1) {
+            return path;
+        }
+        do {
+            // represents a state transitions that will be found via the state machine
+            // but if these patterns aren't contained in the string they can't be found
+            // via the state machine. (we know it already contains at least "." at this point.)
+            if (path.length() > idx + 1 && isSepChar(path.charAt(idx + 1)) || idx > 0 && isSepChar(path.charAt(idx - 1))) {
+                found = true;
+            }
+        } while (idx + 1 < path.length() && (idx = path.indexOf('.', idx + 1)) != -1);
+        if (!found) {
             return path;
         }
 

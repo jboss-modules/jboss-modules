@@ -173,14 +173,25 @@ public class PathUtilsTest {
     // increasing and decreasing string lengths to ensure that no unintended data makes it
     // in the string
     @Test
+    public void testCorrectAgainstOriginal() {
+        assertEquals(originalCanonicalize(".."), PathUtils.canonicalize(".."));
+        assertEquals(originalCanonicalize("."), PathUtils.canonicalize("."));
+        assertEquals(originalCanonicalize("/foo/bar"), PathUtils.canonicalize("/foo/bar"));
+        assertEquals(originalCanonicalize("/foo/../bar"), PathUtils.canonicalize("/foo/../bar"));
+        assertEquals(originalCanonicalize("/bar/.."), PathUtils.canonicalize("/bar/.."));
+        assertEquals(originalCanonicalize("META-INF/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/."), PathUtils.canonicalize("META-INF/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/."));
+        assertEquals(originalCanonicalize("/baz/./"), PathUtils.canonicalize("/baz/./"));
+        assertEquals(originalCanonicalize("/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz"), PathUtils.canonicalize("/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz"));
+        assertEquals(originalCanonicalize("/baz/hidden.properties/.."), PathUtils.canonicalize("/baz/hidden.properties/.."));
+        assertEquals(originalCanonicalize("/baz/./hidden.properties/../../../check..thing/./"), PathUtils.canonicalize("/baz/./hidden.properties/../../../check..thing/./"));
+    }
+
+
+    // run the correctness test over and over to ensure that the buffer reuse doesn't cause issues
+    @Test
     public void testReusedBuffer() {
         for(int i = 0; i < 100; i++) {
-            assertEquals(originalCanonicalize("/foo/bar"), PathUtils.canonicalize("/foo/bar"));
-            assertEquals(originalCanonicalize("/foo/../bar"), PathUtils.canonicalize("/foo/../bar"));
-            assertEquals(originalCanonicalize("/bar/.."), PathUtils.canonicalize("/bar/.."));
-            assertEquals(originalCanonicalize("META-INF/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/."), PathUtils.canonicalize("META-INF/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/."));
-            assertEquals(originalCanonicalize("/baz/./"), PathUtils.canonicalize("/baz/./"));
-            assertEquals(originalCanonicalize("/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz"), PathUtils.canonicalize("/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz"));
+            this.testCorrectAgainstOriginal();
         }
     }
 }

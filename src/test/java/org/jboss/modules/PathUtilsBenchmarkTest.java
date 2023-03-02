@@ -54,7 +54,7 @@ public class PathUtilsBenchmarkTest {
             .timeout(TimeValue.seconds(30))
             .timeUnit(TimeUnit.MICROSECONDS)
             .forks(1)
-            .threads(4)
+            .threads(8)
             .addProfiler(GCProfiler.class)
             .warmupIterations(2)
             .measurementIterations(5)
