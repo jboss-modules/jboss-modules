@@ -35,6 +35,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.jboss.modules.filter.PathFilter;
 
@@ -44,6 +45,9 @@ import org.jboss.modules.filter.PathFilter;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class PathUtils {
+
+    static final int MIN_LENGTH = 256;
+    private static final ThreadLocal<char[]> CHAR_BUFFER_CACHE = new ThreadLocal<>();
 
     private PathUtils() {
     }
@@ -145,22 +149,51 @@ public final class PathUtils {
     }
 
     /**
+     * Request a new buffer at or longer than the given length. The minimum length is
+     * provided at the class level to make sure that the buffer will always exceed the minimum length.
+     *
+     * If a size requested is greater than the minimum length it will go to the next power of two up
+     * to the maximum integer value. This is intended to prevent an ascending series of paths ("/a/a.txt",
+     * "/a/aa.txt", "/a/aaa.txt") from requiring constant/increasing buffer allocations.
+     *
+     * @param length of the buffer to create
+     * @return a created character buffer that may not be empty but that is at least as long as the requeted length
+     */
+    static char[] getBuffer(final int length) {
+        char[] current = CHAR_BUFFER_CACHE.get();
+        if(current == null || current.length < length) {
+            // since we can't shift left from the max value it will hold at the max value
+            // it uses the outer Math.max to belt-and-suspenders out of a lot of corner cases that end up negative.
+            // the shifting logic finds out how many powers of two we need to shift left to get to the next power of two
+            // requesting a size that is already a power of two will give you that same power of two
+            // because we get the same power of two we use a Math.max on the inner value to make sure we always meet the minimum
+            int nexLength = length == Integer.MAX_VALUE ? Integer.MAX_VALUE : Math.max(MIN_LENGTH, 1 << (Integer.SIZE - Integer.numberOfLeadingZeros(Math.max(length, MIN_LENGTH) - 1)));
+            CHAR_BUFFER_CACHE.set(new char[nexLength]);
+        }
+        return CHAR_BUFFER_CACHE.get();
+    }
+
+    /**
      * Canonicalize the given path.  Removes all {@code .} and {@code ..} segments from the path.
      *
      * @param path the relative or absolute possibly non-canonical path
      * @return the canonical path
      */
     public static String canonicalize(String path) {
+        if (path.trim().isEmpty() || (!path.contains("..") && !path.contains("."))) {
+            return path;
+        }
+        if (path.contains(".") && !path.contains("/.") && !path.contains("./")) {
+            return path;
+        }
+
         final int length = path.length();
         // 0 - start
         // 1 - got one .
         // 2 - got two .
         // 3 - got /
         int state = 0;
-        if (length == 0) {
-            return path;
-        }
-        final char[] targetBuf = new char[length];
+        char[] targetBuf = null;
         // string segment end exclusive
         int e = length;
         // string cursor position
@@ -174,8 +207,9 @@ public final class PathUtils {
             outer: switch (c) {
                 case '/': {
                     inner: switch (state) {
-                        case 0: state = 3; e = i; break outer;
-                        case 1: state = 3; e = i; break outer;
+                        case 0:
+                        case 1:
+                            state = 3; e = i; break outer;
                         case 2: state = 3; e = i; skip ++; break outer;
                         case 3: e = i; break outer;
                         default: throw new IllegalStateException();
@@ -184,10 +218,11 @@ public final class PathUtils {
                 }
                 case '.': {
                     inner: switch (state) {
-                        case 0: state = 1; break outer;
+                        case 0:
+                        case 3:
+                            state = 1; break outer;
                         case 1: state = 2; break outer;
                         case 2: break inner; // emit!
-                        case 3: state = 1; break outer;
                         default: throw new IllegalStateException();
                     }
                     // fall thru
@@ -195,8 +230,9 @@ public final class PathUtils {
                 default: {
                     if (File.separatorChar != '/' && c == File.separatorChar) {
                         switch (state) {
-                            case 0: state = 3; e = i; break outer;
-                            case 1: state = 3; e = i; break outer;
+                            case 0:
+                            case 1:
+                                state = 3; e = i; break outer;
                             case 2: state = 3; e = i; skip ++; break outer;
                             case 3: e = i; break outer;
                             default: throw new IllegalStateException();
@@ -208,6 +244,9 @@ public final class PathUtils {
                     if (skip > 0) {
                         skip--;
                     } else {
+                        if (targetBuf == null) {
+                            targetBuf = getBuffer(length);
+                        }
                         if (state == 3) {
                             targetBuf[a--] = '/';
                         }
@@ -221,7 +260,16 @@ public final class PathUtils {
             }
         }
         if (state == 3) {
+            if(targetBuf == null) {
+                targetBuf = getBuffer(length);
+            }
             targetBuf[a--] = '/';
+        }
+        // no buffer was allocated which means no edits
+        // were performed to the original string and it
+        // can be returned as it is already in canonical form
+        if(targetBuf == null) {
+            return path;
         }
         return new String(targetBuf, a + 1, length - a - 1);
     }
