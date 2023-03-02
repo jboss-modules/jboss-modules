@@ -11,6 +11,7 @@ import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
 
+import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 
 //@Ignore
@@ -30,6 +31,11 @@ public class PathUtilsBenchmarkTest {
      * This string will be changed a lot by the canonicalization process
      */
     private static final String MANY_CHANGE_STRING = "/../../../../../.././.thing/../../././../";
+
+    /**
+     * Represents a path with just a dot but no need to canonicalize
+     */
+    private static final String WITH_DOT_BUT_FINE = "META-INF/application.properties";
 
     @Test
     public void launch() throws RunnerException {
@@ -64,6 +70,11 @@ public class PathUtilsBenchmarkTest {
     }
 
     @Benchmark
+    public void withDotButFine(Blackhole bh) {
+        bh.consume(PathUtils.canonicalize(WITH_DOT_BUT_FINE));
+    }
+
+    @Benchmark
     public void directNoChangeString(Blackhole bh) {
         bh.consume(PathUtils.directCanonicalize(NO_CHANGE_STRING));
     }
@@ -76,5 +87,10 @@ public class PathUtilsBenchmarkTest {
     @Benchmark
     public void directManyChangeString(Blackhole bh) {
         bh.consume(PathUtils.directCanonicalize(MANY_CHANGE_STRING));
+    }
+
+    @Benchmark
+    public void directWithDotButFine(Blackhole bh) {
+        bh.consume(PathUtils.directCanonicalize(WITH_DOT_BUT_FINE));
     }
 }
