@@ -168,30 +168,63 @@ public class PathUtilsTest {
         assertEquals(MIN_LENGTH * 4, getBuffer(MIN_LENGTH * 3 + 1).length);
     }
 
+    private void crosscheck(final String path) {
+        assertEquals(originalCanonicalize(path), canonicalize(path));
+    }
+    
     // ensure that buffer sharing doesn't cause issues for different path lengths by
     // running a test that recycles the same buffer in the same thread. this test uses
     // increasing and decreasing string lengths to ensure that no unintended data makes it
     // in the string
     @Test
-    public void testCorrectAgainstOriginal() {
-        assertEquals(originalCanonicalize(".."), PathUtils.canonicalize(".."));
-        assertEquals(originalCanonicalize("."), PathUtils.canonicalize("."));
-        assertEquals(originalCanonicalize("/foo/bar"), PathUtils.canonicalize("/foo/bar"));
-        assertEquals(originalCanonicalize("/foo/../bar"), PathUtils.canonicalize("/foo/../bar"));
-        assertEquals(originalCanonicalize("/bar/.."), PathUtils.canonicalize("/bar/.."));
-        assertEquals(originalCanonicalize("META-INF/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/."), PathUtils.canonicalize("META-INF/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/."));
-        assertEquals(originalCanonicalize("/baz/./"), PathUtils.canonicalize("/baz/./"));
-        assertEquals(originalCanonicalize("/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz"), PathUtils.canonicalize("/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz"));
-        assertEquals(originalCanonicalize("/baz/hidden.properties/.."), PathUtils.canonicalize("/baz/hidden.properties/.."));
-        assertEquals(originalCanonicalize("/baz/./hidden.properties/../../../check..thing/./"), PathUtils.canonicalize("/baz/./hidden.properties/../../../check..thing/./"));
-    }
+    public void testCurrentAgainstOriginal() {
+        crosscheck("application.properties");
+        crosscheck("./application.properties");
+        crosscheck("/../../../../../../../../other");
+        crosscheck("../../../../../../../../other");
+        crosscheck("../../../../../..");
+        crosscheck("/../../../../../..");
+        crosscheck("/../../..///.///../../..");
+        crosscheck("/thing/../other/../../..");
+        crosscheck("/thing/../other/..");
+        crosscheck("/thing/../other/again/..");
+        crosscheck("thing/../other/../../..");
+        crosscheck("/");
+        crosscheck("//");
+        crosscheck("///////////////////////////////////////////////////////////////////////////////////");
+        crosscheck("..");
+        crosscheck("../");
+        crosscheck("./");
+        crosscheck("/..");
+        crosscheck("/../");
+        crosscheck(".");
+        crosscheck("/./");
+        crosscheck("C:\\windows\\..\\");
+        crosscheck("/foo/bar");
+        crosscheck("/foo/bar///");
+        crosscheck("/foo/../bar");
+        crosscheck("/foo//../bar");
+        crosscheck("//");
+        crosscheck("///./../.././///application.thing/application.properties/..hidden");
+        crosscheck("/bar/..");
+        crosscheck("META-INF/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/a/.");
+        crosscheck("/baz/./");
+        crosscheck("/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz/baz");
+        crosscheck("/baz/hidden.properties/..");
+        crosscheck("/baz/./hidden.properties/../../../check..thing/./");
 
+        // it might be overkill because some strings are re-used but crosscheck everything in the benchmark plan as well
+        final PathUtilsBenchmarkTest.Plan plan = new PathUtilsBenchmarkTest.Plan();
+        for(final String input : plan.inputs) {
+            crosscheck(input);
+        }
+    }
 
     // run the correctness test over and over to ensure that the buffer reuse doesn't cause issues
     @Test
     public void testReusedBuffer() {
         for(int i = 0; i < 100; i++) {
-            this.testCorrectAgainstOriginal();
+            this.testCurrentAgainstOriginal();
         }
     }
 }

@@ -18,7 +18,7 @@
 
 package org.jboss.modules;
 
-import static java.lang.Math.max;
+import org.jboss.modules.filter.PathFilter;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,16 +27,9 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.text.Normalizer;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-import org.jboss.modules.filter.PathFilter;
+import static java.lang.Math.max;
 
 /**
  * General helpful path utility methods.
@@ -182,16 +175,18 @@ public final class PathUtils {
      * @param path the relative or absolute possibly non-canonical path
      * @return the canonical path
      */
-    static String directCanonicalize(String path) {
+    public static String canonicalize(String path) {
         final int length = path.length();
+        if (length == 0) {
+            return path;
+        }
+
         // 0 - start
         // 1 - got one .
         // 2 - got two .
         // 3 - got /
         int state = 0;
-        if (length == 0) {
-            return path;
-        }
+
         char[] targetBuf = null;
         // string segment end exclusive
         int e = length;
@@ -235,8 +230,38 @@ public final class PathUtils {
                         }
                         // not reached!
                     }
-                    final int newE = e > 0 ? path.lastIndexOf('/', e - 1) : -1;
+
+                    // look for the next boundary
+                    int newE = e > 0 ? path.lastIndexOf('/', e - 1) : -1;
+
+                    // this is a slight optimization that reduces the number of copies for strings that are
+                    // checking paths that need fewer modifications but it can only be done when no skipping
+                    // needs to be performed and it leads to an earlier "out" / allows longer strings to get
+                    // an early out on the zero-allocation path
+                    if (skip < 1) {
+                        do {
+                            if (newE < 1) {
+                                break;
+                            }
+                            final char peek = path.charAt(newE - 1);
+                            if ('/' != peek && '.' != peek) { // if the next character is just a normal character we can continue searching
+                                newE = path.lastIndexOf('/', newE - 1);
+                            } else { // otherwise we need to break out and do the original logic
+                                break;
+                            }
+                        } while (newE != -1);
+                    }
+
+                    // create segment length for the region that will be copied, which should be from the segment end
+                    // to wherever we found a boundary that cannot be crossed
                     final int segmentLength = e - newE - 1;
+
+                    // at this point we are attempting to copy the entire string so just return which avoids any sort
+                    // of allocation for non-modified strings
+                    if (segmentLength == length) {
+                        return path;
+                    }
+
                     if (skip > 0) {
                         skip--;
                     } else {
@@ -255,58 +280,23 @@ public final class PathUtils {
                 }
             }
         }
+
         if (state == 3) {
+            if (length - a - 1 == 1) {
+                return "/";
+            }
             if (targetBuf == null) {
                 targetBuf = getBuffer(length);
             }
             targetBuf[a--] = '/';
         }
+        if (length - a - 1 == 0) {
+            return "";
+        }
         if (targetBuf == null) {
             return path;
         }
         return new String(targetBuf, a + 1, length - a - 1);
-    }
-
-
-    private static boolean isSepChar(char ch) {
-        // on non-Windows, the JIT *should* eliminate the second check as redundant
-        return ch == '/' || ch == File.separatorChar;
-    }
-
-    /**
-     * Canonicalize the given path.  Removes all {@code .} and {@code ..} segments from the path.
-     *
-     * @param path the relative or absolute possibly non-canonical path
-     * @return the canonical path
-     */
-    public static String canonicalize(String path) {
-        // is null check here even needed?
-        if (path == null || path.isEmpty()) {
-            return path;
-        }
-
-        boolean found = false;
-        int idx = path.indexOf('.'); // maybe reuse the result of the above comparison for efficiency
-        // shortcut if string is "." or ".."
-        if (idx == 0 && path.length() == 1 || path.length() == 2 && path.charAt(idx+1) == '.') {
-            return "";
-        }
-        if (idx == -1) {
-            return path;
-        }
-        do {
-            // represents a state transitions that will be found via the state machine
-            // but if these patterns aren't contained in the string they can't be found
-            // via the state machine. (we know it already contains at least "." at this point.)
-            if (path.length() > idx + 1 && isSepChar(path.charAt(idx + 1)) || idx > 0 && isSepChar(path.charAt(idx - 1))) {
-                found = true;
-            }
-        } while (idx + 1 < path.length() && (idx = path.indexOf('.', idx + 1)) != -1);
-        if (!found) {
-            return path;
-        }
-
-        return directCanonicalize(path);
     }
 
     /**
