@@ -266,10 +266,6 @@ public final class PathUtils {
                             if (state == 3) {
                                 targetBuf[a--] = '/';
                             }
-//                            if (pathBuf == null) {
-//                                pathBuf = path.toCharArray();
-//                            }
-//                            System.arraycopy(pathBuf, newE + 1, targetBuf, (a -= segmentLength) + 1, segmentLength);
                             path.getChars(newE + 1, e, targetBuf, (a -= segmentLength) + 1);
                         }
                     }
