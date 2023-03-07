@@ -93,6 +93,7 @@
                             <execution>
                                 <id>default-test</id>
                                 <configuration>
+                                    <argLine>-Xmx2048m -Xms2048m</argLine>
                                     <includes>
                                         <include>**/BenchmarkSuite*</include>
                                     </includes>

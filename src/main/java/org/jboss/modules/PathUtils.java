@@ -154,14 +154,10 @@ public final class PathUtils {
     static char[] getBuffer(final int length) {
         char[] current = CHAR_BUFFER_CACHE.get();
         if(current == null || current.length < length) {
-            // since we can't shift left from the max value it will hold at the max value
-            // the length is checked against the min value and the min value is just returned if it is too low
-            // the shifting logic finds out how many powers of two we need to shift left to get to the next power of two
-            // requesting a size that is already a power of two will give you that same power of two
-            // because we get the same power of two we use a Math.max on the inner value to make sure we always meet the minimum
-            final int nextLength = length == Integer.MAX_VALUE ? Integer.MAX_VALUE
-                                : length <= MIN_LENGTH ? MIN_LENGTH
-                                : 1 << (Integer.SIZE - Integer.numberOfLeadingZeros(length - 1));
+            // for any value less than the minimum length use the minimum length
+            // for any value greater subtract one, then shift only the highest bit left one
+            // (this is the next greater power of two unless already a power of two where it will be the same)
+            final int nextLength = length <= MIN_LENGTH ? MIN_LENGTH : Integer.highestOneBit(length - 1) << 1;
             current = new char[nextLength];
             CHAR_BUFFER_CACHE.set(current);
         }

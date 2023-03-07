@@ -4,6 +4,7 @@ import org.junit.Test;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.profile.GCProfiler;
+import org.openjdk.jmh.profile.JavaFlightRecorderProfiler;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
@@ -24,7 +25,7 @@ public class PathUtilsBenchmarkTest {
             .timeout(TimeValue.seconds(30))
             .timeUnit(TimeUnit.MICROSECONDS)
             .forks(1)
-            .threads(2)
+            .threads(4) // original issues were found with EAP's MSC using 4 threads
             .addProfiler(GCProfiler.class)
             .warmupIterations(2)
             .measurementIterations(5)
@@ -56,6 +57,7 @@ public class PathUtilsBenchmarkTest {
             // these strings will be changed a lot by the canonicalization process
             "/../../../../../.././.thing/../../././../",
             "./../../../../..//////.course/../../././../",
+            "./../../../../..//////.course/../../././../com/thing/solution/model/AnotherModel.class",
             // these strings are more representative of the types of strings found in applications and should be represented heavily in the benchmark
             "META-INF/application.properties",
             "com/thing/solution/model/SomeModel.class",
