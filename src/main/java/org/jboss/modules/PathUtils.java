@@ -227,14 +227,16 @@ public final class PathUtils {
                         // not reached!
                     }
 
-                    // look for the next boundary
+                    // look for the next potential boundary point
                     int newE = e > 0 ? path.lastIndexOf('/', e - 1) : -1;
 
-                    // this is a slight optimization that reduces the number of copies for strings that are
-                    // checking paths that need fewer modifications but it can only be done when no skipping
-                    // needs to be performed and it leads to an earlier "out" / allows longer strings to get
-                    // an early out on the zero-allocation path
-                    if (skip < 1) {
+                    if (skip > 0) {
+                        skip--;
+                    } else {
+                        // this is a slight optimization that reduces the number of copies for strings that are
+                        // checking paths that need fewer modifications but it can only be done when no skipping
+                        // needs to be performed and it leads to an earlier "out" / allows longer strings to get
+                        // an early out on the zero-allocation path
                         do {
                             if (newE < 1) {
                                 break;
@@ -246,28 +248,30 @@ public final class PathUtils {
                                 break;
                             }
                         } while (newE != -1);
-                    }
 
-                    // create segment length for the region that will be copied, which should be from the segment end
-                    // to wherever we found a boundary that cannot be crossed
-                    final int segmentLength = e - newE - 1;
+                        // create segment length for the region that will be copied, which should be from the segment end
+                        // to wherever we found a boundary that cannot be crossed
+                        final int segmentLength = e - newE - 1;
 
-                    // at this point we are attempting to copy the entire string so just return which avoids any sort
-                    // of allocation for non-modified strings
-                    if (segmentLength == length) {
-                        return path;
-                    }
-
-                    if (skip > 0) {
-                        skip--;
-                    } else {
-                        if (targetBuf == null) {
-                            targetBuf = getBuffer(length);
+                        // at this point we are attempting to copy the entire string so just return which avoids any sort
+                        // of allocation for non-modified strings
+                        if (segmentLength == length) {
+                            return path;
                         }
-                        if (state == 3) {
-                            targetBuf[a--] = '/';
+
+                        if (segmentLength != 0) {  // not sure if this realistically skips anything
+                            if (targetBuf == null) {
+                                targetBuf = getBuffer(length);
+                            }
+                            if (state == 3) {
+                                targetBuf[a--] = '/';
+                            }
+//                            if (pathBuf == null) {
+//                                pathBuf = path.toCharArray();
+//                            }
+//                            System.arraycopy(pathBuf, newE + 1, targetBuf, (a -= segmentLength) + 1, segmentLength);
+                            path.getChars(newE + 1, e, targetBuf, (a -= segmentLength) + 1);
                         }
-                        path.getChars(newE + 1, e, targetBuf, (a -= segmentLength) + 1);
                     }
                     state = 0;
                     i = newE + 1;
@@ -276,19 +280,29 @@ public final class PathUtils {
                 }
             }
         }
-
+        // if we exit on a state of 3 then the path is absolute
         if (state == 3) {
+            // if the string is _only_ the absolute character
+            // do not allocate a new string
             if (length - a - 1 == 1) {
                 return "/";
             }
+            // we should not get here because if we do it somehow means we
+            // have an empty string but nothing in it that we are going to
+            // prepend to (remove?)
             if (targetBuf == null) {
                 targetBuf = getBuffer(length);
             }
+            // prepend the absolute start and also move the starting position of
+            // the buffer to the left by one.
             targetBuf[a--] = '/';
         }
+        // if the string has been cut down to a length of 0 then
+        // do not allocate anything and return an empty string
         if (length - a - 1 == 0) {
             return "";
         }
+        // no change was made so return the original path
         if (targetBuf == null) {
             return path;
         }

@@ -27,6 +27,7 @@ public class PathUtilsBenchmarkTest {
             .forks(1)
             .threads(4) // original issues were found with EAP's MSC using 4 threads
             .addProfiler(GCProfiler.class)
+            .addProfiler(JavaFlightRecorderProfiler.class, "dir=target/jfr;configName=profile")
             .warmupIterations(2)
             .measurementIterations(5)
             .shouldDoGC(true)
