@@ -178,8 +178,11 @@ public abstract class ModuleSpec {
                     resourceLoaders.addAll(this.resourceLoaders);
                 }
 
-                return new ConcreteModuleSpec(name, mainClass, assertionSetting, resourceLoaders.toArray(ResourceLoaderSpec.NO_RESOURCE_LOADERS), dependencies.toArray(dependencies.toArray(DependencySpec.NO_DEPENDENCIES)), fallbackLoader, moduleClassLoaderFactory, classFileTransformer, properties, permissionCollection, version);
-            }
+              
+                ConcreteModuleVersionAndDependency versionAndDependency= new ConcreteModuleVersionAndDependency(mainClass,dependencies.toArray(dependencies.toArray(DependencySpec.NO_DEPENDENCIES)),version);
+
+                return new ConcreteModuleSpec(name,assertionSetting, resourceLoaders.toArray(ResourceLoaderSpec.NO_RESOURCE_LOADERS), fallbackLoader, moduleClassLoaderFactory, classFileTransformer, properties, permissionCollection,versionAndDependency);
+               }
 
             @Override
             public String getName() {

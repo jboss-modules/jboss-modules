@@ -31,34 +31,36 @@ import java.util.Map;
  */
 public final class ConcreteModuleSpec extends ModuleSpec {
 
-    private final String mainClass;
+   
     private final AssertionSetting assertionSetting;
     private final ResourceLoaderSpec[] resourceLoaders;
-    private final DependencySpec[] dependencies;
+ 
     private final LocalLoader fallbackLoader;
     private final ModuleClassLoaderFactory moduleClassLoaderFactory;
     private final ClassTransformer classFileTransformer;
     private final Map<String, String> properties;
     private final PermissionCollection permissionCollection;
-    private final Version version;
+  
+    private final ConcreteModuleVersionAndDependency concreteModuleVersionAndDependency;
 
-    ConcreteModuleSpec(final String name, final String mainClass, final AssertionSetting assertionSetting, final ResourceLoaderSpec[] resourceLoaders, final DependencySpec[] dependencies, final LocalLoader fallbackLoader, final ModuleClassLoaderFactory moduleClassLoaderFactory, final ClassTransformer classFileTransformer, final Map<String, String> properties, final PermissionCollection permissionCollection, final Version version) {
+    ConcreteModuleSpec(final String name, final AssertionSetting assertionSetting, final ResourceLoaderSpec[] resourceLoaders, final LocalLoader fallbackLoader, final ModuleClassLoaderFactory moduleClassLoaderFactory, final ClassTransformer classFileTransformer, final Map<String, String> properties, final PermissionCollection permissionCollection,final ConcreteModuleVersionAndDependency concreteModuleVersionAndDependency) {
         super(name);
-        this.mainClass = mainClass;
+      
         this.assertionSetting = assertionSetting;
         this.resourceLoaders = resourceLoaders;
-        this.dependencies = dependencies;
+   
         this.fallbackLoader = fallbackLoader;
         this.moduleClassLoaderFactory = moduleClassLoaderFactory;
         this.classFileTransformer = classFileTransformer;
         this.properties = properties;
         this.permissionCollection = permissionCollection;
-        this.version = version;
+        this.concreteModuleVersionAndDependency=concreteModuleVersionAndDependency;
     }
 
-    public String getMainClass() {
-        return mainClass;
+    ConcreteModuleVersionAndDependency getConcreteModuleVersionAndDependency() {
+        return concreteModuleVersionAndDependency;
     }
+
 
     AssertionSetting getAssertionSetting() {
         return assertionSetting;
@@ -68,13 +70,6 @@ public final class ConcreteModuleSpec extends ModuleSpec {
         return resourceLoaders;
     }
 
-    DependencySpec[] getDependenciesInternal() {
-        return dependencies;
-    }
-
-    public DependencySpec[] getDependencies() {
-        return dependencies.length == 0 ? dependencies : dependencies.clone();
-    }
 
     LocalLoader getFallbackLoader() {
         return fallbackLoader;
@@ -96,7 +91,5 @@ public final class ConcreteModuleSpec extends ModuleSpec {
         return permissionCollection;
     }
 
-    public Version getVersion() {
-        return version;
-    }
+ 
 }

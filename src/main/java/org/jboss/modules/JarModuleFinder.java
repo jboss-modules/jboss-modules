@@ -76,112 +76,129 @@ public final class JarModuleFinder implements ModuleFinder {
         context = AccessController.getContext();
     }
 
+    //Replace conditional with polymorphism refactoring
     public ModuleSpec findModule(final String name, final ModuleLoader delegateLoader) throws ModuleLoadException {
         if (name.equals(myName)) {
-            // special root JAR module
-            Manifest manifest;
-            try {
-                manifest = jarFile.getManifest();
-            } catch (IOException e) {
-                throw new ModuleLoadException("Failed to load MANIFEST from JAR", e);
-            }
-            ModuleSpec.Builder builder = ModuleSpec.build(name);
-            Attributes mainAttributes = manifest.getMainAttributes();
-            String mainClass = mainAttributes.getValue(Attributes.Name.MAIN_CLASS);
-            if (mainClass != null) {
-                builder.setMainClass(mainClass);
-            }
-            String classPath = mainAttributes.getValue(Attributes.Name.CLASS_PATH);
-            String dependencies = mainAttributes.getValue(DEPENDENCIES);
-            MultiplePathFilterBuilder pathFilterBuilder = PathFilters.multiplePathFilterBuilder(true);
-            pathFilterBuilder.addFilter(PathFilters.is(MODULES_DIR), false);
-            pathFilterBuilder.addFilter(PathFilters.isChildOf(MODULES_DIR), false);
-            builder.addResourceRoot(ResourceLoaderSpec.createResourceLoaderSpec(new JarFileResourceLoader("", jarFile), pathFilterBuilder.create()));
-            String[] classPathEntries = classPath == null ? Utils.NO_STRINGS : classPath.split("\\s+");
-            for (String entry : classPathEntries) {
-                if (! entry.isEmpty()) {
-                    if (entry.startsWith("../") || entry.startsWith("./") || entry.startsWith("/") || entry.contains("/../")) {
-                        // invalid
-                        continue;
-                    }
-                    File root;
-                    try {
-                        File path = new File(new URI(entry));
-                        if (path.isAbsolute()) {
-                          root = path;
-                        } else {
-                          root = new File(jarFile.getName(), path.getPath());
-                        }
-                    } catch (URISyntaxException e) {
-                        // invalid, will probably fail anyway
-                        root = new File(jarFile.getName(), entry);
-                    }
-
-                    if (entry.endsWith("/")) {
-                        // directory reference
-                        builder.addResourceRoot(ResourceLoaderSpec.createResourceLoaderSpec(new PathResourceLoader(entry, root.toPath(), context)));
-                    } else {
-                        // assume a JAR
-                        JarFile childJarFile;
-                        try {
-                            childJarFile = JDKSpecific.getJarFile(root, true);
-                        } catch (IOException e) {
-                            // ignore and continue
-                            continue;
-                        }
-                        builder.addResourceRoot(ResourceLoaderSpec.createResourceLoaderSpec(new JarFileResourceLoader(entry, childJarFile)));
-                    }
-                }
-            }
-            String[] dependencyEntries = dependencies == null ? Utils.NO_STRINGS : dependencies.split("\\s*,\\s*");
-            for (String dependencyEntry : dependencyEntries) {
-                boolean optional = false;
-                boolean export = false;
-                dependencyEntry = dependencyEntry.trim();
-                if (! dependencyEntry.isEmpty()) {
-                    String[] fields = dependencyEntry.split("\\s+");
-                    if (fields.length < 1) {
-                        continue;
-                    }
-                    String moduleName = fields[0];
-                    for (int i = 1; i < fields.length; i++) {
-                        String field = fields[i];
-                        if (field.equals(OPTIONAL)) {
-                            optional = true;
-                        } else if (field.equals(EXPORT)) {
-                            export = true;
-                        }
-                        // else ignored
-                    }
-                    builder.addDependency(new ModuleDependencySpecBuilder()
-                        .setName(moduleName)
-                        .setExport(export)
-                        .setOptional(optional)
-                        .build());
-                }
-            }
-            builder.addDependency(DependencySpec.createSystemDependencySpec(JDKPaths.JDK));
-            builder.addDependency(DependencySpec.createLocalDependencySpec());
-            return builder.create();
+            return findRootModule(delegateLoader,name);
         } else {
-            final String path = PathUtils.basicModuleNameToPath(name);
-            if (path == null) {
-                return null; // not valid, so not found
-            }
-            String basePath = MODULES_DIR + "/" + path;
-            JarEntry moduleXmlEntry = jarFile.getJarEntry(basePath + "/" + MODULE_FILE);
-            if (moduleXmlEntry == null) {
-                return null;
-            }
-            ModuleSpec moduleSpec;
-            try {
-                try (final InputStream inputStream = jarFile.getInputStream(moduleXmlEntry)) {
-                    moduleSpec = ModuleXmlParser.parseModuleXml((rootPath, loaderPath, loaderName) -> new JarFileResourceLoader(loaderName, jarFile, loaderPath), basePath, inputStream, moduleXmlEntry.getName(), delegateLoader, name);
-                }
-            } catch (IOException e) {
-                throw new ModuleLoadException("Failed to read " + MODULE_FILE + " file", e);
-            }
-            return moduleSpec;
+            return findNestedModule(name, delegateLoader);
         }
+    }
+    
+    private ModuleSpec findRootModule(final ModuleLoader delegateLoader,final String name) throws ModuleLoadException {
+        // special root JAR module
+        Manifest manifest;
+        try {
+            manifest = jarFile.getManifest();
+        } catch (IOException e) {
+            throw new ModuleLoadException("Failed to load MANIFEST from JAR", e);
+        }
+        ModuleSpec.Builder builder = ModuleSpec.build(name);
+        Attributes mainAttributes = manifest.getMainAttributes();
+        String mainClass = mainAttributes.getValue(Attributes.Name.MAIN_CLASS);
+        if (mainClass != null) {
+            builder.setMainClass(mainClass);
+        }
+        String classPath = mainAttributes.getValue(Attributes.Name.CLASS_PATH);
+        String dependencies = mainAttributes.getValue(DEPENDENCIES);
+        MultiplePathFilterBuilder pathFilterBuilder = PathFilters.multiplePathFilterBuilder(true);
+        pathFilterBuilder.addFilter(PathFilters.is(MODULES_DIR), false);
+        pathFilterBuilder.addFilter(PathFilters.isChildOf(MODULES_DIR), false);
+        builder.addResourceRoot(ResourceLoaderSpec.createResourceLoaderSpec(new JarFileResourceLoader("", jarFile), pathFilterBuilder.create()));
+        String[] classPathEntries = classPath == null ? Utils.NO_STRINGS : classPath.split("\\s+");
+        for (String entry : classPathEntries) {
+            if (! entry.isEmpty()) {
+                addRootEntry(builder, entry);
+            }
+        }
+        String[] dependencyEntries = dependencies == null ? Utils.NO_STRINGS : dependencies.split("\\s*,\\s*");
+        for (String dependencyEntry : dependencyEntries) {
+            addDependency(builder, dependencyEntry);
+        }
+        builder.addDependency(DependencySpec.createSystemDependencySpec(JDKPaths.JDK));
+        builder.addDependency(DependencySpec.createLocalDependencySpec());
+        return builder.create();
+    }
+    
+    private void addRootEntry(final ModuleSpec.Builder builder, final String entry) {
+        if (entry.startsWith("../") || entry.startsWith("./") || entry.startsWith("/") || entry.contains("/../")) {
+            // invalid
+            return;
+        }
+        File root;
+        try {
+            File path = new File(new URI(entry));
+            if (path.isAbsolute()) {
+                root = path;
+            } else {
+                root = new File(jarFile.getName(), path.getPath());
+            }
+        } catch (URISyntaxException e) {
+            // invalid, will probably fail anyway
+            root = new File(jarFile.getName(), entry);
+        }
+    
+        if (entry.endsWith("/")) {
+            // directory reference
+            builder.addResourceRoot(ResourceLoaderSpec.createResourceLoaderSpec(new PathResourceLoader(entry, root.toPath(), context)));
+        } else {
+            // assume a JAR
+            JarFile childJarFile;
+            try {
+                childJarFile = JDKSpecific.getJarFile(root, true);
+            } catch (IOException e) {
+                // ignore and continue
+                return;
+            }
+            builder.addResourceRoot(ResourceLoaderSpec.createResourceLoaderSpec(new JarFileResourceLoader(entry, childJarFile)));
+        }
+    }
+    
+    private void addDependency(final ModuleSpec.Builder builder, String dependencyEntry) {
+        boolean optional = false;
+        boolean export = false;
+        dependencyEntry = dependencyEntry.trim();
+        if (! dependencyEntry.isEmpty()) {
+            String[] fields = dependencyEntry.split("\\s+");
+            if (fields.length < 1) {
+                return;
+            }
+            String moduleName = fields[0];
+            for (int i = 1; i < fields.length; i++) {
+                String field = fields[i];
+                if (field.equals(OPTIONAL)) {
+                    optional = true;
+                } else if (field.equals(EXPORT)) {
+                    export = true;
+                }
+                // else ignored
+            }
+            builder.addDependency(new ModuleDependencySpecBuilder()
+                .setName(moduleName)
+                .setExport(export)
+                .setOptional(optional)
+                .build());
+        }
+    }
+    
+    private ModuleSpec findNestedModule(final String name, final ModuleLoader delegateLoader) throws ModuleLoadException {
+        final String path = PathUtils.basicModuleNameToPath(name);
+        if (path == null) {
+            return null; // not valid, so not found
+        }
+        String basePath = MODULES_DIR + "/" + path;
+        JarEntry moduleXmlEntry = jarFile.getJarEntry(basePath + "/" + MODULE_FILE);
+        if (moduleXmlEntry == null) {
+            return null;
+        }
+        ModuleSpec moduleSpec;
+        try {
+            try (final InputStream inputStream = jarFile.getInputStream(moduleXmlEntry)) {
+                moduleSpec = ModuleXmlParser.parseModuleXml((rootPath, loaderPath, loaderName) -> new JarFileResourceLoader(loaderName, jarFile, loaderPath), basePath, inputStream, moduleXmlEntry.getName(), delegateLoader, name);
+            }
+        } catch (IOException e) {
+            throw new ModuleLoadException("Failed to read " + MODULE_FILE + " file", e);
+        }
+        return moduleSpec;
     }
 }

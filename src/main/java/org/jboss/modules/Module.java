@@ -233,7 +233,7 @@ public final class Module {
 
         // Initialize state from the spec.
         name = spec.getName();
-        mainClassName = spec.getMainClass();
+        mainClassName = spec.getConcreteModuleVersionAndDependency().getMainClass();
         fallbackLoader = spec.getFallbackLoader();
         final PermissionCollection permissionCollection = spec.getPermissionCollection();
         this.permissionCollection = permissionCollection == null ? NO_PERMISSIONS : permissionCollection.isReadOnly() ? permissionCollection : copyPermissions(permissionCollection);
@@ -242,7 +242,7 @@ public final class Module {
         final ModuleClassLoaderFactory factory = spec.getModuleClassLoaderFactory();
         final Map<String, String> properties = spec.getProperties();
         this.properties = properties.isEmpty() ? Collections.<String, String>emptyMap() : new LinkedHashMap<String, String>(properties);
-        this.version = spec.getVersion();
+        this.version = spec.getConcreteModuleVersionAndDependency().getVersion();
         ModuleClassLoader moduleClassLoader = null;
         if (factory != null) moduleClassLoader = factory.create(configuration);
         if (moduleClassLoader == null) moduleClassLoader = new ModuleClassLoader(configuration);

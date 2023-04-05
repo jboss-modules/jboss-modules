@@ -59,7 +59,7 @@ public final class DependencyTreeViewer {
         } else if (spec instanceof ConcreteModuleSpec) {
             out.println();
             final ConcreteModuleSpec concreteModuleSpec = (ConcreteModuleSpec) spec;
-            final DependencySpec[] dependencies = filtered(ModuleDependencySpec[].class, concreteModuleSpec.getDependencies());
+            final DependencySpec[] dependencies = filtered(ModuleDependencySpec[].class, concreteModuleSpec.getConcreteModuleVersionAndDependency().getDependencies());
             for (int i = 0, dependenciesLength = dependencies.length; i < dependenciesLength; i++) {
                 print(out, prefix, dependencies[i], visited, i == dependenciesLength - 1, roots);
             }

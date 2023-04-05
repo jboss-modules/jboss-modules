@@ -187,18 +187,16 @@ class FastCopyHashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable, Se
         }
     }
 
-    public boolean add(E key) {
+   //Decompose conditional refactoring
+   private void validateKeyParameter(E key) {
         if (key == null) {
             throw new IllegalArgumentException("key is null");
         }
+    }
 
-        E[] table = this.table;
-        int hash = key.hashCode();
-        int length = table.length;
-        int index = index(hash, length);
-
+    private int findNextAvailableIndex(E[] table, int start, int hash, int length,E key) {
         boolean f = false;
-        for (int start = index; ;) {
+        for (int index = start; ;) {
             E e = table[index];
             if (e == null)
                 break;
@@ -206,13 +204,29 @@ class FastCopyHashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable, Se
             if (! f) {
                 f= true;
             }
-            if (key.equals(e)) {
-                return false;
+            if (e.hashCode() == hash && e.equals(key)) {
+                return index;
             }
 
             index = nextIndex(index, length);
             if (index == start)
                 throw new IllegalStateException("Table is full!");
+        }
+
+        return -1;
+    }
+
+    public boolean add(E key) {
+        validateKeyParameter(key);
+
+        E[] table = this.table;
+        int hash = key.hashCode();
+        int length = table.length;
+        int index = index(hash, length);
+
+        int nextIndex = findNextAvailableIndex(table, index, hash, length,key);
+        if (nextIndex != -1) {
+            return false;
         }
 
         modCount++;
@@ -292,27 +306,27 @@ class FastCopyHashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable, Se
         }
     }
 
-    private void relocate(int start) {
+      //Introduce explaining variable refactoring
+      private void relocate(int start) {
         E[] table = this.table;
         int length = table.length;
         int current = nextIndex(start, length);
-
+    
         for (; ;) {
             E e = table[current];
             if (e == null)
                 return;
-
-            // A Doug Lea variant of Knuth's Section 6.4 Algorithm R.
-            // This provides a non-recursive method of relocating
-            // entries to their optimal positions once a gap is created.
-            int prefer = index(e.hashCode(), length);
-            if ((current < prefer && (prefer <= start || start <= current))
-                    || (prefer <= start && start <= current)) {
+            //explaning
+            int preferIndex = index(e.hashCode(), length);
+            boolean shouldRelocate = (current < preferIndex && (preferIndex <= start || start <= current))
+                    || (preferIndex <= start && start <= current);
+            
+            if (shouldRelocate) {
                 table[start] = e;
                 table[current] = null;
                 start = current;
             }
-
+    
             current = nextIndex(current, length);
         }
     }
@@ -501,23 +515,24 @@ class FastCopyHashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable, Se
             return false;
         }
 
+        // Extract method refactoring
         @SuppressWarnings("unchecked")
         public void remove() {
             if (modCount != expectedCount)
                 throw new ConcurrentModificationException();
-
+        
             int current = this.current;
             int delete = current;
-
+        
             if (current == -1)
                 throw new IllegalStateException();
-
+        
             // Invalidate current (prevents multiple remove)
             this.current = -1;
-
+        
             // Start were we relocate
             next = delete;
-
+        
             E[] table = this.table;
             if (table != FastCopyHashSet.this.table) {
                 FastCopyHashSet.this.remove(table[delete]);
@@ -525,20 +540,23 @@ class FastCopyHashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable, Se
                 expectedCount = modCount;
                 return;
             }
-
-
+        
+            deleteEntry(current, delete, table);
+        }
+        
+        private void deleteEntry(int current, int delete, E[] table) {
             int length = table.length;
             int i = delete;
-
+        
             table[delete] = null;
             size--;
-
+        
             for (; ;) {
                 i = nextIndex(i, length);
                 E e = table[i];
                 if (e == null)
                     break;
-
+        
                 int prefer = index(e.hashCode(), length);
                 if ((i < prefer && (prefer <= delete || delete <= i))
                         || (prefer <= delete && delete <= i)) {
@@ -548,13 +566,13 @@ class FastCopyHashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable, Se
                         int remaining = length - current;
                         E[] newTable = (E[]) new Object[remaining];
                         System.arraycopy(table, current, newTable, 0, remaining);
-
+        
                         // Replace iterator's table.
                         // Leave table local var pointing to the real table
                         this.table = newTable;
                         next = 0;
                     }
-
+        
                     // Do the swap on the real table
                     table[delete] = e;
                     table[i] = null;

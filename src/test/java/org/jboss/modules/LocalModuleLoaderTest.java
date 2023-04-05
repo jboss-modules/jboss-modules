@@ -34,7 +34,7 @@ import static org.junit.Assert.fail;
  * @author John Bailey
  */
 public class LocalModuleLoaderTest extends AbstractModuleTestCase {
-    private ModuleLoader moduleLoader;
+    private LocalModuleLoader moduleLoader;
 
     @Before
     public void setupModuleLoader() throws Exception {
