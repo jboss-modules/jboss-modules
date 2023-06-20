@@ -257,13 +257,13 @@ final class JDKSpecific {
         }
 
         @Override
-        public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs) throws IOException {
+        public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs) {
             final String d = dir.toString();
             return d.equals(SLASH) || d.startsWith(PACKAGES) ? CONTINUE : SKIP_SUBTREE;
         }
 
         @Override
-        public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) throws IOException {
+        public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
             if (file.getNameCount() >= 3 && file.getName(0).toString().equals("packages")) {
                 pathSet.add(file.getName(1).toString().replace('.', '/'));
             }
@@ -271,12 +271,12 @@ final class JDKSpecific {
         }
 
         @Override
-        public FileVisitResult visitFileFailed(final Path file, final IOException exc) throws IOException {
+        public FileVisitResult visitFileFailed(final Path file, final IOException exc) {
             return CONTINUE;
         }
 
         @Override
-        public FileVisitResult postVisitDirectory(final Path dir, final IOException exc) throws IOException {
+        public FileVisitResult postVisitDirectory(final Path dir, final IOException exc) {
             return CONTINUE;
         }
     }
