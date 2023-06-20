@@ -137,7 +137,7 @@ final class JDKSpecific {
                 } catch (IOException e) {
                     return Collections.emptyList();
                 }
-                final List<Resource> list = new ArrayList<Resource>();
+                final List<Resource> list = new ArrayList<>();
                 while (urls.hasMoreElements()) {
                     final URL url = urls.nextElement();
                     URLConnection connection = null;
@@ -190,9 +190,9 @@ final class JDKSpecific {
 
     static <T> Iterable<T> findServices(final Class<T> serviceType, final Predicate<Class<?>> filter, final ClassLoader classLoader) {
        final Iterator<ServiceLoader.Provider<T>> delegate = ServiceLoader.load(serviceType, classLoader).stream().iterator();
-       return new Iterable<T>() {
+       return new Iterable<>() {
             public Iterator<T> iterator() {
-                return new Iterator<T>() {
+                return new Iterator<>() {
                     T next = null;
 
                     public boolean hasNext() {

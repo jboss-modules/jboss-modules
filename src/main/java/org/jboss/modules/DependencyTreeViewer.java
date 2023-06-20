@@ -134,7 +134,7 @@ public final class DependencyTreeViewer {
      */
     public static void print(PrintWriter out, String name, final File... roots) {
         out.print(name);
-        print(out, "", name, new FastCopyHashSet<String>(), roots);
+        print(out, "", name, new FastCopyHashSet<>(), roots);
         out.flush();
     }
 }

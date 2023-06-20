@@ -73,9 +73,9 @@ public abstract class ModuleSpec {
         final Builder builder = new Builder() {
             private String mainClass;
             private AssertionSetting assertionSetting = AssertionSetting.INHERIT;
-            private final List<ResourceLoaderSpec> resourceLoaders = new ArrayList<ResourceLoaderSpec>(0);
-            private final List<DependencySpec> dependencies = new ArrayList<DependencySpec>();
-            private final Map<String, String> properties = new LinkedHashMap<String, String>(0);
+            private final List<ResourceLoaderSpec> resourceLoaders = new ArrayList<>(0);
+            private final List<DependencySpec> dependencies = new ArrayList<>();
+            private final Map<String, String> properties = new LinkedHashMap<>(0);
             private final Map<String, List<String>> provides = new HashMap<>(0);
             private LocalLoader fallbackLoader;
             private ModuleClassLoaderFactory moduleClassLoaderFactory;

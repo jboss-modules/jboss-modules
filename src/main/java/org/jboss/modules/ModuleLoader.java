@@ -333,7 +333,7 @@ public class ModuleLoader {
         if (sm != null) {
             sm.checkPermission(MODULE_ITERATE_PERM);
         }
-        return new Iterator<String>() {
+        return new Iterator<>() {
             int idx;
             Iterator<String> nested;
 
@@ -925,7 +925,7 @@ public class ModuleLoader {
         }
     }
 
-    private static final Reaper<ModuleLoader, ObjectName> reaper = new Reaper<ModuleLoader, ObjectName>() {
+    private static final Reaper<ModuleLoader, ObjectName> reaper = new Reaper<>() {
         public void reap(final Reference<ModuleLoader, ObjectName> reference) {
             REG_REF.removeMBean(reference.getAttachment());
         }
@@ -935,7 +935,7 @@ public class ModuleLoader {
         private final Reference<ModuleLoader, ObjectName> reference;
 
         MXBeanImpl(final ModuleLoader moduleLoader, final ObjectName objectName) {
-            reference = new WeakReference<ModuleLoader, ObjectName>(moduleLoader, objectName, reaper);
+            reference = new WeakReference<>(moduleLoader, objectName, reaper);
         }
 
         public String getDescription() {
@@ -1080,7 +1080,7 @@ public class ModuleLoader {
             if (dependencies == null) {
                 return Collections.emptyList();
             }
-            ArrayList<DependencyInfo> list = new ArrayList<DependencyInfo>(dependencies.length);
+            ArrayList<DependencyInfo> list = new ArrayList<>(dependencies.length);
             for (Dependency dependency : dependencies) {
                 final String dependencyType = dependency.getClass().getSimpleName();
                 final String exportFilter = dependency.getExportFilter().toString();
@@ -1088,7 +1088,7 @@ public class ModuleLoader {
                 final DependencyInfo info;
                 if (dependency instanceof LocalDependency) {
                     final LocalDependency localDependency = (LocalDependency) dependency;
-                    ArrayList<String> pathList = new ArrayList<String>(localDependency.getPaths());
+                    ArrayList<String> pathList = new ArrayList<>(localDependency.getPaths());
                     Collections.sort(pathList);
                     info = new DependencyInfo(dependencyType, exportFilter, importFilter, null, null, false, localDependency.getLocalLoader().toString(), pathList);
                 } else if (dependency instanceof ModuleDependency) {
@@ -1111,7 +1111,7 @@ public class ModuleLoader {
         private List<ResourceLoaderInfo> doGetResourceLoaders(final Module module) {
             final ModuleClassLoader classLoader = module.getClassLoaderPrivate();
             final ResourceLoader[] loaders = classLoader.getResourceLoaders();
-            final ArrayList<ResourceLoaderInfo> list = new ArrayList<ResourceLoaderInfo>(loaders.length);
+            final ArrayList<ResourceLoaderInfo> list = new ArrayList<>(loaders.length);
             for (ResourceLoader resourceLoader : loaders) {
                 list.add(new ResourceLoaderInfo(resourceLoader.getClass().getName(), String.valueOf(resourceLoader.getLocation()), new ArrayList<>(resourceLoader.getPaths())));
             }
@@ -1137,16 +1137,16 @@ public class ModuleLoader {
             } catch (ModuleLoadError e) {
                 throw new IllegalArgumentException("Error loading module " + name + ": " + e.toString());
             }
-            final TreeMap<String, List<String>> result = new TreeMap<String, List<String>>();
+            final TreeMap<String, List<String>> result = new TreeMap<>();
             for (Map.Entry<String, List<LocalLoader>> entry : paths.entrySet()) {
                 final String path = entry.getKey();
                 final List<LocalLoader> loaders = entry.getValue();
                 if (loaders.isEmpty()) {
-                    result.put(path, Collections.<String>emptyList());
+                    result.put(path, Collections.emptyList());
                 } else if (loaders.size() == 1) {
-                    result.put(path, Collections.<String>singletonList(loaders.get(0).toString()));
+                    result.put(path, Collections.singletonList(loaders.get(0).toString()));
                 } else {
-                    final ArrayList<String> list = new ArrayList<String>();
+                    final ArrayList<String> list = new ArrayList<>();
                     for (LocalLoader localLoader : loaders) {
                         list.add(localLoader.toString());
                     }
@@ -1210,7 +1210,7 @@ public class ModuleLoader {
     }
 
     private static final class TempMBeanReg implements MBeanReg {
-        private final Map<ObjectName, Object> mappings = new LinkedHashMap<ObjectName, Object>();
+        private final Map<ObjectName, Object> mappings = new LinkedHashMap<>();
 
         public boolean addMBean(final ObjectName name, final Object bean) {
             if (bean == null) {
@@ -1253,7 +1253,7 @@ public class ModuleLoader {
         private final MBeanServer server;
 
         RealMBeanReg() {
-            server = doPrivileged(new PrivilegedAction<MBeanServer>() {
+            server = doPrivileged(new PrivilegedAction<>() {
                 public MBeanServer run() {
                     return ManagementFactory.getPlatformMBeanServer();
                 }

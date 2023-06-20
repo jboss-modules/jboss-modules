@@ -83,7 +83,7 @@ public final class PathUtils {
             // here's where it starts to get ugly...
             final URLClassLoader urlClassLoader = (URLClassLoader) classLoader;
             final URL[] urls = urlClassLoader.getURLs();
-            final Set<String> paths = new HashSet<String>();
+            final Set<String> paths = new HashSet<>();
             for (URL url : urls) {
                 final URI uri;
                 try {

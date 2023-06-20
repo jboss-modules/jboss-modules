@@ -51,7 +51,7 @@ class LayeredModulePathFactory {
     static File[] resolveLayeredModulePath(File... modulePath) {
 
         boolean foundLayers = false;
-        List<File> layeredPath = new ArrayList<File>();
+        List<File> layeredPath = new ArrayList<>();
         for (File file : modulePath) {
 
             // Always add the root, as the user may place modules directly in it
@@ -70,7 +70,7 @@ class LayeredModulePathFactory {
             }
 
             boolean validLayers = true;
-            List<File> layerFiles = new ArrayList<File>();
+            List<File> layerFiles = new ArrayList<>();
             for (String layerName : layersConfig.getLayers()) {
                 File layer = new File(layersDir, layerName);
                 if (!layer.exists()) {
@@ -151,7 +151,7 @@ class LayeredModulePathFactory {
                 }
             } else {
                 String[] layerNames = layersProp.split(",");
-                layers = new ArrayList<String>();
+                layers = new ArrayList<>();
                 boolean hasBase = false;
                 for (String layerName : layerNames) {
                     if ("base".equals(layerName)) {
@@ -227,7 +227,7 @@ class LayeredModulePathFactory {
     }
 
     static List<String> readRefs(final InputStream is) throws IOException {
-        final List<String> refs = new ArrayList<String>();
+        final List<String> refs = new ArrayList<>();
         final StringBuffer buffer = new StringBuffer();
         do {
             if(buffer.length() > 0) {

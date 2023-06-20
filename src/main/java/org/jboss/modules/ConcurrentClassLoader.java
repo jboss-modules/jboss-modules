@@ -38,7 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public abstract class ConcurrentClassLoader extends NamedClassLoader {
 
-    private static final ThreadLocal<Boolean> GET_PACKAGE_SUPPRESSOR = new ThreadLocal<Boolean>();
+    private static final ThreadLocal<Boolean> GET_PACKAGE_SUPPRESSOR = new ThreadLocal<>();
 
     static {
         if (! ClassLoader.registerAsParallelCapable()) {
@@ -453,7 +453,7 @@ public abstract class ConcurrentClassLoader extends NamedClassLoader {
      * @return the packages
      */
     protected Package[] getPackages() {
-        ArrayList<Package> list = new ArrayList<Package>();
+        ArrayList<Package> list = new ArrayList<>();
         list.addAll(packages.values());
         list.addAll(Arrays.asList(super.getPackages()));
         return list.toArray(new Package[list.size()]);

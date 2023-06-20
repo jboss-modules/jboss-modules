@@ -59,7 +59,7 @@ public class NativeLibraryResourceLoader extends AbstractResourceLoader {
         static final String FEDORA = "fedora";
 
         static {
-            final Object[] strings = AccessController.doPrivileged(new PrivilegedAction<Object[]>() {
+            final Object[] strings = AccessController.doPrivileged(new PrivilegedAction<>() {
                 public Object[] run() {
                     // First, identify the operating system.
                     boolean knownOs = true;

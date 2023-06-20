@@ -77,9 +77,9 @@ public final class Module {
 
     static {
         log = NoopModuleLogger.getInstance();
-        BOOT_MODULE_LOADER = new AtomicReference<ModuleLoader>();
-        EMPTY_CLASS_FILTERS = new FastCopyHashSet<ClassFilter>(0);
-        EMPTY_PATH_FILTERS = new FastCopyHashSet<PathFilter>(0);
+        BOOT_MODULE_LOADER = new AtomicReference<>();
+        EMPTY_CLASS_FILTERS = new FastCopyHashSet<>(0);
+        EMPTY_PATH_FILTERS = new FastCopyHashSet<>(0);
         GET_DEPENDENCIES = new RuntimePermission("getDependencies");
         GET_CLASS_LOADER = new RuntimePermission("getClassLoader");
         GET_BOOT_MODULE_LOADER = new RuntimePermission("getBootModuleLoader");
@@ -88,7 +88,7 @@ public final class Module {
         ADD_URL_STREAM_HANDLER_FACTORY = new RuntimePermission("addURLStreamHandlerFactory");
 
         final String pkgsString = AccessController.doPrivileged(new PropertyReadAction("jboss.modules.system.pkgs"));
-        final List<String> list = new ArrayList<String>();
+        final List<String> list = new ArrayList<>();
         if (pkgsString != null) {
             int i;
             int nc = -1;
@@ -240,7 +240,7 @@ public final class Module {
         final ModuleClassLoader.Configuration configuration = new ModuleClassLoader.Configuration(this, spec.getAssertionSetting(), spec.getResourceLoaders(), spec.getClassFileTransformer());
         final ModuleClassLoaderFactory factory = spec.getModuleClassLoaderFactory();
         final Map<String, String> properties = spec.getProperties();
-        this.properties = properties.isEmpty() ? Collections.<String, String>emptyMap() : new LinkedHashMap<String, String>(properties);
+        this.properties = properties.isEmpty() ? Collections.emptyMap() : new LinkedHashMap<>(properties);
         this.version = spec.getVersion();
         ModuleClassLoader moduleClassLoader = null;
         if (factory != null) moduleClassLoader = factory.create(configuration);
@@ -409,7 +409,7 @@ public final class Module {
         return ServiceLoader.load(serviceType, new ClassLoader(null) {
             public Enumeration<URL> getResources(final String name) throws IOException {
                 final Enumeration<Resource> resourceEnumeration = Collections.enumeration(getClassLoader().getLocalLoader().loadResourceLocal(name));
-                return new Enumeration<URL>() {
+                return new Enumeration<>() {
                     public boolean hasMoreElements() {
                         return resourceEnumeration.hasMoreElements();
                     }
@@ -869,7 +869,7 @@ public final class Module {
         final Map<String, List<LocalLoader>> paths = getPathsUnchecked();
         final List<LocalLoader> loaders = paths.get(path);
 
-        final List<URL> list = new ArrayList<URL>();
+        final List<URL> list = new ArrayList<>();
         if (loaders != null) {
             for (LocalLoader loader : loaders) {
                 final List<Resource> resourceList = loader.loadResourceLocal(canonPath);
@@ -920,7 +920,7 @@ public final class Module {
     public Iterator<Resource> iterateResources(final PathFilter filter) throws ModuleLoadException {
         final Map<String, List<LocalLoader>> paths = getPaths();
         final Iterator<Map.Entry<String, List<LocalLoader>>> iterator = paths.entrySet().iterator();
-        return new Iterator<Resource>() {
+        return new Iterator<>() {
 
             private String path;
             private Iterator<Resource> resourceIterator;
@@ -1081,7 +1081,7 @@ public final class Module {
      * @return the property names list
      */
     public List<String> getPropertyNames() {
-        return new ArrayList<String>(properties.keySet());
+        return new ArrayList<>(properties.keySet());
     }
 
     /**
@@ -1325,7 +1325,7 @@ public final class Module {
                     if (importFilter.accept(path)) {
                         List<LocalLoader> list = map.get(path);
                         if (list == null) {
-                            map.put(path, list = new ArrayList<LocalLoader>());
+                            map.put(path, list = new ArrayList<>());
                             list.add(localLoader);
                         } else if (! list.contains(localLoader)) {
                             list.add(localLoader);
@@ -1359,7 +1359,7 @@ public final class Module {
                     if (importFilter.accept(path)) {
                         List<LocalLoader> list = map.get(path);
                         if (list == null) {
-                            map.put(path, list = new ArrayList<LocalLoader>());
+                            map.put(path, list = new ArrayList<>());
                             list.add(localLoader);
                         } else if (! list.contains(localLoader)) {
                             list.add(localLoader);
@@ -1495,7 +1495,7 @@ public final class Module {
                         if (accept && importFilter.accept(path) && exportFilter.accept(path)) {
                             List<LocalLoader> list = map.get(path);
                             if (list == null) {
-                                map.put(path, list = new ArrayList<LocalLoader>(1));
+                                map.put(path, list = new ArrayList<>(1));
                                 list.add(localLoader);
                             } else if (! list.contains(localLoader)) {
                                 list.add(localLoader);
@@ -1542,7 +1542,7 @@ public final class Module {
                         if (accept && localDependency.getImportFilter().accept(path) && localDependency.getExportFilter().accept(path)) {
                             List<LocalLoader> list = map.get(path);
                             if (list == null) {
-                                map.put(path, list = new ArrayList<LocalLoader>(1));
+                                map.put(path, list = new ArrayList<>(1));
                                 list.add(localLoader);
                             } else if (! list.contains(localLoader)) {
                                 list.add(localLoader);
@@ -1615,13 +1615,13 @@ public final class Module {
     }
 
     void link(final Linkage linkage) throws ModuleLoadException {
-        final HashMap<String, List<LocalLoader>> importsMap = new HashMap<String, List<LocalLoader>>();
+        final HashMap<String, List<LocalLoader>> importsMap = new HashMap<>();
         final Dependency[] dependencies = linkage.getDependencies();
         final long start = Metrics.getCurrentCPUTime();
         long subtractTime = 0L;
         try {
-            final Set<Visited> visited = new FastCopyHashSet<Visited>(16);
-            final FastCopyHashSet<PathFilter> filterStack = new FastCopyHashSet<PathFilter>(8);
+            final Set<Visited> visited = new FastCopyHashSet<>(16);
+            final FastCopyHashSet<PathFilter> filterStack = new FastCopyHashSet<>(8);
             final FastCopyHashSet<ClassFilter> classFilterStack = EMPTY_CLASS_FILTERS;
             final FastCopyHashSet<PathFilter> resourceFilterStack = EMPTY_PATH_FILTERS;
             subtractTime += addPaths(dependencies, importsMap, filterStack, classFilterStack, resourceFilterStack, visited);
@@ -1715,7 +1715,7 @@ public final class Module {
     }
 
     Package[] getPackages() {
-        final ArrayList<Package> packages = new ArrayList<Package>();
+        final ArrayList<Package> packages = new ArrayList<>();
         final Map<String, List<LocalLoader>> allPaths = getPathsUnchecked();
         next: for (String path : allPaths.keySet()) {
             String packageName = path.replace('/', '.');

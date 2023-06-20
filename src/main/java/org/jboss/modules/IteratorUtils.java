@@ -29,7 +29,7 @@ final class IteratorUtils {
     }
 
     public static <T, U> Iterator<U> transformingIterator(Iterator<T> original, Function<T, U> translator) {
-        return new Iterator<U>() {
+        return new Iterator<>() {
             public boolean hasNext() {
                 return original.hasNext();
             }

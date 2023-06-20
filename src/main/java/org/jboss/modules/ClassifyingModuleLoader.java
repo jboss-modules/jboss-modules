@@ -41,7 +41,7 @@ public final class ClassifyingModuleLoader extends ModuleLoader {
     public ClassifyingModuleLoader(final String name, final Map<String, ModuleLoader> delegates, final ModuleLoader defaultLoader) {
         super(true, false);
         this.defaultLoader = defaultLoader;
-        this.delegates = new HashMap<String, ModuleLoader>(delegates);
+        this.delegates = new HashMap<>(delegates);
         this.name = name;
     }
 
@@ -74,7 +74,7 @@ public final class ClassifyingModuleLoader extends ModuleLoader {
      * @param delegates the new delegates map to use
      */
     public void setDelegates(Map<String, ModuleLoader> delegates) {
-        this.delegates = new HashMap<String, ModuleLoader>(delegates);
+        this.delegates = new HashMap<>(delegates);
     }
 
     public String toString() {

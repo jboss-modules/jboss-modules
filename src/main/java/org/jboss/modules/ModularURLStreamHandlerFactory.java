@@ -40,12 +40,12 @@ final class ModularURLStreamHandlerFactory implements URLStreamHandlerFactory {
 
     private static final ThreadLocal<Set<String>> reentered = new ThreadLocal<Set<String>>() {
         protected Set<String> initialValue() {
-            return new FastCopyHashSet<String>();
+            return new FastCopyHashSet<>();
         }
     };
 
     static {
-        CopyOnWriteArrayList<Module> list = new CopyOnWriteArrayList<Module>();
+        CopyOnWriteArrayList<Module> list = new CopyOnWriteArrayList<>();
         final SecurityManager sm = System.getSecurityManager();
         final String urlModulesList;
         if (sm != null) {
@@ -54,7 +54,7 @@ final class ModularURLStreamHandlerFactory implements URLStreamHandlerFactory {
             urlModulesList = URL_MODULES_LIST_ACTION.run();
         }
         if (urlModulesList != null) {
-            final List<Module> moduleList = new ArrayList<Module>();
+            final List<Module> moduleList = new ArrayList<>();
             int f = 0;
             int i;
             do {

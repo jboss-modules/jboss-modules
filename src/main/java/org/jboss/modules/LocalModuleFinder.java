@@ -265,7 +265,7 @@ public final class LocalModuleFinder implements IterableModuleFinder, AutoClosea
     };
 
     public Iterator<String> iterateModules(final String baseName, final boolean recursive, final ModuleLoader delegateLoader) {
-        return new Iterator<String>() {
+        return new Iterator<>() {
             private final Iterator<File> rootIter = Arrays.asList(repoRoots).iterator();
             private final Set<String> found = new HashSet<>();
             private Iterator<Path> pathIter;
