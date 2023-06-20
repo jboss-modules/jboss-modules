@@ -188,10 +188,6 @@ final class JDKSpecific {
         }
     }
 
-    static void addInternalPackages(final List<String> list) {
-        // none in Java 9+
-    }
-
     static <T> Iterable<T> findServices(final Class<T> serviceType, final Predicate<Class<?>> filter, final ClassLoader classLoader) {
        final Iterator<ServiceLoader.Provider<T>> delegate = ServiceLoader.load(serviceType, classLoader).stream().iterator();
        return new Iterable<T>() {

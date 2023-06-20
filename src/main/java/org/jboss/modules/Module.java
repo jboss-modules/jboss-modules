@@ -89,7 +89,6 @@ public final class Module {
 
         final String pkgsString = AccessController.doPrivileged(new PropertyReadAction("jboss.modules.system.pkgs"));
         final List<String> list = new ArrayList<String>();
-        JDKSpecific.addInternalPackages(list);
         if (pkgsString != null) {
             int i;
             int nc = -1;
