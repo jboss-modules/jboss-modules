@@ -18,10 +18,6 @@
 
 package org.jboss.modules;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  * @author <a href="mailto:ropalka@redhat.com">Richard Opalka</a>
@@ -42,14 +38,5 @@ final class Utils {
     }
 
     static final ModuleLoader JDK_MODULE_LOADER = new ModuleLoader(JDKModuleFinder.getInstance());
-
-    static void copy(final InputStream in, final OutputStream out) throws IOException {
-        byte[] buf = new byte[16384];
-        int len;
-        while ((len = in.read(buf)) > 0) {
-            out.write(buf, 0, len);
-        }
-        out.flush();
-    }
 
 }
