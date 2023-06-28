@@ -31,7 +31,7 @@ import static java.security.AccessController.doPrivileged;
  */
 final class SecurityActions {
 
-    private static final PrivilegedAction<ClassLoader> GET_LOADER_ACTION = new PrivilegedAction<ClassLoader>() {
+    private static final PrivilegedAction<ClassLoader> GET_LOADER_ACTION = new PrivilegedAction<>() {
         public ClassLoader run() {
             return currentThread().getContextClassLoader();
         }
@@ -40,7 +40,7 @@ final class SecurityActions {
     static ClassLoader setContextClassLoader(final ClassLoader classLoader) {
         final SecurityManager sm = getSecurityManager();
         if (sm != null) {
-            return doPrivileged(new PrivilegedAction<ClassLoader>() {
+            return doPrivileged(new PrivilegedAction<>() {
                 public ClassLoader run() {
                     try {
                         return currentThread().getContextClassLoader();

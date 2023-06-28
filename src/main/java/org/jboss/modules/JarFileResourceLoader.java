@@ -265,7 +265,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
             }
         }
         final Iterator<String> iterator = directory.iterator();
-        return new Iterator<Resource>() {
+        return new Iterator<>() {
             private Resource next;
 
             public boolean hasNext() {
@@ -302,7 +302,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
     }
 
     public Collection<String> getPaths() {
-        final Collection<String> index = new HashSet<String>();
+        final Collection<String> index = new HashSet<>();
         index.add("");
         extractJarPaths(jarFile, relativePath, index);
         return index;

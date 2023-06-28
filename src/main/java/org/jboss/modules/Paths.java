@@ -47,7 +47,7 @@ final class Paths<T, A> {
         return sourceList == null ? defVal : sourceList;
     }
 
-    static final Paths<?, ?> NONE = new Paths<Object, Object>(null, null);
+    static final Paths<?, ?> NONE = new Paths<>(null, null);
 
     @SuppressWarnings({ "unchecked" })
     static <T, A> Paths<T, A> none() {

@@ -85,7 +85,7 @@ final class ClassLoaderLocalLoader implements LocalLoader {
         } catch (IOException e) {
             return Collections.emptyList();
         }
-        final List<Resource> list = new ArrayList<Resource>();
+        final List<Resource> list = new ArrayList<>();
         while (urls.hasMoreElements()) {
             final URL url = urls.nextElement();
             URLConnection connection = null;

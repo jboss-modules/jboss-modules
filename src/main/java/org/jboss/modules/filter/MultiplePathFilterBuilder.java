@@ -28,8 +28,8 @@ import java.util.List;
  * @see PathFilters#multiplePathFilterBuilder(boolean)
  */
 public class MultiplePathFilterBuilder {
-    private final List<PathFilter> filters = new ArrayList<PathFilter>();
-    private final List<Boolean> includeFlags = new ArrayList<Boolean>();
+    private final List<PathFilter> filters = new ArrayList<>();
+    private final List<Boolean> includeFlags = new ArrayList<>();
     private final boolean defaultVal;
 
     MultiplePathFilterBuilder(final boolean defaultVal) {

@@ -46,23 +46,23 @@ public final class ObjectProperties extends Hashtable<String, String> {
     }
 
     public ObjectProperties(final int initialCapacity, final float loadFactor) {
-        realMap = new LinkedHashMap<String, String>(initialCapacity, loadFactor);
+        realMap = new LinkedHashMap<>(initialCapacity, loadFactor);
     }
 
     public ObjectProperties(final int initialCapacity) {
-        realMap = new LinkedHashMap<String, String>(initialCapacity);
+        realMap = new LinkedHashMap<>(initialCapacity);
     }
 
     public ObjectProperties() {
-        realMap = new LinkedHashMap<String, String>();
+        realMap = new LinkedHashMap<>();
     }
 
     public ObjectProperties(final Map<? extends String, ? extends String> t) {
-        realMap = new LinkedHashMap<String, String>(t);
+        realMap = new LinkedHashMap<>(t);
     }
 
     public ObjectProperties(Property... properties) {
-        realMap = new LinkedHashMap<String, String>(properties.length);
+        realMap = new LinkedHashMap<>(properties.length);
         for (Property property : properties) {
             realMap.put(property.getKey(), property.getValue());
         }

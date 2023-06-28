@@ -145,7 +145,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
     }
 
     private boolean setResourceLoaders(final Paths<ResourceLoader, ResourceLoaderSpec> paths, final ResourceLoaderSpec[] resourceLoaders) {
-        final Map<String, List<ResourceLoader>> allPaths = new HashMap<String, List<ResourceLoader>>();
+        final Map<String, List<ResourceLoader>> allPaths = new HashMap<>();
         for (ResourceLoaderSpec loaderSpec : resourceLoaders) {
             final ResourceLoader loader = loaderSpec.getResourceLoader();
             final PathFilter filter = loaderSpec.getPathFilter();
@@ -153,7 +153,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
                 if (filter.accept(path)) {
                     final List<ResourceLoader> allLoaders = allPaths.get(path);
                     if (allLoaders == null) {
-                        ArrayList<ResourceLoader> newList = new ArrayList<ResourceLoader>(16);
+                        ArrayList<ResourceLoader> newList = new ArrayList<>(16);
                         newList.add(loader);
                         allPaths.put(path, newList);
                     } else {
@@ -332,7 +332,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         final Map<String, List<ResourceLoader>> paths = this.paths.get().getAllPaths();
         final String path = Module.pathOf(name);
         final List<ResourceLoader> loaders = paths.get(path);
-        final List<Resource> list = new ArrayList<Resource>(loaders == null ? 1 : loaders.size());
+        final List<Resource> list = new ArrayList<>(loaders == null ? 1 : loaders.size());
         if (loaders != null) {
             for (ResourceLoader loader : loaders) {
                 final Resource resource = loader.getResource(name);
@@ -361,7 +361,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         }
     }
 
-    private final IdentityHashMap<CodeSource, ProtectionDomain> protectionDomains = new IdentityHashMap<CodeSource, ProtectionDomain>();
+    private final IdentityHashMap<CodeSource, ProtectionDomain> protectionDomains = new IdentityHashMap<>();
 
     private ProtectionDomain getProtectionDomain(CodeSource codeSource) {
         final IdentityHashMap<CodeSource, ProtectionDomain> map = protectionDomains;
@@ -730,7 +730,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         }
         final Map<String, List<ResourceLoader>> paths = this.paths.get().getAllPaths();
         final Iterator<Map.Entry<String, List<ResourceLoader>>> iterator = paths.entrySet().iterator();
-        return new Iterator<Resource>() {
+        return new Iterator<>() {
 
             private String path;
             private Iterator<Resource> resourceIterator;

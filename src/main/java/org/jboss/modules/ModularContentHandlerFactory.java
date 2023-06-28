@@ -36,7 +36,7 @@ final class ModularContentHandlerFactory implements ContentHandlerFactory {
     private static final List<Module> modules;
 
     static {
-        CopyOnWriteArrayList<Module> list = new CopyOnWriteArrayList<Module>();
+        CopyOnWriteArrayList<Module> list = new CopyOnWriteArrayList<>();
         final SecurityManager sm = System.getSecurityManager();
         final String urlModulesList;
         if (sm != null) {
@@ -45,7 +45,7 @@ final class ModularContentHandlerFactory implements ContentHandlerFactory {
             urlModulesList = CONTENT_MODULES_LIST_ACTION.run();
         }
         if (urlModulesList != null) {
-            final List<Module> moduleList = new ArrayList<Module>();
+            final List<Module> moduleList = new ArrayList<>();
             int f = 0;
             int i;
             do {

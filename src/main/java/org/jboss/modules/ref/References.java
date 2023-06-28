@@ -50,7 +50,7 @@ public final class References {
     }
 
     static final class ReaperThread extends Thread {
-        static final ReferenceQueue<Object> REAPER_QUEUE = new ReferenceQueue<Object>();
+        static final ReferenceQueue<Object> REAPER_QUEUE = new ReferenceQueue<>();
 
         static {
             final ReaperThread thr = new ReaperThread();
@@ -92,13 +92,13 @@ public final class References {
     public static <T, A> Reference<T, A> create(Reference.Type type, T value, A attachment, Reaper<T, A> reaper) {
         switch (type) {
             case STRONG:
-                return new StrongReference<T, A>(value, attachment);
+                return new StrongReference<>(value, attachment);
             case WEAK:
-                return new WeakReference<T, A>(value, attachment, reaper);
+                return new WeakReference<>(value, attachment, reaper);
             case PHANTOM:
-                return new PhantomReference<T, A>(value, attachment, reaper);
+                return new PhantomReference<>(value, attachment, reaper);
             case SOFT:
-                return new SoftReference<T, A>(value, attachment, reaper);
+                return new SoftReference<>(value, attachment, reaper);
             case NULL:
                 return getNullReference();
             default:
@@ -122,13 +122,13 @@ public final class References {
     public static <T, A> Reference<T, A> create(Reference.Type type, T value, A attachment, ReferenceQueue<? super T> referenceQueue) {
         switch (type) {
             case STRONG:
-                return new StrongReference<T, A>(value, attachment);
+                return new StrongReference<>(value, attachment);
             case WEAK:
-                return new WeakReference<T, A>(value, attachment, referenceQueue);
+                return new WeakReference<>(value, attachment, referenceQueue);
             case PHANTOM:
-                return new PhantomReference<T, A>(value, attachment, referenceQueue);
+                return new PhantomReference<>(value, attachment, referenceQueue);
             case SOFT:
-                return new SoftReference<T, A>(value, attachment, referenceQueue);
+                return new SoftReference<>(value, attachment, referenceQueue);
             case NULL:
                 return getNullReference();
             default:
@@ -153,13 +153,13 @@ public final class References {
     public static <T, A> Reference<T, A> create(Reference.Type type, T value, A attachment) throws IllegalArgumentException {
         switch (type) {
             case STRONG:
-                return new StrongReference<T, A>(value, attachment);
+                return new StrongReference<>(value, attachment);
             case WEAK:
-                return new WeakReference<T, A>(value, attachment);
+                return new WeakReference<>(value, attachment);
             case PHANTOM:
                 throw new IllegalArgumentException("Phantom reference may not be created without a queue or reaper");
             case SOFT:
-                return new SoftReference<T, A>(value, attachment);
+                return new SoftReference<>(value, attachment);
             case NULL:
                 return getNullReference();
             default:

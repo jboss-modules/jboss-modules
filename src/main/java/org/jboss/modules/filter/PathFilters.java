@@ -193,7 +193,7 @@ public final class PathFilters {
      * @return the filter
      */
     public static PathFilter in(Set<String> paths) {
-        return new SetPathFilter(new HashSet<String>(paths));
+        return new SetPathFilter(new HashSet<>(paths));
     }
 
     /**
@@ -204,7 +204,7 @@ public final class PathFilters {
      * @return the filter
      */
     public static PathFilter in(Collection<String> paths) {
-        return new SetPathFilter(new HashSet<String>(paths));
+        return new SetPathFilter(new HashSet<>(paths));
     }
 
     /**
@@ -215,7 +215,7 @@ public final class PathFilters {
      * @return the filtered iterator
      */
     public static Iterator<Resource> filtered(final PathFilter filter, final Iterator<Resource> original) {
-        return new Iterator<Resource>() {
+        return new Iterator<>() {
             private Resource next;
 
             public boolean hasNext() {
