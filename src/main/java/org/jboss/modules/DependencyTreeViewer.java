@@ -29,12 +29,12 @@ import org.jboss.modules.filter.PathFilters;
  * A dependency tree viewer utility.  Prints out the dependency tree for a module.
  */
 public final class DependencyTreeViewer {
-    private static <I, O extends I> O[] filtered(Class<O[]> oType, I... inputs) {
-        final I[] newArray = Arrays.copyOf(inputs, inputs.length);
+    private static DependencySpec[] filtered(Class<ModuleDependencySpec[]> oType, DependencySpec... inputs) {
+        final DependencySpec[] newArray = Arrays.copyOf(inputs, inputs.length);
         int o = 0;
         for (int i = 0; i < inputs.length; i ++) {
             if (oType.getComponentType().isInstance(inputs[i])) {
-                newArray[o++] = (O) inputs[i];
+                newArray[o++] = inputs[i];
             }
         }
         return Arrays.copyOf(newArray, o, oType);

@@ -93,7 +93,7 @@ public final class ModuleXmlParser {
      * accept the default.
      */
     public interface ResourceRootFactory {
-        ResourceLoader createResourceLoader(final String rootPath, final String loaderPath, @Deprecated final String loaderName) throws IOException;
+        ResourceLoader createResourceLoader(final String rootPath, final String loaderPath, final String loaderName) throws IOException;
 
         /**
          * Get the default resource root factory.

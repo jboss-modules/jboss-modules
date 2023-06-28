@@ -48,10 +48,19 @@ final class ClassPathModuleFinder extends FileSystemClassPathModuleFinder {
             // special initial module
             ModuleSpec.Builder builder = ModuleSpec.build(name);
             for (String dependency : dependencies) {
-                builder.addDependency(DependencySpec.createModuleDependencySpec(PathFilters.acceptAll(), PathFilters.acceptAll(), null, dependency, false));
+                builder.addDependency(new ModuleDependencySpecBuilder()
+                    .setImportFilter(PathFilters.acceptAll())
+                    .setExportFilter(PathFilters.acceptAll())
+                    .setName(dependency)
+                    .build());
             }
             for (String item : classPath) {
-                builder.addDependency(DependencySpec.createModuleDependencySpec(PathFilters.acceptAll(), PathFilters.acceptAll(), null, item, true));
+                builder.addDependency(new ModuleDependencySpecBuilder()
+                    .setImportFilter(PathFilters.acceptAll())
+                    .setExportFilter(PathFilters.acceptAll())
+                    .setName(item)
+                    .setOptional(true)
+                    .build());
             }
             if (mainClass != null) {
                 builder.setMainClass(mainClass);
