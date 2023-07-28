@@ -451,6 +451,9 @@ public final class Main {
             }
         }
 
+        // Configure the ModuleLoggerFinder's class loader
+        ModuleLoggerFinder.setClassLoader(bootClassLoader);
+
         final String logManagerName = getServiceName(bootClassLoader, "java.util.logging.LogManager");
         if (logManagerName != null) {
             System.setProperty("java.util.logging.manager", logManagerName);
