@@ -28,11 +28,12 @@ package org.jboss.modules;
 public final class ModuleLoggerFinder {
 
     /**
-     * Sets the class loader to use when attempting to find the {@link LoggerFinder}.
+     * Activates the module logger and replaces any old delegating {@link System.Logger system loggers} with a logger
+     * from the new finder.
      *
      * @param cl the class loader to use
      */
-    static void setClassLoader(final ClassLoader cl) {
+    static void activate(final ClassLoader cl) {
         // Do nothing, this is only used for JDK 9+
     }
 }
