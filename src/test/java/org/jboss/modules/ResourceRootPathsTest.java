@@ -63,7 +63,7 @@ public class ResourceRootPathsTest extends AbstractModuleTestCase {
 
     @Before
     public void setupModuleLoader() throws Exception {
-        repoRoot = tmpDir.newFolder("repo");
+        repoRoot = tmpDir.newFolder("repo").getCanonicalFile();
         testModuleRoot = new File(repoRoot, "test/test/main/");
 
         // Build a jar in module
@@ -100,13 +100,13 @@ public class ResourceRootPathsTest extends AbstractModuleTestCase {
                 final File jar = getFileFromJarUri(resourceLoader.getLocation());
 
                 // validate jar with relative path
-                if (testModuleRoot.equals(jar.getParentFile())) {
+                if (testModuleRoot.equals(jar.getParentFile().getCanonicalFile())) {
                     checkCount++;
                     continue;
                 }
 
                 // validate jar with absolute path
-                if (repoRoot.equals(jar.getParentFile())) {
+                if (repoRoot.equals(jar.getParentFile().getCanonicalFile())) {
                     checkCount++;
                     continue;
                 }
