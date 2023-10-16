@@ -551,7 +551,7 @@
                 </documentation>
             </annotation>
         </xsd:attribute>
-        <xsd:attribute name="name" type="xsd:string">
+        <xsd:attribute name="name" type="xsd:string" use="required">
             <annotation xmlns="http://www.w3.org/2001/XMLSchema">
                 <documentation>
                     The permission name to provide to the permission class constructor.
