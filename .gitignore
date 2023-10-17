@@ -1,6 +1,7 @@
 # Ignore all dot files
 .*
 !.gitignore
+!.github
 
 # Ignore Maven metadata files
 target
