@@ -178,7 +178,7 @@ public final class ModuleXmlParser {
 
     private static final List<String> LIST_A_NAME_A_SLOT = Arrays.asList(A_NAME, A_SLOT);
     private static final List<String> LIST_A_NAME_A_TARGET_NAME = Arrays.asList(A_NAME, A_TARGET_NAME);
-    private static final List<String> LIST_A_PERMISSION_A_NAME = Arrays.asList(A_PERMISSION, A_NAME);
+    private static final List<String> LIST_A_PERMISSION = List.of(A_PERMISSION);
 
     private static PropertiesCallback NOOP_PROPS_CALLBACK;
 
@@ -1393,7 +1393,7 @@ public final class ModuleXmlParser {
         String permission = null;
         String name = null;
         String actions = null;
-        final Set<String> required = new HashSet<>(LIST_A_PERMISSION_A_NAME);
+        final Set<String> required = new HashSet<>(LIST_A_PERMISSION);
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i ++) {
             validateAttributeNamespace(reader, i);
@@ -1483,11 +1483,16 @@ public final class ModuleXmlParser {
 
     private static void expandName(final ModuleLoader moduleLoader, final String moduleName,
             final ArrayList<PermissionFactory> list, String permission, String name, String actions) {
-        String expandedName = PolicyExpander.expand(name);
-        //If a property can't be expanded in a permission entry that entry is ignored.
-        //https://docs.oracle.com/javase/8/docs/technotes/guides/security/PolicyFiles.html#PropertyExp
-        if(expandedName != null)
-            list.add(new ModularPermissionFactory(moduleLoader, moduleName, permission, expandedName, actions));
+        if (name != null) {
+            String expandedName = PolicyExpander.expand(name);
+            if (expandedName == null) {
+                //If a property can't be expanded in a permission entry that entry is ignored.
+                //https://docs.oracle.com/javase/8/docs/technotes/guides/security/PolicyFiles.html#PropertyExp
+                return;
+            }
+            name = expandedName;
+        }
+        list.add(new ModularPermissionFactory(moduleLoader, moduleName, permission, name, actions));
     }
 
     private static void parseNoContent(final XmlPullParser reader) throws XmlPullParserException, IOException {
