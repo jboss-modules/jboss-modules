@@ -39,7 +39,7 @@ jobs:
           17
     - name: Run Tests
       run: mvn -ntp -U -B -fae clean install "-Djava11.home=${{env.JAVA_HOME_11_X64}}"
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       if: failure()
       with:
         name: surefire-${{ matrix.jdk-distribution }}-${{ matrix.os }}
