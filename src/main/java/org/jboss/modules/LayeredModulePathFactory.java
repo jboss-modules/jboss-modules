@@ -194,11 +194,20 @@ class LayeredModulePathFactory {
 
         final File overlays = new File(layeringRoot, OVERLAYS);
         if (overlays.exists()) {
+            if (!overlays.canRead()) {
+                Module.getModuleLogger().overlaysDirectoryNotReadable(overlays);
+            }
             final File refs = new File(overlays, OVERLAYS);
             if (refs.exists()) {
+                if (!refs.canRead()) {
+                    Module.getModuleLogger().overlaysMetadataNotReadable(overlays);
+                }
                 try {
                     for (final String overlay : readRefs(refs)) {
                         final File root = new File(overlays, overlay);
+                        if (!root.exists() || !root.canRead()) {
+                            Module.getModuleLogger().overlayRootNotReadable(overlays);
+                        }
                         path.add(root);
                     }
                 } catch (IOException e) {

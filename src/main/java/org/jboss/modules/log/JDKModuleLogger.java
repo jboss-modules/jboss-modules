@@ -18,6 +18,7 @@
 
 package org.jboss.modules.log;
 
+import java.io.File;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -219,6 +220,27 @@ public final class JDKModuleLogger implements ModuleLogger {
     public void jaxpResourceLoaded(final URL resourceURL, final Module module) {
         if (jaxpLogger.isLoggable(TRACE)) {
             doLog(jaxpLogger, TRACE, String.format("JAXP Resource %s loaded from module %s", resourceURL, module), null);
+        }
+    }
+
+    @Override
+    public void overlaysDirectoryNotReadable(File file) {
+        if (logger.isLoggable(WARN)) {
+            doLog(logger, WARN, String.format("Overlays directory exists but is not readable: %s", file.getPath()), null);
+        }
+    }
+
+    @Override
+    public void overlaysMetadataNotReadable(File file) {
+        if (logger.isLoggable(WARN)) {
+            doLog(logger, WARN, String.format("Overlays metadata file exists but is not readable: %s", file.getPath()), null);
+        }
+    }
+
+    @Override
+    public void overlayRootNotReadable(File file) {
+        if (logger.isLoggable(WARN)) {
+            doLog(logger, WARN, String.format("Overlay root directory doesn't exists or is not readable: %s", file.getPath()), null);
         }
     }
 }
