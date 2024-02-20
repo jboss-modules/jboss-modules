@@ -18,6 +18,8 @@
 
 package org.jboss.modules.log;
 
+import java.io.File;
+
 import org.jboss.modules.Module;
 import org.jboss.modules.ModuleIdentifier;
 import org.jboss.modules.ModuleLoader;
@@ -63,4 +65,10 @@ public interface ModuleLogger {
     void classDefineFailed(Throwable throwable, String className, Module module);
 
     void classDefined(String name, Module module);
+
+    void overlaysDirectoryNotReadable(File file);
+
+    void overlaysMetadataNotReadable(File file);
+
+    void overlayRootNotReadable(File file);
 }

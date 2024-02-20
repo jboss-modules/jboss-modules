@@ -18,6 +18,7 @@
 
 package org.jboss.modules.log;
 
+import java.io.File;
 import java.io.OutputStream;
 import java.io.PrintStream;
 
@@ -152,5 +153,17 @@ public final class StreamModuleLogger implements ModuleLogger {
     }
 
     public void classDefined(final String name, final Module module) {
+    }
+
+    @Override
+    public void overlaysDirectoryNotReadable(File file) {
+    }
+
+    @Override
+    public void overlaysMetadataNotReadable(File file) {
+    }
+
+    @Override
+    public void overlayRootNotReadable(File file) {
     }
 }
