@@ -18,6 +18,7 @@
 
 package org.jboss.modules.log;
 
+import java.io.File;
 import java.net.URL;
 import org.jboss.modules.Module;
 import org.jboss.modules.ModuleIdentifier;
@@ -69,4 +70,10 @@ public interface ModuleLogger {
     void jaxpClassLoaded(Class<?> jaxpClass, Module module);
 
     void jaxpResourceLoaded(URL resourceURL, Module module);
+
+    void overlaysDirectoryNotReadable(File file);
+
+    void overlaysMetadataNotReadable(File file);
+
+    void overlayRootNotReadable(File file);
 }
