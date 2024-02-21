@@ -72,10 +72,15 @@ public class LayeredModulePathFactoryTest {
     @Test
     public void testUnreadableOverlays() throws IOException {
         // make directory non-readable
-        Set<PosixFilePermission> permissions = PosixFilePermissions.fromString("-w-------");
-        Files.setPosixFilePermissions(overlaysDir.toPath(), permissions);
+        Set<PosixFilePermission> origPermissions = Files.getPosixFilePermissions(overlaysDir.toPath());
+        try {
+            Set<PosixFilePermission> testPermissions = PosixFilePermissions.fromString("-w-------");
+            Files.setPosixFilePermissions(overlaysDir.toPath(), testPermissions);
 
-        LayeredModulePathFactory.loadOverlays(layeringRoot, discoveredPaths);
+            LayeredModulePathFactory.loadOverlays(layeringRoot, discoveredPaths);
+        } finally {
+            Files.setPosixFilePermissions(overlaysDir.toPath(), origPermissions);
+        }
 
         Assert.assertTrue(overlaysDirNotReadableLogged);
         Assert.assertFalse(overlaysMetadataNotReadableLogged);
@@ -85,13 +90,18 @@ public class LayeredModulePathFactoryTest {
     @Test
     public void testUnreadableOverlaysMetadataFile() throws IOException {
         // make directory non-readable
-        Set<PosixFilePermission> permissions = PosixFilePermissions.fromString("-w-------");
-        Files.setPosixFilePermissions(metadataFile.toPath(), permissions);
-
+        Set<PosixFilePermission> origPermissions = Files.getPosixFilePermissions(overlaysDir.toPath());
         try {
-            LayeredModulePathFactory.loadOverlays(layeringRoot, discoveredPaths);
-        } catch (RuntimeException e) {
-            // ignore
+            Set<PosixFilePermission> testPermissions = PosixFilePermissions.fromString("-w-------");
+            Files.setPosixFilePermissions(metadataFile.toPath(), testPermissions);
+
+            try {
+                LayeredModulePathFactory.loadOverlays(layeringRoot, discoveredPaths);
+            } catch (RuntimeException e) {
+                // ignore
+            }
+        } finally {
+            Files.setPosixFilePermissions(overlaysDir.toPath(), origPermissions);
         }
 
         Assert.assertFalse(overlaysDirNotReadableLogged);
@@ -102,10 +112,15 @@ public class LayeredModulePathFactoryTest {
     @Test
     public void testUnreadableOverlayRoot() throws IOException {
         // make directory non-readable
-        Set<PosixFilePermission> permissions = PosixFilePermissions.fromString("-w-------");
-        Files.setPosixFilePermissions(overlayRoot.toPath(), permissions);
+        Set<PosixFilePermission> origPermissions = Files.getPosixFilePermissions(overlaysDir.toPath());
+        try {
+            Set<PosixFilePermission> testPermissions = PosixFilePermissions.fromString("-w-------");
+            Files.setPosixFilePermissions(overlayRoot.toPath(), testPermissions);
 
-        LayeredModulePathFactory.loadOverlays(layeringRoot, discoveredPaths);
+            LayeredModulePathFactory.loadOverlays(layeringRoot, discoveredPaths);
+        } finally {
+            Files.setPosixFilePermissions(overlaysDir.toPath(), origPermissions);
+        }
 
         Assert.assertFalse(overlaysDirNotReadableLogged);
         Assert.assertFalse(overlaysMetadataNotReadableLogged);
