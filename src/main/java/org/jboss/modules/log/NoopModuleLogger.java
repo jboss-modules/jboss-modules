@@ -93,16 +93,4 @@ public final class NoopModuleLogger implements ModuleLogger {
     @Override
     public void classDefined(final String name, final Module module) {
     }
-
-    @Override
-    public void overlaysDirectoryNotReadable(File file) {
-    }
-
-    @Override
-    public void overlaysMetadataNotReadable(File file) {
-    }
-
-    @Override
-    public void overlayRootNotReadable(File file) {
-    }
 }

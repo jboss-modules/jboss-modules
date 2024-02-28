@@ -606,6 +606,7 @@ public class LayeredModulePathTest extends AbstractModuleTestCase {
             for (final String overlay : overlays) {
                 os.write(overlay.getBytes());
                 os.write('\n');
+                new File(overlaysRoot, overlay).mkdirs();
             }
         } finally {
             if (os != null) try {

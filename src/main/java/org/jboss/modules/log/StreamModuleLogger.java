@@ -154,16 +154,4 @@ public final class StreamModuleLogger implements ModuleLogger {
 
     public void classDefined(final String name, final Module module) {
     }
-
-    @Override
-    public void overlaysDirectoryNotReadable(File file) {
-    }
-
-    @Override
-    public void overlaysMetadataNotReadable(File file) {
-    }
-
-    @Override
-    public void overlayRootNotReadable(File file) {
-    }
 }
