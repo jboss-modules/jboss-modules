@@ -195,18 +195,18 @@ class LayeredModulePathFactory {
         final File overlays = new File(layeringRoot, OVERLAYS);
         if (overlays.exists()) {
             if (!overlays.canRead()) {
-                Module.getModuleLogger().overlaysDirectoryNotReadable(overlays);
+                throw new IllegalStateException("Overlays directory exists but is not readable: " + overlays.getPath());
             }
             final File refs = new File(overlays, OVERLAYS);
             if (refs.exists()) {
                 if (!refs.canRead()) {
-                    Module.getModuleLogger().overlaysMetadataNotReadable(overlays);
+                    throw new IllegalStateException("Overlays metadata file exists but is not readable: " + refs.getPath());
                 }
                 try {
                     for (final String overlay : readRefs(refs)) {
                         final File root = new File(overlays, overlay);
                         if (!root.exists() || !root.canRead()) {
-                            Module.getModuleLogger().overlayRootNotReadable(overlays);
+                            throw new IllegalStateException("Overlay root directory doesn't exists or is not readable: " + root.getPath());
                         }
                         path.add(root);
                     }

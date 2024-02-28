@@ -70,10 +70,4 @@ public interface ModuleLogger {
     void jaxpClassLoaded(Class<?> jaxpClass, Module module);
 
     void jaxpResourceLoaded(URL resourceURL, Module module);
-
-    void overlaysDirectoryNotReadable(File file);
-
-    void overlaysMetadataNotReadable(File file);
-
-    void overlayRootNotReadable(File file);
 }

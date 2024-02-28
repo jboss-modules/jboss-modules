@@ -104,16 +104,4 @@ public final class NoopModuleLogger implements ModuleLogger {
     @Override
     public void jaxpResourceLoaded(final URL resourceURL, final Module module) {
     }
-
-    @Override
-    public void overlaysDirectoryNotReadable(File file) {
-    }
-
-    @Override
-    public void overlaysMetadataNotReadable(File file) {
-    }
-
-    @Override
-    public void overlayRootNotReadable(File file) {
-    }
 }

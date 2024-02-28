@@ -1,6 +1,5 @@
 package org.jboss.modules;
 
-import org.jboss.modules.log.ModuleLogger;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Before;
@@ -33,10 +32,6 @@ public class LayeredModulePathFactoryTest {
     private File overlayRoot;
     private final List<File> discoveredPaths = new ArrayList<>();
 
-    private boolean overlaysDirNotReadableLogged = false;
-    private boolean overlaysMetadataNotReadableLogged = false;
-    private boolean overlayRootNotReadableLogged = false;
-
     @Before
     public void setup() throws IOException {
         boolean isPosix = FileSystems.getDefault().supportedFileAttributeViews().contains("posix");
@@ -56,180 +51,74 @@ public class LayeredModulePathFactoryTest {
         // layeringRoot/.overlays/overlay-1/
         overlayRoot = new File(overlaysDir, OVERLAY_NAME);
         Assert.assertTrue(overlayRoot.mkdir());
-
-        // custom logger to detect warn messages being printed
-        Module.setModuleLogger(new CustomLogger());
     }
 
     @Test
     public void testReadable() {
         LayeredModulePathFactory.loadOverlays(layeringRoot, discoveredPaths);
-
-        Assert.assertFalse(overlaysDirNotReadableLogged);
-        Assert.assertFalse(overlaysMetadataNotReadableLogged);
-        Assert.assertFalse(overlayRootNotReadableLogged);
     }
 
     @Test
     public void testUnreadableOverlays() throws IOException {
-        // make directory non-readable
+        boolean expectedFailure = false;
         Set<PosixFilePermission> origPermissions = Files.getPosixFilePermissions(overlaysDir.toPath());
         try {
+            // make directory non-readable
             Set<PosixFilePermission> testPermissions = PosixFilePermissions.fromString("-w-------");
             Files.setPosixFilePermissions(overlaysDir.toPath(), testPermissions);
 
             LayeredModulePathFactory.loadOverlays(layeringRoot, discoveredPaths);
+        } catch (IllegalStateException ise) {
+            expectedFailure = ise.getMessage().startsWith("Overlays directory exists but is not readable: ");
         } finally {
             Files.setPosixFilePermissions(overlaysDir.toPath(), origPermissions);
         }
 
-        Assert.assertTrue(overlaysDirNotReadableLogged);
-        Assert.assertFalse(overlaysMetadataNotReadableLogged);
-        Assert.assertFalse(overlayRootNotReadableLogged);
+        Assert.assertTrue(expectedFailure);
     }
 
     @Test
     public void testUnreadableOverlaysMetadataFile() throws IOException {
-        // make directory non-readable
+        boolean expectedFailure = false;
         Set<PosixFilePermission> origPermissions = Files.getPosixFilePermissions(overlaysDir.toPath());
         try {
+            // make directory non-readable
             Set<PosixFilePermission> testPermissions = PosixFilePermissions.fromString("-w-------");
             Files.setPosixFilePermissions(metadataFile.toPath(), testPermissions);
 
             try {
                 LayeredModulePathFactory.loadOverlays(layeringRoot, discoveredPaths);
-            } catch (RuntimeException e) {
-                // ignore
+            } catch (IllegalStateException ise) {
+                expectedFailure = ise.getMessage().startsWith("Overlays metadata file exists but is not readable: ");
             }
         } finally {
             Files.setPosixFilePermissions(overlaysDir.toPath(), origPermissions);
         }
 
-        Assert.assertFalse(overlaysDirNotReadableLogged);
-        Assert.assertTrue(overlaysMetadataNotReadableLogged);
-        Assert.assertFalse(overlayRootNotReadableLogged);
+        Assert.assertTrue(expectedFailure);
     }
 
     @Test
     public void testUnreadableOverlayRoot() throws IOException {
-        // make directory non-readable
+        boolean expectedFailure = false;
         Set<PosixFilePermission> origPermissions = Files.getPosixFilePermissions(overlaysDir.toPath());
         try {
+            // make directory non-readable
             Set<PosixFilePermission> testPermissions = PosixFilePermissions.fromString("-w-------");
             Files.setPosixFilePermissions(overlayRoot.toPath(), testPermissions);
 
             LayeredModulePathFactory.loadOverlays(layeringRoot, discoveredPaths);
+        } catch (IllegalStateException ise) {
+            expectedFailure = ise.getMessage().startsWith("Overlay root directory doesn't exists or is not readable: ");
         } finally {
             Files.setPosixFilePermissions(overlaysDir.toPath(), origPermissions);
         }
 
-        Assert.assertFalse(overlaysDirNotReadableLogged);
-        Assert.assertFalse(overlaysMetadataNotReadableLogged);
-        Assert.assertTrue(overlayRootNotReadableLogged);
+        Assert.assertTrue(expectedFailure);
     }
 
     private static void writeRefsFile(File file) throws IOException {
         Files.write(file.toPath(), (OVERLAY_NAME + '\n').getBytes());
     }
 
-    /**
-     * This is a custom logger that detects if specific messages has been logged.
-     */
-    private class CustomLogger implements ModuleLogger {
-
-        @Override
-        public void trace(String message) {
-
-        }
-
-        @Override
-        public void trace(String format, Object arg1) {
-
-        }
-
-        @Override
-        public void trace(String format, Object arg1, Object arg2) {
-
-        }
-
-        @Override
-        public void trace(String format, Object arg1, Object arg2, Object arg3) {
-
-        }
-
-        @Override
-        public void trace(String format, Object... args) {
-
-        }
-
-        @Override
-        public void trace(Throwable t, String message) {
-
-        }
-
-        @Override
-        public void trace(Throwable t, String format, Object arg1) {
-
-        }
-
-        @Override
-        public void trace(Throwable t, String format, Object arg1, Object arg2) {
-
-        }
-
-        @Override
-        public void trace(Throwable t, String format, Object arg1, Object arg2, Object arg3) {
-
-        }
-
-        @Override
-        public void trace(Throwable t, String format, Object... args) {
-
-        }
-
-        @Override
-        public void greeting() {
-
-        }
-
-        @Override
-        public void classDefineFailed(Throwable throwable, String className, Module module) {
-
-        }
-
-        @Override
-        public void classDefined(String name, Module module) {
-
-        }
-
-        @Override
-        public void providerUnloadable(String name, ClassLoader loader) {
-
-        }
-
-        @Override
-        public void jaxpClassLoaded(Class<?> jaxpClass, Module module) {
-
-        }
-
-        @Override
-        public void jaxpResourceLoaded(URL resourceURL, Module module) {
-
-        }
-
-        @Override
-        public void overlaysDirectoryNotReadable(File file) {
-            overlaysDirNotReadableLogged = true;
-        }
-
-        @Override
-        public void overlaysMetadataNotReadable(File file) {
-            overlaysMetadataNotReadableLogged = true;
-        }
-
-        @Override
-        public void overlayRootNotReadable(File file) {
-            overlayRootNotReadableLogged = true;
-        }
-    }
 }
