@@ -21,6 +21,8 @@ package org.jboss.modules;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A unique identifier for a module within a module loader.
@@ -40,8 +42,12 @@ public final class ModuleIdentifier implements Serializable {
 
     private static final String DEFAULT_SLOT = "main";
 
+    private static final Map<String, ModuleIdentifier> identifierMap = new ConcurrentHashMap<>();
+
     private final String name;
     private final String slot;
+
+    private transient String toString;
 
     private transient volatile int hashCode;
 
@@ -118,8 +124,12 @@ public final class ModuleIdentifier implements Serializable {
      */
     @Override
     public String toString() {
+        if (toString != null) {
+            return toString;
+        }
         final String escapeName = escapeName(name);
-        return slot.equals(DEFAULT_SLOT) ? escapeName : escapeName + ":" + escapeSlot(slot);
+        toString = slot.equals(DEFAULT_SLOT) ? escapeName : escapeName + ":" + escapeSlot(slot);
+        return toString;
     }
 
     private void readObject(ObjectInputStream ois) throws ClassNotFoundException, IOException {
@@ -179,6 +189,11 @@ public final class ModuleIdentifier implements Serializable {
             throw new IllegalArgumentException("Empty module specification");
         }
 
+        ModuleIdentifier identifier = identifierMap.get(moduleSpec);
+        if (identifier != null) {
+            return identifier;
+        }
+
         int c;
         final StringBuilder b = new StringBuilder();
         int i = 0;
@@ -212,9 +227,13 @@ public final class ModuleIdentifier implements Serializable {
             b.appendCodePoint(c);
             i = moduleSpec.offsetByCodePoints(i, 1);
         } while (i < moduleSpec.length()); else {
-            return new ModuleIdentifier(name, DEFAULT_SLOT);
+            identifier = new ModuleIdentifier(name, DEFAULT_SLOT);
+            identifierMap.put(moduleSpec, identifier);
+            return identifier;
         }
-        return new ModuleIdentifier(name, b.toString());
+        identifier = new ModuleIdentifier(name, b.toString());
+        identifierMap.put(moduleSpec, identifier);
+        return identifier;
     }
 
     /**
