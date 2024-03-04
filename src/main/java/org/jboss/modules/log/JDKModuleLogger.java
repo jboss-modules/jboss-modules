@@ -194,25 +194,4 @@ public final class JDKModuleLogger implements ModuleLogger {
             doLog(defineLogger, TRACE, String.format("Defined class %s in %s", name, module), null);
         }
     }
-
-    @Override
-    public void overlaysDirectoryNotReadable(File file) {
-        if (logger.isLoggable(WARN)) {
-            doLog(logger, WARN, String.format("Overlays directory exists but is not readable: %s", file.getPath()), null);
-        }
-    }
-
-    @Override
-    public void overlaysMetadataNotReadable(File file) {
-        if (logger.isLoggable(WARN)) {
-            doLog(logger, WARN, String.format("Overlays metadata file exists but is not readable: %s", file.getPath()), null);
-        }
-    }
-
-    @Override
-    public void overlayRootNotReadable(File file) {
-        if (logger.isLoggable(WARN)) {
-            doLog(logger, WARN, String.format("Overlay root directory doesn't exists or is not readable: %s", file.getPath()), null);
-        }
-    }
 }
