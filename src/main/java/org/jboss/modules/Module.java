@@ -18,6 +18,8 @@
 
 package org.jboss.modules;
 
+import static java.security.AccessController.doPrivileged;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.invoke.MethodHandle;
@@ -150,7 +152,7 @@ public final class Module {
      * @throws SecurityException always
      */
     public static ModulesPrivateAccess getPrivateAccess() {
-        if (JDKSpecific.getCallingClass() == ModularPermissionFactory.class) {
+        if (STACK_WALKER.getCallerClass() == ModularPermissionFactory.class) {
             return PRIVATE_ACCESS;
         }
         throw new SecurityException();
@@ -585,7 +587,7 @@ public final class Module {
      * @return the current module loader, or {@code null} if this method is called outside of a module
      */
     public static ModuleLoader getCallerModuleLoader() {
-        Module callerModule = getCallerModule();
+        Module callerModule = forClass(STACK_WALKER.getCallerClass());
         return callerModule == null ? null : callerModule.getModuleLoader();
     }
 
@@ -636,6 +638,8 @@ public final class Module {
         throw new ModuleLoadException(name);
     }
 
+    static final StackWalker STACK_WALKER = doPrivileged((PrivilegedAction<StackWalker>) () -> StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE));
+
     /**
      * Get the caller's module. The caller's module is the module containing the method that calls this
      * method. Note that this method crawls the stack so other ways of obtaining the
@@ -644,7 +648,7 @@ public final class Module {
      * @return the current module
      */
     public static Module getCallerModule() {
-        return forClass(JDKSpecific.getCallingUserClass());
+        return forClass(STACK_WALKER.getCallerClass());
     }
 
     /**

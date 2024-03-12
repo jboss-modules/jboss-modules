@@ -70,7 +70,7 @@ final class ClassLoaderLocalLoader implements LocalLoader {
     }
 
     public Package loadPackageLocal(final String name) {
-        return JDKSpecific.getPackage(classLoader, name);
+        return classLoader.getDefinedPackage(name);
     }
 
     public List<Resource> loadResourceLocal(final String name) {

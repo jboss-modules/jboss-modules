@@ -83,7 +83,7 @@ public abstract class ConcurrentClassLoader extends NamedClassLoader {
      */
     protected ConcurrentClassLoader(final ConcurrentClassLoader parent, final String name) {
         super(parent == null ? JDKSpecific.getPlatformClassLoader() : parent, name);
-        if (! JDKSpecific.isParallelCapable(this)) {
+        if (! isRegisteredAsParallelCapable()) {
             throw new Error("Cannot instantiate non-parallel subclass");
         }
     }
@@ -95,7 +95,7 @@ public abstract class ConcurrentClassLoader extends NamedClassLoader {
      */
     protected ConcurrentClassLoader(String name) {
         super(JDKSpecific.getPlatformClassLoader(), name);
-        if (! JDKSpecific.isParallelCapable(this)) {
+        if (! isRegisteredAsParallelCapable()) {
             throw new Error("Cannot instantiate non-parallel subclass");
         }
     }
