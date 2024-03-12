@@ -48,6 +48,7 @@
     <properties>
         <version.javadoc.plugin>3.4.1</version.javadoc.plugin>
         <version.junit>4.13.2</version.junit>
+        <version.org.jacoco>0.8.11</version.org.jacoco>
         <version.org.jboss.shrinkwrap>1.2.6</version.org.jboss.shrinkwrap>
         <version.org.wildfly.checkstyle-config>1.0.8.Final</version.org.wildfly.checkstyle-config>
         <version.org.jboss.bridger>1.6.Final</version.org.jboss.bridger>
@@ -140,7 +141,7 @@
                     </includes>
                     <reuseForks>false</reuseForks>
                     <!-- org.jboss.modules.util package is defined in tests folder -->
-                    <argLine>--add-exports=org.jboss.modules/org.jboss.modules.util=ALL-UNNAMED</argLine>
+                    <argLine>@{argLine} --add-exports=org.jboss.modules/org.jboss.modules.util=ALL-UNNAMED</argLine>
                 </configuration>
             </plugin>
 
@@ -190,6 +191,27 @@
                              <goal>transform</goal>
                          </goals>
                      </execution>
+                </executions>
+            </plugin>
+
+            <!-- Code Coverage -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${version.org.jacoco}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>generate-code-coverage-report</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
                 </executions>
             </plugin>
         </plugins>
