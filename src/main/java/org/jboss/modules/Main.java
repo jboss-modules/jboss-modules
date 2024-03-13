@@ -155,9 +155,6 @@ public final class Main {
                         }
                         modulePath = args[++i];
                         System.setProperty("module.path", modulePath);
-                    } else if ("-config".equals(arg)) {
-                        System.err.println("Config files are no longer supported.  Use the -mp option instead");
-                        System.exit(1);
                     } else if ("-deptree".equals(arg)) {
                         if (depTree) {
                             System.err.println("-deptree may only be specified once");
