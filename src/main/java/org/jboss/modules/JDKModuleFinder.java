@@ -23,6 +23,7 @@ import static java.security.AccessController.doPrivileged;
 import java.io.IOException;
 import java.lang.Module;
 import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleFinder;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -51,10 +52,15 @@ public final class JDKModuleFinder implements IterableModuleFinder {
 
     public ModuleSpec findModule(final String name, final ModuleLoader delegateLoader) {
         if ("java.se".equals(name)) {
-            // provide our own "java.se" aggregator module, as the one in JDK isn't accessible by default
+            // The `java.se` aggregator module is not included in JDK boot layer by default.
+            // It becomes available when the JVM starts with the `--add-modules java.se` command line parameter.
+            // By defining it here, we ensure its availability even if the JVM was not started with this parameter.
             final ModuleSpec.Builder builder = ModuleSpec.build(name, false);
-            for (DependencySpec dep : JavaSeDeps.list) {
-                builder.addDependency(dep);
+            final ModuleDescriptor javaSeDescriptor = ModuleFinder.ofSystem().find(name).get().descriptor();
+            DependencySpec dependencySpec;
+            for (final ModuleDescriptor.Requires dep : javaSeDescriptor.requires()) {
+                dependencySpec = new ModuleDependencySpecBuilder().setName(dep.name()).setExport(true).build();
+                builder.addDependency(dependencySpec);
             }
             return builder.create();
         }
