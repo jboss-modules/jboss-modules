@@ -59,6 +59,7 @@ public interface ModuleLogger {
         moduleDefined(ModuleIdentifier.fromString(name), moduleLoader);
     }
 
+    @Deprecated(forRemoval = true)
     default void moduleDefined(ModuleIdentifier identifier, final ModuleLoader moduleLoader) {
     }
 

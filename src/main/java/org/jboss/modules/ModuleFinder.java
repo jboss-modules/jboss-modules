@@ -27,7 +27,8 @@ public interface ModuleFinder {
 
     /**
      * Find a module specification for the given name.  The default implementation delegates to the legacy
-     * {@link #findModule(ModuleIdentifier, ModuleLoader)} method.
+     * {@link #findModule(ModuleIdentifier, ModuleLoader)} method for now, however this behavior will be
+     * discontinued in the future.
      *
      * @param name the module name
      * @param delegateLoader the module loader from which dependencies should be resolved
@@ -45,7 +46,9 @@ public interface ModuleFinder {
      * @param moduleIdentifier the module identifier
      * @param delegateLoader the module loader from which dependencies should be resolved
      * @return the module specification, or {@code null} if no specification is found for this identifier
+     * @deprecated Implement {@link #findModule(String, ModuleLoader)} instead.
      */
+    @Deprecated(forRemoval = true)
     default ModuleSpec findModule(ModuleIdentifier moduleIdentifier, ModuleLoader delegateLoader) throws ModuleLoadException {
         return null;
     }

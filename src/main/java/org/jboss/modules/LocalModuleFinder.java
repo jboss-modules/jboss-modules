@@ -219,7 +219,7 @@ public final class LocalModuleFinder implements IterableModuleFinder, AutoClosea
      * @throws ModuleLoadException if creating the module specification failed (e.g. due to a parse error)
      * @deprecated Use {@link #parseModuleXmlFile(String, ModuleLoader, File...)} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static ModuleSpec parseModuleXmlFile(final ModuleIdentifier identifier, final ModuleLoader delegateLoader, final File... roots) throws IOException, ModuleLoadException {
         return parseModuleXmlFile(identifier.toString(), delegateLoader, roots);
     }

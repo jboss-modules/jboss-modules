@@ -50,7 +50,7 @@ public final class ModularPermissionFactory implements PermissionFactory {
      * @param permissionActions the action list to pass to the permission class constructor or {@code null} for none
      * @deprecated Use {@link #ModularPermissionFactory(ModuleLoader, String, String, String, String)} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public ModularPermissionFactory(final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier, final String className, final String targetName, final String permissionActions) {
         this(moduleLoader, moduleIdentifier.toString(), className, targetName, permissionActions);
     }

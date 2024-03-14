@@ -349,7 +349,7 @@ public abstract class DependencySpec {
      *
      * @deprecated Use {@link ModuleDependencySpecBuilder} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static DependencySpec createModuleDependencySpec(final ModuleIdentifier identifier) {
         return createModuleDependencySpec(identifier.toString());
     }
@@ -362,7 +362,7 @@ public abstract class DependencySpec {
      *
      * @deprecated Use {@link ModuleDependencySpecBuilder} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static DependencySpec createModuleDependencySpec(final String name) {
         return new ModuleDependencySpecBuilder()
             .setName(name)
@@ -378,7 +378,7 @@ public abstract class DependencySpec {
      *
      * @deprecated Use {@link ModuleDependencySpecBuilder} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static DependencySpec createModuleDependencySpec(final ModuleIdentifier identifier, final boolean export) {
         return createModuleDependencySpec(identifier.toString(), export);
     }
@@ -392,7 +392,7 @@ public abstract class DependencySpec {
      *
      * @deprecated Use {@link ModuleDependencySpecBuilder} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static DependencySpec createModuleDependencySpec(final String name, final boolean export) {
         return new ModuleDependencySpecBuilder()
             .setName(name)
@@ -410,7 +410,7 @@ public abstract class DependencySpec {
      *
      * @deprecated Use {@link ModuleDependencySpecBuilder} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static DependencySpec createModuleDependencySpec(final ModuleIdentifier identifier, final boolean export, final boolean optional) {
         return createModuleDependencySpec(identifier.toString(), export, optional);
     }
@@ -425,7 +425,7 @@ public abstract class DependencySpec {
      *
      * @deprecated Use {@link ModuleDependencySpecBuilder} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static DependencySpec createModuleDependencySpec(final String name, final boolean export, final boolean optional) {
         return new ModuleDependencySpecBuilder()
             .setName(name)
@@ -444,7 +444,7 @@ public abstract class DependencySpec {
      *
      * @deprecated Use {@link ModuleDependencySpecBuilder} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static DependencySpec createModuleDependencySpec(final ModuleLoader moduleLoader, final ModuleIdentifier identifier, final boolean export) {
         return createModuleDependencySpec(moduleLoader, identifier.toString(), export);
     }
@@ -459,7 +459,7 @@ public abstract class DependencySpec {
      *
      * @deprecated Use {@link ModuleDependencySpecBuilder} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static DependencySpec createModuleDependencySpec(final ModuleLoader moduleLoader, final String name, final boolean export) {
         return new ModuleDependencySpecBuilder()
             .setModuleLoader(moduleLoader)
@@ -479,7 +479,7 @@ public abstract class DependencySpec {
      *
      * @deprecated Use {@link ModuleDependencySpecBuilder} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static DependencySpec createModuleDependencySpec(final ModuleLoader moduleLoader, final ModuleIdentifier identifier, final boolean export, final boolean optional) {
         return createModuleDependencySpec(moduleLoader, identifier.toString(), export, optional);
     }
@@ -495,7 +495,7 @@ public abstract class DependencySpec {
      *
      * @deprecated Use {@link ModuleDependencySpecBuilder} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static DependencySpec createModuleDependencySpec(final ModuleLoader moduleLoader, final String name, final boolean export, final boolean optional) {
         return new ModuleDependencySpecBuilder()
             .setModuleLoader(moduleLoader)
@@ -515,7 +515,7 @@ public abstract class DependencySpec {
      *
      * @deprecated Use {@link ModuleDependencySpecBuilder} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static DependencySpec createModuleDependencySpec(final PathFilter exportFilter, final ModuleIdentifier identifier, final boolean optional) {
         return createModuleDependencySpec(exportFilter, identifier.toString(), optional);
     }
@@ -530,7 +530,7 @@ public abstract class DependencySpec {
      *
      * @deprecated Use {@link ModuleDependencySpecBuilder} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static DependencySpec createModuleDependencySpec(final PathFilter exportFilter, final String name, final boolean optional) {
         return new ModuleDependencySpecBuilder()
             .setExportFilter(exportFilter)
@@ -550,7 +550,7 @@ public abstract class DependencySpec {
      *
      * @deprecated Use {@link ModuleDependencySpecBuilder} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static DependencySpec createModuleDependencySpec(final PathFilter exportFilter, final ModuleLoader moduleLoader, final ModuleIdentifier identifier, final boolean optional) {
         return createModuleDependencySpec(exportFilter, moduleLoader, identifier.toString(), optional);
     }
@@ -566,7 +566,7 @@ public abstract class DependencySpec {
      *
      * @deprecated Use {@link ModuleDependencySpecBuilder} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static DependencySpec createModuleDependencySpec(final PathFilter exportFilter, final ModuleLoader moduleLoader, final String name, final boolean optional) {
         return new ModuleDependencySpecBuilder()
             .setExportFilter(exportFilter)
@@ -588,7 +588,7 @@ public abstract class DependencySpec {
      *
      * @deprecated Use {@link ModuleDependencySpecBuilder} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static DependencySpec createModuleDependencySpec(final PathFilter importFilter, final PathFilter exportFilter, final ModuleLoader moduleLoader, final ModuleIdentifier identifier, final boolean optional) {
         return createModuleDependencySpec(importFilter, exportFilter, PathFilters.acceptAll(), PathFilters.acceptAll(), ClassFilters.acceptAll(), ClassFilters.acceptAll(), moduleLoader, identifier, optional);
     }
@@ -605,7 +605,7 @@ public abstract class DependencySpec {
      *
      * @deprecated Use {@link ModuleDependencySpecBuilder} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static DependencySpec createModuleDependencySpec(final PathFilter importFilter, final PathFilter exportFilter, final ModuleLoader moduleLoader, final String name, final boolean optional) {
         return new ModuleDependencySpecBuilder()
             .setImportFilter(importFilter)
@@ -632,7 +632,7 @@ public abstract class DependencySpec {
      *
      * @deprecated Use {@link ModuleDependencySpecBuilder} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static DependencySpec createModuleDependencySpec(final PathFilter importFilter, final PathFilter exportFilter, final PathFilter resourceImportFilter, final PathFilter resourceExportFilter, final ClassFilter classImportFilter, final ClassFilter classExportFilter, final ModuleLoader moduleLoader, final ModuleIdentifier identifier, final boolean optional) {
         return createModuleDependencySpec(importFilter, exportFilter, resourceImportFilter, resourceExportFilter, classImportFilter, classExportFilter, moduleLoader, identifier.toString(), optional);
     }
@@ -653,7 +653,7 @@ public abstract class DependencySpec {
      *
      * @deprecated Use {@link ModuleDependencySpecBuilder} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static DependencySpec createModuleDependencySpec(final PathFilter importFilter, final PathFilter exportFilter, final PathFilter resourceImportFilter, final PathFilter resourceExportFilter, final ClassFilter classImportFilter, final ClassFilter classExportFilter, final ModuleLoader moduleLoader, final String name, final boolean optional) {
         return new ModuleDependencySpecBuilder()
             .setImportFilter(importFilter)

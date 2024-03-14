@@ -51,7 +51,7 @@ public abstract class ModuleSpec {
      * @return the builder
      * @deprecated Use {@link #build(String)} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static Builder build(final ModuleIdentifier moduleIdentifier) {
         return build(moduleIdentifier.toString());
     }
@@ -204,7 +204,7 @@ public abstract class ModuleSpec {
      * @return the builder
      * @deprecated Use {@link #buildAlias(String, String)} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static AliasBuilder buildAlias(final ModuleIdentifier moduleIdentifier, final ModuleIdentifier aliasTarget) {
         return buildAlias(moduleIdentifier.toString(), aliasTarget.toString());
     }
@@ -244,7 +244,7 @@ public abstract class ModuleSpec {
      * @return the module identifier
      * @deprecated Use {@link #getName()} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public ModuleIdentifier getModuleIdentifier() {
         return ModuleIdentifier.fromString(name);
     }
@@ -310,7 +310,7 @@ public abstract class ModuleSpec {
          * @return the module identifier
          * @deprecated use {@link #getName()} instead
          */
-        @Deprecated
+        @Deprecated(forRemoval = true)
         default ModuleIdentifier getIdentifier() {
             return ModuleIdentifier.fromString(getName());
         }
@@ -420,7 +420,7 @@ public abstract class ModuleSpec {
          * @return the module identifier
          * @deprecated Use {@link #getName()} instead.
          */
-        @Deprecated
+        @Deprecated(forRemoval = true)
         default ModuleIdentifier getIdentifier() {
             return ModuleIdentifier.fromString(getName());
         }
@@ -438,7 +438,7 @@ public abstract class ModuleSpec {
          * @return the module identifier
          * @deprecated Use {@link #getAliasName()} instead.
          */
-        @Deprecated
+        @Deprecated(forRemoval = true)
         default ModuleIdentifier getAliasTarget() {
             return ModuleIdentifier.fromString(getAliasName());
         }

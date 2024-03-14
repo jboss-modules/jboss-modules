@@ -282,7 +282,7 @@ public class ModuleLoader {
      * @throws ModuleLoadException if the Module can not be loaded
      * @deprecated Use {@link #loadModule(String)} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public final Module loadModule(ModuleIdentifier identifier) throws ModuleLoadException {
         return loadModule(identifier.toString());
     }
@@ -313,7 +313,7 @@ public class ModuleLoader {
      * @throws SecurityException if the caller does not have permission to iterate module loaders
      * @deprecated Use {@link #iterateModules(String, boolean)} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public final Iterator<ModuleIdentifier> iterateModules(final ModuleIdentifier baseIdentifier, final boolean recursive) {
         return IteratorUtils.transformingIterator(iterateModules(baseIdentifier == null ? (String) null : baseIdentifier.toString(), recursive), ModuleIdentifier::fromString);
     }
@@ -381,7 +381,7 @@ public class ModuleLoader {
      * @return the load result, or {@code null} if the module is not found
      * @throws ModuleLoadException if an error occurs
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     protected Module preloadModule(ModuleIdentifier identifier) throws ModuleLoadException {
         if (overridesPreloadModuleByIdentifier) {
             return loadModuleLocal(identifier);
@@ -426,7 +426,7 @@ public class ModuleLoader {
      * @throws ModuleLoadException if an error occurs
      * @deprecated Use {@link #preloadModule(String)} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     protected Module preloadExportedModule(ModuleIdentifier identifier) throws ModuleLoadException {
         return preloadModule(identifier.getName());
     }
@@ -454,7 +454,7 @@ public class ModuleLoader {
      * @throws ModuleLoadException if an error occurs
      * @deprecated Use {@link #preloadModule(String, ModuleLoader)} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     protected static Module preloadModule(ModuleIdentifier identifier, ModuleLoader moduleLoader) throws ModuleLoadException {
         return moduleLoader.preloadExportedModule(identifier.toString());
     }
@@ -469,7 +469,7 @@ public class ModuleLoader {
      * @throws ModuleLoadException if an error occurs while loading the module
      * @deprecated Use {@link #loadModuleLocal(String)} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     protected final Module loadModuleLocal(ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
         return loadModuleLocal(moduleIdentifier.toString());
     }
@@ -554,7 +554,7 @@ public class ModuleLoader {
      * @return the module, or {@code null} if it wasn't found
      * @deprecated Use {@link #findLoadedModuleLocal(String)} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     protected final Module findLoadedModuleLocal(ModuleIdentifier identifier) {
         return findLoadedModuleLocal(identifier.toString());
     }
@@ -664,7 +664,7 @@ public class ModuleLoader {
      * @return the module specification
      * @throws ModuleLoadException
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     protected ModuleSpec findModule(final ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
         if (overridesFindModuleByIdentifier) {
             return findModule0(moduleIdentifier.toString());
@@ -1125,7 +1125,7 @@ public class ModuleLoader {
             final List<ResourceLoaderInfo> resourceLoaders = doGetResourceLoaders(module);
             final LocalLoader fallbackLoader = module.getFallbackLoader();
             final String fallbackLoaderString = fallbackLoader == null ? null : fallbackLoader.toString();
-            return new ModuleInfo(module.getIdentifier().toString(), module.getModuleLoader().mxBean, dependencies, resourceLoaders, module.getMainClass(), module.getClassLoaderPrivate().toString(), fallbackLoaderString);
+            return new ModuleInfo(module.getName(), module.getModuleLoader().mxBean, dependencies, resourceLoaders, module.getMainClass(), module.getClassLoaderPrivate().toString(), fallbackLoaderString);
         }
 
         public SortedMap<String, List<String>> getModulePathsInfo(final String name, final boolean exports) {
@@ -1135,7 +1135,7 @@ public class ModuleLoader {
             try {
                 paths = module.getPathsUnchecked();
             } catch (ModuleLoadError e) {
-                throw new IllegalArgumentException("Error loading module " + name + ": " + e.toString());
+                throw new IllegalArgumentException("Error loading module " + name + ": " + e);
             }
             final TreeMap<String, List<String>> result = new TreeMap<>();
             for (Map.Entry<String, List<LocalLoader>> entry : paths.entrySet()) {
@@ -1188,7 +1188,7 @@ public class ModuleLoader {
                 }
                 return module;
             } catch (ModuleLoadError e) {
-                throw new IllegalArgumentException("Error loading module " + name + ": " + e.toString());
+                throw new IllegalArgumentException("Error loading module " + name + ": " + e);
             }
         }
 

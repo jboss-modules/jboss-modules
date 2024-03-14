@@ -358,7 +358,7 @@ public final class Module {
      * @return the identifier
      * @deprecated Use {@link #getName()} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public ModuleIdentifier getIdentifier() {
         return ModuleIdentifier.fromString(getName());
     }
@@ -429,7 +429,7 @@ public final class Module {
      * @throws ModuleLoadException if the named module failed to load
      * @deprecated Use {@link #loadServiceFromCallerModuleLoader(String, Class)} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static <S> ServiceLoader<S> loadServiceFromCallerModuleLoader(ModuleIdentifier identifier, Class<S> serviceType) throws ModuleLoadException {
         return loadServiceFromCallerModuleLoader(identifier.toString(), serviceType);
     }
@@ -608,7 +608,7 @@ public final class Module {
      * @throws ModuleLoadException if the module could not be loaded
      * @deprecated Use {@link #getModuleFromCallerModuleLoader(String)} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static Module getModuleFromCallerModuleLoader(final ModuleIdentifier identifier) throws ModuleLoadException {
         return getModuleFromCallerModuleLoader(identifier.toString());
     }
@@ -651,7 +651,7 @@ public final class Module {
      * @throws ModuleLoadException if an error occurs
      * @deprecated Use {@link #getModule(String)} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public Module getModule(final ModuleIdentifier identifier) throws ModuleLoadException {
         return getModule(identifier.toString());
     }
@@ -680,7 +680,7 @@ public final class Module {
      * @throws ClassNotFoundException if the class could not be loaded
      * @deprecated Use {@link #loadClassFromBootModuleLoader(String, String)} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static Class<?> loadClassFromBootModuleLoader(final ModuleIdentifier moduleIdentifier, final String className)
             throws ModuleLoadException, ClassNotFoundException {
         return loadClassFromBootModuleLoader(moduleIdentifier.toString(), className);
@@ -716,7 +716,7 @@ public final class Module {
      * @throws ClassNotFoundException if the class could not be loaded
      * @deprecated Use {@link #loadClassFromCallerModuleLoader(String, String)} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static Class<?> loadClassFromCallerModuleLoader(final ModuleIdentifier moduleIdentifier, final String className)
             throws ModuleLoadException, ClassNotFoundException {
         return loadClassFromCallerModuleLoader(moduleIdentifier.toString(), className);
@@ -1258,7 +1258,7 @@ public final class Module {
                     if (moduleDependency.isOptional()) {
                         continue;
                     } else {
-                        log.trace("Module %s, dependency %s preload failed: %s", getIdentifier(), moduleDependency.getName(), ex);
+                        log.trace("Module %s, dependency %s preload failed: %s", getName(), moduleDependency.getName(), ex);
                         throw ex;
                     }
                 }
@@ -1409,7 +1409,7 @@ public final class Module {
                         if (moduleDependency.isOptional()) {
                             continue;
                         } else {
-                            log.trace("Module %s, dependency %s preload failed: %s", getIdentifier(), moduleDependency.getName(), ex);
+                            log.trace("Module %s, dependency %s preload failed: %s", getName(), moduleDependency.getName(), ex);
                             throw ex;
                         }
                     }
