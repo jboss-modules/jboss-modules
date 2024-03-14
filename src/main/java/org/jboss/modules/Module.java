@@ -856,7 +856,7 @@ public final class Module {
                 try {
                     return moduleClassLoader.getResources(canonPath);
                 } catch (IOException e) {
-                    return ConcurrentClassLoader.EMPTY_ENUMERATION;
+                    return Collections.emptyEnumeration();
                 }
             }
         }
@@ -882,7 +882,7 @@ public final class Module {
             }
         }
 
-        return list.size() == 0 ? ConcurrentClassLoader.EMPTY_ENUMERATION : Collections.enumeration(list);
+        return Collections.enumeration(list);
     }
 
     /**
@@ -1068,7 +1068,7 @@ public final class Module {
      * @return the property value
      */
     public String getProperty(String name, String defaultVal) {
-        return properties.containsKey(name) ? properties.get(name) : defaultVal;
+        return properties.getOrDefault(name, defaultVal);
     }
 
     /**

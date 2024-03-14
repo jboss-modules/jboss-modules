@@ -71,7 +71,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
     private final Module module;
     private final ClassTransformer transformer;
 
-    private final AtomicReference<Paths<ResourceLoader, ResourceLoaderSpec>> paths = new AtomicReference<>(Paths.<ResourceLoader, ResourceLoaderSpec>none());
+    private final AtomicReference<Paths<ResourceLoader, ResourceLoaderSpec>> paths = new AtomicReference<>(Paths.none());
 
     private final LocalLoader localLoader = new IterableLocalLoader() {
         public Class<?> loadClassLocal(final String name, final boolean resolve) {
@@ -102,7 +102,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         }
 
         public String toString() {
-            return "local loader for " + ModuleClassLoader.this.toString();
+            return "local loader for " + ModuleClassLoader.this;
         }
     };
 
@@ -114,7 +114,7 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
     protected ModuleClassLoader(final Configuration configuration) {
         super(configuration.getModule().getModuleLoader().getModuleDescription(configuration.getModule()));
         module = configuration.getModule();
-        paths.lazySet(new Paths<>(configuration.getResourceLoaders(), Collections.<String, List<ResourceLoader>>emptyMap()));
+        paths.lazySet(new Paths<>(configuration.getResourceLoaders(), Collections.emptyMap()));
         final AssertionSetting setting = configuration.getAssertionSetting();
         if (setting != AssertionSetting.INHERIT) {
             setDefaultAssertionStatus(setting == AssertionSetting.ENABLED);

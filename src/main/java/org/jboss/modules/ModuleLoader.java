@@ -120,7 +120,7 @@ public class ModuleLoader {
             public ModuleLoaderMXBean run() {
                 ObjectName objectName;
                 try {
-                    objectName = new ObjectName("jboss.modules", ObjectProperties.properties(property("type", "ModuleLoader"), property("name", ModuleLoader.this.getClass().getSimpleName() + "-" + Integer.toString(SEQ.incrementAndGet()))));
+                    objectName = new ObjectName("jboss.modules", ObjectProperties.properties(property("type", "ModuleLoader"), property("name", ModuleLoader.this.getClass().getSimpleName() + "-" + SEQ.incrementAndGet())));
                 } catch (MalformedObjectNameException e) {
                     return null;
                 }
@@ -315,7 +315,7 @@ public class ModuleLoader {
      */
     @Deprecated(forRemoval = true)
     public final Iterator<ModuleIdentifier> iterateModules(final ModuleIdentifier baseIdentifier, final boolean recursive) {
-        return IteratorUtils.transformingIterator(iterateModules(baseIdentifier == null ? (String) null : baseIdentifier.toString(), recursive), ModuleIdentifier::fromString);
+        return IteratorUtils.transformingIterator(iterateModules(baseIdentifier == null ? null : baseIdentifier.toString(), recursive), ModuleIdentifier::fromString);
     }
 
     /**
@@ -610,11 +610,11 @@ public class ModuleLoader {
      * this module will fail until a new module is loaded with the same name.  Once this happens, if all references to
      * the previous module are not cleared, the same module may be loaded more than once, causing possible class duplication
      * and class cast exceptions if proper care is not taken.
-     *
+     * <p>
      * If the given {@code moduleName} is an alias of the given {@code module}
      * then only alias mapping to {@code module} is removed. Aliased {@code module}
      * with its canonical name and other aliases mapping is left intact.
-     *
+     * <p>
      * If the given {@code moduleName} is the canonical {@code module} name
      * then all its alias plus canonical {@code moduleName} association mappings are removed.
      *
@@ -726,7 +726,7 @@ public class ModuleLoader {
     private Module defineModule(final ConcreteModuleSpec moduleSpec, final FutureModule futureModule) throws ModuleLoadException {
         try {
             return doPrivileged(new PrivilegedExceptionAction<Module>() {
-                public Module run() throws Exception {
+                public Module run() {
                     final ModuleLogger log = Module.log;
                     final String name = moduleSpec.getName();
 
@@ -737,10 +737,7 @@ public class ModuleLoader {
                     try {
                         futureModule.setModule(module);
                         return module;
-                    } catch (RuntimeException e) {
-                        log.trace(e, "Failed to load module %s", name);
-                        throw e;
-                    } catch (Error e) {
+                    } catch (RuntimeException | Error e) {
                         log.trace(e, "Failed to load module %s", name);
                         throw e;
                     }
@@ -749,9 +746,7 @@ public class ModuleLoader {
         } catch (PrivilegedActionException pe) {
             try {
                 throw pe.getException();
-            } catch (RuntimeException e) {
-                throw e;
-            } catch (ModuleLoadException e) {
+            } catch (RuntimeException | ModuleLoadException e) {
                 throw e;
             } catch (Exception e) {
                 throw new UndeclaredThrowableException(e);
@@ -888,7 +883,7 @@ public class ModuleLoader {
 
     static final Object NOT_FOUND = new Object();
 
-    final class FutureModule {
+    static final class FutureModule {
 
         final String name;
         volatile Object module;
@@ -1065,7 +1060,7 @@ public class ModuleLoader {
             try {
                 loader.relink(module);
             } catch (ModuleLoadException e) {
-                throw new IllegalStateException("Module load failure for module " + name + ": " + e.toString());
+                throw new IllegalStateException("Module load failure for module " + name + ": " + e);
             }
         }
 
@@ -1253,11 +1248,7 @@ public class ModuleLoader {
         private final MBeanServer server;
 
         RealMBeanReg() {
-            server = doPrivileged(new PrivilegedAction<>() {
-                public MBeanServer run() {
-                    return ManagementFactory.getPlatformMBeanServer();
-                }
-            });
+            server = doPrivileged((PrivilegedAction<MBeanServer>) ManagementFactory::getPlatformMBeanServer);
         }
 
         public boolean addMBean(final ObjectName name, final Object bean) {

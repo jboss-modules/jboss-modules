@@ -54,8 +54,11 @@ public abstract class ConcurrentClassLoader extends NamedClassLoader {
 
     /**
      * An empty enumeration, for subclasses to use if desired.
+     *
+     * @deprecated Use {@link Collections#emptyEnumeration()} instead.
      */
-    protected static final Enumeration<URL> EMPTY_ENUMERATION = Collections.enumeration(Collections.<URL>emptySet());
+    @Deprecated
+    protected static final Enumeration<URL> EMPTY_ENUMERATION = Collections.emptyEnumeration();
 
     /**
      * Construct a new instance with the given parent class loader, which must be a concurrent class loader, or {@code null}
@@ -98,10 +101,6 @@ public abstract class ConcurrentClassLoader extends NamedClassLoader {
         if (! isRegisteredAsParallelCapable()) {
             throw new Error("Cannot instantiate non-parallel subclass");
         }
-    }
-
-    static Object getLockForClass(ConcurrentClassLoader cl, String name) {
-        return cl.getClassLoadingLock(name);
     }
 
     /**
@@ -179,8 +178,7 @@ public abstract class ConcurrentClassLoader extends NamedClassLoader {
      */
     protected final Class<?> defineOrLoadClass(final String className, final byte[] bytes, int off, int len) {
         try {
-            final Class<?> definedClass = defineClass(className, bytes, off, len);
-            return definedClass;
+            return defineClass(className, bytes, off, len);
         } catch (LinkageError e) {
             final Class<?> loadedClass = findLoadedClass(className);
             if (loadedClass != null) {
@@ -322,7 +320,7 @@ public abstract class ConcurrentClassLoader extends NamedClassLoader {
      * @throws IOException if an I/O error occurs
      */
     protected Enumeration<URL> findResources(final String name, final boolean exportsOnly) throws IOException {
-        return EMPTY_ENUMERATION;
+        return Collections.emptyEnumeration();
     }
 
     /**
@@ -334,7 +332,7 @@ public abstract class ConcurrentClassLoader extends NamedClassLoader {
      * @return an empty enumeration
      */
     protected final Enumeration<URL> findResources(final String name) {
-        return EMPTY_ENUMERATION;
+        return Collections.emptyEnumeration();
     }
 
     /**
@@ -421,7 +419,9 @@ public abstract class ConcurrentClassLoader extends NamedClassLoader {
      *
      * @param name the package name
      * @return the package, or {@code null} if no such package is visible to this class loader
+     * @deprecated Deprecated in {@link ClassLoader#getPackage(String)}.
      */
+    @Deprecated
     protected final Package getPackage(final String name) {
         final String packageName = name + ".";
         for (String s : Module.systemPackages) {
