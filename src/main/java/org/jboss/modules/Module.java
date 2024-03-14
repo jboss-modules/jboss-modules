@@ -41,7 +41,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.ServiceLoader;
@@ -103,20 +102,13 @@ public final class Module {
                 } else {
                     part = pkgsString.substring(i, nc).trim();
                 }
-                if (part.length() > 0) {
+                if (! part.isEmpty()) {
                     list.add((part + ".").intern());
                 }
             } while (nc != -1);
         }
-        final String[] noStrings = new String[0];
-        systemPackages = list.toArray(noStrings);
-        final ListIterator<String> iterator = list.listIterator();
-        // http://youtrack.jetbrains.net/issue/IDEA-72097
-        //noinspection WhileLoopReplaceableByForEach
-        while (iterator.hasNext()) {
-            iterator.set(iterator.next().replace('.', '/'));
-        }
-        systemPaths = list.toArray(noStrings);
+        systemPackages = list.toArray(String[]::new);
+        systemPaths = list.stream().map(i -> i.replace('.', '/')).toArray(String[]::new);
 
         AccessController.doPrivileged(new PrivilegedAction<Void>() {
             public Void run() {
