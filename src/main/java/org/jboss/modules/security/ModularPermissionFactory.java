@@ -20,7 +20,6 @@ package org.jboss.modules.security;
 
 import java.security.Permission;
 import org.jboss.modules.Module;
-import org.jboss.modules.ModuleIdentifier;
 import org.jboss.modules.ModuleLoader;
 import org.jboss.modules._private.ModulesPrivateAccess;
 
@@ -39,21 +38,6 @@ public final class ModularPermissionFactory implements PermissionFactory {
     private volatile Permission instance = UninitializedPermission.INSTANCE;
 
     private static final ModulesPrivateAccess access = Module.getPrivateAccess();
-
-    /**
-     * Construct a new instance.
-     *
-     * @param moduleLoader the module loader from which the module is to be loaded
-     * @param moduleIdentifier the module identifier from which the permission is to be loaded
-     * @param className the name of the permission class
-     * @param targetName the name to pass to the permission class constructor or {@code null} for none
-     * @param permissionActions the action list to pass to the permission class constructor or {@code null} for none
-     * @deprecated Use {@link #ModularPermissionFactory(ModuleLoader, String, String, String, String)} instead.
-     */
-    @Deprecated(forRemoval = true)
-    public ModularPermissionFactory(final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier, final String className, final String targetName, final String permissionActions) {
-        this(moduleLoader, moduleIdentifier.toString(), className, targetName, permissionActions);
-    }
 
     /**
      * Construct a new instance.

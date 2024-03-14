@@ -18,7 +18,6 @@
 
 package org.jboss.modules;
 
-import java.util.Collections;
 import java.util.Iterator;
 
 /**
@@ -29,35 +28,14 @@ import java.util.Iterator;
 public interface IterableModuleFinder extends ModuleFinder {
 
     /**
-     * This method returns an empty iterator and should not be used by new code.
-     *
-     * @param baseIdentifier the identifier to start with, or {@code null} to iterate all modules
-     * @param recursive {@code true} to find recursively nested modules, {@code false} to only find immediately nested
-     * modules
-     * @return an iterator for the modules in this module finder
-     * @deprecated Use {@link #iterateModules(String, boolean, ModuleLoader)} instead.
-     */
-    @Deprecated(forRemoval = true)
-    default Iterator<ModuleIdentifier> iterateModules(ModuleIdentifier baseIdentifier, boolean recursive) {
-        return Collections.emptyIterator();
-    }
-
-    /**
      * Iterate the modules which can be located via this module finder.
      *
      * @param baseName the identifier to start with, or {@code null} to iterate all modules; ignored if this module
      * loader does not have a concept of nested modules
      * @param recursive {@code true} to find recursively nested modules, {@code false} to only find immediately nested
      * modules; ignored if this module finder does not have a concept of nested modules
+     * @param delegateLoader the delegate loader to query for dependency resolution
      * @return an iterator for the modules in this module finder
-     * @deprecated Use {@link #iterateModules(String, boolean, ModuleLoader)} instead.
      */
-    @Deprecated
-    default Iterator<String> iterateModules(String baseName, boolean recursive) {
-        return iterateModules(baseName, recursive, null);
-    }
-
-    default Iterator<String> iterateModules(String baseName, boolean recursive, final ModuleLoader delegateLoader) {
-        return IteratorUtils.transformingIterator(iterateModules(baseName == null ? null : ModuleIdentifier.fromString(baseName), recursive), ModuleIdentifier::toString);
-    }
+    Iterator<String> iterateModules(String baseName, boolean recursive, ModuleLoader delegateLoader);
 }

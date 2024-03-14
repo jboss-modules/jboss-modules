@@ -18,10 +18,7 @@
 
 package org.jboss.modules.log;
 
-import java.io.File;
-
 import org.jboss.modules.Module;
-import org.jboss.modules.ModuleIdentifier;
 import org.jboss.modules.ModuleLoader;
 
 /**
@@ -55,13 +52,7 @@ public interface ModuleLogger {
 
     void greeting();
 
-    default void moduleDefined(String name, final ModuleLoader moduleLoader) {
-        moduleDefined(ModuleIdentifier.fromString(name), moduleLoader);
-    }
-
-    @Deprecated(forRemoval = true)
-    default void moduleDefined(ModuleIdentifier identifier, final ModuleLoader moduleLoader) {
-    }
+    void moduleDefined(String name, final ModuleLoader moduleLoader);
 
     void classDefineFailed(Throwable throwable, String className, Module module);
 

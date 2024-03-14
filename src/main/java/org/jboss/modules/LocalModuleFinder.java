@@ -211,22 +211,6 @@ public final class LocalModuleFinder implements IterableModuleFinder, AutoClosea
     /**
      * Parse a {@code module.xml} file and return the corresponding module specification.
      *
-     * @param identifier the identifier to load
-     * @param delegateLoader the delegate module loader to use for module specifications
-     * @param roots the repository root paths to search
-     * @return the module specification
-     * @throws IOException if reading the module file failed
-     * @throws ModuleLoadException if creating the module specification failed (e.g. due to a parse error)
-     * @deprecated Use {@link #parseModuleXmlFile(String, ModuleLoader, File...)} instead.
-     */
-    @Deprecated(forRemoval = true)
-    public static ModuleSpec parseModuleXmlFile(final ModuleIdentifier identifier, final ModuleLoader delegateLoader, final File... roots) throws IOException, ModuleLoadException {
-        return parseModuleXmlFile(identifier.toString(), delegateLoader, roots);
-    }
-
-    /**
-     * Parse a {@code module.xml} file and return the corresponding module specification.
-     *
      * @param name the name of the module to load
      * @param delegateLoader the delegate module loader to use for module specifications
      * @param roots the repository root paths to search
@@ -294,7 +278,7 @@ public final class LocalModuleFinder implements IterableModuleFinder, AutoClosea
                             continue;
                         }
                         try (InputStream stream = Files.newInputStream(nextPath)) {
-                            final ModuleSpec moduleSpec = ModuleXmlParser.parseModuleXml(ModuleXmlParser.ResourceRootFactory.getDefault(), nextPath.getParent().toString(), stream, nextPath.toString(), delegateLoader, (String)null);
+                            final ModuleSpec moduleSpec = ModuleXmlParser.parseModuleXml(ModuleXmlParser.ResourceRootFactory.getDefault(), nextPath.getParent().toString(), stream, nextPath.toString(), delegateLoader, null);
                             if (moduleSpec != null) {
                                 this.next = moduleSpec.getName();
                                 if (found.add(this.next)) {

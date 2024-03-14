@@ -48,7 +48,6 @@ import org.jboss.modules.ModuleDependencySpecBuilder;
 import org.jboss.modules.Version;
 import org.jboss.modules.VersionDetection;
 import org.jboss.modules.maven.ArtifactCoordinates;
-import org.jboss.modules.ModuleIdentifier;
 import org.jboss.modules.ModuleLoadException;
 import org.jboss.modules.ModuleLoader;
 import org.jboss.modules.ModuleSpec;
@@ -202,23 +201,6 @@ public final class ModuleXmlParser {
      * Parse a {@code module.xml} file.
      *
      * @param moduleLoader the module loader to use for dependency specifications
-     * @param moduleIdentifier the module identifier of the module to load
-     * @param root the module path root
-     * @param moduleInfoFile the {@code File} of the {@code module.xml} content
-     * @return a module specification
-     * @throws ModuleLoadException if a dependency could not be established or another error occurs
-     * @throws IOException if I/O fails
-     * @deprecated Use {@link #parseModuleXml(ModuleLoader, String, File, File)} instead.
-     */
-    @Deprecated
-    public static ModuleSpec parseModuleXml(final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier, final File root, final File moduleInfoFile) throws ModuleLoadException, IOException {
-        return parseModuleXml(moduleLoader, moduleIdentifier.toString(), root, moduleInfoFile);
-    }
-
-    /**
-     * Parse a {@code module.xml} file.
-     *
-     * @param moduleLoader the module loader to use for dependency specifications
      * @param moduleName the name of the module to load
      * @param root the module path root
      * @param moduleInfoFile the {@code File} of the {@code module.xml} content
@@ -264,25 +246,6 @@ public final class ModuleXmlParser {
      * @param source a stream of the {@code module.xml} content (must not be {@code null})
      * @param moduleInfoFile the {@code File} of the {@code module.xml} content (must not be {@code null})
      * @param moduleLoader the module loader to use for dependency specifications (must not be {@code null})
-     * @param moduleIdentifier the module identifier of the module to load
-     * @return a module specification
-     * @throws ModuleLoadException if a dependency could not be established or another error occurs
-     * @throws IOException if I/O fails
-     * @deprecated Use {@link #parseModuleXml(ResourceRootFactory, String, InputStream, String, ModuleLoader, String)} instead.
-     */
-    @Deprecated
-    public static ModuleSpec parseModuleXml(final ResourceRootFactory factory, final String rootPath, InputStream source, final String moduleInfoFile, final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier) throws ModuleLoadException, IOException {
-        return parseModuleXml(factory, MavenResolver.createDefaultResolver(), rootPath, source, moduleInfoFile, moduleLoader, moduleIdentifier);
-    }
-
-    /**
-     * Parse a {@code module.xml} file.
-     *
-     * @param factory the resource root factory to use (must not be {@code null})
-     * @param rootPath the root path to send in to the resource root factory (must not be {@code null})
-     * @param source a stream of the {@code module.xml} content (must not be {@code null})
-     * @param moduleInfoFile the {@code File} of the {@code module.xml} content (must not be {@code null})
-     * @param moduleLoader the module loader to use for dependency specifications (must not be {@code null})
      * @param moduleName the module name of the module to load
      * @return a module specification
      * @throws ModuleLoadException if a dependency could not be established or another error occurs
@@ -290,26 +253,6 @@ public final class ModuleXmlParser {
      */
     public static ModuleSpec parseModuleXml(final ResourceRootFactory factory, final String rootPath, InputStream source, final String moduleInfoFile, final ModuleLoader moduleLoader, final String moduleName) throws ModuleLoadException, IOException {
         return parseModuleXml(factory, MavenResolver.createDefaultResolver(), rootPath, source, moduleInfoFile, moduleLoader, moduleName);
-    }
-
-    /**
-     * Parse a {@code module.xml} file.
-     *
-     * @param factory the resource root factory to use (must not be {@code null})
-     * @param mavenResolver the Maven artifact resolver to use (must not be {@code null})
-     * @param rootPath the root path to send in to the resource root factory (must not be {@code null})
-     * @param source a stream of the {@code module.xml} content (must not be {@code null})
-     * @param moduleInfoFile the {@code File} of the {@code module.xml} content (must not be {@code null})
-     * @param moduleLoader the module loader to use for dependency specifications (must not be {@code null})
-     * @param moduleIdentifier the module identifier of the module to load
-     * @return a module specification
-     * @throws ModuleLoadException if a dependency could not be established or another error occurs
-     * @throws IOException if I/O fails
-     * @deprecated Use {@link #parseModuleXml(ResourceRootFactory, MavenResolver, String, InputStream, String, ModuleLoader, String)} instead.
-     */
-    @Deprecated
-    public static ModuleSpec parseModuleXml(final ResourceRootFactory factory, final MavenResolver mavenResolver, final String rootPath, InputStream source, final String moduleInfoFile, final ModuleLoader moduleLoader, final ModuleIdentifier moduleIdentifier) throws ModuleLoadException, IOException {
-        return parseModuleXml(factory, mavenResolver, rootPath, source, moduleInfoFile, moduleLoader, moduleIdentifier.toString());
     }
 
     /**
@@ -555,7 +498,7 @@ public final class ModuleXmlParser {
                     throw invalidModuleName(reader, moduleName);
                 }
             } else {
-                if (! ModuleIdentifier.fromString(moduleName).equals(ModuleIdentifier.create(name, slot))) {
+                if (! moduleName.equals(composeLegacyName(name, slot))) {
                     throw invalidModuleName(reader, moduleName);
                 }
             }
@@ -568,13 +511,22 @@ public final class ModuleXmlParser {
                     if (noSlots) {
                         return ModuleSpec.buildAlias(name, targetName).create();
                     } else {
-                        return ModuleSpec.buildAlias(ModuleIdentifier.create(name, slot), ModuleIdentifier.create(targetName, targetSlot)).create();
+                        return ModuleSpec.buildAlias(composeLegacyName(name, slot), composeLegacyName(targetName, targetSlot)).create();
                     }
                 }
                 default: {
                     throw unexpectedContent(reader);
                 }
             }
+        }
+    }
+
+    static String composeLegacyName(String name, String slot) {
+        // this is not identical to the legacy code but should encompass all existing use cases
+        if (slot == null || slot.isEmpty() || slot.equals("main")) {
+            return name;
+        } else {
+            return name.replaceAll("([\\\\:])", "\\$1") + ":" + slot;
         }
     }
 
@@ -603,7 +555,7 @@ public final class ModuleXmlParser {
                     throw invalidModuleName(reader, moduleName);
                 }
             } else {
-                if (!ModuleIdentifier.fromString(moduleName).equals(ModuleIdentifier.create(name, slot))) {
+                if (!composeLegacyName(name, slot).equals(moduleName)) {
                     throw invalidModuleName(reader, moduleName);
                 }
             }
@@ -653,7 +605,7 @@ public final class ModuleXmlParser {
         if (is1_6) {
             realModuleName = name;
         } else {
-            realModuleName = ModuleIdentifier.create(name, slot).toString();
+            realModuleName = composeLegacyName(name, slot);
         }
         if (moduleName != null && ! realModuleName.equals(moduleName)) {
             throw invalidModuleName(reader, realModuleName);
@@ -809,7 +761,7 @@ public final class ModuleXmlParser {
                     dependencies.add(new ModuleDependencySpecBuilder()
                         .setImportFilter(importFilter)
                         .setExportFilter(exportFilter)
-                        .setName(noSlots ? name : ModuleIdentifier.create(name, slot).toString())
+                        .setName(noSlots ? name : composeLegacyName(name, slot))
                         .setOptional(optional)
                         .build());
                     return;
