@@ -456,7 +456,7 @@ public abstract class ConcurrentClassLoader extends NamedClassLoader {
         ArrayList<Package> list = new ArrayList<>();
         list.addAll(packages.values());
         list.addAll(Arrays.asList(super.getPackages()));
-        return list.toArray(new Package[list.size()]);
+        return list.toArray(Package[]::new);
     }
 
     /**

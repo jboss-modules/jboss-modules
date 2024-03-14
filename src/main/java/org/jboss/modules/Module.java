@@ -1671,7 +1671,7 @@ public final class Module {
         if (dependencySpecs == null) {
             throw new IllegalArgumentException("dependencySpecs is null");
         }
-        final DependencySpec[] specs = dependencySpecs.toArray(new DependencySpec[dependencySpecs.size()]);
+        final DependencySpec[] specs = dependencySpecs.toArray(DependencySpec[]::new);
         for (DependencySpec spec : specs) {
             if (spec == null) {
                 throw new IllegalArgumentException("dependencySpecs contains a null dependency specification");
@@ -1723,6 +1723,6 @@ public final class Module {
                 continue next;
             }
         }
-        return packages.toArray(new Package[packages.size()]);
+        return packages.toArray(Package[]::new);
     }
 }

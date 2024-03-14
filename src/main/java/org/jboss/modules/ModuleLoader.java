@@ -801,7 +801,7 @@ public class ModuleLoader {
             throw new SecurityException("Module is not defined by this module loader");
         }
 
-        module.getClassLoaderPrivate().setResourceLoaders(loaders.toArray(new ResourceLoaderSpec[loaders.size()]));
+        module.getClassLoaderPrivate().setResourceLoaders(loaders.toArray(ResourceLoaderSpec[]::new));
     }
 
     /**
