@@ -59,7 +59,9 @@ public final class JarModuleFinder implements ModuleFinder {
      *
      * @param myIdentifier the identifier to use for the JAR itself
      * @param jarFile the JAR file to encapsulate
+     * @deprecated Use {@link #JarModuleFinder(String,JarFile)} instead.
      */
+    @Deprecated(forRemoval = true)
     public JarModuleFinder(final ModuleIdentifier myIdentifier, final JarFile jarFile) {
         this(myIdentifier.toString(), jarFile);
     }

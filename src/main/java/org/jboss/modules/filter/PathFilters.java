@@ -50,7 +50,7 @@ public final class PathFilters {
      * @return the "all" filter
      */
     public static PathFilter all(Collection<PathFilter> filters) {
-        return all(filters.toArray(new PathFilter[filters.size()]));
+        return all(filters.toArray(PathFilter[]::new));
     }
 
     /**
@@ -70,7 +70,7 @@ public final class PathFilters {
      * @return the "any" filter
      */
     public static PathFilter any(Collection<PathFilter> filters) {
-        return any(filters.toArray(new PathFilter[filters.size()]));
+        return any(filters.toArray(PathFilter[]::new));
     }
 
     /**

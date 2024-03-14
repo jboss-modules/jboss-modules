@@ -37,7 +37,7 @@ public interface IterableModuleFinder extends ModuleFinder {
      * @return an iterator for the modules in this module finder
      * @deprecated Use {@link #iterateModules(String, boolean, ModuleLoader)} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     default Iterator<ModuleIdentifier> iterateModules(ModuleIdentifier baseIdentifier, boolean recursive) {
         return Collections.emptyIterator();
     }

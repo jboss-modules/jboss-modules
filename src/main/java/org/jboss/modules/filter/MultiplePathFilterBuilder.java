@@ -56,7 +56,7 @@ public class MultiplePathFilterBuilder {
      * @return the path filter
      */
     public PathFilter create() {
-        final PathFilter[] filters = this.filters.toArray(new PathFilter[this.filters.size()]);
+        final PathFilter[] filters = this.filters.toArray(PathFilter[]::new);
         final boolean[] includeFlags = new boolean[this.includeFlags.size()];
         for (int i = 0, includeFlagsSize = this.includeFlags.size(); i < includeFlagsSize; i++) {
             includeFlags[i] = this.includeFlags.get(i).booleanValue();

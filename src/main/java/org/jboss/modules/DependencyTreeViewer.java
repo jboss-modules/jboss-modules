@@ -120,7 +120,7 @@ public final class DependencyTreeViewer {
      * @param roots the module roots to search
      * @deprecated Use {@link #print(PrintWriter, String, File...)} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static void print(PrintWriter out, ModuleIdentifier identifier, final File... roots) {
         print(out, identifier.toString(), roots);
     }

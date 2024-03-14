@@ -120,7 +120,7 @@ public class ModuleLoader {
             public ModuleLoaderMXBean run() {
                 ObjectName objectName;
                 try {
-                    objectName = new ObjectName("jboss.modules", ObjectProperties.properties(property("type", "ModuleLoader"), property("name", ModuleLoader.this.getClass().getSimpleName() + "-" + Integer.toString(SEQ.incrementAndGet()))));
+                    objectName = new ObjectName("jboss.modules", ObjectProperties.properties(property("type", "ModuleLoader"), property("name", ModuleLoader.this.getClass().getSimpleName() + "-" + SEQ.incrementAndGet())));
                 } catch (MalformedObjectNameException e) {
                     return null;
                 }
@@ -282,7 +282,7 @@ public class ModuleLoader {
      * @throws ModuleLoadException if the Module can not be loaded
      * @deprecated Use {@link #loadModule(String)} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public final Module loadModule(ModuleIdentifier identifier) throws ModuleLoadException {
         return loadModule(identifier.toString());
     }
@@ -313,9 +313,9 @@ public class ModuleLoader {
      * @throws SecurityException if the caller does not have permission to iterate module loaders
      * @deprecated Use {@link #iterateModules(String, boolean)} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public final Iterator<ModuleIdentifier> iterateModules(final ModuleIdentifier baseIdentifier, final boolean recursive) {
-        return IteratorUtils.transformingIterator(iterateModules(baseIdentifier == null ? (String) null : baseIdentifier.toString(), recursive), ModuleIdentifier::fromString);
+        return IteratorUtils.transformingIterator(iterateModules(baseIdentifier == null ? null : baseIdentifier.toString(), recursive), ModuleIdentifier::fromString);
     }
 
     /**
@@ -381,7 +381,7 @@ public class ModuleLoader {
      * @return the load result, or {@code null} if the module is not found
      * @throws ModuleLoadException if an error occurs
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     protected Module preloadModule(ModuleIdentifier identifier) throws ModuleLoadException {
         if (overridesPreloadModuleByIdentifier) {
             return loadModuleLocal(identifier);
@@ -426,7 +426,7 @@ public class ModuleLoader {
      * @throws ModuleLoadException if an error occurs
      * @deprecated Use {@link #preloadModule(String)} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     protected Module preloadExportedModule(ModuleIdentifier identifier) throws ModuleLoadException {
         return preloadModule(identifier.getName());
     }
@@ -454,7 +454,7 @@ public class ModuleLoader {
      * @throws ModuleLoadException if an error occurs
      * @deprecated Use {@link #preloadModule(String, ModuleLoader)} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     protected static Module preloadModule(ModuleIdentifier identifier, ModuleLoader moduleLoader) throws ModuleLoadException {
         return moduleLoader.preloadExportedModule(identifier.toString());
     }
@@ -469,7 +469,7 @@ public class ModuleLoader {
      * @throws ModuleLoadException if an error occurs while loading the module
      * @deprecated Use {@link #loadModuleLocal(String)} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     protected final Module loadModuleLocal(ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
         return loadModuleLocal(moduleIdentifier.toString());
     }
@@ -554,7 +554,7 @@ public class ModuleLoader {
      * @return the module, or {@code null} if it wasn't found
      * @deprecated Use {@link #findLoadedModuleLocal(String)} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     protected final Module findLoadedModuleLocal(ModuleIdentifier identifier) {
         return findLoadedModuleLocal(identifier.toString());
     }
@@ -610,11 +610,11 @@ public class ModuleLoader {
      * this module will fail until a new module is loaded with the same name.  Once this happens, if all references to
      * the previous module are not cleared, the same module may be loaded more than once, causing possible class duplication
      * and class cast exceptions if proper care is not taken.
-     *
+     * <p>
      * If the given {@code moduleName} is an alias of the given {@code module}
      * then only alias mapping to {@code module} is removed. Aliased {@code module}
      * with its canonical name and other aliases mapping is left intact.
-     *
+     * <p>
      * If the given {@code moduleName} is the canonical {@code module} name
      * then all its alias plus canonical {@code moduleName} association mappings are removed.
      *
@@ -664,7 +664,7 @@ public class ModuleLoader {
      * @return the module specification
      * @throws ModuleLoadException
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     protected ModuleSpec findModule(final ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
         if (overridesFindModuleByIdentifier) {
             return findModule0(moduleIdentifier.toString());
@@ -726,7 +726,7 @@ public class ModuleLoader {
     private Module defineModule(final ConcreteModuleSpec moduleSpec, final FutureModule futureModule) throws ModuleLoadException {
         try {
             return doPrivileged(new PrivilegedExceptionAction<Module>() {
-                public Module run() throws Exception {
+                public Module run() {
                     final ModuleLogger log = Module.log;
                     final String name = moduleSpec.getName();
 
@@ -737,10 +737,7 @@ public class ModuleLoader {
                     try {
                         futureModule.setModule(module);
                         return module;
-                    } catch (RuntimeException e) {
-                        log.trace(e, "Failed to load module %s", name);
-                        throw e;
-                    } catch (Error e) {
+                    } catch (RuntimeException | Error e) {
                         log.trace(e, "Failed to load module %s", name);
                         throw e;
                     }
@@ -749,9 +746,7 @@ public class ModuleLoader {
         } catch (PrivilegedActionException pe) {
             try {
                 throw pe.getException();
-            } catch (RuntimeException e) {
-                throw e;
-            } catch (ModuleLoadException e) {
+            } catch (RuntimeException | ModuleLoadException e) {
                 throw e;
             } catch (Exception e) {
                 throw new UndeclaredThrowableException(e);
@@ -801,7 +796,7 @@ public class ModuleLoader {
             throw new SecurityException("Module is not defined by this module loader");
         }
 
-        module.getClassLoaderPrivate().setResourceLoaders(loaders.toArray(new ResourceLoaderSpec[loaders.size()]));
+        module.getClassLoaderPrivate().setResourceLoaders(loaders.toArray(ResourceLoaderSpec[]::new));
     }
 
     /**
@@ -888,7 +883,7 @@ public class ModuleLoader {
 
     static final Object NOT_FOUND = new Object();
 
-    final class FutureModule {
+    static final class FutureModule {
 
         final String name;
         volatile Object module;
@@ -1065,7 +1060,7 @@ public class ModuleLoader {
             try {
                 loader.relink(module);
             } catch (ModuleLoadException e) {
-                throw new IllegalStateException("Module load failure for module " + name + ": " + e.toString());
+                throw new IllegalStateException("Module load failure for module " + name + ": " + e);
             }
         }
 
@@ -1125,7 +1120,7 @@ public class ModuleLoader {
             final List<ResourceLoaderInfo> resourceLoaders = doGetResourceLoaders(module);
             final LocalLoader fallbackLoader = module.getFallbackLoader();
             final String fallbackLoaderString = fallbackLoader == null ? null : fallbackLoader.toString();
-            return new ModuleInfo(module.getIdentifier().toString(), module.getModuleLoader().mxBean, dependencies, resourceLoaders, module.getMainClass(), module.getClassLoaderPrivate().toString(), fallbackLoaderString);
+            return new ModuleInfo(module.getName(), module.getModuleLoader().mxBean, dependencies, resourceLoaders, module.getMainClass(), module.getClassLoaderPrivate().toString(), fallbackLoaderString);
         }
 
         public SortedMap<String, List<String>> getModulePathsInfo(final String name, final boolean exports) {
@@ -1135,7 +1130,7 @@ public class ModuleLoader {
             try {
                 paths = module.getPathsUnchecked();
             } catch (ModuleLoadError e) {
-                throw new IllegalArgumentException("Error loading module " + name + ": " + e.toString());
+                throw new IllegalArgumentException("Error loading module " + name + ": " + e);
             }
             final TreeMap<String, List<String>> result = new TreeMap<>();
             for (Map.Entry<String, List<LocalLoader>> entry : paths.entrySet()) {
@@ -1188,7 +1183,7 @@ public class ModuleLoader {
                 }
                 return module;
             } catch (ModuleLoadError e) {
-                throw new IllegalArgumentException("Error loading module " + name + ": " + e.toString());
+                throw new IllegalArgumentException("Error loading module " + name + ": " + e);
             }
         }
 
@@ -1253,11 +1248,7 @@ public class ModuleLoader {
         private final MBeanServer server;
 
         RealMBeanReg() {
-            server = doPrivileged(new PrivilegedAction<>() {
-                public MBeanServer run() {
-                    return ManagementFactory.getPlatformMBeanServer();
-                }
-            });
+            server = doPrivileged((PrivilegedAction<MBeanServer>) ManagementFactory::getPlatformMBeanServer);
         }
 
         public boolean addMBean(final ObjectName name, final Object bean) {

@@ -117,7 +117,7 @@ public final class JDKModuleFinder implements IterableModuleFinder {
         return "JDK Module Finder";
     }
 
-    public Iterator<String> iterateModules(final String baseName, final boolean recursive) {
+    public Iterator<String> iterateModules(final String baseName, final boolean recursive, final ModuleLoader delegate) {
         final Set<Module> moduleSet = layer.modules();
         final ArrayList<String> nameList = new ArrayList<>(moduleSet.size() + 1);
         final Module ourModule = getClass().getModule();

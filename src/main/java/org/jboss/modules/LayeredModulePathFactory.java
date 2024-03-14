@@ -99,7 +99,7 @@ class LayeredModulePathFactory {
             }
         }
 
-        return foundLayers ? layeredPath.toArray(new File[layeredPath.size()]) : modulePath;
+        return foundLayers ? layeredPath.toArray(File[]::new) : modulePath;
     }
 
     private static LayersConfig getLayersConfig(File repoRoot) {

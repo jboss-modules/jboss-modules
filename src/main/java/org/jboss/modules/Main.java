@@ -361,13 +361,12 @@ public final class Main {
             System.exit(1);
             return;
         }
-        final String ourJavaVersion = doPrivileged(new PropertyReadAction("java.specification.version", "1.6"));
-        final String requireJavaVersion = module.getProperty("jboss.require-java-version", ourJavaVersion);
+        int actualVersion = Runtime.version().feature();
+        final String requireJavaVersion = module.getProperty("jboss.require-java-version", Integer.toString(actualVersion));
         final Pattern versionPattern = Pattern.compile("(?:1\\.)?(\\d+)");
         final Matcher requireMatcher = versionPattern.matcher(requireJavaVersion);
-        final Matcher ourMatcher = versionPattern.matcher(ourJavaVersion);
-        if (requireMatcher.matches() && ourMatcher.matches() && Integer.parseInt(requireMatcher.group(1)) > Integer.parseInt(ourMatcher.group(1))) {
-            System.err.printf("This application requires Java specification version %s or later to run (this Java virtual machine implements specification version %s)%n", requireJavaVersion, ourJavaVersion);
+        if (requireMatcher.matches() && Integer.parseInt(requireMatcher.group(1)) > actualVersion) {
+            System.err.printf("This application requires Java specification version %s or later to run (this Java virtual machine implements specification version %s)%n", requireJavaVersion, Integer.valueOf(actualVersion));
             System.exit(1);
         }
 

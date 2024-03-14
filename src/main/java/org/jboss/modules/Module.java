@@ -18,6 +18,8 @@
 
 package org.jboss.modules;
 
+import static java.security.AccessController.doPrivileged;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.invoke.MethodHandle;
@@ -39,7 +41,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.ServiceLoader;
@@ -101,20 +102,13 @@ public final class Module {
                 } else {
                     part = pkgsString.substring(i, nc).trim();
                 }
-                if (part.length() > 0) {
+                if (! part.isEmpty()) {
                     list.add((part + ".").intern());
                 }
             } while (nc != -1);
         }
-        final String[] noStrings = new String[0];
-        systemPackages = list.toArray(noStrings);
-        final ListIterator<String> iterator = list.listIterator();
-        // http://youtrack.jetbrains.net/issue/IDEA-72097
-        //noinspection WhileLoopReplaceableByForEach
-        while (iterator.hasNext()) {
-            iterator.set(iterator.next().replace('.', '/'));
-        }
-        systemPaths = list.toArray(noStrings);
+        systemPackages = list.toArray(String[]::new);
+        systemPaths = list.stream().map(i -> i.replace('.', '/')).toArray(String[]::new);
 
         AccessController.doPrivileged(new PrivilegedAction<Void>() {
             public Void run() {
@@ -150,7 +144,7 @@ public final class Module {
      * @throws SecurityException always
      */
     public static ModulesPrivateAccess getPrivateAccess() {
-        if (JDKSpecific.getCallingClass() == ModularPermissionFactory.class) {
+        if (STACK_WALKER.getCallerClass() == ModularPermissionFactory.class) {
             return PRIVATE_ACCESS;
         }
         throw new SecurityException();
@@ -364,7 +358,7 @@ public final class Module {
      * @return the identifier
      * @deprecated Use {@link #getName()} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public ModuleIdentifier getIdentifier() {
         return ModuleIdentifier.fromString(getName());
     }
@@ -435,7 +429,7 @@ public final class Module {
      * @throws ModuleLoadException if the named module failed to load
      * @deprecated Use {@link #loadServiceFromCallerModuleLoader(String, Class)} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static <S> ServiceLoader<S> loadServiceFromCallerModuleLoader(ModuleIdentifier identifier, Class<S> serviceType) throws ModuleLoadException {
         return loadServiceFromCallerModuleLoader(identifier.toString(), serviceType);
     }
@@ -585,7 +579,7 @@ public final class Module {
      * @return the current module loader, or {@code null} if this method is called outside of a module
      */
     public static ModuleLoader getCallerModuleLoader() {
-        Module callerModule = getCallerModule();
+        Module callerModule = forClass(STACK_WALKER.getCallerClass());
         return callerModule == null ? null : callerModule.getModuleLoader();
     }
 
@@ -614,7 +608,7 @@ public final class Module {
      * @throws ModuleLoadException if the module could not be loaded
      * @deprecated Use {@link #getModuleFromCallerModuleLoader(String)} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static Module getModuleFromCallerModuleLoader(final ModuleIdentifier identifier) throws ModuleLoadException {
         return getModuleFromCallerModuleLoader(identifier.toString());
     }
@@ -636,6 +630,8 @@ public final class Module {
         throw new ModuleLoadException(name);
     }
 
+    static final StackWalker STACK_WALKER = doPrivileged((PrivilegedAction<StackWalker>) () -> StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE));
+
     /**
      * Get the caller's module. The caller's module is the module containing the method that calls this
      * method. Note that this method crawls the stack so other ways of obtaining the
@@ -644,7 +640,7 @@ public final class Module {
      * @return the current module
      */
     public static Module getCallerModule() {
-        return forClass(JDKSpecific.getCallingUserClass());
+        return forClass(STACK_WALKER.getCallerClass());
     }
 
     /**
@@ -655,7 +651,7 @@ public final class Module {
      * @throws ModuleLoadException if an error occurs
      * @deprecated Use {@link #getModule(String)} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public Module getModule(final ModuleIdentifier identifier) throws ModuleLoadException {
         return getModule(identifier.toString());
     }
@@ -684,7 +680,7 @@ public final class Module {
      * @throws ClassNotFoundException if the class could not be loaded
      * @deprecated Use {@link #loadClassFromBootModuleLoader(String, String)} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static Class<?> loadClassFromBootModuleLoader(final ModuleIdentifier moduleIdentifier, final String className)
             throws ModuleLoadException, ClassNotFoundException {
         return loadClassFromBootModuleLoader(moduleIdentifier.toString(), className);
@@ -720,7 +716,7 @@ public final class Module {
      * @throws ClassNotFoundException if the class could not be loaded
      * @deprecated Use {@link #loadClassFromCallerModuleLoader(String, String)} instead.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static Class<?> loadClassFromCallerModuleLoader(final ModuleIdentifier moduleIdentifier, final String className)
             throws ModuleLoadException, ClassNotFoundException {
         return loadClassFromCallerModuleLoader(moduleIdentifier.toString(), className);
@@ -860,7 +856,7 @@ public final class Module {
                 try {
                     return moduleClassLoader.getResources(canonPath);
                 } catch (IOException e) {
-                    return ConcurrentClassLoader.EMPTY_ENUMERATION;
+                    return Collections.emptyEnumeration();
                 }
             }
         }
@@ -886,7 +882,7 @@ public final class Module {
             }
         }
 
-        return list.size() == 0 ? ConcurrentClassLoader.EMPTY_ENUMERATION : Collections.enumeration(list);
+        return Collections.enumeration(list);
     }
 
     /**
@@ -1072,7 +1068,7 @@ public final class Module {
      * @return the property value
      */
     public String getProperty(String name, String defaultVal) {
-        return properties.containsKey(name) ? properties.get(name) : defaultVal;
+        return properties.getOrDefault(name, defaultVal);
     }
 
     /**
@@ -1262,7 +1258,7 @@ public final class Module {
                     if (moduleDependency.isOptional()) {
                         continue;
                     } else {
-                        log.trace("Module %s, dependency %s preload failed: %s", getIdentifier(), moduleDependency.getName(), ex);
+                        log.trace("Module %s, dependency %s preload failed: %s", getName(), moduleDependency.getName(), ex);
                         throw ex;
                     }
                 }
@@ -1413,7 +1409,7 @@ public final class Module {
                         if (moduleDependency.isOptional()) {
                             continue;
                         } else {
-                            log.trace("Module %s, dependency %s preload failed: %s", getIdentifier(), moduleDependency.getName(), ex);
+                            log.trace("Module %s, dependency %s preload failed: %s", getName(), moduleDependency.getName(), ex);
                             throw ex;
                         }
                     }
@@ -1675,7 +1671,7 @@ public final class Module {
         if (dependencySpecs == null) {
             throw new IllegalArgumentException("dependencySpecs is null");
         }
-        final DependencySpec[] specs = dependencySpecs.toArray(new DependencySpec[dependencySpecs.size()]);
+        final DependencySpec[] specs = dependencySpecs.toArray(DependencySpec[]::new);
         for (DependencySpec spec : specs) {
             if (spec == null) {
                 throw new IllegalArgumentException("dependencySpecs contains a null dependency specification");
@@ -1727,6 +1723,6 @@ public final class Module {
                 continue next;
             }
         }
-        return packages.toArray(new Package[packages.size()]);
+        return packages.toArray(Package[]::new);
     }
 }

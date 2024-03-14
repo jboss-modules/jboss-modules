@@ -37,8 +37,6 @@ import org.jboss.modules.security.PermissionFactory;
  */
 public final class PermissionsXmlParser {
 
-    private static final PermissionFactory[] NO_PERMISSION_FACTORIES = new PermissionFactory[0];
-
     /**
      * Parse the {@code permissions.xml} stream content.
      *
@@ -130,7 +128,7 @@ public final class PermissionsXmlParser {
                     break;
                 }
                 case END_TAG: {
-                    return new FactoryPermissionCollection(factories.toArray(NO_PERMISSION_FACTORIES));
+                    return new FactoryPermissionCollection(factories.toArray(PermissionFactory[]::new));
                 }
             }
         }

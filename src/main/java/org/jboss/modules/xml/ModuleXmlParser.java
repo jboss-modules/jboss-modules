@@ -1368,7 +1368,7 @@ public final class ModuleXmlParser {
             eventType = reader.nextTag();
             switch (eventType) {
                 case END_TAG: {
-                    specBuilder.setPermissionCollection(new FactoryPermissionCollection(list.toArray(new PermissionFactory[list.size()])));
+                    specBuilder.setPermissionCollection(new FactoryPermissionCollection(list.toArray(PermissionFactory[]::new)));
                     return;
                 }
                 case START_TAG: {

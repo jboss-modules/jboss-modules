@@ -49,10 +49,8 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.ServiceLoader;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.function.Predicate;
 import java.util.jar.JarFile;
-import java.util.stream.Stream;
 
 /**
  * JDK-specific classes which are replaced for different JDK major versions.  This one is for Java 9 only.
@@ -72,8 +70,6 @@ final class JDKSpecific {
         "org/jboss/modules/ref"
     ));
 
-    static final StackWalker STACK_WALKER = doPrivileged((PrivilegedAction<StackWalker>) () -> StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE));
-
     static final ClassLoader SYSTEM_CLASS_LOADER = doPrivileged((PrivilegedAction<ClassLoader>) ClassLoader::getSystemClassLoader);
     static final ClassLoader OUR_CLASS_LOADER = JDKSpecific.class.getClassLoader();
 
@@ -81,24 +77,6 @@ final class JDKSpecific {
 
     static JarFile getJarFile(final File name, final boolean verify) throws IOException {
         return new JarFile(name, verify, JarFile.OPEN_READ, JarFile.runtimeVersion());
-    }
-
-    static Class<?> getCallingUserClass() {
-        return STACK_WALKER.walk(stream -> stream.skip(1)
-                .filter(s -> !s.getDeclaringClass().equals(org.jboss.modules.Module.class))
-                .findFirst().get().getDeclaringClass());
-    }
-
-    static Class<?> getCallingClass() {
-        return STACK_WALKER.walk(JDKSpecific::processFrame);
-    }
-
-    static boolean isParallelCapable(ConcurrentClassLoader cl) {
-        return cl.isRegisteredAsParallelCapable();
-    }
-
-    static Package getPackage(ClassLoader cl, String packageName) {
-        return cl.getDefinedPackage(packageName);
     }
 
     static Set<String> getJDKPaths() {
@@ -126,8 +104,8 @@ final class JDKSpecific {
             }
 
             public Package loadPackageLocal(final String name) {
-                final Package pkg = getPackage(getPlatformClassLoader(), name);
-                return pkg != null ? pkg : getPackage(OUR_CLASS_LOADER, name);
+                final Package pkg = getPlatformClassLoader().getDefinedPackage(name);
+                return pkg != null ? pkg : OUR_CLASS_LOADER.getDefinedPackage(name);
             }
 
             public List<Resource> loadResourceLocal(final String name) {
@@ -220,21 +198,6 @@ final class JDKSpecific {
     }
 
     // === nested util stuff, non-API ===
-
-    private static Class<?> processFrame(Stream<StackWalker.StackFrame> stream) {
-        final Iterator<StackWalker.StackFrame> iterator = stream.iterator();
-        if (! iterator.hasNext()) return null;
-        iterator.next();
-        if (! iterator.hasNext()) return null;
-        Class<?> testClass = iterator.next().getDeclaringClass();
-        while (iterator.hasNext()) {
-            final Class<?> item = iterator.next().getDeclaringClass();
-            if (testClass != item) {
-                return item;
-            }
-        }
-        return null;
-    }
 
     private static void processRuntimeImages(final Set<String> pathSet) {
         try {
