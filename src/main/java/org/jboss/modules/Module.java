@@ -422,7 +422,7 @@ public final class Module {
      * Note that {@link #loadService(Class)} is more efficient since it does not need to crawl
      * the stack.
      *
-     * @param <S> the the service type
+     * @param <S> the service type
      * @param identifier the module identifier containing the service loader
      * @param serviceType the service type class
      * @return the loaded service from the caller's module
@@ -431,7 +431,17 @@ public final class Module {
      */
     @Deprecated(forRemoval = true)
     public static <S> ServiceLoader<S> loadServiceFromCallerModuleLoader(ModuleIdentifier identifier, Class<S> serviceType) throws ModuleLoadException {
-        return loadServiceFromCallerModuleLoader(identifier.toString(), serviceType);
+        Class<?> caller = STACK_WALKER.getCallerClass();
+        assert ! caller.getPackageName().equals(Module.class.getPackageName());
+        String name = identifier.toString();
+        Module callerModule = forClass(caller);
+        if (callerModule != null) {
+            ModuleLoader ml = callerModule.getModuleLoader();
+            if (ml != null) {
+                return ml.loadModule(name).loadService(serviceType);
+            }
+        }
+        throw new ModuleLoadException(name);
     }
 
     /**
@@ -440,16 +450,21 @@ public final class Module {
      * Note that {@link #loadService(Class)} is more efficient since it does not need to crawl
      * the stack.
      *
-     * @param <S> the the service type
+     * @param <S> the service type
      * @param name the module name containing the service loader
      * @param serviceType the service type class
      * @return the loaded service from the caller's module
      * @throws ModuleLoadException if the named module failed to load
      */
     public static <S> ServiceLoader<S> loadServiceFromCallerModuleLoader(String name, Class<S> serviceType) throws ModuleLoadException {
-        ModuleLoader ml = getCallerModuleLoader();
-        if (ml != null) {
-            return ml.loadModule(name).loadService(serviceType);
+        Class<?> caller = STACK_WALKER.getCallerClass();
+        assert ! caller.getPackageName().equals(Module.class.getPackageName());
+        Module callerModule = forClass(caller);
+        if (callerModule != null) {
+            ModuleLoader ml = callerModule.getModuleLoader();
+            if (ml != null) {
+                return ml.loadModule(name).loadService(serviceType);
+            }
         }
         throw new ModuleLoadException(name);
     }
@@ -579,8 +594,7 @@ public final class Module {
      * @return the current module loader, or {@code null} if this method is called outside of a module
      */
     public static ModuleLoader getCallerModuleLoader() {
-        Module callerModule = forClass(STACK_WALKER.getCallerClass());
-        return callerModule == null ? null : callerModule.getModuleLoader();
+        return ModuleLoader.forClass(STACK_WALKER.getCallerClass());
     }
 
     /**
@@ -598,6 +612,8 @@ public final class Module {
         return null;
     }
 
+    static final StackWalker STACK_WALKER = doPrivileged((PrivilegedAction<StackWalker>) () -> StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE));
+
     /**
      * Get a module from the current module loader. Note that this must crawl the
      * stack to determine this, so other mechanisms are more efficient.
@@ -610,7 +626,14 @@ public final class Module {
      */
     @Deprecated(forRemoval = true)
     public static Module getModuleFromCallerModuleLoader(final ModuleIdentifier identifier) throws ModuleLoadException {
-        return getModuleFromCallerModuleLoader(identifier.toString());
+        final String name = identifier.toString();
+        Class<?> caller = STACK_WALKER.getCallerClass();
+        assert ! caller.getPackageName().equals(Module.class.getPackageName());
+        ModuleLoader ml = ModuleLoader.forClass(caller);
+        if (ml != null) {
+            return ml.loadModule(name);
+        }
+        throw new ModuleLoadException(name);
     }
 
     /**
@@ -623,14 +646,12 @@ public final class Module {
      * @throws ModuleLoadException if the module could not be loaded
      */
     public static Module getModuleFromCallerModuleLoader(final String name) throws ModuleLoadException {
-        ModuleLoader ml = getCallerModuleLoader();
+        ModuleLoader ml = ModuleLoader.forClass(STACK_WALKER.getCallerClass());
         if (ml != null) {
             return ml.loadModule(name);
         }
         throw new ModuleLoadException(name);
     }
-
-    static final StackWalker STACK_WALKER = doPrivileged((PrivilegedAction<StackWalker>) () -> StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE));
 
     /**
      * Get the caller's module. The caller's module is the module containing the method that calls this
@@ -700,7 +721,7 @@ public final class Module {
      */
     public static Class<?> loadClassFromBootModuleLoader(final String name, final String className)
             throws ModuleLoadException, ClassNotFoundException {
-        return Class.forName(className, true, getBootModuleLoader().loadModule(name).getClassLoader());
+        return Class.forName(className, true, getBootModuleLoader().loadModule(name).getClassLoaderPrivate());
     }
 
     /**
@@ -719,7 +740,14 @@ public final class Module {
     @Deprecated(forRemoval = true)
     public static Class<?> loadClassFromCallerModuleLoader(final ModuleIdentifier moduleIdentifier, final String className)
             throws ModuleLoadException, ClassNotFoundException {
-        return loadClassFromCallerModuleLoader(moduleIdentifier.toString(), className);
+        Class<?> caller = STACK_WALKER.getCallerClass();
+        assert ! caller.getPackageName().equals(Module.class.getPackageName());
+        ModuleLoader ml = ModuleLoader.forClass(caller);
+        String name = moduleIdentifier.toString();
+        if (ml != null) {
+            return Class.forName(className, true, ml.loadModule(name).getClassLoaderPrivate());
+        }
+        throw new ModuleLoadException(name);
     }
 
     /**
@@ -736,7 +764,13 @@ public final class Module {
      */
     public static Class<?> loadClassFromCallerModuleLoader(final String name, final String className)
             throws ModuleLoadException, ClassNotFoundException {
-        return Class.forName(className, true, getModuleFromCallerModuleLoader(name).getClassLoader());
+        Class<?> caller = STACK_WALKER.getCallerClass();
+        assert ! caller.getPackageName().equals(Module.class.getPackageName());
+        ModuleLoader ml = ModuleLoader.forClass(caller);
+        if (ml != null) {
+            return Class.forName(className, true, ml.loadModule(name).getClassLoaderPrivate());
+        }
+        throw new ModuleLoadException(name);
     }
 
     /**
