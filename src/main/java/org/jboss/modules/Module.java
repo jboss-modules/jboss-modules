@@ -579,7 +579,7 @@ public final class Module {
      * @return the current module loader, or {@code null} if this method is called outside of a module
      */
     public static ModuleLoader getCallerModuleLoader() {
-        Module callerModule = forClass(STACK_WALKER.getCallerClass());
+        Module callerModule = forClass(getCallingUserClass());
         return callerModule == null ? null : callerModule.getModuleLoader();
     }
 
@@ -640,7 +640,7 @@ public final class Module {
      * @return the current module
      */
     public static Module getCallerModule() {
-        return forClass(STACK_WALKER.getCallerClass());
+        return forClass(getCallingUserClass());
     }
 
     /**
@@ -1196,6 +1196,12 @@ public final class Module {
      */
     public static String getPlatformIdentifier() {
         return NativeLibraryResourceLoader.getArchName();
+    }
+
+    static Class<?> getCallingUserClass() {
+        return STACK_WALKER.walk(stream -> stream.skip(1)
+                .filter(s -> !s.getDeclaringClass().equals(org.jboss.modules.Module.class))
+                .findFirst().get().getDeclaringClass());
     }
 
     /**
