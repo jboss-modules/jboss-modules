@@ -646,7 +646,9 @@ public final class Module {
      * @throws ModuleLoadException if the module could not be loaded
      */
     public static Module getModuleFromCallerModuleLoader(final String name) throws ModuleLoadException {
-        ModuleLoader ml = ModuleLoader.forClass(STACK_WALKER.getCallerClass());
+        Class<?> caller = STACK_WALKER.getCallerClass();
+        assert ! caller.getPackageName().equals(Module.class.getPackageName());
+        ModuleLoader ml = ModuleLoader.forClass(caller);
         if (ml != null) {
             return ml.loadModule(name);
         }
