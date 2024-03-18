@@ -215,7 +215,7 @@ public final class MavenArtifactUtil {
         File fp = mavenResolver.resolveJarArtifact(coordinates);
         if (fp == null) return null;
         JarFile jarFile = new JarFile(fp, true, JarFile.OPEN_READ, JarFile.runtimeVersion());
-        return ResourceLoaders.createJarResourceLoader(rootName, jarFile);
+        return ResourceLoaders.createJarResourceLoader(jarFile);
     }
 
     static <T> T doIo(PrivilegedExceptionAction<T> action) throws IOException {
