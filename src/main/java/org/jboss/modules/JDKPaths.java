@@ -38,7 +38,7 @@ final class JDKPaths {
     static final Set<String> JDK;
 
     static {
-        final Set<String> pathSet = JDKSpecific.getJDKPaths();
+        final Set<String> pathSet = Utils.getJDKPaths();
         if (pathSet.size() == 0) throw new IllegalStateException("Something went wrong with system paths set up");
         JDK = Collections.unmodifiableSet(pathSet);
     }

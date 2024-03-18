@@ -37,7 +37,7 @@ import static java.security.AccessController.getContext;
  */
 final class ClassLoaderLocalLoader implements LocalLoader {
 
-    static final LocalLoader SYSTEM = JDKSpecific.getSystemLocalLoader();
+    static final LocalLoader SYSTEM = Utils.getSystemLocalLoader();
 
     private final ClassLoader classLoader;
     private final AccessControlContext context;
@@ -78,7 +78,7 @@ final class ClassLoaderLocalLoader implements LocalLoader {
         ClassLoader classLoader = this.classLoader;
         try {
             if (classLoader == null) {
-                urls = JDKSpecific.getSystemResources(name);
+                urls = Utils.getSystemResources(name);
             } else {
                 urls = classLoader.getResources(name);
             }

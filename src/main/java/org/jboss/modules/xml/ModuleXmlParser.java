@@ -1619,7 +1619,7 @@ public final class ModuleXmlParser {
             if (file.isDirectory()) {
                 return ResourceLoaders.createPathResourceLoader(loaderName, file.toPath());
             } else {
-                final JarFile jarFile = JDKSpecific.getJarFile(file, true);
+                final JarFile jarFile = new JarFile(file, true, JarFile.OPEN_READ, JarFile.runtimeVersion());
                 return ResourceLoaders.createJarResourceLoader(loaderName, jarFile);
             }
         }
