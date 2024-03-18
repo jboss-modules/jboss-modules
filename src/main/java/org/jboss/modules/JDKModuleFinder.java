@@ -72,16 +72,7 @@ public final class JDKModuleFinder implements IterableModuleFinder {
             if (module.isNamed()) {
                 packages = module.getPackages();
             } else {
-                packages = Set.of(
-                        "org.jboss.modules",
-                        "org.jboss.modules.filter",
-                        "org.jboss.modules.log",
-                        "org.jboss.modules.management",
-                        "org.jboss.modules.maven",
-                        "org.jboss.modules.ref",
-                        "org.jboss.modules.security",
-                        "org.jboss.modules.xml"
-                );
+                packages = Utils.MODULES_PACKAGES;
             }
         } else {
             final Optional<Module> moduleOptional = layer.findModule(name);

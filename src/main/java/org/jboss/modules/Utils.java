@@ -35,10 +35,8 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -71,13 +69,26 @@ final class Utils {
 
     static final ModuleLoader JDK_MODULE_LOADER = new ModuleLoader(JDKModuleFinder.getInstance());
 
-    private static final Set<String> MODULES_PACKAGES = new HashSet<>(Arrays.asList(
+    static final Set<String> MODULES_PACKAGES = Set.of(
+            "org.jboss.modules",
+            "org.jboss.modules.filter",
+            "org.jboss.modules.log",
+            "org.jboss.modules.management",
+            "org.jboss.modules.maven",
+            "org.jboss.modules.ref",
+            "org.jboss.modules.security",
+            "org.jboss.modules.xml"
+    );
+    private static final Set<String> MODULES_PATHS = Set.of(
             "org/jboss/modules",
             "org/jboss/modules/filter",
             "org/jboss/modules/log",
             "org/jboss/modules/management",
-            "org/jboss/modules/ref"
-    ));
+            "org/jboss/modules/maven",
+            "org/jboss/modules/ref",
+            "org/jboss/modules/security",
+            "org/jboss/modules/xml"
+    );
 
     private static final ClassLoader SYSTEM_CLASS_LOADER = doPrivileged((PrivilegedAction<ClassLoader>) ClassLoader::getSystemClassLoader);
     private static final ClassLoader OUR_CLASS_LOADER = Utils.class.getClassLoader();
@@ -88,7 +99,7 @@ final class Utils {
         // TODO: Remove this stuff once jboss-modules is itself a module
         final String javaClassPath = AccessController.doPrivileged(new PropertyReadAction("java.class.path"));
         JDKPaths.processClassPathItem(javaClassPath, new FastCopyHashSet<>(1024), pathSet);
-        pathSet.addAll(MODULES_PACKAGES);
+        pathSet.addAll(MODULES_PATHS);
         return pathSet;
     }
 
