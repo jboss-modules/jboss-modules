@@ -578,7 +578,7 @@ public final class Module {
         if (loader == null) {
             throw new IllegalArgumentException("loader is null");
         }
-        return JDKSpecific.findServices(type, filter, loader);
+        return Utils.findServices(type, filter, loader);
     }
 
     static void initBootModuleLoader(ModuleLoader loader) {

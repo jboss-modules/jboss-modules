@@ -140,7 +140,7 @@ public class FileSystemClassPathModuleFinder implements ModuleFinder {
                 fatModuleLoader = new DelegatingModuleLoader(baseModuleLoader, new LocalModuleFinder(new File[]{ path.resolve(MODULES_DIR).toFile() }));
             } else {
                 // assume some kind of JAR file
-                final JarFile jarFile = JDKSpecific.getJarFile(path.toFile(), true);
+                final JarFile jarFile = new JarFile(path.toFile(), true, JarFile.OPEN_READ, JarFile.runtimeVersion());
                 try {
                     try {
                         manifest = jarFile.getManifest();

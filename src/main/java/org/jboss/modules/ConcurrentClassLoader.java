@@ -85,7 +85,7 @@ public abstract class ConcurrentClassLoader extends NamedClassLoader {
      * @param name the name of this class loader, or {@code null} if it is unnamed
      */
     protected ConcurrentClassLoader(final ConcurrentClassLoader parent, final String name) {
-        super(parent == null ? JDKSpecific.getPlatformClassLoader() : parent, name);
+        super(parent == null ? Utils.getPlatformClassLoader() : parent, name);
         if (! isRegisteredAsParallelCapable()) {
             throw new Error("Cannot instantiate non-parallel subclass");
         }
@@ -97,7 +97,7 @@ public abstract class ConcurrentClassLoader extends NamedClassLoader {
      * @param name the name of this class loader, or {@code null} if it is unnamed
      */
     protected ConcurrentClassLoader(String name) {
-        super(JDKSpecific.getPlatformClassLoader(), name);
+        super(Utils.getPlatformClassLoader(), name);
         if (! isRegisteredAsParallelCapable()) {
             throw new Error("Cannot instantiate non-parallel subclass");
         }
@@ -247,7 +247,7 @@ public abstract class ConcurrentClassLoader extends NamedClassLoader {
     public final URL getResource(final String name) {
         for (String s : Module.systemPaths) {
             if (name.startsWith(s)) {
-                return JDKSpecific.getSystemResource(name);
+                return Utils.getSystemResource(name);
             }
         }
         return findResource(name, false);
@@ -265,7 +265,7 @@ public abstract class ConcurrentClassLoader extends NamedClassLoader {
     public final Enumeration<URL> getResources(final String name) throws IOException {
         for (String s : Module.systemPaths) {
             if (name.startsWith(s)) {
-                return JDKSpecific.getSystemResources(name);
+                return Utils.getSystemResources(name);
             }
         }
         return findResources(name, false);
@@ -360,7 +360,7 @@ public abstract class ConcurrentClassLoader extends NamedClassLoader {
     public final InputStream getResourceAsStream(final String name) {
         for (String s : Module.systemPaths) {
             if (name.startsWith(s)) {
-                return JDKSpecific.getSystemResourceAsStream(name);
+                return Utils.getSystemResourceAsStream(name);
             }
         }
         return findResourceAsStream(name, false);
@@ -390,7 +390,7 @@ public abstract class ConcurrentClassLoader extends NamedClassLoader {
         }
         for (String s : Module.systemPackages) {
             if (className.startsWith(s)) {
-                return JDKSpecific.getSystemClass(this, className);
+                return Utils.getSystemClass(this, className);
             }
         }
         return performLoadClassUnchecked(className, exportsOnly, resolve);
