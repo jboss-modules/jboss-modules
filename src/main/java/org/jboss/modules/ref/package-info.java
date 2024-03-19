@@ -19,5 +19,9 @@
 /**
  * Classes which implement reference types which can be cleaned up automatically by a background thread.  See
  * {@link org.jboss.modules.ref.Reference Reference} and its subtypes, and {@link org.jboss.modules.ref.Reaper Reaper} for more information.
+ *
+ * @deprecated Use {@link java.lang.ref.Cleaner} or one of the reference types from a support library such as
+ *      {@code io.smallrye.common:smallrye-common-ref} instead.
  */
+@Deprecated
 package org.jboss.modules.ref;
