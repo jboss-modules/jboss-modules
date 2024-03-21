@@ -22,7 +22,11 @@ import java.lang.ref.ReferenceQueue;
 
 /**
  * A set of utility methods for reference types.
+ *
+ * @deprecated Use {@link java.lang.ref.Cleaner} or one of the reference types from a support library such as
+ *      {@code io.smallrye.common:smallrye-common-ref} instead.
  */
+@Deprecated
 public final class References {
     @SuppressWarnings({ "RawUseOfParameterizedType" })
     private static final Reference NULL = new Reference() {

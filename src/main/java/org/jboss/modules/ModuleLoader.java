@@ -22,6 +22,8 @@ import static java.security.AccessController.doPrivileged;
 import static org.jboss.modules.management.ObjectProperties.property;
 
 import java.lang.management.ManagementFactory;
+import java.lang.ref.Cleaner;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.UndeclaredThrowableException;
@@ -55,9 +57,6 @@ import org.jboss.modules.management.ModuleInfo;
 import org.jboss.modules.management.ModuleLoaderMXBean;
 import org.jboss.modules.management.ObjectProperties;
 import org.jboss.modules.management.ResourceLoaderInfo;
-import org.jboss.modules.ref.Reaper;
-import org.jboss.modules.ref.Reference;
-import org.jboss.modules.ref.WeakReference;
 
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
@@ -920,17 +919,14 @@ public class ModuleLoader {
         }
     }
 
-    private static final Reaper<ModuleLoader, ObjectName> reaper = new Reaper<>() {
-        public void reap(final Reference<ModuleLoader, ObjectName> reference) {
-            REG_REF.removeMBean(reference.getAttachment());
-        }
-    };
-
     static final class MXBeanImpl implements ModuleLoaderMXBean {
-        private final Reference<ModuleLoader, ObjectName> reference;
+        private static final Cleaner cleaner = Cleaner.create();
+
+        private final WeakReference<ModuleLoader> reference;
 
         MXBeanImpl(final ModuleLoader moduleLoader, final ObjectName objectName) {
-            reference = new WeakReference<>(moduleLoader, objectName, reaper);
+            cleaner.register(moduleLoader, () -> REG_REF.removeMBean(objectName));
+            reference = new WeakReference<>(moduleLoader);
         }
 
         public String getDescription() {

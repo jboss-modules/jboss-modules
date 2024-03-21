@@ -30,7 +30,11 @@ import java.lang.ref.ReferenceQueue;
  * @see java.lang.ref.WeakReference
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ *
+ * @deprecated Use {@link java.lang.ref.Cleaner} or one of the reference types from a support library such as
+ *      {@code io.smallrye.common:smallrye-common-ref} instead.
  */
+@Deprecated
 public class WeakReference<T, A> extends java.lang.ref.WeakReference<T> implements Reference<T, A>, Reapable<T, A> {
     private final A attachment;
     private final Reaper<T, A> reaper;

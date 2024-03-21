@@ -27,7 +27,11 @@ package org.jboss.modules.ref;
  * @see java.lang.ref.Reference
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ *
+ * @deprecated Use {@link java.lang.ref.Cleaner} or one of the reference types from a support library such as
+ *      {@code io.smallrye.common:smallrye-common-ref} instead.
  */
+@Deprecated
 public interface Reference<T, A> {
 
     /**

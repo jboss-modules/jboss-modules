@@ -28,6 +28,7 @@ package org.jboss.modules.ref;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
+@Deprecated
 interface Reapable<T, A> {
 
     /**

@@ -30,7 +30,11 @@ import java.lang.ref.ReferenceQueue;
  * @see java.lang.ref.SoftReference
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ *
+ * @deprecated Use {@link java.lang.ref.Cleaner} or one of the reference types from a support library such as
+ *      {@code io.smallrye.common:smallrye-common-ref} instead.
  */
+@Deprecated
 public class SoftReference<T, A> extends java.lang.ref.SoftReference<T> implements Reference<T, A>, Reapable<T, A> {
     private final A attachment;
     private final Reaper<T, A> reaper;
