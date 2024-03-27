@@ -56,6 +56,8 @@ public final class ModuleLoggerFinder extends LoggerFinder {
         }
     };
 
+    private static final int MAX_LOG_MESSAGES = getMaxLogMessages();
+
     private static final Map<String, System.Logger> loggers = new ConcurrentHashMap<>();
     private static final ReentrantLock lock = new ReentrantLock();
     private static final Deque<SystemLogRecord> messages = new LinkedBlockingDeque<>();
@@ -139,6 +141,24 @@ public final class ModuleLoggerFinder extends LoggerFinder {
         } finally {
             activated = true;
             lock.unlock();
+        }
+    }
+
+    private static int getMaxLogMessages() {
+        final int dft = 10_000;
+        final String value;
+        if (System.getSecurityManager() == null) {
+            value = System.getProperty("jboss.modules.logger.finder.threshold");
+        } else {
+            value = AccessController.doPrivileged(new PropertyReadAction("jboss.modules.logger.finder.threshold"));
+        }
+        if (value == null) {
+            return dft;
+        }
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException ignore) {
+            return dft;
         }
     }
 
@@ -289,12 +309,33 @@ public final class ModuleLoggerFinder extends LoggerFinder {
 
         @Override
         public void log(final System.Logger.Level level, final ResourceBundle bundle, final String msg, final Throwable thrown) {
-            messages.addLast(new SystemLogRecord(name, module, level, bundle, msg, null, thrown));
+            if (messages.size() >= MAX_LOG_MESSAGES) {
+                activate(getClassLoader());
+            }
+            if (activated) {
+                finder.getLogger(name, module).log(level, bundle, msg, thrown);
+            } else {
+                messages.addLast(new SystemLogRecord(name, module, level, bundle, msg, null, thrown));
+            }
         }
 
         @Override
         public void log(final System.Logger.Level level, final ResourceBundle bundle, final String format, final Object... params) {
-            messages.addLast(new SystemLogRecord(name, module, level, bundle, format, params, null));
+            if (messages.size() >= MAX_LOG_MESSAGES) {
+                activate(getClassLoader());
+            }
+            if (activated) {
+                finder.getLogger(name, module).log(level, bundle, format, params);
+            } else {
+                messages.addLast(new SystemLogRecord(name, module, level, bundle, format, params, null));
+            }
+        }
+
+        private ClassLoader getClassLoader() {
+            if (System.getSecurityManager() == null) {
+                return getClass().getClassLoader();
+            }
+            return AccessController.doPrivileged(((PrivilegedAction<ClassLoader>) () -> getClass().getClassLoader()));
         }
     }
 
