@@ -353,17 +353,6 @@ public final class Module {
     }
 
     /**
-     * Get this module's identifier.
-     *
-     * @return the identifier
-     * @deprecated Use {@link #getName()} instead.
-     */
-    @Deprecated(forRemoval = true)
-    public ModuleIdentifier getIdentifier() {
-        return ModuleIdentifier.fromString(getName());
-    }
-
-    /**
      * Get this module's name.
      *
      * @return this module's name
@@ -414,34 +403,6 @@ public final class Module {
                 };
             }
         });
-    }
-
-    /**
-     * Load a service loader from a module in the caller's module loader. The caller's
-     * module loader refers to the loader of the module of the class that calls this method.
-     * Note that {@link #loadService(Class)} is more efficient since it does not need to crawl
-     * the stack.
-     *
-     * @param <S> the service type
-     * @param identifier the module identifier containing the service loader
-     * @param serviceType the service type class
-     * @return the loaded service from the caller's module
-     * @throws ModuleLoadException if the named module failed to load
-     * @deprecated Use {@link #loadServiceFromCallerModuleLoader(String, Class)} instead.
-     */
-    @Deprecated(forRemoval = true)
-    public static <S> ServiceLoader<S> loadServiceFromCallerModuleLoader(ModuleIdentifier identifier, Class<S> serviceType) throws ModuleLoadException {
-        Class<?> caller = STACK_WALKER.getCallerClass();
-        assert ! caller.getPackageName().equals(Module.class.getPackageName());
-        String name = identifier.toString();
-        Module callerModule = forClass(caller);
-        if (callerModule != null) {
-            ModuleLoader ml = callerModule.getModuleLoader();
-            if (ml != null) {
-                return ml.loadModule(name).loadService(serviceType);
-            }
-        }
-        throw new ModuleLoadException(name);
     }
 
     /**
@@ -619,28 +580,6 @@ public final class Module {
      * stack to determine this, so other mechanisms are more efficient.
      * @see #getCallerModuleLoader()
      *
-     * @param identifier the module identifier
-     * @return the module
-     * @throws ModuleLoadException if the module could not be loaded
-     * @deprecated Use {@link #getModuleFromCallerModuleLoader(String)} instead.
-     */
-    @Deprecated(forRemoval = true)
-    public static Module getModuleFromCallerModuleLoader(final ModuleIdentifier identifier) throws ModuleLoadException {
-        final String name = identifier.toString();
-        Class<?> caller = STACK_WALKER.getCallerClass();
-        assert ! caller.getPackageName().equals(Module.class.getPackageName());
-        ModuleLoader ml = ModuleLoader.forClass(caller);
-        if (ml != null) {
-            return ml.loadModule(name);
-        }
-        throw new ModuleLoadException(name);
-    }
-
-    /**
-     * Get a module from the current module loader. Note that this must crawl the
-     * stack to determine this, so other mechanisms are more efficient.
-     * @see #getCallerModuleLoader()
-     *
      * @param name the module name
      * @return the module
      * @throws ModuleLoadException if the module could not be loaded
@@ -669,44 +608,12 @@ public final class Module {
     /**
      * Get the module with the given identifier from the module loader used by this module.
      *
-     * @param identifier the module identifier
-     * @return the module
-     * @throws ModuleLoadException if an error occurs
-     * @deprecated Use {@link #getModule(String)} instead.
-     */
-    @Deprecated(forRemoval = true)
-    public Module getModule(final ModuleIdentifier identifier) throws ModuleLoadException {
-        return getModule(identifier.toString());
-    }
-
-    /**
-     * Get the module with the given identifier from the module loader used by this module.
-     *
      * @param name the module name
      * @return the module
      * @throws ModuleLoadException if an error occurs
      */
     public Module getModule(final String name) throws ModuleLoadException {
         return moduleLoader.loadModule(name);
-    }
-
-    /**
-     * Load a class from a module in the system module loader.
-     *
-     * @see #getBootModuleLoader()
-     *
-     * @param moduleIdentifier the identifier of the module from which the class
-     *        should be loaded
-     * @param className the class name to load
-     * @return the class
-     * @throws ModuleLoadException if the module could not be loaded
-     * @throws ClassNotFoundException if the class could not be loaded
-     * @deprecated Use {@link #loadClassFromBootModuleLoader(String, String)} instead.
-     */
-    @Deprecated(forRemoval = true)
-    public static Class<?> loadClassFromBootModuleLoader(final ModuleIdentifier moduleIdentifier, final String className)
-            throws ModuleLoadException, ClassNotFoundException {
-        return loadClassFromBootModuleLoader(moduleIdentifier.toString(), className);
     }
 
     /**
@@ -724,32 +631,6 @@ public final class Module {
     public static Class<?> loadClassFromBootModuleLoader(final String name, final String className)
             throws ModuleLoadException, ClassNotFoundException {
         return Class.forName(className, true, getBootModuleLoader().loadModule(name).getClassLoaderPrivate());
-    }
-
-    /**
-     * Load a class from a module in the caller's module loader.
-     *
-     * @see #getCallerModuleLoader()
-     *
-     * @param moduleIdentifier the identifier of the module from which the class
-     *        should be loaded
-     * @param className the class name to load
-     * @return the class
-     * @throws ModuleLoadException if the module could not be loaded
-     * @throws ClassNotFoundException if the class could not be loaded
-     * @deprecated Use {@link #loadClassFromCallerModuleLoader(String, String)} instead.
-     */
-    @Deprecated(forRemoval = true)
-    public static Class<?> loadClassFromCallerModuleLoader(final ModuleIdentifier moduleIdentifier, final String className)
-            throws ModuleLoadException, ClassNotFoundException {
-        Class<?> caller = STACK_WALKER.getCallerClass();
-        assert ! caller.getPackageName().equals(Module.class.getPackageName());
-        ModuleLoader ml = ModuleLoader.forClass(caller);
-        String name = moduleIdentifier.toString();
-        if (ml != null) {
-            return Class.forName(className, true, ml.loadModule(name).getClassLoaderPrivate());
-        }
-        throw new ModuleLoadException(name);
     }
 
     /**

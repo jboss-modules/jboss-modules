@@ -62,17 +62,6 @@ public final class ModuleDependencySpec extends DependencySpec {
     }
 
     /**
-     * Get the module identifier of the dependency.
-     *
-     * @return the module identifier
-     * @deprecated Use {@code #getName()} instead.
-     */
-    @Deprecated(forRemoval = true)
-    public ModuleIdentifier getIdentifier() {
-        return ModuleIdentifier.fromString(name);
-    }
-
-    /**
      * Get the module name of the dependency.
      *
      * @return the module name

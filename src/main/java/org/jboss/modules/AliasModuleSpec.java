@@ -33,17 +33,6 @@ public final class AliasModuleSpec extends ModuleSpec {
     }
 
     /**
-     * Get the module alias target.
-     *
-     * @return the module alias target
-     * @deprecated Use {@link #getAliasName()} instead.
-     */
-    @Deprecated(forRemoval = true)
-    public ModuleIdentifier getAliasTarget() {
-        return ModuleIdentifier.fromString(aliasName);
-    }
-
-    /**
      * Get the module alias name.
      *
      * @return the module alias name

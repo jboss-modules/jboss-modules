@@ -116,19 +116,6 @@ public final class DependencyTreeViewer {
      * Print the dependency tree for the given module with the given module root list.
      *
      * @param out the output stream to use
-     * @param identifier the identifier of the module to examine
-     * @param roots the module roots to search
-     * @deprecated Use {@link #print(PrintWriter, String, File...)} instead.
-     */
-    @Deprecated(forRemoval = true)
-    public static void print(PrintWriter out, ModuleIdentifier identifier, final File... roots) {
-        print(out, identifier.toString(), roots);
-    }
-
-    /**
-     * Print the dependency tree for the given module with the given module root list.
-     *
-     * @param out the output stream to use
      * @param name the name of the module to examine
      * @param roots the module roots to search
      */

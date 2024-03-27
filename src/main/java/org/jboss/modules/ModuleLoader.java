@@ -82,7 +82,6 @@ public class ModuleLoader {
     private static final RuntimePermission MODULE_ITERATE_PERM = new RuntimePermission("canIterateModules");
 
     private static final AtomicInteger SEQ = new AtomicInteger(1);
-    private static final Class<?>[] JUST_MODULE_IDENTIFIER = { ModuleIdentifier.class };
 
     private static volatile MBeanReg REG_REF = new TempMBeanReg();
 
@@ -103,9 +102,6 @@ public class ModuleLoader {
     private final AtomicInteger scanCount = new AtomicInteger();
     private final AtomicInteger raceCount = new AtomicInteger();
     private final AtomicInteger classCount = new AtomicInteger();
-
-    private final boolean overridesFindModuleByIdentifier;
-    private final boolean overridesPreloadModuleByIdentifier;
 
     ModuleLoader(boolean canRedefine, boolean skipRegister) {
         this(canRedefine, skipRegister, NO_FINDERS);
@@ -132,32 +128,6 @@ public class ModuleLoader {
                 return null;
             }
         });
-        // determine if the subclass overrides the crusty old find-module-by-identifier method
-        boolean foundFindModule = false;
-        boolean foundPreloadModule = false;
-        for (Class<? extends ModuleLoader> clazz = getClass(); clazz != ModuleLoader.class; clazz = clazz.getSuperclass().asSubclass(ModuleLoader.class)) {
-            for (Method method : clazz.getDeclaredMethods()) {
-                if ((method.getModifiers() & (Modifier.STATIC | Modifier.PRIVATE)) == 0) {
-                    if (method.getName().equals("findModule")) {
-                        if (ModuleSpec.class.isAssignableFrom(method.getReturnType())) {
-                            if (Arrays.equals(method.getParameterTypes(), JUST_MODULE_IDENTIFIER)) {
-                                foundFindModule = true;
-                                if (foundPreloadModule) break;
-                            }
-                        }
-                    } else if (method.getName().equals("preloadModule")) {
-                        if (Module.class.isAssignableFrom(method.getReturnType())) {
-                            if (Arrays.equals(method.getParameterTypes(), JUST_MODULE_IDENTIFIER)) {
-                                foundPreloadModule = true;
-                                if (foundFindModule) break;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        overridesFindModuleByIdentifier = foundFindModule;
-        overridesPreloadModuleByIdentifier = foundPreloadModule;
     }
 
     /**
@@ -276,20 +246,6 @@ public class ModuleLoader {
      * Load a module based on an identifier.  This method delegates to {@link #preloadModule(String)} and then
      * links the returned module if necessary.
      *
-     * @param identifier The module identifier
-     * @return The loaded Module
-     * @throws ModuleLoadException if the Module can not be loaded
-     * @deprecated Use {@link #loadModule(String)} instead.
-     */
-    @Deprecated(forRemoval = true)
-    public final Module loadModule(ModuleIdentifier identifier) throws ModuleLoadException {
-        return loadModule(identifier.toString());
-    }
-
-    /**
-     * Load a module based on an identifier.  This method delegates to {@link #preloadModule(String)} and then
-     * links the returned module if necessary.
-     *
      * @param name The module name
      * @return The loaded Module
      * @throws ModuleLoadException if the Module can not be loaded
@@ -301,20 +257,6 @@ public class ModuleLoader {
         }
         module.relinkIfNecessary();
         return module;
-    }
-
-    /**
-     * Iterate the modules which can be located via this module loader.
-     *
-     * @param baseIdentifier the identifier to start with, or {@code null} to iterate all modules
-     * @param recursive {@code true} to find recursively nested modules, {@code false} to only find immediately nested modules
-     * @return an iterator for the modules in this module finder
-     * @throws SecurityException if the caller does not have permission to iterate module loaders
-     * @deprecated Use {@link #iterateModules(String, boolean)} instead.
-     */
-    @Deprecated(forRemoval = true)
-    public final Iterator<ModuleIdentifier> iterateModules(final ModuleIdentifier baseIdentifier, final boolean recursive) {
-        return IteratorUtils.transformingIterator(iterateModules(baseIdentifier == null ? null : baseIdentifier.toString(), recursive), ModuleIdentifier::fromString);
     }
 
     /**
@@ -370,26 +312,6 @@ public class ModuleLoader {
     }
 
     /**
-     * This compatibility method just calls {@code preloadModule(methodIdentifier.toString())} and is usually not used;
-     * if however a legacy subclass overrides this method, then it will be called instead of {@link #preloadModule(String)},
-     * and that method will redirect to this one.
-     *
-     * @deprecated Use {@link #preloadModule(String)} instead.
-     *
-     * @param identifier the module identifier (must not be {@code null})
-     * @return the load result, or {@code null} if the module is not found
-     * @throws ModuleLoadException if an error occurs
-     */
-    @Deprecated(forRemoval = true)
-    protected Module preloadModule(ModuleIdentifier identifier) throws ModuleLoadException {
-        if (overridesPreloadModuleByIdentifier) {
-            return loadModuleLocal(identifier);
-        } else {
-            return preloadModule(identifier.toString());
-        }
-    }
-
-    /**
      * Preload a module based on an identifier.  By default, delegation is only done for system and this method otherwise simply invokes
      * {@link #loadModuleLocal(String)}.  A delegating module loader may delegate to the appropriate module
      * loader based on loader-specific criteria (via the {@link #preloadModule(String, ModuleLoader)} method).
@@ -399,11 +321,7 @@ public class ModuleLoader {
      * @throws ModuleLoadException if an error occurs
      */
     protected Module preloadModule(String name) throws ModuleLoadException {
-        if (overridesPreloadModuleByIdentifier) {
-            return preloadModule(ModuleIdentifier.fromString(name));
-        } else {
-            return loadModuleLocal(name);
-        }
+        return loadModuleLocal(name);
     }
 
     /**
@@ -418,19 +336,6 @@ public class ModuleLoader {
     }
 
     /**
-     * Preload an "exported" module based on an identifier.  By default this simply delegates to {@link #preloadModule(String)}.
-     *
-     * @param identifier the module identifier
-     * @return the load result, or {@code null} if the module is not found
-     * @throws ModuleLoadException if an error occurs
-     * @deprecated Use {@link #preloadModule(String)} instead.
-     */
-    @Deprecated(forRemoval = true)
-    protected Module preloadExportedModule(ModuleIdentifier identifier) throws ModuleLoadException {
-        return preloadModule(identifier.getName());
-    }
-
-    /**
      * Utility method to delegate to another module loader, accessible from subclasses.  The delegate module loader
      * will be queried for exported modules only.
      *
@@ -441,36 +346,6 @@ public class ModuleLoader {
      */
     protected static Module preloadModule(String name, ModuleLoader moduleLoader) throws ModuleLoadException {
         return moduleLoader.preloadExportedModule(name);
-    }
-
-    /**
-     * Utility method to delegate to another module loader, accessible from subclasses.  The delegate module loader
-     * will be queried for exported modules only.
-     *
-     * @param identifier the module identifier
-     * @param moduleLoader the module loader to delegate to
-     * @return the delegation result
-     * @throws ModuleLoadException if an error occurs
-     * @deprecated Use {@link #preloadModule(String, ModuleLoader)} instead.
-     */
-    @Deprecated(forRemoval = true)
-    protected static Module preloadModule(ModuleIdentifier identifier, ModuleLoader moduleLoader) throws ModuleLoadException {
-        return moduleLoader.preloadExportedModule(identifier.toString());
-    }
-
-    /**
-     * Try to load a module from this module loader.  Returns {@code null} if the module is not found.  The returned
-     * module may not yet be resolved.  The returned module may have a different name than the given identifier if
-     * the identifier is an alias for another module.
-     *
-     * @param moduleIdentifier the module identifier
-     * @return the module
-     * @throws ModuleLoadException if an error occurs while loading the module
-     * @deprecated Use {@link #loadModuleLocal(String)} instead.
-     */
-    @Deprecated(forRemoval = true)
-    protected final Module loadModuleLocal(ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
-        return loadModuleLocal(moduleIdentifier.toString());
     }
 
     /**
@@ -542,20 +417,6 @@ public class ModuleLoader {
                 moduleMap.remove(name, newFuture);
             }
         }
-    }
-
-    /**
-     * Find an already-loaded module, returning {@code null} if the module isn't currently loaded.  May block
-     * while the loaded state of the module is in question (if the module is being concurrently loaded from another
-     * thread, for example).
-     *
-     * @param identifier the module identifier
-     * @return the module, or {@code null} if it wasn't found
-     * @deprecated Use {@link #findLoadedModuleLocal(String)} instead.
-     */
-    @Deprecated(forRemoval = true)
-    protected final Module findLoadedModuleLocal(ModuleIdentifier identifier) {
-        return findLoadedModuleLocal(identifier.toString());
     }
 
     /**
@@ -653,26 +514,6 @@ public class ModuleLoader {
     }
 
     /**
-     * This compatibility method just calls {@code findModule(methodIdentifier.toString())} and is usually not used;
-     * if however a legacy subclass overrides this method, then it will be called instead of {@link #findModule(String)},
-     * and that method will redirect to this one.
-     *
-     * @deprecated Use {@link #findModule(String)} instead.
-     *
-     * @param moduleIdentifier the module identifier
-     * @return the module specification
-     * @throws ModuleLoadException
-     */
-    @Deprecated(forRemoval = true)
-    protected ModuleSpec findModule(final ModuleIdentifier moduleIdentifier) throws ModuleLoadException {
-        if (overridesFindModuleByIdentifier) {
-            return findModule0(moduleIdentifier.toString());
-        } else {
-            return findModule(moduleIdentifier.toString());
-        }
-    }
-
-    /**
      * Find a Module's specification in this ModuleLoader by its name.  This can be overriden by sub-classes to
      * implement the Module loading strategy for this loader.  The default implementation iterates the module finders
      * provided during construction.
@@ -686,14 +527,6 @@ public class ModuleLoader {
      * @throws ModuleLoadException if any problems occur finding the module
      */
     protected ModuleSpec findModule(final String name) throws ModuleLoadException {
-        if (overridesFindModuleByIdentifier) {
-            return findModule(ModuleIdentifier.fromString(name));
-        } else {
-            return findModule0(name);
-        }
-    }
-
-    private ModuleSpec findModule0(final String name) throws ModuleLoadException {
         for (ModuleFinder finder : finders) {
             if (finder != null) {
                 final ModuleSpec spec = finder.findModule(name, this);
