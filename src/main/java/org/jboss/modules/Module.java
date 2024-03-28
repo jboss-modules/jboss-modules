@@ -335,7 +335,7 @@ public final class Module {
             } catch (Throwable t) {
                 throw new InvocationTargetException(t, "Failed to initialize main class '" + className + "'");
             }
-            final MethodHandles.Lookup lookup = MethodHandles.lookup();
+            final MethodHandles.Lookup lookup = MethodHandles.publicLookup();
             final MethodHandle methodHandle;
             try {
                 methodHandle = lookup.findStatic(mainClass, "main", MAIN_METHOD_TYPE);
