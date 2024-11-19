@@ -238,6 +238,7 @@ public final class Main {
                         }
                         classDefined = true;
                     } else if ("-secmgr".equals(arg)) {
+                        System.err.println("WARNING: -secmgr is deprecated and may be removed in a future release");
                         if (defaultSecMgr) {
                             System.err.println("-secmgr may only be specified once");
                             System.exit(1);
@@ -248,6 +249,7 @@ public final class Main {
                         }
                         defaultSecMgr = true;
                     } else if ("-secmgrmodule".equals(arg)) {
+                        System.err.println("WARNING: -secmgrmodule is deprecated and may be removed in a future release");
                         if (secMgrModule != null) {
                             System.err.println("-secmgrmodule may only be specified once");
                             System.exit(1);
@@ -258,6 +260,7 @@ public final class Main {
                         }
                         secMgrModule = args[++ i];
                     } else if ("-add-provider".equals(arg)) {
+                        System.err.println("WARNING: -add-provider is deprecated and may be removed in a future release");
                         addedProviders.add(args[++i]);
                     } else if (arg.startsWith("-javaagent:")) {
                         agentJars.add(arg.substring(11));
@@ -553,48 +556,50 @@ public final class Main {
             ManagementFactory.getPlatformMBeanServer();
         }
 
-        for (String addedProvider : addedProviders) {
-            final int idx = addedProvider.indexOf('/');
-            if (idx != -1) {
-                final String provModule = addedProvider.substring(0, idx);
-                final String provClazz = addedProvider.substring(idx + 1);
-                final Class<? extends Provider> providerClass;
-                try {
-                    providerClass = Class.forName(provClazz, false, environmentLoader.loadModule(provModule).getClassLoaderPrivate()).asSubclass(Provider.class);
-                    // each provider needs permission to install itself
-                    doPrivileged(new AddProviderAction(providerClass.getConstructor().newInstance()), getProviderContext(providerClass));
-                } catch (Exception e) {
-                    Module.getModuleLogger().trace(e, "Failed to initialize a security provider");
-                }
-            } else {
-                final ModuleClassLoader classLoader = environmentLoader.loadModule(addedProvider).getClassLoaderPrivate();
-                final ServiceLoader<Provider> providerServiceLoader = ServiceLoader.load(Provider.class, classLoader);
-                final Iterator<Provider> iterator = providerServiceLoader.iterator();
-                for (;;) try {
-                    if (! (iterator.hasNext())) {
-                        Module.getModuleLogger().trace("Module \"%s\" did not contain a security provider service", addedProvider);
-                        break;
+        if (actualVersion < 24) {
+            for (String addedProvider : addedProviders) {
+                final int idx = addedProvider.indexOf('/');
+                if (idx != -1) {
+                    final String provModule = addedProvider.substring(0, idx);
+                    final String provClazz = addedProvider.substring(idx + 1);
+                    final Class<? extends Provider> providerClass;
+                    try {
+                        providerClass = Class.forName(provClazz, false, environmentLoader.loadModule(provModule).getClassLoaderPrivate()).asSubclass(Provider.class);
+                        // each provider needs permission to install itself
+                        doPrivileged(new AddProviderAction(providerClass.getConstructor().newInstance()), getProviderContext(providerClass));
+                    } catch (Exception e) {
+                        Module.getModuleLogger().trace(e, "Failed to initialize a security provider");
                     }
-                    final Provider provider = iterator.next();
-                    final Class<? extends Provider> providerClass = provider.getClass();
-                    // each provider needs permission to install itself
-                    doPrivileged(new AddProviderAction(provider), getProviderContext(providerClass));
-                } catch (ServiceConfigurationError | RuntimeException e) {
-                    Module.getModuleLogger().trace(e, "Failed to initialize a security provider");
+                } else {
+                    final ModuleClassLoader classLoader = environmentLoader.loadModule(addedProvider).getClassLoaderPrivate();
+                    final ServiceLoader<Provider> providerServiceLoader = ServiceLoader.load(Provider.class, classLoader);
+                    final Iterator<Provider> iterator = providerServiceLoader.iterator();
+                    for (;;) try {
+                        if (!(iterator.hasNext())) {
+                             Module.getModuleLogger().trace("Module \"%s\" did not contain a security provider service", addedProvider);
+                             break;
+                        }
+                        final Provider provider = iterator.next();
+                        final Class<? extends Provider> providerClass = provider.getClass();
+                        // each provider needs permission to install itself
+                        doPrivileged(new AddProviderAction(provider), getProviderContext(providerClass));
+                    } catch (ServiceConfigurationError | RuntimeException e) {
+                        Module.getModuleLogger().trace(e, "Failed to initialize a security provider");
+                    }
                 }
             }
-        }
 
-        final ServiceLoader<Provider> providerServiceLoader = ServiceLoader.load(Provider.class, bootClassLoader);
-        Iterator<Provider> iterator = providerServiceLoader.iterator();
-        for (;;) try {
-            if (! (iterator.hasNext())) break;
-            final Provider provider = iterator.next();
-            final Class<? extends Provider> providerClass = provider.getClass();
-            // each provider needs permission to install itself
-            doPrivileged(new AddProviderAction(provider), getProviderContext(providerClass));
-        } catch (ServiceConfigurationError | RuntimeException e) {
-            Module.getModuleLogger().trace(e, "Failed to initialize a security provider");
+            final ServiceLoader<Provider> providerServiceLoader = ServiceLoader.load(Provider.class, bootClassLoader);
+            Iterator<Provider> iterator = providerServiceLoader.iterator();
+            for (;;) try {
+                if (!(iterator.hasNext())) break;
+                final Provider provider = iterator.next();
+                final Class<? extends Provider> providerClass = provider.getClass();
+                // each provider needs permission to install itself
+                doPrivileged(new AddProviderAction(provider), getProviderContext(providerClass));
+            } catch (ServiceConfigurationError | RuntimeException e) {
+                Module.getModuleLogger().trace(e, "Failed to initialize a security provider");
+            }
         }
 
         ModuleLoader.installMBeanServer();
