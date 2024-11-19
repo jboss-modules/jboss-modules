@@ -44,7 +44,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import java.util.ServiceConfigurationError;
-import java.util.ServiceLoader;
 import java.util.logging.LogManager;
 
 import java.util.jar.Attributes;
@@ -280,6 +279,12 @@ public final class Main {
                 System.exit(1);
             }
         }
+        int actualVersion = Runtime.version().feature();
+
+        if (actualVersion >= 24 && (secMgrModule != null || defaultSecMgr)) {
+            System.err.printf("The security manager is not supported in Java %d.", Runtime.version().feature());
+            System.exit(1);
+        }
 
         if (deps != null && ! classDefined && ! classpathDefined) {
             System.err.println("-deps may only be specified when -cp/-classpath or -class is in use");
@@ -358,7 +363,6 @@ public final class Main {
             System.exit(1);
             return;
         }
-        int actualVersion = Runtime.version().feature();
         final String requireJavaVersion = module.getProperty("jboss.require-java-version", Integer.toString(actualVersion));
         final Pattern versionPattern = Pattern.compile("(?:1\\.)?(\\d+)");
         final Matcher requireMatcher = versionPattern.matcher(requireJavaVersion);
@@ -370,50 +374,51 @@ public final class Main {
         ModularURLStreamHandlerProvider.addHandlerModule(module);
         ModularContentHandlerFactory.addHandlerModule(module);
 
-        // at this point, having a security manager already installed will prevent correct operation.
+        if (actualVersion < 24) {
+            // at this point, having a security manager already installed will prevent correct operation.
 
-        final SecurityManager existingSecMgr = System.getSecurityManager();
-        if (existingSecMgr != null) {
-            System.err.println("An existing security manager was detected.  You must use the -secmgr switch to start with a security manager.");
-            System.exit(1);
-            return; // not reached
-        }
-
-        try {
-            final Iterator<Policy> iterator = module.loadService(Policy.class).iterator();
-            if (iterator.hasNext()) {
-                Policy.setPolicy(iterator.next());
+            final SecurityManager existingSecMgr = System.getSecurityManager();
+            if (existingSecMgr != null) {
+                System.err.println("An existing security manager was detected.  You must use the -secmgr switch to start with a security manager.");
+                System.exit(1);
+                return; // not reached
             }
-        } catch (Exception ignored) {}
-
-        // configure policy so that if SM is enabled, modules can still function
-        final ModulesPolicy policy = new ModulesPolicy(Policy.getPolicy());
-        Policy.setPolicy(policy);
-
-        if (secMgrModule != null) {
-            final Module loadedModule;
             try {
-                loadedModule = environmentLoader.loadModule(secMgrModule);
-            } catch (ModuleNotFoundException e) {
-                e.printStackTrace(System.err);
-                System.exit(1);
-                return;
-            }
-            final Iterator<SecurityManager> iterator = loadedModule.loadService(SecurityManager.class).iterator();
-            if (iterator.hasNext()) {
-                System.setSecurityManager(iterator.next());
-            } else {
-                System.err.println("No security manager found in module " + secMgrModule);
-                System.exit(1);
-            }
-        }
+                final Iterator<Policy> iterator = module.loadService(Policy.class).iterator();
+                if (iterator.hasNext()) {
+                    Policy.setPolicy(iterator.next());
+                }
+            } catch (Exception ignored) {}
 
-        if (defaultSecMgr) {
-            final Iterator<SecurityManager> iterator = module.loadService(SecurityManager.class).iterator();
-            if (iterator.hasNext()) {
-                System.setSecurityManager(iterator.next());
-            } else {
-                System.setSecurityManager(new SecurityManager());
+            // configure policy so that if SM is enabled, modules can still function
+            final ModulesPolicy policy = new ModulesPolicy(Policy.getPolicy());
+            Policy.setPolicy(policy);
+
+            if (secMgrModule != null) {
+                final Module loadedModule;
+                try {
+                    loadedModule = environmentLoader.loadModule(secMgrModule);
+                } catch (ModuleNotFoundException e) {
+                    e.printStackTrace(System.err);
+                    System.exit(1);
+                    return;
+                }
+                final Iterator<SecurityManager> iterator = loadedModule.loadService(SecurityManager.class).iterator();
+                if (iterator.hasNext()) {
+                    System.setSecurityManager(iterator.next());
+                } else {
+                    System.err.println("No security manager found in module " + secMgrModule);
+                    System.exit(1);
+                }
+            }
+
+            if (defaultSecMgr) {
+                final Iterator<SecurityManager> iterator = module.loadService(SecurityManager.class).iterator();
+                if (iterator.hasNext()) {
+                    System.setSecurityManager(iterator.next());
+                } else {
+                    System.setSecurityManager(new SecurityManager());
+                }
             }
         }
 
