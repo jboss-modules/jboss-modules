@@ -20,6 +20,7 @@ package org.jboss.modules;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.ref.SoftReference;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -52,7 +53,7 @@ class PathResourceLoader extends AbstractResourceLoader implements IterableResou
     protected final Path root;
     protected final AccessControlContext context;
 
-    private final Manifest manifest;
+    private volatile SoftReference<Manifest> manifestRef;
     private final CodeSource codeSource;
 
     PathResourceLoader(final String rootName, final Path root, final AccessControlContext context) {
@@ -68,8 +69,6 @@ class PathResourceLoader extends AbstractResourceLoader implements IterableResou
         this.rootName = rootName;
         this.root = root;
         this.context = context;
-        final Path manifestFile = root.resolve("META-INF").resolve("MANIFEST.MF");
-        manifest = readManifestFile(manifestFile);
 
         try {
             codeSource = doPrivilegedIfNeeded(context, MalformedURLException.class, () -> new CodeSource(root.toUri().toURL(), (CodeSigner[]) null));
@@ -78,7 +77,15 @@ class PathResourceLoader extends AbstractResourceLoader implements IterableResou
         }
     }
 
-    private Manifest readManifestFile(final Path manifestFile) {
+    private Manifest manifest() {
+        SoftReference<Manifest> ref = manifestRef;
+        if (ref != null) {
+            Manifest manifest = ref.get();
+            if (manifest != null) {
+                return manifest;
+            }
+        }
+        final Path manifestFile = root.resolve("META-INF").resolve("MANIFEST.MF");
         try {
             return doPrivilegedIfNeeded(context, IOException.class, () -> {
                 if (Files.isDirectory(manifestFile)) {
@@ -86,7 +93,9 @@ class PathResourceLoader extends AbstractResourceLoader implements IterableResou
                 }
 
                 try (InputStream is = Files.newInputStream(manifestFile)) {
-                    return new Manifest(is);
+                    Manifest manifest = new Manifest(is);
+                    manifestRef = new SoftReference<>(manifest);
+                    return manifest;
                 }
             });
         } catch (IOException e) {
@@ -141,7 +150,7 @@ class PathResourceLoader extends AbstractResourceLoader implements IterableResou
     @Override
     public PackageSpec getPackageSpec(final String name) throws IOException {
         URL rootUrl = doPrivilegedIfNeeded(context, IOException.class, () -> root.toUri().toURL());
-        return getPackageSpec(name, manifest, rootUrl);
+        return getPackageSpec(name, manifest(), rootUrl);
     }
 
     @Override

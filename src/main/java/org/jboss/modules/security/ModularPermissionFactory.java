@@ -94,6 +94,7 @@ public final class ModularPermissionFactory implements PermissionFactory {
                 final Class<? extends Permission> permissionClass = access.getClassLoaderOf(module).loadClass(className, true).asSubclass(Permission.class);
                 return instance = PermissionFactory.constructFromClass(permissionClass, targetName, permissionActions);
             } catch (Throwable t) {
+                Module.getModuleLogger().trace(t, "Failed to construct permission instance: %s in %s", className, moduleName);
                 instance = null;
                 return null;
             }

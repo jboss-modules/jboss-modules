@@ -46,6 +46,8 @@ import java.util.jar.Manifest;
 
 import static java.security.AccessController.doPrivileged;
 
+import org.jboss.modules.log.ModuleLogger;
+
 /**
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -338,13 +340,16 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
     static void extractJarPaths(final JarFile jarFile, String relativePath, final Collection<String> index) {
         index.add("");
         final Enumeration<JarEntry> entries = jarFile.entries();
-        while (entries.hasMoreElements()) {
+        if (! entries.hasMoreElements()) {
+            ModuleLogger log = Module.getModuleLogger();
+            log.trace("No JAR paths were found in the JAR file path %s", relativePath);
+        } else do {
             final JarEntry jarEntry = entries.nextElement();
             final String name = jarEntry.getName();
             final int idx = name.lastIndexOf('/');
             if (idx == -1) continue;
             final String path = name.substring(0, idx);
-            if (path.length() == 0 || path.endsWith("/")) {
+            if (path.isEmpty() || path.endsWith("/")) {
                 // invalid name, just skip...
                 continue;
             }
@@ -355,7 +360,7 @@ final class JarFileResourceLoader extends AbstractResourceLoader implements Iter
                     index.add(path.substring(relativePath.length() + 1));
                 }
             }
-        }
+        } while (entries.hasMoreElements());
     }
 
     private static final CodeSigners EMPTY_CODE_SIGNERS = new CodeSigners(new CodeSigner[0]);
