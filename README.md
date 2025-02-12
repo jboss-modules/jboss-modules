@@ -10,7 +10,7 @@ All documentation lives at http://jboss-modules.github.io/jboss-modules/manual/
 
 ## Issue tracker
 
-All issues can be reported at https://issues.jboss.org/browse/MODULES
+All issues can be reported at https://github.com/jboss-modules/jboss-modules/issues
 
 ## Code
 
