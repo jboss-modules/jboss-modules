@@ -249,6 +249,8 @@ public final class ModuleLoggerFinder extends LoggerFinder {
     private static class QueueingSystemLogger implements System.Logger {
         private static final System.Logger.Level DEFAULT_LEVEL;
 
+        private static final int MAX_QUEUE_SIZE = 1000;
+
         static {
             System.Logger.Level level;
             if (System.getSecurityManager() == null) {
@@ -289,12 +291,16 @@ public final class ModuleLoggerFinder extends LoggerFinder {
 
         @Override
         public void log(final System.Logger.Level level, final ResourceBundle bundle, final String msg, final Throwable thrown) {
-            messages.addLast(new SystemLogRecord(name, module, level, bundle, msg, null, thrown));
+            if(messages.size() <= MAX_QUEUE_SIZE) {
+                messages.addLast(new SystemLogRecord(name, module, level, bundle, msg, null, thrown));
+            }
         }
 
         @Override
         public void log(final System.Logger.Level level, final ResourceBundle bundle, final String format, final Object... params) {
-            messages.addLast(new SystemLogRecord(name, module, level, bundle, format, params, null));
+            if(messages.size() <= MAX_QUEUE_SIZE) {
+                messages.addLast(new SystemLogRecord(name, module, level, bundle, format, params, null));
+            }
         }
     }
 
