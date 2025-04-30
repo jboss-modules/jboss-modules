@@ -693,12 +693,6 @@ public class ModuleClassLoader extends ConcurrentClassLoader {
         return super.clone();
     }
 
-    /** {@inheritDoc} */
-    @Override
-    protected final void finalize() throws Throwable {
-        super.finalize();
-    }
-
     ResourceLoader[] getResourceLoaders() {
         final ResourceLoaderSpec[] specs = paths.get().getSourceList(ResourceLoaderSpec.NO_RESOURCE_LOADERS);
         final int length = specs.length;
