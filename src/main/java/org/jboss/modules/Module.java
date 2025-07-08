@@ -1056,10 +1056,16 @@ public final class Module {
             throw new IllegalArgumentException("logger is null");
         }
         final SecurityManager sm = System.getSecurityManager();
+        String logVersion;
         if (sm != null) {
             sm.checkPermission(ACCESS_MODULE_LOGGER);
+            logVersion = doPrivileged(new PropertyReadAction("jboss.log-version", "false"));
+        } else {
+            logVersion = System.getProperty("jboss.log-version", "false");
         }
-        logger.greeting();
+        if (Boolean.parseBoolean(logVersion)) {
+            logger.greeting();
+        }
         log = logger;
     }
 
