@@ -14,3 +14,14 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+  - package-ecosystem: maven
+    target-branch: "2.2"
+    directory: "/"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 10
+  - package-ecosystem: "github-actions"
+    target-branch: "2.2"
+    directory: "/"
+    schedule:
+      interval: "daily"
