@@ -48,7 +48,7 @@
     <properties>
         <version.javadoc.plugin>3.4.1</version.javadoc.plugin>
         <version.junit>4.13.2</version.junit>
-        <version.org.jacoco>0.8.12</version.org.jacoco>
+        <version.org.jacoco>0.8.13</version.org.jacoco>
         <version.org.jboss.shrinkwrap>1.2.6</version.org.jboss.shrinkwrap>
         <version.org.wildfly.checkstyle-config>1.0.8.Final</version.org.wildfly.checkstyle-config>
         <version.org.jboss.bridger>1.6.Final</version.org.jboss.bridger>
