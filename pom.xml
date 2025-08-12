@@ -29,7 +29,7 @@
     <parent>
         <groupId>org.jboss</groupId>
         <artifactId>jboss-parent</artifactId>
-        <version>50.alpha1</version>
+        <version>50.beta1</version>
     </parent>
 
     <licenses>
