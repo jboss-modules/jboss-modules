@@ -38,8 +38,9 @@ jobs:
           11
           17
           21
+          25
     - name: Run Tests
-      run: mvn -ntp -U -B -fae clean install "-Djava11.home=${{env.JAVA_HOME_11_X64}}" "-Djava17.home=${{env.JAVA_HOME_17_X64}}"
+      run: mvn -ntp -U -B -fae clean install "-Djava11.home=${{env.JAVA_HOME_11_X64}}" "-Djava17.home=${{env.JAVA_HOME_17_X64}}" "-Djava21.home=${{env.JAVA_HOME_21_X64}}"
     - uses: actions/upload-artifact@v4
       if: failure()
       with:
