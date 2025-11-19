@@ -9,7 +9,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
-import org.jboss.modules.Module;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -28,6 +27,30 @@ public class MavenSettingsTest {
 
     @Rule
     public TemporaryFolder tmpdir = new TemporaryFolder();
+
+    @Test
+    public void testRepoLocalHeadAndTail() throws Exception {
+        URL settingsXmlUrl = MavenSettingsTest.class.getResource("settings-with-local-repo-defined.xml");
+        System.setProperty("jboss.modules.settings.xml.url", settingsXmlUrl.toExternalForm());
+        String temporaryLocalRepository = tmpdir.newFolder("repository").getAbsolutePath();
+        String temporaryRepoTail = tmpdir.newFolder("repo-tail").getAbsolutePath();
+        String temporaryRepoHead1 = tmpdir.newFolder("repo-head1").getAbsolutePath();
+        String temporaryRepoHead2 = tmpdir.newFolder("repo-head2").getAbsolutePath();
+        System.setProperty("maven.repo.local", temporaryLocalRepository);
+        System.setProperty("maven.repo.local.head", temporaryRepoHead1 + "," + temporaryRepoHead2);
+        System.setProperty("maven.repo.local.tail", temporaryRepoTail);
+
+        try {
+            clearCachedSettings();
+            MavenSettings settings = MavenSettings.getSettings();
+            Assert.assertEquals(temporaryLocalRepository, settings.getLocalRepository().toString());
+            Assert.assertEquals(List.of(Path.of(temporaryRepoHead1), Path.of(temporaryRepoHead2)), settings.localRepositoryHead());
+            Assert.assertEquals(List.of(Path.of(temporaryRepoTail)), settings.localRepositoryTail());
+        } finally {
+            System.clearProperty("maven.repo.local");
+            System.clearProperty("jboss.modules.settings.xml.url");
+        }
+    }
 
     @Test
     public void testLocalRepositoryOverriddenViaSystemProperty() throws Exception {

@@ -83,6 +83,8 @@ public final class MavenArtifactUtil {
         String artifactRelativeHttpPath = coordinates.relativeArtifactPath('/');
         final MavenSettings settings = MavenSettings.getSettings();
         final Path localRepository = settings.getLocalRepository();
+        List<Path> localRepositoryHead = settings.localRepositoryHead();
+        List<Path> localRepositoryTail = settings.localRepositoryTail();
         final File localRepositoryFile = localRepository.toFile();
 
         final String pomPath = artifactRelativePath + ".pom";
@@ -91,9 +93,22 @@ public final class MavenArtifactUtil {
         synchronized (artifactLock) {
             if ("pom".equals(packaging)) {
                 // ignore classifier
-                Path fp = localRepository.resolve(pomPath);
+                Path fp;
+                for (Path head : localRepositoryHead) {
+                    fp = head.resolve(pomPath);
+                    if (Files.exists(fp)) {
+                        return fp.toFile();
+                    }
+                }
+                fp = localRepository.resolve(pomPath);
                 if (Files.exists(fp)) {
                     return fp.toFile();
+                }
+                for (Path head : localRepositoryTail) {
+                    fp = head.resolve(pomPath);
+                    if (Files.exists(fp)) {
+                        return fp.toFile();
+                    }
                 }
                 List<String> remoteRepos = settings.getRemoteRepositories();
                 if (remoteRepos.isEmpty()) {
@@ -116,9 +131,22 @@ public final class MavenArtifactUtil {
                 final String coordinatesClassifier = coordinates.getClassifier();
                 String classifier = coordinatesClassifier.isEmpty() ? "" : "-" + coordinatesClassifier;
                 String artifactPath = artifactRelativePath + classifier + "." + packaging;
-                Path fp = localRepository.resolve(artifactPath);
+                Path fp;
+                for (Path head : localRepositoryHead) {
+                    fp = head.resolve(pomPath);
+                    if (Files.exists(fp)) {
+                        return fp.toFile();
+                    }
+                }
+                fp = localRepository.resolve(artifactPath);
                 if (Files.exists(fp)) {
                     return fp.toFile();
+                }
+                for (Path head : localRepositoryTail) {
+                    fp = head.resolve(pomPath);
+                    if (Files.exists(fp)) {
+                        return fp.toFile();
+                    }
                 }
 
                 List<String> remoteRepos = settings.getRemoteRepositories();
