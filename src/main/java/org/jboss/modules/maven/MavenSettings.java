@@ -29,6 +29,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -38,6 +39,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.jboss.modules.xml.MXParser;
 import org.jboss.modules.xml.XmlPullParser;
@@ -59,7 +61,9 @@ final class MavenSettings {
 
     private static volatile MavenSettings mavenSettings;
 
+    private List<Path> localRepositoryHead = List.of();
     private Path localRepository = null;
+    private List<Path> localRepositoryTail = List.of();
 
     private final List<String> remoteRepositories = new LinkedList<>();
 
@@ -352,13 +356,27 @@ final class MavenSettings {
         String localRepositoryPath = System.getProperty("local.maven.repo.path");
         if (localRepositoryPath != null && !localRepositoryPath.trim().isEmpty()) {
             System.out.println("Please use 'maven.repo.local' instead of 'local.maven.repo.path'");
-            localRepository = java.nio.file.Paths.get(localRepositoryPath.split(File.pathSeparator)[0]);
+            localRepository = Paths.get(localRepositoryPath.split(File.pathSeparator)[0]);
         }
 
         localRepositoryPath = System.getProperty("maven.repo.local");
         if (localRepositoryPath != null && !localRepositoryPath.trim().isEmpty()) {
-            localRepository = java.nio.file.Paths.get(localRepositoryPath);
+            localRepository = Paths.get(localRepositoryPath);
         }
+
+        String mavenRepoLocalTail = System.getProperty("maven.repo.local.tail");
+        if (mavenRepoLocalTail != null && !mavenRepoLocalTail.trim().isEmpty()) {
+            localRepositoryTail = Arrays.stream(mavenRepoLocalTail.split(","))
+                .map(Path::of)
+                .collect(Collectors.toUnmodifiableList());
+        }
+        String mavenRepoLocalHead = System.getProperty("maven.repo.local.head");
+        if (mavenRepoLocalHead != null && !mavenRepoLocalHead.trim().isEmpty()) {
+            localRepositoryHead = Arrays.stream(mavenRepoLocalHead.split(","))
+                .map(Path::of)
+                .collect(Collectors.toUnmodifiableList());
+        }
+
         String remoteRepository = System.getProperty("remote.maven.repo");
         if (remoteRepository != null) {
             for (String repo : remoteRepository.split(",")) {
@@ -376,6 +394,14 @@ final class MavenSettings {
 
     public Path getLocalRepository() {
         return localRepository;
+    }
+
+    public List<Path> localRepositoryHead() {
+        return localRepositoryHead;
+    }
+
+    public List<Path> localRepositoryTail() {
+        return localRepositoryTail;
     }
 
     public List<String> getRemoteRepositories() {
