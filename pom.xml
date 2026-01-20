@@ -46,6 +46,7 @@
     </licenses>
 
     <properties>
+        <nexus.repository.release>jboss-common</nexus.repository.release>
         <version.javadoc.plugin>3.4.1</version.javadoc.plugin>
         <version.junit>4.13.2</version.junit>
         <version.org.jacoco>0.8.14</version.org.jacoco>
