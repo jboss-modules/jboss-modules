@@ -321,8 +321,8 @@ packages that are to be defined by the module's own resources.
 [id='predefined-modules']
 === Predefined modules
 
-As of JBoss Modules version 1.8, a set of modules are predefined and available to users
-automatically when the default module loader is used.  The set of modules available
+As of JBoss Modules version 1.8, a set of modules are predefined and available for use
+as dependencies when the default module loader is used.  The set of modules available
 depends on the version of JDK that is being run.
 
 Under all JDKs, the special module `org.jboss.modules` is available which includes all of
