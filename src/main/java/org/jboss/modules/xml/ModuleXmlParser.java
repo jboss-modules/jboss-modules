@@ -35,6 +35,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
@@ -327,6 +328,7 @@ public final class ModuleXmlParser {
      * @throws IOException if I/O fails
      */
     public static ModuleSpec parseModuleXml(final ResourceRootFactory factory, final MavenResolver mavenResolver, final String rootPath, InputStream source, final String moduleInfoFile, final ModuleLoader moduleLoader, final String moduleName) throws ModuleLoadException, IOException {
+        Objects.requireNonNull(rootPath, "rootPath");
         try {
             final MXParser parser = new MXParser();
             parser.setFeature(FEATURE_PROCESS_NAMESPACES, true);
@@ -1591,6 +1593,8 @@ public final class ModuleXmlParser {
         static final DefaultResourceRootFactory INSTANCE = new DefaultResourceRootFactory();
 
         public ResourceLoader createResourceLoader(final String rootPath, final String loaderPath, final String loaderName) throws IOException {
+            Objects.requireNonNull(rootPath, "rootPath");
+            Objects.requireNonNull(loaderPath, "loaderPath");
             final File file;
             final File loaderFile;
             final String loaderFileName;
