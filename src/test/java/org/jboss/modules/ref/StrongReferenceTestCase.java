@@ -19,7 +19,7 @@
 package org.jboss.modules.ref;
 
 import org.jboss.modules.ref.Reference.Type;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test for {@link StrongReference}.

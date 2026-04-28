@@ -25,19 +25,19 @@ import org.jboss.modules.test.ImportedInterface;
 import org.jboss.modules.test.TestClass;
 import org.jboss.modules.util.TestModuleLoader;
 import org.jboss.modules.util.TestResourceLoader;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.net.URL;
 import java.util.Enumeration;
 import java.util.List;
 
 import static org.jboss.modules.util.Util.toList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Test to verify module functionality.
@@ -59,7 +59,7 @@ public class ModuleClassLoaderTest extends AbstractModuleTestCase {
 
     private TestModuleLoader moduleLoader;
 
-    @Before
+    @BeforeEach
     public void setupModuleLoader() throws Exception {
         moduleLoader = new TestModuleLoader();
 

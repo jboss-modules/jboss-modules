@@ -18,19 +18,17 @@
 
 package org.jboss.modules;
 
+import org.jboss.modules.maven.ArtifactCoordinates;
+import org.jboss.modules.maven.MavenArtifactUtil;
+import org.jboss.modules.util.Util;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+
 import java.io.File;
 import java.net.URL;
 
-import org.jboss.modules.maven.ArtifactCoordinates;
-import org.jboss.modules.maven.MavenArtifactUtil;
-import org.jboss.modules.maven.MavenSettingsTest;
-import org.jboss.modules.util.Util;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * @author <a href="mailto:bill@burkecentral.com">Bill Burke</a>
@@ -40,12 +38,9 @@ public class MavenResourceTest {
 
     protected static final String MODULE_ID = "test.maven";
 
-    @Rule
-    public TemporaryFolder tmpdir = new TemporaryFolder();
-
     private ModuleLoader moduleLoader;
 
-    @Before
+    @BeforeEach
     public void setupRepo() throws Exception {
         final File repoRoot = Util.getResourceFile(getClass(), "test/repo");
         moduleLoader = new LocalModuleLoader(new File[]{repoRoot});
@@ -53,16 +48,18 @@ public class MavenResourceTest {
 
     @Test
     public void testWithPassedRepository() throws Exception {
-        System.setProperty("maven.repo.local", tmpdir.newFolder("repository").getAbsolutePath());
+        File repoDir = new File(System.getProperty("java.io.tmpdir"), "MavenResourceTest_repository" + System.currentTimeMillis());
+        repoDir.mkdirs();
+        System.setProperty("maven.repo.local", repoDir.getAbsolutePath());
         System.setProperty("remote.maven.repo", "https://repository.jboss.org/nexus/content/groups/public/,https://maven-central.storage.googleapis.com/");
         try {
             Module module = moduleLoader.loadModule(MODULE_ID);
             URL url = module.getResource("org/jboss/resteasy/plugins/providers/jackson/ResteasyJacksonProvider.class");
             System.out.println(url);
-            Assert.assertNotNull(url);
+            assertNotNull(url);
         } finally {
             System.clearProperty("maven.repo.local");
-            System.clearProperty("remote.repository");
+            System.clearProperty("remote.maven.repo");
         }
     }
 
@@ -72,10 +69,10 @@ public class MavenResourceTest {
      * @throws Exception
      */
     @Test
-    @Ignore("Test is mostly meant for manual testing, as snapshot are not parmanent")
+    @Disabled("Test is mostly meant for manual testing, as snapshot are not parmanent")
     public void testCustomRepository() throws Exception {
         File f = MavenArtifactUtil.resolveJarArtifact(ArtifactCoordinates.fromString("org.wildfly.core:wildfly-version:2.0.5.Final-20151222.144931-1"));
-        Assert.assertNotNull("Should resolve", f);
+        assertNotNull(f);
         System.out.println("f = " + f);
     }
 }

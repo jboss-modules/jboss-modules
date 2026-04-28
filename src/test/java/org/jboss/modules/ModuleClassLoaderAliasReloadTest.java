@@ -1,15 +1,15 @@
 package org.jboss.modules;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
+import org.jboss.modules.test.TestClass;
+import org.jboss.modules.util.TestModuleLoader;
+import org.jboss.modules.util.TestResourceLoader;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.Collection;
 
-import org.jboss.modules.test.TestClass;
-import org.jboss.modules.util.TestModuleLoader;
-import org.jboss.modules.util.TestResourceLoader;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Verifies the functionality of alias modules in unload/reload scenarios.

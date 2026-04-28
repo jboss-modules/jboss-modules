@@ -18,15 +18,15 @@
 
 package org.jboss.modules;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.util.Iterator;
 
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Test to verify the functionality of the LocalModuleLoader.
@@ -36,7 +36,7 @@ import static org.junit.Assert.fail;
 public class LocalModuleLoaderTest extends AbstractModuleTestCase {
     private ModuleLoader moduleLoader;
 
-    @Before
+    @BeforeEach
     public void setupModuleLoader() throws Exception {
         final File repoRoot = getResource("test/repo");
         System.setProperty("foo.bar", "substituted_value");

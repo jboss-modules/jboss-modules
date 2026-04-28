@@ -18,16 +18,16 @@
 
 package org.jboss.modules;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
 import org.jboss.modules.util.Util;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.util.Iterator;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * [MODULES-377] Getting 'IAE: moduleLoader is null' when iterating modules and module.xml contains a permissions markup
@@ -38,7 +38,7 @@ public class MODULES_377_Test extends AbstractModuleTestCase {
     private LocalModuleFinder moduleFinder;
     private ModuleLoader moduleLoader;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         final File repoRoot = Util.getResourceFile(getClass(), "test/MODULES_377");
         moduleFinder = new LocalModuleFinder(new File[] {repoRoot});

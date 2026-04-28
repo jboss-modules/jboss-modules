@@ -18,15 +18,16 @@
 
 package org.jboss.modules;
 
+import org.jboss.modules.filter.PathFilter;
+import org.junit.jupiter.api.AfterEach;
+
 import java.io.File;
 import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.security.AccessController;
 
-import org.jboss.modules.filter.PathFilter;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Assume;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Test the functionality of the PathResourceLoader with resources containing symbolic links
@@ -37,7 +38,7 @@ public class SymlinkResourceLoaderTest extends AbstractResourceLoaderTestCase {
 
     private File resourceRoot;
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         File base = getResource("test");
         File symlink = new File(base, "symlink");
@@ -52,7 +53,7 @@ public class SymlinkResourceLoaderTest extends AbstractResourceLoaderTestCase {
         try {
             resourceRoot = Files.createSymbolicLink(new File(base, "symlink").toPath(), realRoot.toPath()).toFile();
         } catch (UnsupportedOperationException | FileSystemException e) {
-            Assume.assumeNoException(e);
+            fail("unexpected exception", e);
         }
 
         // Copy the classfile over
@@ -64,7 +65,7 @@ public class SymlinkResourceLoaderTest extends AbstractResourceLoaderTestCase {
     protected void assertResource(Resource resource, String fileName) {
         final File resourceFile = getExpectedFile(fileName);
 
-        Assert.assertEquals(resourceFile.length(), resource.getSize());
+        assertEquals(resourceFile.length(), resource.getSize());
     }
 
     public void testGetClassSpec() throws Exception {

@@ -18,19 +18,21 @@
 
 package org.jboss.modules.xml;
 
-import static org.junit.Assert.*;
+import org.jboss.modules.AbstractModuleTestCase;
+import org.jboss.modules.LocalModuleLoader;
+import org.jboss.modules.Module;
+import org.jboss.modules.ModuleLoader;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.FilePermission;
 import java.security.Permission;
 import java.util.Enumeration;
 
-import org.jboss.modules.AbstractModuleTestCase;
-import org.jboss.modules.LocalModuleLoader;
-import org.jboss.modules.Module;
-import org.jboss.modules.ModuleLoader;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Test to verify the functionality of module permissions
@@ -42,7 +44,7 @@ public class PermissionsTest extends AbstractModuleTestCase {
     protected static final String MODULE_WITH_INVALID_EXPANSION = "test.permissions";
     private ModuleLoader moduleLoader;
 
-    @Before
+    @BeforeEach
     public void setupModuleLoader() throws Exception {
         System.setProperty("jboss.home.dir", JBOSS_HOME_DIR_VALUE);
         System.setProperty("foo.bar", "substituted_value");

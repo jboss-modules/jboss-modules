@@ -18,11 +18,6 @@
 
 package org.jboss.modules;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Iterator;
-import java.util.jar.JarFile;
-
 import org.jboss.modules.filter.PathFilter;
 import org.jboss.modules.filter.PathFilters;
 import org.jboss.modules.util.TestModuleLoader;
@@ -30,8 +25,16 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Iterator;
+import java.util.jar.JarFile;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  *
@@ -68,9 +71,9 @@ public class ModuleIteratorTest extends AbstractModuleTestCase {
 
         Module moduleA = moduleLoader.loadModule(MODULE_A);
         Iterator<Resource> itres = moduleA.iterateResources(PathFilters.getMetaInfServicesFilter());
-        Assert.assertTrue("Found a resource", itres.hasNext());
-        Assert.assertEquals("META-INF/services/org/apache/camel/component/jms", itres.next().getName());
-        Assert.assertFalse("No other resource", itres.hasNext());
+        assertTrue(itres.hasNext(), "Found a resource");
+        assertEquals("META-INF/services/org/apache/camel/component/jms", itres.next().getName());
+        assertFalse(itres.hasNext(), "No other resource");
     }
 
     @Test
@@ -121,7 +124,7 @@ public class ModuleIteratorTest extends AbstractModuleTestCase {
             count++;
         }
 
-        Assert.assertEquals(2, count);
+        assertEquals(2, count);
     }
 
     private JarFile toJarFile(JavaArchive archive) throws IOException {

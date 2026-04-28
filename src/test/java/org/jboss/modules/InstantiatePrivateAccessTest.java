@@ -18,14 +18,14 @@
 
 package org.jboss.modules;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import org.jboss.modules.security.ModularPermissionFactory;
+import org.junit.jupiter.api.Test;
 
 import java.security.AllPermission;
 import java.security.Permissions;
 
-import org.jboss.modules.security.ModularPermissionFactory;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
