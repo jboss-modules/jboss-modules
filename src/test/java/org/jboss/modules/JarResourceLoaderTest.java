@@ -19,7 +19,6 @@
 package org.jboss.modules;
 
 import org.jboss.modules.filter.PathFilter;
-import org.junit.Assert;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -29,6 +28,8 @@ import java.io.IOException;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Test the functionality of the JarResourceLoader.
@@ -56,7 +57,7 @@ public class JarResourceLoaderTest extends AbstractResourceLoaderTestCase {
     @Override
     protected void assertResource(Resource resource, String fileName) {
         final JarEntry entry = jarFile.getJarEntry(fileName);
-        Assert.assertEquals(entry.getSize(), resource.getSize());
+        assertEquals(entry.getSize(), resource.getSize());
     }
 
     static void buildJar(final File source, final File targetFile) throws IOException {

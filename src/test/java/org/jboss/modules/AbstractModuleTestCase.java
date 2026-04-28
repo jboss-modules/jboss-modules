@@ -20,7 +20,7 @@ package org.jboss.modules;
 
 import org.jboss.modules.log.StreamModuleLogger;
 import org.jboss.modules.util.Util;
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.BeforeAll;
 
 import java.io.Closeable;
 import java.io.File;
@@ -37,7 +37,7 @@ import java.io.OutputStream;
  */
 public abstract class AbstractModuleTestCase {
 
-    @BeforeClass
+    @BeforeAll
     public static void initUrlHandler() {
         // this also kicks off Module's static init
         Module.setModuleLogger(new StreamModuleLogger(System.err));

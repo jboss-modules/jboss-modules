@@ -18,6 +18,10 @@
 
 package org.jboss.modules;
 
+import org.jboss.modules.util.TestModuleLoader;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,11 +31,9 @@ import java.security.CodeSource;
 import java.security.ProtectionDomain;
 import java.util.Collection;
 import java.util.Collections;
-import org.jboss.modules.util.TestModuleLoader;
-import org.junit.Before;
-import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  */
@@ -39,7 +41,7 @@ public class ClassDefinerTest extends AbstractModuleTestCase {
 
     private TestModuleLoader moduleLoader;
 
-    @Before
+    @BeforeEach
     public void setupModuleLoader() {
         moduleLoader = new TestModuleLoader();
         ModuleSpec.Builder builder = ModuleSpec.build("org.module.foo");

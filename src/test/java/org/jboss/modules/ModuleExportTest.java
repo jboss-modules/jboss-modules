@@ -18,8 +18,12 @@
 
 package org.jboss.modules;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import org.jboss.modules.filter.PathFilters;
+import org.jboss.modules.test.ImportedClass;
+import org.jboss.modules.util.TestModuleLoader;
+import org.jboss.modules.util.TestResourceLoader;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
 import java.util.Collections;
@@ -28,12 +32,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.jboss.modules.filter.PathFilters;
-import org.jboss.modules.test.ImportedClass;
-import org.jboss.modules.util.TestModuleLoader;
-import org.jboss.modules.util.TestResourceLoader;
-import org.junit.Ignore;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Test to verify the module export dependencies and imports are created correctly.  Each module should have an entry
@@ -120,7 +120,7 @@ public class ModuleExportTest extends AbstractModuleTestCase {
 
     @SuppressWarnings({ "unchecked" })
     @Test
-    @Ignore("Disabled; relies on modules not inheriting full set of JDK paths which is incorrect behavior")
+    @Disabled("Disabled; relies on modules not inheriting full set of JDK paths which is incorrect behavior")
     public void testImportPaths() throws Exception {
         final TestModuleLoader moduleLoader = new TestModuleLoader();
 

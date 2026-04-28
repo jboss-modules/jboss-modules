@@ -1,18 +1,23 @@
 package org.jboss.modules.maven;
 
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
 import java.io.File;
 import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Tomaz Cerar (c) 2015 Red Hat Inc.
@@ -25,17 +30,17 @@ public class MavenSettingsTest {
         mavenSettings.set(null, null);
     }
 
-    @Rule
-    public TemporaryFolder tmpdir = new TemporaryFolder();
+    @TempDir
+    public Path tmpdir;
 
     @Test
     public void testRepoLocalHeadAndTail() throws Exception {
         URL settingsXmlUrl = MavenSettingsTest.class.getResource("settings-with-local-repo-defined.xml");
         System.setProperty("jboss.modules.settings.xml.url", settingsXmlUrl.toExternalForm());
-        String temporaryLocalRepository = tmpdir.newFolder("repository").getAbsolutePath();
-        String temporaryRepoTail = tmpdir.newFolder("repo-tail").getAbsolutePath();
-        String temporaryRepoHead1 = tmpdir.newFolder("repo-head1").getAbsolutePath();
-        String temporaryRepoHead2 = tmpdir.newFolder("repo-head2").getAbsolutePath();
+        String temporaryLocalRepository = Files.createFile(tmpdir.resolve("repository")).toFile().getAbsolutePath();
+        String temporaryRepoTail = Files.createFile(tmpdir.resolve("repo-tail")).toFile().getAbsolutePath();
+        String temporaryRepoHead1 = Files.createFile(tmpdir.resolve("repo-head1")).toFile().getAbsolutePath();
+        String temporaryRepoHead2 = Files.createFile(tmpdir.resolve("repo-head2")).toFile().getAbsolutePath();
         System.setProperty("maven.repo.local", temporaryLocalRepository);
         System.setProperty("maven.repo.local.head", temporaryRepoHead1 + "," + temporaryRepoHead2);
         System.setProperty("maven.repo.local.tail", temporaryRepoTail);
@@ -43,9 +48,9 @@ public class MavenSettingsTest {
         try {
             clearCachedSettings();
             MavenSettings settings = MavenSettings.getSettings();
-            Assert.assertEquals(temporaryLocalRepository, settings.getLocalRepository().toString());
-            Assert.assertEquals(List.of(Path.of(temporaryRepoHead1), Path.of(temporaryRepoHead2)), settings.localRepositoryHead());
-            Assert.assertEquals(List.of(Path.of(temporaryRepoTail)), settings.localRepositoryTail());
+            assertEquals(temporaryLocalRepository, settings.getLocalRepository().toString());
+            assertEquals(List.of(Path.of(temporaryRepoHead1), Path.of(temporaryRepoHead2)), settings.localRepositoryHead());
+            assertEquals(List.of(Path.of(temporaryRepoTail)), settings.localRepositoryTail());
         } finally {
             System.clearProperty("maven.repo.local");
             System.clearProperty("jboss.modules.settings.xml.url");
@@ -56,13 +61,13 @@ public class MavenSettingsTest {
     public void testLocalRepositoryOverriddenViaSystemProperty() throws Exception {
         URL settingsXmlUrl = MavenSettingsTest.class.getResource("settings-with-local-repo-defined.xml");
         System.setProperty("jboss.modules.settings.xml.url", settingsXmlUrl.toExternalForm());
-        String temporaryLocalRepository = tmpdir.newFolder("repository").getAbsolutePath();
+        String temporaryLocalRepository = Files.createFile(tmpdir.resolve("repository")).toFile().getAbsolutePath();
         System.setProperty("maven.repo.local", temporaryLocalRepository);
 
         try {
             clearCachedSettings();
             MavenSettings settings = MavenSettings.getSettings();
-            Assert.assertEquals(temporaryLocalRepository, settings.getLocalRepository().toString());
+            assertEquals(temporaryLocalRepository, settings.getLocalRepository().toString());
         } finally {
             System.clearProperty("maven.repo.local");
             System.clearProperty("jboss.modules.settings.xml.url");
@@ -77,7 +82,7 @@ public class MavenSettingsTest {
         try {
             clearCachedSettings();
             MavenSettings settings = MavenSettings.getSettings();
-            Assert.assertEquals("/user/defined/path/in/settings/xml".replace('/', File.separatorChar), settings.getLocalRepository().toString());
+            assertEquals("/user/defined/path/in/settings/xml".replace('/', File.separatorChar), settings.getLocalRepository().toString());
         } finally {
             System.clearProperty("jboss.modules.settings.xml.url");
         }
@@ -85,17 +90,17 @@ public class MavenSettingsTest {
 
     @Test
     public void testWithPassedRepository() throws Exception {
-        System.setProperty("maven.repo.local", tmpdir.newFolder("repository").getAbsolutePath());
+        System.setProperty("maven.repo.local", Files.createFile(tmpdir.resolve("repository")).toFile().getAbsolutePath());
         System.setProperty("remote.maven.repo", "http://repository.jboss.org/nexus/content/groups/public/,https://maven-central.storage.googleapis.com/");
 
         try {
             clearCachedSettings();
             MavenSettings settings = MavenSettings.getSettings();
             List<String> remoteRepos = settings.getRemoteRepositories();
-            Assert.assertTrue(remoteRepos.size() >= 3); //at least 3 must be present, other can come from settings.xml
-            Assert.assertTrue(remoteRepos.contains("https://repo1.maven.org/maven2/"));
-            Assert.assertTrue(remoteRepos.contains("http://repository.jboss.org/nexus/content/groups/public/"));
-            Assert.assertTrue(remoteRepos.contains("https://maven-central.storage.googleapis.com/"));
+            assertTrue(remoteRepos.size() >= 3); //at least 3 must be present, other can come from settings.xml
+            assertTrue(remoteRepos.contains("https://repo1.maven.org/maven2/"));
+            assertTrue(remoteRepos.contains("http://repository.jboss.org/nexus/content/groups/public/"));
+            assertTrue(remoteRepos.contains("https://maven-central.storage.googleapis.com/"));
 
         } finally {
             System.clearProperty("maven.repo.local");
@@ -105,15 +110,15 @@ public class MavenSettingsTest {
 
     @Test
     public void testWithEmptyPassedRepository() throws Exception {
-        Path userRepo = tmpdir.newFolder(".m2", "repository").toPath();
+        Path userRepo = Files.createDirectories(tmpdir.resolve(".m2").resolve("repository"));
         String userHome = System.getProperty("user.home");
-        System.setProperty("user.home", tmpdir.getRoot().getAbsolutePath());
+        System.setProperty("user.home", tmpdir.toFile().getAbsolutePath());
         System.setProperty("maven.repo.local", "");
 
         try {
             clearCachedSettings();
             MavenSettings settings = MavenSettings.getSettings();
-            Assert.assertEquals(userRepo, settings.getLocalRepository());
+            assertEquals(userRepo, settings.getLocalRepository());
         } finally {
             System.setProperty("user.home", userHome);
             System.clearProperty("maven.repo.local");
@@ -125,22 +130,22 @@ public class MavenSettingsTest {
         MavenSettings settings = new MavenSettings();
 
         MavenSettings.parseSettingsXml(Paths.get(MavenSettingsTest.class.getResource("settings-empty-local-repo.xml").toURI()), settings);
-        Assert.assertNull(settings.getLocalRepository());//local repo shouldn't be set
+        assertNull(settings.getLocalRepository());//local repo shouldn't be set
 
     }
 
     @Test
     public void testInterpolatedLocalRepo() throws Exception {
-        Path userRepo = tmpdir.newFolder(".m2", "repository").toPath();
+        Path userRepo = Files.createDirectories(tmpdir.resolve(".m2").resolve("repository"));
         String userHome = System.getProperty("user.home");
-        System.setProperty("user.home", tmpdir.getRoot().getAbsolutePath());
+        System.setProperty("user.home", tmpdir.getRoot().toFile().getAbsolutePath());
 
         try {
             clearCachedSettings();
             MavenSettings settings = new MavenSettings();
 
             MavenSettings.parseSettingsXml(Paths.get(MavenSettingsTest.class.getResource("settings-interpolated-local-repo.xml").toURI()), settings);
-            Assert.assertEquals(Paths.get(tmpdir.getRoot().getAbsolutePath() + "/.mvnrepository"), settings.getLocalRepository());
+            assertEquals(Paths.get(tmpdir.getRoot().toFile().getAbsolutePath() + "/.mvnrepository"), settings.getLocalRepository());
         } finally {
             System.setProperty("user.home", userHome);
         }
@@ -153,26 +158,26 @@ public class MavenSettingsTest {
 
         MavenSettings.parseSettingsXml(Paths.get(MavenSettingsTest.class.getResource("settings-empty-local-repo.xml").toURI()), settings);
         List<MavenSettings.Proxy> proxies = settings.getProxies();
-        Assert.assertEquals(1, proxies.size());
+        assertEquals(1, proxies.size());
 
         MavenSettings.Proxy proxy = proxies.get(0);
 
-        Assert.assertEquals("my-proxy", proxy.getId());
-        Assert.assertEquals("myproxy.corp.com", proxy.getHost());
-        Assert.assertEquals(8080, proxy.getPort());
-        Assert.assertEquals("http", proxy.getProtocol());
-        Assert.assertEquals("bob", proxy.getUsername());
-        Assert.assertEquals("hunter2", proxy.getPassword());
+        assertEquals("my-proxy", proxy.getId());
+        assertEquals("myproxy.corp.com", proxy.getHost());
+        assertEquals(8080, proxy.getPort());
+        assertEquals("http", proxy.getProtocol());
+        assertEquals("bob", proxy.getUsername());
+        assertEquals("hunter2", proxy.getPassword());
 
-        Assert.assertTrue(proxy.canProxyFor(new URL("http://www.redhat.com/")));
-        Assert.assertFalse(proxy.canProxyFor(new URL("http://genius.apple.com/")));
+        assertTrue(proxy.canProxyFor(new URL("http://www.redhat.com/")));
+        assertFalse(proxy.canProxyFor(new URL("http://genius.apple.com/")));
 
         Proxy netProxy = proxy.getProxy();
 
-        Assert.assertNotNull(netProxy);
+        assertNotNull(netProxy);
 
-        Assert.assertEquals("myproxy.corp.com", ((InetSocketAddress) netProxy.address()).getHostName());
-        Assert.assertEquals(8080, ((InetSocketAddress) netProxy.address()).getPort());
+        assertEquals("myproxy.corp.com", ((InetSocketAddress) netProxy.address()).getHostName());
+        assertEquals(8080, ((InetSocketAddress) netProxy.address()).getPort());
     }
 
     @Test
@@ -181,16 +186,16 @@ public class MavenSettingsTest {
 
         MavenSettings.parseSettingsXml(Paths.get(MavenSettingsTest.class.getResource("settings-empty-local-repo.xml").toURI()), settings);
         List<MavenSettings.Proxy> proxies = settings.getProxies();
-        Assert.assertEquals(1, proxies.size());
+        assertEquals(1, proxies.size());
 
         MavenSettings.Proxy proxy = settings.getProxyFor(new URL("http://genius.apple.com/foo/bar/baz"));
-        Assert.assertNull(proxy);
+        assertNull(proxy);
 
         proxy = settings.getProxyFor(new URL("http://repository.jboss.org/foo/bar/baz"));
-        Assert.assertNotNull(proxy);
+        assertNotNull(proxy);
 
-        Assert.assertEquals("myproxy.corp.com", ((InetSocketAddress) proxy.getProxy().address()).getHostName());
-        Assert.assertEquals(8080, ((InetSocketAddress) proxy.getProxy().address()).getPort());
+        assertEquals("myproxy.corp.com", ((InetSocketAddress) proxy.getProxy().address()).getHostName());
+        assertEquals(8080, ((InetSocketAddress) proxy.getProxy().address()).getPort());
     }
 
     /**
@@ -202,14 +207,14 @@ public class MavenSettingsTest {
     public void testSnapshotResolving() throws Exception {
         ArtifactCoordinates coordinates = ArtifactCoordinates.fromString("org.wildfly.core:wildfly-version:2.0.5.Final-20151222.144931-1");
         String path = coordinates.relativeArtifactPath('/');
-        Assert.assertEquals("org/wildfly/core/wildfly-version/2.0.5.Final-SNAPSHOT/wildfly-version-2.0.5.Final-20151222.144931-1", path);
+        assertEquals("org/wildfly/core/wildfly-version/2.0.5.Final-SNAPSHOT/wildfly-version-2.0.5.Final-20151222.144931-1", path);
     }
 
     @Test
     public void testInterpolateVariablesOneVariable() throws Exception {
         try {
             System.setProperty( "test.user.home", "/home/bob" );
-            Assert.assertEquals("/home/bob/.m2/repository", MavenSettings.interpolateVariables("${test.user.home}/.m2/repository"));
+            assertEquals("/home/bob/.m2/repository", MavenSettings.interpolateVariables("${test.user.home}/.m2/repository"));
         } finally {
             System.clearProperty("test.user.home");
         }
@@ -220,7 +225,7 @@ public class MavenSettingsTest {
         try {
             System.setProperty( "test.user.home", "/home/bob" );
             System.setProperty( "test.repo.dir", "repository" );
-            Assert.assertEquals("/home/bob/.m2/repository", MavenSettings.interpolateVariables("${test.user.home}/.m2/${test.repo.dir}"));
+            assertEquals("/home/bob/.m2/repository", MavenSettings.interpolateVariables("${test.user.home}/.m2/${test.repo.dir}"));
         } finally {
             System.clearProperty("test.user.home");
         }
@@ -230,7 +235,7 @@ public class MavenSettingsTest {
     public void testInterpolateVariablesInvalidExpression() throws Exception {
         try {
             System.setProperty( "test.user.home", "/home/bob" );
-            Assert.assertEquals("${test.user.home/.m2/repository", MavenSettings.interpolateVariables("${test.user.home/.m2/repository"));
+            assertEquals("${test.user.home/.m2/repository", MavenSettings.interpolateVariables("${test.user.home/.m2/repository"));
         } finally {
             System.clearProperty("test.user.home");
         }
@@ -240,7 +245,7 @@ public class MavenSettingsTest {
     public void testInterpolateVariablesInvalidExpression2() throws Exception {
         try {
             System.setProperty( "test.user.home", "/home/bob" );
-            Assert.assertEquals("/home/bob/.m2/${repoName", MavenSettings.interpolateVariables("${test.user.home}/.m2/${repoName"));
+            assertEquals("/home/bob/.m2/${repoName", MavenSettings.interpolateVariables("${test.user.home}/.m2/${repoName"));
         } finally {
             System.clearProperty("test.user.home");
         }

@@ -18,14 +18,14 @@
 
 package org.jboss.modules.ref.util;
 
+import org.jboss.modules.ref.Reaper;
+import org.jboss.modules.ref.Reference;
+
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
-import org.jboss.modules.ref.Reaper;
-import org.jboss.modules.ref.Reference;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Reaper used by tests.
