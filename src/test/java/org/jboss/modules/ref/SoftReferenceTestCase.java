@@ -18,13 +18,13 @@
 
 package org.jboss.modules.ref;
 
+import org.jboss.modules.ref.Reference.Type;
+import org.jboss.modules.ref.util.TestReaper;
+import org.junit.jupiter.api.Test;
+
 import java.lang.ref.ReferenceQueue;
 import java.util.ArrayList;
 import java.util.Collection;
-
-import org.jboss.modules.ref.Reference.Type;
-import org.jboss.modules.ref.util.TestReaper;
-import org.junit.Test;
 
 /**
  * Test for {@link SoftReference}.
