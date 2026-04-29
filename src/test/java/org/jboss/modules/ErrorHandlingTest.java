@@ -21,10 +21,10 @@ package org.jboss.modules;
 import org.jboss.modules.test.ClassA;
 import org.jboss.modules.util.TestModuleLoader;
 import org.jboss.modules.util.TestResourceLoader;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * @author <a href="mailto:cdewolf@redhat.com">Carlo de Wolf</a>
@@ -34,7 +34,7 @@ public class ErrorHandlingTest extends AbstractModuleTestCase {
 
     private TestModuleLoader moduleLoader;
 
-    @Before
+    @BeforeEach
     public void before() throws Exception {
         moduleLoader = new TestModuleLoader();
 

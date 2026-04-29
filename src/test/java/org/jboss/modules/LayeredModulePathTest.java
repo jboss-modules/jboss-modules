@@ -18,6 +18,10 @@
 
 package org.jboss.modules;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
@@ -30,10 +34,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Tests of {@link LocalModuleLoader} when "layers" and "add-ons" are configured.
@@ -52,7 +56,7 @@ public class LayeredModulePathTest extends AbstractModuleTestCase {
     private File repoA;
     private File repoB;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
 
         originalModulePath = System.getProperty("module.path");
@@ -71,7 +75,7 @@ public class LayeredModulePathTest extends AbstractModuleTestCase {
         }
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         if (reposRoot != null) {
             cleanFile(reposRoot);
@@ -332,7 +336,7 @@ public class LayeredModulePathTest extends AbstractModuleTestCase {
         File[] standardPath = { repoA };
         try {
             LayeredModulePathFactory.resolveLayeredModulePath(standardPath);
-            Assert.fail("layers.conf with no layers should fail");
+            fail("layers.conf with no layers should fail");
         } catch (Exception good) {
             // good
         }
@@ -346,7 +350,7 @@ public class LayeredModulePathTest extends AbstractModuleTestCase {
         File[] standardPath = { repoA };
         try {
             LayeredModulePathFactory.resolveLayeredModulePath(standardPath);
-            Assert.fail("layers.conf with no layers should fail");
+            fail("layers.conf with no layers should fail");
         } catch (Exception good) {
             // good
         }
@@ -375,14 +379,14 @@ public class LayeredModulePathTest extends AbstractModuleTestCase {
         File[] standardPath = { repoA };
         File[] modulePath = LayeredModulePathFactory.resolveLayeredModulePath(standardPath);
 
-        Assert.assertEquals(7, modulePath.length);
-        Assert.assertEquals(repoA, modulePath[0]);
-        Assert.assertEquals(new File(repoA, "system/layers/top/.overlays/top1"), modulePath[1]);
-        Assert.assertEquals(new File(repoA, "system/layers/top/.overlays/top2"), modulePath[2]);
-        Assert.assertEquals(new File(repoA, "system/layers/top"), modulePath[3]);
-        Assert.assertEquals(new File(repoA, "system/layers/base/.overlays/base1"), modulePath[4]);
-        Assert.assertEquals(new File(repoA, "system/layers/base/.overlays/base2"), modulePath[5]);
-        Assert.assertEquals(new File(repoA, "system/layers/base"), modulePath[6]);
+        assertEquals(7, modulePath.length);
+        assertEquals(repoA, modulePath[0]);
+        assertEquals(new File(repoA, "system/layers/top/.overlays/top1"), modulePath[1]);
+        assertEquals(new File(repoA, "system/layers/top/.overlays/top2"), modulePath[2]);
+        assertEquals(new File(repoA, "system/layers/top"), modulePath[3]);
+        assertEquals(new File(repoA, "system/layers/base/.overlays/base1"), modulePath[4]);
+        assertEquals(new File(repoA, "system/layers/base/.overlays/base2"), modulePath[5]);
+        assertEquals(new File(repoA, "system/layers/base"), modulePath[6]);
 
     }
 
@@ -397,16 +401,16 @@ public class LayeredModulePathTest extends AbstractModuleTestCase {
         File[] standardPath = { repoA };
         File[] modulePath = LayeredModulePathFactory.resolveLayeredModulePath(standardPath);
 
-        Assert.assertEquals(6, modulePath.length);
-        Assert.assertEquals(repoA, modulePath[0]);
-        Assert.assertEquals(new File(repoA, "system/layers/base"), modulePath[1]);
+        assertEquals(6, modulePath.length);
+        assertEquals(repoA, modulePath[0]);
+        assertEquals(new File(repoA, "system/layers/base"), modulePath[1]);
         // The order of the add-ons is non deterministic
-        Assert.assertEquals(".overlays", modulePath[2].getParentFile().getName());
+        assertEquals(".overlays", modulePath[2].getParentFile().getName());
         final String firstOverlay = modulePath[2].getName();
-        Assert.assertEquals(new File(repoA, "system/add-ons/" + firstOverlay), modulePath[3]);
-        Assert.assertEquals(".overlays", modulePath[4].getParentFile().getName());
+        assertEquals(new File(repoA, "system/add-ons/" + firstOverlay), modulePath[3]);
+        assertEquals(".overlays", modulePath[4].getParentFile().getName());
         final String secondOverlays = modulePath[4].getName();
-        Assert.assertEquals(new File(repoA, "system/add-ons/" + secondOverlays), modulePath[5]);
+        assertEquals(new File(repoA, "system/add-ons/" + secondOverlays), modulePath[5]);
 
     }
 
@@ -490,30 +494,30 @@ public class LayeredModulePathTest extends AbstractModuleTestCase {
 
         // Validate positional parameters -- check for bad test writers ;)
         if (expectedOtherRootPos < 0) {
-            Assert.assertEquals(0, expectedStartPos); //
+            assertEquals(0, expectedStartPos); //
         } else if (expectedStartPos == 0) {
-            Assert.assertEquals(expectedLength, expectedOtherRootPos);
+            assertEquals(expectedLength, expectedOtherRootPos);
         }
 
         if (expectedOtherRootPos < 1) {
-            Assert.assertEquals("Correct module path length", expectedStartPos + expectedLength, modulePath.length);
+            assertEquals(expectedStartPos + expectedLength, modulePath.length, "Correct module path length");
         } else {
-            Assert.assertTrue("Correct module path length", modulePath.length > expectedStartPos + expectedLength);
+            assertTrue(modulePath.length > expectedStartPos + expectedLength, "Correct module path length");
         }
 
-        Assert.assertEquals(repoRoot, modulePath[expectedStartPos]);
+        assertEquals(repoRoot, modulePath[expectedStartPos]);
         for (int i = 0; i < layers.length; i++) {
             File layer = new File(repoRoot, "system/layers/" + layers[i]);
-            Assert.assertEquals(layer, modulePath[expectedStartPos + i + 1]);
+            assertEquals(layer, modulePath[expectedStartPos + i + 1]);
         }
         if (expectAddons) {
             File addOnBase = new File(repoRoot, "system/add-ons");
             Set<String> valid = new HashSet<String>(Arrays.asList("a", "b"));
             for (int i = 0; i < 2; i++) {
                 File addOn = modulePath[expectedStartPos + layers.length + i + 1];
-                Assert.assertEquals(addOnBase, addOn.getParentFile());
+                assertEquals(addOnBase, addOn.getParentFile());
                 String addOnName = addOn.getName();
-                Assert.assertTrue(addOnName, valid.remove(addOnName));
+                assertTrue(valid.remove(addOnName), addOnName);
             }
 
         }
@@ -534,7 +538,7 @@ public class LayeredModulePathTest extends AbstractModuleTestCase {
         File stop = repoRoot.getParentFile();
         File testee = file;
         while (testee != null && !testee.equals(stop)) {
-            Assert.assertFalse(testee.equals(repoRoot));
+            assertFalse(testee.equals(repoRoot));
             testee = testee.getParentFile();
         }
     }
@@ -550,11 +554,11 @@ public class LayeredModulePathTest extends AbstractModuleTestCase {
             Module shared = moduleLoader.loadModule(SHARED);
             String sharedProp = shared.getProperty("test.prop");
             if (expectUserPrecedence) {
-                Assert.assertEquals("user", sharedProp);
+                assertEquals("user", sharedProp);
             } else if (layers.length > 0) {
-                Assert.assertEquals(layers[0], sharedProp);
+                assertEquals(layers[0], sharedProp);
             } else if (expectAddOns) {
-                Assert.assertTrue("a".equals(sharedProp) || "b".equals(sharedProp));
+                assertTrue("a".equals(sharedProp) || "b".equals(sharedProp));
             }
         }
 
@@ -583,13 +587,13 @@ public class LayeredModulePathTest extends AbstractModuleTestCase {
         try {
             Module module = moduleLoader.loadModule("test." + moduleName);
             if (!expectAvailable) {
-                Assert.fail("test." + moduleName + " should not be loadable");
+                fail("test." + moduleName + " should not be loadable");
             }
             String prop = module.getProperty("test.prop");
-            Assert.assertEquals(moduleName, prop);
+            assertEquals(moduleName, prop);
         } catch (ModuleLoadException e) {
             if (expectAvailable) {
-                Assert.fail(e.getMessage());
+                fail(e.getMessage());
             }
         }
     }

@@ -18,13 +18,10 @@
 
 package org.jboss.modules;
 
-import static org.jboss.modules.util.Util.readBytes;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import org.jboss.modules.filter.PathFilter;
+import org.jboss.modules.filter.PathFilters;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.net.URL;
 import java.util.Collection;
@@ -33,11 +30,13 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-import org.jboss.modules.filter.PathFilter;
-import org.jboss.modules.filter.PathFilters;
-import org.junit.Before;
-import org.junit.Test;
-
+import static org.jboss.modules.util.Util.readBytes;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Abstract Test Case used as the base for all resource loader tests.
@@ -48,7 +47,7 @@ public abstract class AbstractResourceLoaderTestCase extends AbstractModuleTestC
 
     protected ResourceLoader loader;
 
-    @Before
+    @BeforeEach
     public void setupLoader() throws Exception {
         loader = createLoader(PathFilters.acceptAll());
     }

@@ -20,14 +20,13 @@ package org.jboss.modules;
 
 import org.jboss.modules.maven.MavenSettingsTest;
 import org.jboss.modules.util.Util;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.net.URL;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * @author <a href="mailto:bill@burkecentral.com">Bill Burke</a>
@@ -39,7 +38,7 @@ public class MavenResource2Test {
 
     private ModuleLoader moduleLoader;
 
-    @Before
+    @BeforeEach
     public void setupRepo() throws Exception {
         final File repoRoot = Util.getResourceFile(getClass(), "test/repo");
         moduleLoader = new LocalModuleLoader(new File[]{repoRoot});
@@ -53,7 +52,7 @@ public class MavenResource2Test {
             Module module = moduleLoader.loadModule(MODULE_ID2);
             URL url = module.getResource("org/jboss/resteasy/plugins/providers/jackson/ResteasyJacksonProvider.class");
             System.out.println(url);
-            Assert.assertNotNull(url);
+            assertNotNull(url);
         } finally {
             System.clearProperty("jboss.modules.settings.xml.url");
         }

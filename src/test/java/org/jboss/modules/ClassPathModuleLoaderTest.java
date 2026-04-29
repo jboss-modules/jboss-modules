@@ -18,18 +18,18 @@
 
 package org.jboss.modules;
 
-import java.lang.reflect.Method;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Enumeration;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * Test to verify the functionality of the ClassPathModuleLoader.
@@ -39,7 +39,7 @@ import static org.junit.Assert.assertNotNull;
  */
 public class ClassPathModuleLoaderTest extends AbstractModuleTestCase {
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() throws Exception {
         final Method method = ModuleLoader.class.getDeclaredMethod("installMBeanServer");
         method.setAccessible(true);
@@ -98,6 +98,6 @@ public class ClassPathModuleLoaderTest extends AbstractModuleTestCase {
         while(services.hasMoreElements()) {
             found.add(services.nextElement());
         }
-        assertEquals("Found 2 services of type javax.ws.rs.ext.Providers", 2, found.size());
+        assertEquals(2, found.size(), "Found 2 services of type javax.ws.rs.ext.Providers");
     }
 }

@@ -18,13 +18,14 @@
 
 package org.jboss.modules;
 
+import org.jboss.modules.util.Util;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.io.File;
 import java.net.URL;
 
-import org.jboss.modules.util.Util;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -33,7 +34,7 @@ public class FileSystemClassPathModuleLoaderTest {
     private FileSystemClassPathModuleFinder moduleFinder;
     private ModuleLoader moduleLoader;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         final File repoRoot = Util.getResourceFile(getClass(), "test/repo");
         ModuleLoader localModuleLoader = new LocalModuleLoader(new File[] {repoRoot});
@@ -46,6 +47,6 @@ public class FileSystemClassPathModuleLoaderTest {
         final File resourceFile = Util.getResourceFile(getClass(), "test/filesystem-module-1");
         final Module module = moduleLoader.loadModule(resourceFile.getAbsoluteFile().getCanonicalFile().toString());
         final URL exportedResource = module.getExportedResource("META-INF/services/javax.ws.rs.ext.Providers");
-        Assert.assertNotNull(exportedResource);
+        assertNotNull(exportedResource);
     }
 }
