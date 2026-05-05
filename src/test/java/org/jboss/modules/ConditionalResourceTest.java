@@ -18,16 +18,16 @@
 
 package org.jboss.modules;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.nio.file.Paths;
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * Test to verify conditional expressions
@@ -36,7 +36,7 @@ import org.junit.Test;
  */
 public class ConditionalResourceTest extends AbstractModuleTestCase {
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() throws Exception {
         final Method method = ModuleLoader.class.getDeclaredMethod("installMBeanServer");
         method.setAccessible(true);

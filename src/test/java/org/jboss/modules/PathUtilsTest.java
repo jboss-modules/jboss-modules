@@ -18,11 +18,15 @@
 
 package org.jboss.modules;
 
-import static org.jboss.modules.PathUtils.*;
+import org.junit.jupiter.api.Test;
 
-import org.junit.Test;
-
-import static org.junit.Assert.*;
+import static org.jboss.modules.PathUtils.basicModuleNameToPath;
+import static org.jboss.modules.PathUtils.isChild;
+import static org.jboss.modules.PathUtils.isDirectChild;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * Test to verify the PathUtils functionality.

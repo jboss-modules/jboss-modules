@@ -19,10 +19,11 @@
 package org.jboss.modules;
 
 import org.jboss.modules.filter.PathFilter;
-import org.junit.Assert;
 
 import java.io.File;
 import java.security.AccessController;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Test the functionality of the FileResourceLoader
@@ -44,7 +45,7 @@ public class FileResourceLoaderTest extends AbstractResourceLoaderTestCase {
     protected void assertResource(Resource resource, String fileName) {
         final File resourceFile = getExpectedFile(fileName);
 
-        Assert.assertEquals(resourceFile.length(), resource.getSize());
+        assertEquals(resourceFile.length(), resource.getSize());
     }
 
     public void testGetClassSpec() throws Exception {

@@ -28,7 +28,7 @@ import org.jboss.modules.test.QuxFoo;
 import org.jboss.modules.test.QuxImpl;
 import org.jboss.modules.util.ModulesTestBase;
 import org.jboss.modules.util.TestResourceLoader;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.jboss.modules.ResourceLoaderSpec.createResourceLoaderSpec;
 import static org.jboss.modules.util.TestResourceLoader.TestResourceLoaderBuilder;
