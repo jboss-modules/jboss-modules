@@ -23,7 +23,7 @@ import org.jboss.modules.test.ClassB;
 import org.jboss.modules.test.ClassC;
 import org.jboss.modules.test.ClassD;
 import org.jboss.modules.util.Util;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collection;

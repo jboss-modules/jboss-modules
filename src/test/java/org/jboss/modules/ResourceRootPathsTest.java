@@ -18,6 +18,9 @@
 
 package org.jboss.modules;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.JarURLConnection;
@@ -30,11 +33,7 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Test absolute and relative paths in resource-roots' path attribute (MODULES-218)
@@ -42,8 +41,6 @@ import org.junit.rules.TemporaryFolder;
  */
 public class ResourceRootPathsTest extends AbstractModuleTestCase {
 
-    @Rule
-    public TemporaryFolder tmpDir = new TemporaryFolder();
     private File repoRoot;
     private File testModuleRoot;
     private File fileResourceRoot;
@@ -61,9 +58,9 @@ public class ResourceRootPathsTest extends AbstractModuleTestCase {
 
     private ModuleLoader moduleLoader;
 
-    @Before
+    @BeforeEach
     public void setupModuleLoader() throws Exception {
-        repoRoot = tmpDir.newFolder("repo").getCanonicalFile();
+        repoRoot = new File(System.getProperty("java.io.tmpdir"), "ResourceRootPathsTest_repo" + System.currentTimeMillis());
         testModuleRoot = new File(repoRoot, "test/test/main/");
 
         // Build a jar in module
@@ -126,11 +123,12 @@ public class ResourceRootPathsTest extends AbstractModuleTestCase {
                 }
             }
         }
-        Assert.assertEquals("Test should have checked 4 ResourceLoaders", 4, checkCount);
+        assertEquals(4, checkCount, "Test should have checked 4 ResourceLoaders");
     }
 
     private File getFileFromJarUri(URI uri) throws Exception {
         JarURLConnection connection = (JarURLConnection) uri.toURL().openConnection();
+        connection.setUseCaches(false);
         File file = new File(connection.getJarFileURL().toURI());
         return file;
     }
@@ -150,7 +148,7 @@ public class ResourceRootPathsTest extends AbstractModuleTestCase {
                     Path target = ptr.resolve(dir.getName(dir.getNameCount() - 1));
                     ptr = target;
                 }
-                Files.copy(dir, ptr, StandardCopyOption.COPY_ATTRIBUTES);
+                Files.createDirectories(ptr);
                 isFirst = false;
                 return FileVisitResult.CONTINUE;
             }

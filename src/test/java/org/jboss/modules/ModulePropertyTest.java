@@ -18,13 +18,14 @@
 
 package org.jboss.modules;
 
-import java.io.File;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
+import java.io.File;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Test to verify the functionality of module properties.
@@ -34,7 +35,7 @@ import static org.junit.Assert.fail;
 public class ModulePropertyTest extends AbstractModuleTestCase {
     private ModuleLoader moduleLoader;
 
-    @Before
+    @BeforeEach
     public void setupModuleLoader() throws Exception {
         final File repoRoot = getResource("test/repo");
         moduleLoader = new LocalModuleLoader(new File[] {repoRoot});

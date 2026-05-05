@@ -21,24 +21,24 @@ package org.jboss.modules.util;
 import org.jboss.modules.DependencySpec;
 import org.jboss.modules.Module;
 import org.jboss.modules.ModuleClassLoader;
-import org.jboss.modules.ModuleLoadException;
 import org.jboss.modules.ModuleLoader;
+import org.jboss.modules.ModuleLoadException;
 import org.jboss.modules.ModuleSpec;
 import org.jboss.modules.filter.PathFilter;
 import org.jboss.modules.filter.PathFilters;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 
 import java.net.URL;
 import java.util.Collections;
+import java.util.List;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Test low level modules use cases.
@@ -50,7 +50,7 @@ public abstract class ModulesTestBase {
 
     private ModuleLoaderSupport moduleLoader;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         moduleLoader = new ModuleLoaderSupport("default");
     }
@@ -104,7 +104,7 @@ public abstract class ModulesTestBase {
     protected void assertLoadClassFail(String identifier, String className) throws Exception {
         try {
             Class<?> clazz = loadClass(identifier, className);
-            assertNotNull("ClassNotFoundException expected for [" + className + "], but was: " + clazz, clazz);
+            assertNotNull(clazz, "ClassNotFoundException expected for [" + className + "], but was: " + clazz);
             fail("ClassNotFoundException expected for [" + className + "], but was loaded from: " + clazz.getClassLoader());
         } catch (ClassNotFoundException ex) {
             // expected

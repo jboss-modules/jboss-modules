@@ -1,29 +1,30 @@
 package org.jboss.modules;
 
-import org.junit.Assert;
-import org.junit.Assume;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
+
 public class LayeredModulePathFactoryTest {
 
     private static final String OVERLAYS = ".overlays";
     private static final String OVERLAY_NAME = "overlay-1";
 
-    @Rule
-    public TemporaryFolder temporaryFolder = new TemporaryFolder();
+    @TempDir
+    public Path temporaryFOlder;
 
     private File layeringRoot;
     private File overlaysDir;
@@ -31,25 +32,25 @@ public class LayeredModulePathFactoryTest {
     private File overlayRoot;
     private final List<File> discoveredPaths = new ArrayList<>();
 
-    @Before
+    @BeforeEach
     public void setup() throws IOException {
         boolean isPosix = FileSystems.getDefault().supportedFileAttributeViews().contains("posix");
-        Assume.assumeTrue("This test requires POSIX compatible OS", isPosix);
+        assumeTrue(isPosix, "This test requires POSIX compatible OS");
 
-        layeringRoot = temporaryFolder.getRoot();
+        layeringRoot = temporaryFOlder.toFile();
 
         // layeringRoot/.overlays/
         overlaysDir = new File(layeringRoot, OVERLAYS);
-        Assert.assertTrue(overlaysDir.mkdir());
+        assertTrue(overlaysDir.mkdir());
 
         // layeringRoot/.overlays/.overlays file
         metadataFile = new File(overlaysDir, OVERLAYS);
-        Assert.assertTrue(metadataFile.createNewFile());
+        assertTrue(metadataFile.createNewFile());
         writeRefsFile(metadataFile);
 
         // layeringRoot/.overlays/overlay-1/
         overlayRoot = new File(overlaysDir, OVERLAY_NAME);
-        Assert.assertTrue(overlayRoot.mkdir());
+        assertTrue(overlayRoot.mkdir());
     }
 
     @Test
@@ -73,7 +74,7 @@ public class LayeredModulePathFactoryTest {
             Files.setPosixFilePermissions(overlaysDir.toPath(), origPermissions);
         }
 
-        Assert.assertTrue(expectedFailure);
+        assertTrue(expectedFailure);
     }
 
     @Test
@@ -94,7 +95,7 @@ public class LayeredModulePathFactoryTest {
             Files.setPosixFilePermissions(overlaysDir.toPath(), origPermissions);
         }
 
-        Assert.assertTrue(expectedFailure);
+        assertTrue(expectedFailure);
     }
 
     @Test
@@ -113,7 +114,7 @@ public class LayeredModulePathFactoryTest {
             Files.setPosixFilePermissions(overlaysDir.toPath(), origPermissions);
         }
 
-        Assert.assertTrue(expectedFailure);
+        assertTrue(expectedFailure);
     }
 
     private static void writeRefsFile(File file) throws IOException {

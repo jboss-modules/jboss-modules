@@ -37,8 +37,8 @@ import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
-import static org.junit.Assert.assertTrue;
 import static org.jboss.modules.util.Util.getClassBytes;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * A test resource loader that simple retrieves resources frm maps.  This allows tests to build

@@ -1,10 +1,11 @@
 package org.jboss.modules.xml;
 
-import static org.junit.Assert.*;
-
 import org.jboss.modules.util.ModulesTestBase;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class PropertyExpanderTestCase extends ModulesTestBase{
     private static final String FILE_SEPATATOR = System.getProperty("file.separator");
@@ -15,7 +16,7 @@ public class PropertyExpanderTestCase extends ModulesTestBase{
     private static final String JBOSS_HOME = "jboss.home.dir";
     private static final String JBOSS_HOME_VALUE = "/Users/home/jshepher/eap/jboss-eap-7";
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception{
         super.setUp();
         System.setProperty(SOME_PROPERTY, SOME_PROPERTY_VALUE);

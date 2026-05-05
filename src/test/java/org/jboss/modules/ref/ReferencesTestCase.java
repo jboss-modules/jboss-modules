@@ -18,22 +18,22 @@
 
 package org.jboss.modules.ref;
 
-import static org.jboss.modules.ref.util.Assert.assertReference;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import org.jboss.modules.ref.Reference.Type;
+import org.jboss.modules.ref.References.ReaperThread;
+import org.jboss.modules.ref.util.TestReaper;
+import org.junit.jupiter.api.Test;
 
 import java.lang.ref.ReferenceQueue;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
-import org.jboss.modules.ref.Reference.Type;
-import org.jboss.modules.ref.References.ReaperThread;
-import org.jboss.modules.ref.util.TestReaper;
-import org.junit.Test;
+import static org.jboss.modules.ref.util.Assert.assertReference;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Test for {@link References} class and internal classes.
