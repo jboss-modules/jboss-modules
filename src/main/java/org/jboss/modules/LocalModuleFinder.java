@@ -172,16 +172,92 @@ public final class LocalModuleFinder implements IterableModuleFinder, AutoClosea
 
     private static File[] getFiles(final String modulePath, final int stringIdx, final int arrayIdx) {
         if (modulePath == null) return NO_FILES;
-        final int i = modulePath.indexOf(File.pathSeparatorChar, stringIdx);
+        // Find next unescaped path separator
+        final int i = findNextUnescapedSeparator(modulePath, stringIdx);
         final File[] files;
         if (i == -1) {
+            // Last path in the list
             files = new File[arrayIdx + 1];
-            files[arrayIdx] = new File(modulePath.substring(stringIdx)).getAbsoluteFile();
+            String path = unescapePath(modulePath.substring(stringIdx));
+            files[arrayIdx] = new File(path).getAbsoluteFile();
         } else {
+            // More paths to process
             files = getFiles(modulePath, i + 1, arrayIdx + 1);
-            files[arrayIdx] = new File(modulePath.substring(stringIdx, i)).getAbsoluteFile();
+            String path = unescapePath(modulePath.substring(stringIdx, i));
+            files[arrayIdx] = new File(path).getAbsoluteFile();
         }
         return files;
+    }
+
+    /**
+     * Find the next unescaped path separator character in the string.
+     * A separator is considered escaped if it's preceded by an odd number of backslashes.
+     *
+     * @param path the path string to search
+     * @param startIdx the index to start searching from
+     * @return the index of the next unescaped separator, or -1 if none found
+     */
+    private static int findNextUnescapedSeparator(String path, int startIdx) {
+        int idx = startIdx;
+        while (idx < path.length()) {
+            char c = path.charAt(idx);
+            
+            if (c == File.pathSeparatorChar) {
+                // Count preceding backslashes
+                int backslashCount = 0;
+                int checkIdx = idx - 1;
+                while (checkIdx >= 0 && path.charAt(checkIdx) == '\\') {
+                    backslashCount++;
+                    checkIdx--;
+                }
+                
+                // If even number of backslashes (including 0), separator is not escaped
+                if (backslashCount % 2 == 0) {
+                    return idx; // Found unescaped separator
+                }
+            }
+            idx++;
+        }
+        return -1; // No separator found
+    }
+
+    /**
+     * Remove escape characters from a path string.
+     * Converts escaped separators and backslashes to their literal forms.
+     *
+     * @param path the path string with escape characters
+     * @return the unescaped path string
+     */
+    private static String unescapePath(String path) {
+        if (path.indexOf('\\') == -1) {
+            // No backslashes, return as-is (optimization)
+            return path;
+        }
+        
+        StringBuilder result = new StringBuilder(path.length());
+        int idx = 0;
+        
+        while (idx < path.length()) {
+            char c = path.charAt(idx);
+            
+            if (c == '\\' && idx + 1 < path.length()) {
+                char next = path.charAt(idx + 1);
+                
+                // Check if it's an escape sequence we recognize
+                if (next == File.pathSeparatorChar || next == '\\') {
+                    // Skip the backslash, add the escaped character
+                    result.append(next);
+                    idx += 2;
+                    continue;
+                }
+            }
+            
+            // Regular character or backslash not part of escape sequence
+            result.append(c);
+            idx++;
+        }
+        
+        return result.toString();
     }
 
     public ModuleSpec findModule(final String name, final ModuleLoader delegateLoader) throws ModuleLoadException {
