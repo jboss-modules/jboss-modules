@@ -48,7 +48,7 @@
     <properties>
         <nexus.repository.release>jboss-common</nexus.repository.release>
         <version.javadoc.plugin>3.4.1</version.javadoc.plugin>
-        <version.junit>5.14.3</version.junit>
+        <version.junit>6.1.1</version.junit>
         <version.org.jacoco>0.8.15</version.org.jacoco>
         <version.org.jboss.shrinkwrap>1.2.6</version.org.jboss.shrinkwrap>
         <version.org.wildfly.checkstyle-config>1.0.8.Final</version.org.wildfly.checkstyle-config>
